@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_UTIL_ALLOCATOR_H_
 
 #include <concepts>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <type_traits>
@@ -18,6 +19,13 @@ struct Block
 };
 
 ///
+/// Uses alignment of std::max_align_t to get max alignment.
+/// Pointers returned by allocation functions such as std::malloc are suitably aligned for any object,
+/// which means they are aligned at least as strictly as std::max_align_t.
+///
+constexpr size_t cMaxAlignment = alignof(std::max_align_t);
+
+///
 /// Rounds a size to an aligned size with and alignment of 8 bytes.
 ///
 /// Can be used for compulsive alignment for allocators.
@@ -28,7 +36,7 @@ struct Block
 ///
 constexpr size_t RoundToAligned(size_t size)
 {
-  return (size + 8 - 1) & ~(8 - 1);
+  return (size + cMaxAlignment - 1) & ~(cMaxAlignment - 1);
 }
 
 ///
@@ -166,7 +174,7 @@ public:
   ///
   /// Returns whether or not the allocator has ownership on this block of memory.
   ///
-  /// @note Always returns true, because it is impossible to know if malloc was used.
+  /// @warning Always returns true, because it is impossible to know if malloc was used.
   ///
   /// @return True if allocator owns block, false otherwise.
   ///

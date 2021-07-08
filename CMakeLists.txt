@@ -53,7 +53,7 @@ include(cmake/Conan.cmake)
 add_conan_package(glfw/3.3.4)
 
 if (BUILD_DEBUG)
-    add_conan_package(fmt/8.0.1)
+    add_conan_package(fmt/8.0.0)
 endif ()
 
 if (BUILD_EDITOR)
@@ -65,7 +65,7 @@ if (BUILD_TESTS)
 endif ()
 
 if (BUILD_BENCHMARKS)
-    add_conan_package(benchmark/1.5.5)
+    add_conan_package(benchmark/1.5.3)
 endif ()
 
 run_conan()

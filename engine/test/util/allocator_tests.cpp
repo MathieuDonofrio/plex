@@ -9,12 +9,15 @@ namespace genebits::engine::tests
 {
 static_assert(sizeof(Block) == sizeof(char*) + sizeof(size_t), "The size of a block cannot excede that of a char* and size_t");
 
+static_assert((cMaxAlignment & (cMaxAlignment - 1)) == 0, "Max alignment should be a power of two");
+
 template<typename Type>
 using MallocatorVector = std::vector<Type, AllocatorAdapter<Type, Mallocator>>;
 
 // Static assert to check if the MallocatorVector compiles
 static_assert(std::is_same_v<MallocatorVector<int>, MallocatorVector<int>>);
 
+// These maps are used in the mock allocator
 static std::map<size_t, bool> allocate_call;
 static std::map<size_t, bool> deallocate_call;
 static std::map<size_t, bool> reallocate_call;
