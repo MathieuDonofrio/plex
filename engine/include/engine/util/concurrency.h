@@ -66,7 +66,7 @@ public:
   ///
   /// Locks the spin lock, blocks if the lock is not available.
   ///
-  constexpr void lock() noexcept
+  void lock() noexcept
   {
     for (;;)
     {
@@ -84,7 +84,7 @@ public:
   ///
   /// @return True if aquired lock, false otherwise
   ///
-  constexpr bool try_lock() noexcept
+  bool try_lock() noexcept
   {
     return !lock_.exchange(true, std::memory_order::acquire);
   }
@@ -92,7 +92,7 @@ public:
   ///
   /// Unlocks the spin lock.
   ///
-  constexpr void unlock() noexcept
+  void unlock() noexcept
   {
     lock_.store(false, std::memory_order::release);
   }

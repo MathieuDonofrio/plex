@@ -6,7 +6,7 @@
 
 namespace genebits::engine
 {
-static void Allocator_STD_AllocateDeallocate(benchmark::State& state)
+static void Allocator_STD_Allocator_AllocateDeallocate(benchmark::State& state)
 {
   std::allocator<char> allocator;
 
@@ -22,7 +22,7 @@ static void Allocator_STD_AllocateDeallocate(benchmark::State& state)
   }
 }
 
-BENCHMARK(Allocator_STD_AllocateDeallocate);
+BENCHMARK(Allocator_STD_Allocator_AllocateDeallocate);
 
 static void Allocator_StackAllocator_AllocateDeallocate(benchmark::State& state)
 {

@@ -18,7 +18,7 @@ static void Random_STD_Rand(benchmark::State& state)
 
 BENCHMARK(Random_STD_Rand);
 
-static void Random_STD_mt19937(benchmark::State& state)
+static void Random_STD_mt19937_Rand(benchmark::State& state)
 {
   std::mt19937 random(static_cast<unsigned int>(Seed()));
 
@@ -28,7 +28,7 @@ static void Random_STD_mt19937(benchmark::State& state)
   }
 }
 
-BENCHMARK(Random_STD_mt19937);
+BENCHMARK(Random_STD_mt19937_Rand);
 
 static void Random_NextUInt(benchmark::State& state)
 {
