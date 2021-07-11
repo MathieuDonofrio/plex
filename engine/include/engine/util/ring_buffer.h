@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_RING_BUFFER_H
-#define GENEBITS_ENGINE_UTIL_RING_BUFFER_H
+#ifndef GENEBITS_ENGINE_UTIL_RING_BUFFER_H_
+#define GENEBITS_ENGINE_UTIL_RING_BUFFER_H_
 
 #include <mutex>
 
@@ -94,9 +94,9 @@ public:
 
   bool Dequeue(Type& item) noexcept
   {
-    const size_t current_tail = tail_.load(std::memory_order::relaxed);
+    const size_t current_tail = tail_.load(std::memory_order_relaxed);
 
-    if (current_tail == head_.load(std::memory_order::acquire)) return false;
+    if (current_tail == head_.load(std::memory_order_acquire)) return false;
 
     item = buffer_[current_tail & cMask];
 
@@ -107,18 +107,18 @@ public:
 
   void Clear() noexcept
   {
-    tail_.store(0, std::memory_order::relaxed);
-    head_.store(0, std::memory_order::relaxed);
+    tail_.store(0, std::memory_order_relaxed);
+    head_.store(0, std::memory_order_relaxed);
   }
 
   [[nodiscard]] size_t Size() const noexcept
   {
-    return head_.load(std::memory_order::acquire) - tail_.load(std::memory_order::relaxed);
+    return head_.load(std::memory_order_acquire) - tail_.load(std::memory_order_relaxed);
   }
 
   [[nodiscard]] bool Empty() const noexcept
   {
-    return head_.load(std::memory_order::acquire) == tail_.load(std::memory_order::relaxed);
+    return head_.load(std::memory_order_acquire) == tail_.load(std::memory_order_relaxed);
   }
 
 private:

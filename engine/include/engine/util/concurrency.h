@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_CONCURRENCY_H
-#define GENEBITS_ENGINE_UTIL_CONCURRENCY_H
+#ifndef GENEBITS_ENGINE_UTIL_CONCURRENCY_H_
+#define GENEBITS_ENGINE_UTIL_CONCURRENCY_H_
 
 #include <atomic>
 #include <new>
@@ -51,6 +51,8 @@ constexpr size_t cCacheLineSize = STANDARD_HARDWARE_INTERFERENCY_SIZE
 ///
 /// Very good spin lock implementation.
 ///
+/// @note Implements the standard Lockable concept
+///
 /// @note Based on implementation from: https://rigtorp.se/spinlock/
 ///
 class SpinLock
@@ -88,7 +90,7 @@ public:
   ///
   bool try_lock() noexcept
   {
-    return !lock_.exchange(true, std::memory_order::acquire);
+    return !lock_.exchange(true, std::memory_order_acquire);
   }
 
   ///
@@ -96,7 +98,7 @@ public:
   ///
   void unlock() noexcept
   {
-    lock_.store(false, std::memory_order::release);
+    lock_.store(false, std::memory_order_release);
   }
 
 private:
