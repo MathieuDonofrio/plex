@@ -8,7 +8,7 @@
 
 namespace genebits::engine
 {
-template<POD Type, size_t Capacity, ConcurrencyModel Conc = ConcurrencyModel::None>
+template<POD Type, size_t Capacity, ConcurrencyModel Concurrency = ConcurrencyModel::None>
 requires POT<Capacity> class RingBuffer;
 
 template<typename Type, size_t Capacity>

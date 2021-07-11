@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <new>
+#include <thread>
 
 #include "config.h"
 
@@ -75,7 +76,8 @@ public:
 
       // Wait for lock to be released without generating cache misses
       while (lock_.load(std::memory_order_relaxed))
-      {};
+      {
+      };
     }
   }
 
