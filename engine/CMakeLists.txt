@@ -22,8 +22,8 @@ set_project_warnings(engine)
 find_package(glfw3 REQUIRED)
 find_package(Vulkan REQUIRED)
 
-target_include_directories(engine PUBLIC ${glfw3_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(engine ${glfw3_LIBRARIES} ${Vulkan_LIBRARIES})
+target_include_directories(engine PUBLIC ${glfw_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIRS})
+target_link_libraries(engine ${glfw_LIBRARIES} ${Vulkan_LIBRARIES})
 
 if (BUILD_DEBUG)
     find_package(fmt REQUIRED)
