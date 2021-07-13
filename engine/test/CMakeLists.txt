@@ -9,6 +9,8 @@
 find_package(GTest REQUIRED)
 
 function(add_engine_test subdirectory)
+    message(STATUS "Adding Test: " ${subdirectory})
+
     file(GLOB_RECURSE ${subdirectory}_test_headers ${CMAKE_CURRENT_SOURCE_DIR}/${subdirectory}/*.h)
     file(GLOB_RECURSE ${subdirectory}_test_sources ${CMAKE_CURRENT_SOURCE_DIR}/${subdirectory}/*.cpp)
 
