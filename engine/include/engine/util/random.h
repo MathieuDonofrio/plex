@@ -205,20 +205,15 @@ consteval uint64_t CompileTimeSeed(const std::source_location location = std::so
     time_seed |= static_cast<uint8_t>(c);
   }
 
-  time_seed ^= Random::cScramble;
-
   // Location seed changes when called in a different location
-  uint64_t location_seed = Random::cIncrement;
+  uint64_t location_seed = location.column() + (location.line() << 6) + (location.line() >> 2);
+
+  size_t rot = 0;
 
   for (const auto c : __FILE__)
   {
-    location_seed ^= static_cast<uint8_t>(c);
-    location_seed *= Random::cMultiplier;
+    location_seed ^= static_cast<uint8_t>(c) << ((rot++ << 3) & 31u);
   }
-
-  location_seed ^= (location.line() + location.line() * location.column());
-
-  location_seed = location_seed * Random::cMultiplier + Random::cIncrement;
 
   return time_seed ^ location_seed;
 }
@@ -245,7 +240,10 @@ inline uint64_t Seed()
     // Runs an LCG iteration for randomness in the seed.
     uint64_t next = current * Random::cMultiplier + Random::cIncrement;
 
-    if (current == state.exchange(next)) return next;
+    if (current == state.exchange(next, std::memory_order_relaxed))
+    {
+      return next;
+    }
   }
 }
 

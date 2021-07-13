@@ -112,11 +112,17 @@ TEST(Random_Tests, NextFloat_LowerBoundAndUpperBound_InRange)
   }
 }
 
-TEST(Random_Tests, CompileTimeSeed_DifferentLocation_DifferentSeed)
+TEST(Random_Tests, CompileTimeSeed_DifferentLine_DifferentSeed)
 {
   uint64_t seed1 = CompileTimeSeed();
-  // Space between
   uint64_t seed2 = CompileTimeSeed();
+
+  ASSERT_NE(seed1, seed2);
+}
+
+TEST(Random_Tests, CompileTimeSeed_DifferentColumn_DifferentSeed)
+{
+  uint64_t seed1 = CompileTimeSeed(), seed2 = CompileTimeSeed();
 
   ASSERT_NE(seed1, seed2);
 }
@@ -138,5 +144,7 @@ TEST(Random_Tests, TLRandom_DifferentThreads_DifferentRandomGenerator)
     { random2 = TLRandom(); });
 
   ASSERT_NE(random1.State(), random2.State());
+
+  t1.join();
 }
 } // namespace genebits::engine::tests
