@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_RANDOM_H_
-#define GENEBITS_ENGINE_UTIL_RANDOM_H_
+#ifndef GENEBITS_ENGINE_UTIL_RANDOM_H
+#define GENEBITS_ENGINE_UTIL_RANDOM_H
 
 #include <atomic>
 #include <cstdint>

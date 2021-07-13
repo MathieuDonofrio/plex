@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_CONCEPTS_H_
-#define GENEBITS_ENGINE_UTIL_CONCEPTS_H_
+#ifndef GENEBITS_ENGINE_UTIL_CONCEPTS_H
+#define GENEBITS_ENGINE_UTIL_CONCEPTS_H
 
 #include <concepts>
 #include <type_traits>
