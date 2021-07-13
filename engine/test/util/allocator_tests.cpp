@@ -3,7 +3,7 @@
 #include <map>
 #include <vector>
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 namespace genebits::engine::tests
 {

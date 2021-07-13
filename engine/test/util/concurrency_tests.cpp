@@ -2,7 +2,7 @@
 
 #include <thread>
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 namespace genebits::engine::tests
 {
@@ -10,13 +10,13 @@ static_assert(cCacheLineSize > 0, "Cache line size must be bigger than 0");
 
 TEST(Concurrency_Tests, SpinLock_Lock_LocksAfterDefaultState)
 {
-  SpinLock spin_lock;
+  SpinMutex mutex;
 
   std::atomic<bool> locked = false;
 
   std::thread thread([&]()
     {
-      spin_lock.lock();
+      mutex.lock();
       locked = true;
     });
 
@@ -24,22 +24,22 @@ TEST(Concurrency_Tests, SpinLock_Lock_LocksAfterDefaultState)
 
   ASSERT_TRUE(locked);
 
-  spin_lock.unlock();
+  mutex.unlock();
 
   thread.join();
 }
 
 TEST(Concurrency_Tests, SpinLock_Lock_AlreadyLocked)
 {
-  SpinLock spin_lock;
+  SpinMutex mutex;
 
-  spin_lock.lock();
+  mutex.lock();
 
   std::atomic<bool> locked = true;
 
   std::thread thread([&]()
     {
-      spin_lock.lock();
+      mutex.lock();
       locked = false;
     });
 
@@ -47,24 +47,24 @@ TEST(Concurrency_Tests, SpinLock_Lock_AlreadyLocked)
 
   ASSERT_TRUE(locked);
 
-  spin_lock.unlock();
+  mutex.unlock();
 
   thread.join();
 }
 
 TEST(Concurrency_Tests, SpinLock_Unlock_AllowLocking)
 {
-  SpinLock spin_lock;
+  SpinMutex mutex;
 
-  spin_lock.lock();
+  mutex.lock();
 
-  spin_lock.unlock();
+  mutex.unlock();
 
   std::atomic<bool> locked = false;
 
   std::thread thread([&]()
     {
-      spin_lock.lock();
+      mutex.lock();
       locked = true;
     });
 
@@ -72,42 +72,42 @@ TEST(Concurrency_Tests, SpinLock_Unlock_AllowLocking)
 
   ASSERT_TRUE(locked);
 
-  spin_lock.unlock();
+  mutex.unlock();
 
   thread.join();
 }
 
 TEST(Concurrency_Tests, SpinLock_TryLock_Unlocked)
 {
-  SpinLock spin_lock;
+  SpinMutex mutex;
 
-  ASSERT_TRUE(spin_lock.try_lock());
+  ASSERT_TRUE(mutex.try_lock());
 
-  spin_lock.unlock();
+  mutex.unlock();
 }
 
 TEST(Concurrency_Tests, SpinLock_TryLock_Locked)
 {
-  SpinLock spin_lock;
+  SpinMutex mutex;
 
-  spin_lock.lock();
+  mutex.lock();
 
-  ASSERT_FALSE(spin_lock.try_lock());
+  ASSERT_FALSE(mutex.try_lock());
 
-  spin_lock.unlock();
+  mutex.unlock();
 }
 
 TEST(Concurrency_Tests, SpinLock_TryLock_LocksAfterDefaultState)
 {
-  SpinLock spin_lock;
+  SpinMutex mutex;
 
-  spin_lock.try_lock();
+  mutex.try_lock();
 
   std::atomic<bool> locked = true;
 
   std::thread thread([&]()
     {
-      spin_lock.lock();
+      mutex.lock();
       locked = false;
     });
 
@@ -115,7 +115,7 @@ TEST(Concurrency_Tests, SpinLock_TryLock_LocksAfterDefaultState)
 
   ASSERT_TRUE(locked);
 
-  spin_lock.unlock();
+  mutex.unlock();
 
   thread.join();
 }

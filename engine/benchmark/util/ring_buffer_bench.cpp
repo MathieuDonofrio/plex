@@ -9,7 +9,7 @@ namespace genebits::engine
 
 static void RingBuffer_None_EnqueueDequeue(benchmark::State& state)
 {
-  RingBuffer<size_t, 64, ConcurrencyModel::None> ring_buffer;
+  RingBuffer<size_t, 64, ConcurrencyGuarantee::None> ring_buffer;
 
   for (auto _ : state)
   {
@@ -29,7 +29,7 @@ BENCHMARK(RingBuffer_None_EnqueueDequeue);
 
 static void RingBuffer_ProducerConsumer_EnqueueDequeue(benchmark::State& state)
 {
-  RingBuffer<size_t, 64, ConcurrencyModel::ProducerConsumer> ring_buffer;
+  RingBuffer<size_t, 64, ConcurrencyGuarantee::OneToOne> ring_buffer;
 
   for (auto _ : state)
   {
@@ -49,7 +49,12 @@ BENCHMARK(RingBuffer_ProducerConsumer_EnqueueDequeue);
 
 static void RingBuffer_ProducerConsumer_EnqueueDequeueContention(benchmark::State& state)
 {
-  RingBuffer<size_t, 64, ConcurrencyModel::ProducerConsumer> ring_buffer;
+  RingBuffer<size_t, 64, ConcurrencyGuarantee::OneToOne> ring_buffer;
+
+  for (size_t i = 0; i < 16; i++)
+  {
+    ring_buffer.Enqueue(i);
+  }
 
   for (auto _ : state)
   {
@@ -65,6 +70,6 @@ static void RingBuffer_ProducerConsumer_EnqueueDequeueContention(benchmark::Stat
   benchmark::DoNotOptimize(ring_buffer);
 }
 
-BENCHMARK(RingBuffer_ProducerConsumer_EnqueueDequeueContention)->Threads(16);
+BENCHMARK(RingBuffer_ProducerConsumer_EnqueueDequeueContention)->Threads(2);
 
 } // namespace genebits::engine

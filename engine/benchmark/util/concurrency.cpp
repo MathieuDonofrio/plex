@@ -26,24 +26,24 @@ static void Concurrency_STD_Mutex_LockUnlock(benchmark::State& state)
 
 BENCHMARK(Concurrency_STD_Mutex_LockUnlock)->Threads(16);
 
-static void Concurrency_SpinLock_LockUnlock(benchmark::State& state)
+static void Concurrency_SpinMutex_LockUnlock(benchmark::State& state)
 {
-  SpinLock spin_lock;
+  SpinMutex mutex;
 
   float sum = 0;
 
   for (auto _ : state)
   {
-    spin_lock.lock();
+    mutex.lock();
 
     sum = sum * 2 + sum + 4;
 
-    spin_lock.unlock();
+    mutex.unlock();
   }
 
-  benchmark::DoNotOptimize(spin_lock);
+  benchmark::DoNotOptimize(mutex);
 }
 
-BENCHMARK(Concurrency_SpinLock_LockUnlock)->Threads(16);
+BENCHMARK(Concurrency_SpinMutex_LockUnlock)->Threads(16);
 
 } // namespace genebits::engine
