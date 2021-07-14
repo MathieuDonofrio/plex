@@ -121,7 +121,7 @@ public:
   void lock() noexcept
   {
     // Optimistically assume the lock is free on the first try
-    if (!lock_.exchange(true, std::memory_order_acquire)) return;
+    if (try_lock()) return;
 
     ExponentialBackoff backoff;
 
