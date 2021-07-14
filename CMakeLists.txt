@@ -75,3 +75,9 @@ run_conan()
 #
 
 add_subdirectory(engine)
+
+#
+# Sandboxes
+#
+
+add_subdirectory(sandbox)
