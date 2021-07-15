@@ -1,6 +1,8 @@
 
 #include "engine/graphics/window.h"
 
+#define GLFW_INCLUDE_NONE // Removes OpenGL
+#define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
 
 namespace genebits::engine
@@ -19,10 +21,10 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height)
 
   glfwInit(); // Assert this
 
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
   pimpl_->handle_ = glfwCreateWindow(
     static_cast<int>(width), static_cast<int>(height), pimpl_->title_.c_str(), nullptr, nullptr);
-
-  glfwMakeContextCurrent(pimpl_->handle_);
 }
 
 Window::~Window()
@@ -66,6 +68,12 @@ uint32_t Window::GetHeight() const
 void Window::Resize(uint32_t width, uint32_t height)
 {
   glfwSetWindowSize(pimpl_->handle_, width, height);
+}
+
+template<>
+void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
+{
+  glfwCreateWindowSurface(instance, pimpl_->handle_, nullptr, surface);
 }
 
 } // namespace genebits::engine

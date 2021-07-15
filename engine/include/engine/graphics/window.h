@@ -50,6 +50,9 @@ public:
 
   //uint32_t GetMaximumHeight();
 
+  template<typename InstanceType, typename SurfaceType>
+  void createWindowSurface(InstanceType instance, SurfaceType* surface);
+
 private:
   struct Pimpl;
   Pimpl* pimpl_;
