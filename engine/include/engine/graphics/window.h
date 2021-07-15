@@ -18,37 +18,51 @@ public:
   Window(Window&&) = delete;
   Window& operator=(Window&&) = delete;
 
-  //void Focus();
+  void Focus();
 
-  //void Maximize();
+  void Maximize();
 
-  //void Minimize();
+  void Minimize();
 
-  //void Restore();
+  void Restore();
 
-  //void Close();
+  void Close();
 
-  void Resize(uint32_t width, uint32_t height);
+  void Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensions = false);
+
+  [[nodiscard]] bool IsClosed() const noexcept;
+
+  //glfwSetWindowCloseCallback
 
   void SetTitle(const std::string& title);
 
-  const std::string& GetTitle() const;
+  [[nodiscard]] const std::string& GetTitle() const;
 
-  //uint32_t GetMonitorWidth();
+  void SetIcon(uint8_t* pixels, uint32_t width, uint32_t height);
 
-  //uint32_t GetMonitorHeight();
+  [[nodiscard]] uint32_t GetMonitorWidth() const;
 
-  uint32_t GetWidth() const;
+  [[nodiscard]] uint32_t GetMonitorHeight() const;
 
-  uint32_t GetHeight() const;
+  [[nodiscard]] uint32_t GetWidth() const;
 
-  //uint32_t GetMinimumWidth();
+  [[nodiscard]] uint32_t GetHeight() const;
 
-  //uint32_t GetMinimumHeight();
+  [[nodiscard]] uint32_t GetMinimumWidth() const noexcept;
 
-  //uint32_t GetMaximumWidth();
+  [[nodiscard]] uint32_t GetMinimumHeight() const noexcept;
 
-  //uint32_t GetMaximumHeight();
+  [[nodiscard]] uint32_t GetMaximumWidth() const;
+
+  [[nodiscard]] uint32_t GetMaximumHeight() const;
+
+  void SetMaximumWidth(uint32_t width);
+
+  void SetMaximumHeight(uint32_t height);
+
+  void SetMinimumWidth(uint32_t width);
+
+  void SetMinimumHeight(uint32_t height);
 
   template<typename InstanceType, typename SurfaceType>
   void createWindowSurface(InstanceType instance, SurfaceType* surface);
