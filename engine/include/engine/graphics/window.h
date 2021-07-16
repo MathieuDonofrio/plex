@@ -6,8 +6,11 @@
 
 namespace genebits::engine
 {
+
 class Window
 {
+  friend class WindowBuilder;
+
 public:
   Window(const std::string& title, uint32_t width, uint32_t height);
 
@@ -17,6 +20,8 @@ public:
   Window& operator=(const Window&) = delete;
   Window(Window&&) = delete;
   Window& operator=(Window&&) = delete;
+
+  void Create();
 
   void Focus();
 
@@ -65,12 +70,18 @@ public:
   void SetMinimumHeight(uint32_t height);
 
   template<typename InstanceType, typename SurfaceType>
-  void createWindowSurface(InstanceType instance, SurfaceType* surface);
+  void CreateWindowSurface(InstanceType instance, SurfaceType* surface);
 
 private:
+  template<typename WindowCreationHintsType>
+  void SetWindowCreationHints(WindowCreationHintsType window_creation_hints_type) noexcept;
+
+protected:
   struct Pimpl;
   Pimpl* pimpl_;
+  void ApplyWindowCreationHints();
 };
+
 } // namespace genebits::engine
 
 #endif
