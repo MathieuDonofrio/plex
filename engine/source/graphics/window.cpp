@@ -6,8 +6,6 @@
 
 #include "GLFW/glfw3.h"
 
-#include "window_creation_hint.h"
-
 namespace genebits::engine
 {
 
@@ -27,16 +25,26 @@ struct Window::Pimpl
     uint32_t min_height = 480;
   } size_limit_;
 
-  WindowCreationHints window_creation_hints_;
-  bool is_using_creation_hints = false;
+  std::function<void(Window*)> window_closing_user_callback_;
+  std::function<void(GLFWwindow*)> window_closing_internal_callback_;
 };
 
-Window::Window(const std::string& title, uint32_t width, uint32_t height)
+Window::Window(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
   : pimpl_(new Pimpl)
 {
   pimpl_->title_ = title;
   pimpl_->width_ = width;
   pimpl_->height_ = height;
+
+  //TODO Get the defaults but only modify glfw hints if creation hints are different
+  if (window_creation_hints == WindowCreationHints::None)
+  {
+    glfwDefaultWindowHints();
+  }
+  else
+  {
+    ApplyWindowCreationHints(window_creation_hints);
+  }
 
   glfwInit(); // Assert this
 
@@ -45,11 +53,6 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height)
 
 void Window::Create()
 {
-  if (pimpl_->is_using_creation_hints)
-  {
-    ApplyWindowCreationHints();
-  }
-
   pimpl_->handle_ = glfwCreateWindow(
     static_cast<int>(pimpl_->width_), static_cast<int>(pimpl_->height_), pimpl_->title_.c_str(), nullptr, nullptr);
 
@@ -142,10 +145,11 @@ bool Window::IsClosed() const noexcept
 {
   return glfwWindowShouldClose(pimpl_->handle_) != 0;
 }
-//To revert to the default window icon, pass in an empty image array
+
+//To revert to the default window icon, pass in a nullptr for the pixel array
 void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 {
-  //TODO add LOD icons (small, med big)
+  //TODO add LOD icons (small, med, big)
   if (pixels != nullptr)
   {
     GLFWimage icon[1] { { static_cast<int>(width), static_cast<int>(height), pixels } };
@@ -231,32 +235,37 @@ void Window::SetMinimumHeight(uint32_t height)
   glfwSetWindowSizeLimits(pimpl_->handle_, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
-void Window::ApplyWindowCreationHints()
+void Window::SetFullScreenRefreshRate(uint64_t refresh_rate)
 {
-  if (pimpl_->is_using_creation_hints)
-  {
-    //TODO might be good to keep track of some of those states
-    const auto& hints = pimpl_->window_creation_hints_;
-    glfwWindowHint(GLFW_RESIZABLE, hints.is_resizable_);
-    glfwWindowHint(GLFW_VISIBLE, hints.is_visible_);
-    glfwWindowHint(GLFW_DECORATED, hints.is_decorated_);
-    glfwWindowHint(GLFW_FOCUSED, hints.is_focused_);
-    glfwWindowHint(GLFW_AUTO_ICONIFY, hints.is_auto_iconified);
-    glfwWindowHint(GLFW_FLOATING, hints.is_floating);
-    glfwWindowHint(GLFW_MAXIMIZED, hints.is_maximized);
-    glfwWindowHint(GLFW_CENTER_CURSOR, hints.is_cursor_centered);
-    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, hints.is_using_transparent_framebuffer);
-    glfwWindowHint(GLFW_FOCUS_ON_SHOW, hints.is_focusing_on_show);
-    glfwWindowHint(GLFW_SCALE_TO_MONITOR, hints.is_scaling_to_monitor);
-    glfwWindowHint(GLFW_REFRESH_RATE, hints.fullscreen_refresh_rate);
-  }
+  glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate);
 }
 
-template<>
-void Window::SetWindowCreationHints<WindowCreationHints>(WindowCreationHints window_creation_hints) noexcept
+void Window::SetWindowClosingCallback(std::function<void(Window*)> window_closing_callback)
 {
-  pimpl_->is_using_creation_hints = true;
-  pimpl_->window_creation_hints_ = window_creation_hints;
+  //  pimpl_->window_closing_user_callback_ = window_closing_callback;
+  //  pimpl_->window_closing_internal_callback_ = [](GLFWwindow* glfw_window_ptr) -> void
+  //  {
+  //    auto window_ptr = static_cast<Window*>(glfwGetWindowUserPointer(glfw_window_ptr));
+  //    window_ptr->pimpl_->window_closing_user_callback_(window_ptr);
+  //  };
+
+  //glfwSetWindowCloseCallback(pimpl_->handle_, pimpl_->window_closing_internal_callback_)
+}
+
+void Window::ApplyWindowCreationHints(const WindowCreationHints& hints)
+{
+  //TODO might be good to keep track of some of those states
+  glfwWindowHint(GLFW_RESIZABLE, (hints & WindowCreationHints::Resizable) != 0);
+  glfwWindowHint(GLFW_VISIBLE, (hints & WindowCreationHints::Visible) != 0);
+  glfwWindowHint(GLFW_DECORATED, (hints & WindowCreationHints::Decorated) != 0);
+  glfwWindowHint(GLFW_FOCUSED, (hints & WindowCreationHints::Focused) != 0);
+  glfwWindowHint(GLFW_AUTO_ICONIFY, (hints & WindowCreationHints::AutoIconified) != 0);
+  glfwWindowHint(GLFW_FLOATING, (hints & WindowCreationHints::Floating) != 0);
+  glfwWindowHint(GLFW_MAXIMIZED, (hints & WindowCreationHints::Maximised) != 0);
+  glfwWindowHint(GLFW_CENTER_CURSOR, (hints & WindowCreationHints::CursorCentered) != 0);
+  glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, (hints & WindowCreationHints::TransparentFramebuffer) != 0);
+  glfwWindowHint(GLFW_FOCUS_ON_SHOW, (hints & WindowCreationHints::FocusingOnShow) != 0);
+  glfwWindowHint(GLFW_SCALE_TO_MONITOR, (hints & WindowCreationHints::ScalingToMonitor) != 0);
 }
 
 } // namespace genebits::engine

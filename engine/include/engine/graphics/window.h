@@ -2,17 +2,58 @@
 #define GENEBITS_ENGINE_GRAPHICS_WINDOW_H
 
 #include <cstdint>
+#include <functional>
 #include <string>
 
 namespace genebits::engine
 {
 
+enum class WindowCreationHints : uint64_t
+{
+  None = 0,
+  Resizable = 1 << 0,
+  Visible = 1 << 1,
+  Decorated = 1 << 2,
+  Focused = 1 << 3,
+  AutoIconified = 1 << 4,
+  FocusingOnShow = 1 << 5,
+  Floating = 1 << 6,
+  Maximised = 1 << 7,
+  CursorCentered = 1 << 8,
+  TransparentFramebuffer = 1 << 9,
+  ScalingToMonitor = 1 << 10,
+};
+
+constexpr WindowCreationHints operator&(const WindowCreationHints& left, const WindowCreationHints& right)
+{
+  using enum_type = std::underlying_type_t<WindowCreationHints>;
+  return static_cast<WindowCreationHints>(static_cast<enum_type>(left) & static_cast<enum_type>(right));
+}
+
+constexpr WindowCreationHints operator|(const WindowCreationHints& left, const WindowCreationHints& right)
+{
+  using enum_type = std::underlying_type_t<WindowCreationHints>;
+  return static_cast<WindowCreationHints>(static_cast<enum_type>(left) | static_cast<enum_type>(right));
+}
+
+constexpr bool operator==(const WindowCreationHints& left, const std::underlying_type_t<WindowCreationHints>& right)
+{
+  using enum_type = std::underlying_type_t<WindowCreationHints>;
+  return static_cast<enum_type>(left) == right;
+}
+
+constexpr bool operator!=(const WindowCreationHints& left, const std::underlying_type_t<WindowCreationHints>& right)
+{
+  using enum_type = std::underlying_type_t<WindowCreationHints>;
+  return static_cast<enum_type>(left) != right;
+}
+
 class Window
 {
-  friend class WindowBuilder;
-
 public:
-  Window(const std::string& title, uint32_t width, uint32_t height);
+  using WindowClosingCallback = std::function<void(Window*)>;
+
+  Window(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints = WindowCreationHints::None);
 
   ~Window();
 
@@ -69,17 +110,19 @@ public:
 
   void SetMinimumHeight(uint32_t height);
 
+  // Use 0 to disable refresh rate limit
+  static void SetFullScreenRefreshRate(uint64_t refresh_rate);
+
+  void SetWindowClosingCallback(WindowClosingCallback window_closing_callback);
+
   template<typename InstanceType, typename SurfaceType>
   void CreateWindowSurface(InstanceType instance, SurfaceType* surface);
 
 private:
-  template<typename WindowCreationHintsType>
-  void SetWindowCreationHints(WindowCreationHintsType window_creation_hints_type) noexcept;
-
 protected:
   struct Pimpl;
   Pimpl* pimpl_;
-  void ApplyWindowCreationHints();
+  static void ApplyWindowCreationHints(const WindowCreationHints& hints);
 };
 
 } // namespace genebits::engine
