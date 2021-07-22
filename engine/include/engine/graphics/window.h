@@ -5,6 +5,8 @@
 #include <functional>
 #include <string>
 
+#include <engine/util/enum_flag.h>
+
 namespace genebits::engine
 {
 
@@ -24,29 +26,11 @@ enum class WindowCreationHints : uint64_t
   ScalingToMonitor = 1 << 10,
 };
 
-constexpr WindowCreationHints operator&(const WindowCreationHints& left, const WindowCreationHints& right)
+template<>
+struct EnableBitwiseOperators<WindowCreationHints>
 {
-  using enum_type = std::underlying_type_t<WindowCreationHints>;
-  return static_cast<WindowCreationHints>(static_cast<enum_type>(left) & static_cast<enum_type>(right));
-}
-
-constexpr WindowCreationHints operator|(const WindowCreationHints& left, const WindowCreationHints& right)
-{
-  using enum_type = std::underlying_type_t<WindowCreationHints>;
-  return static_cast<WindowCreationHints>(static_cast<enum_type>(left) | static_cast<enum_type>(right));
-}
-
-constexpr bool operator==(const WindowCreationHints& left, const std::underlying_type_t<WindowCreationHints>& right)
-{
-  using enum_type = std::underlying_type_t<WindowCreationHints>;
-  return static_cast<enum_type>(left) == right;
-}
-
-constexpr bool operator!=(const WindowCreationHints& left, const std::underlying_type_t<WindowCreationHints>& right)
-{
-  using enum_type = std::underlying_type_t<WindowCreationHints>;
-  return static_cast<enum_type>(left) != right;
-}
+  static constexpr bool enable = true;
+};
 
 class Window
 {
