@@ -6,21 +6,20 @@
 namespace genebits::engine
 {
 
-/*
- * Define a template specialization using this template to enable bitwise operators for that enum
- *
- * template<>
- * struct EnableBitwiseOperators<Enum>
- * {
- *  static constexpr bool enable = true;
- * };
- *
- * */
 template<typename E>
 struct EnableBitwiseOperators
 {
   static constexpr bool enable = false;
 };
+
+#define ENUM_FLAG(Name, Type)            \
+  enum class Name : Type;                \
+  template<>                             \
+  struct EnableBitwiseOperators<Name>    \
+  {                                      \
+    static constexpr bool enable = true; \
+  };                                     \
+  enum class Name : Type
 
 template<typename E>
 concept BitwiseOperationsEnabled = requires
