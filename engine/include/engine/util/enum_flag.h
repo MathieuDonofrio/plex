@@ -7,28 +7,30 @@ namespace genebits::engine
 {
 
 template<typename E>
-struct EnableBitwiseOperators
-{
-  static constexpr bool enable = false;
-};
+struct EnableBitwiseOperators;
 
-#define ENUM_FLAG(Name, Type)            \
-  enum class Name : Type;                \
-  template<>                             \
-  struct EnableBitwiseOperators<Name>    \
-  {                                      \
-    static constexpr bool enable = true; \
-  };                                     \
+#define ENUM_FLAG(Name, Type)         \
+  enum class Name : Type;             \
+  template<>                          \
+  struct EnableBitwiseOperators<Name> \
+  {};                                 \
   enum class Name : Type
 
-template<typename E>
-concept BitwiseOperationsEnabled = requires
-{
-  typename std::enable_if<EnableBitwiseOperators<E>::enable, E>::type;
-};
+// Attempting to call IsTypeComplete will use one of the two definition based on whether the type is complete or not
+// This definition gets chosen if the sizeof() function can be called on the type
+template<class T, std::size_t = sizeof(T)>
+std::true_type IsTypeComplete(T*);
+
+// If a type is incomplete, sizeof() cannot be called on the type, so this definition is chosen
+std::false_type IsTypeComplete(...);
+
+// By calling IsTypeComplete with a fake instance of the type using declval, one of the two definition of IsTypeComplete is chosen.
+// Finally, by using decltype we can know which definition of IsTypeComplete has been chosen based on the different return types
+template<class T>
+using IsComplete = decltype(IsTypeComplete(std::declval<T*>()));
 
 template<class E>
-concept EnumFlag = std::is_enum_v<E>&& BitwiseOperationsEnabled<E>;
+concept EnumFlag = std::is_enum_v<E>&& IsComplete<EnableBitwiseOperators<E>>::value;
 
 template<typename EnumType>
 requires(EnumFlag<EnumType>) constexpr EnumType operator|(EnumType lhs, EnumType rhs) noexcept
