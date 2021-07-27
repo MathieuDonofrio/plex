@@ -51,5 +51,12 @@ requires(EnumFlag<EnumType>) constexpr bool operator!=(EnumType lhs, std::underl
   return static_cast<underlying>(lhs) != rhs;
 }
 
+template<typename EnumType>
+requires(EnumFlag<EnumType>) constexpr bool operator==(EnumType lhs, std::underlying_type_t<EnumType> rhs) noexcept
+{
+  using underlying = std::underlying_type_t<EnumType>;
+  return static_cast<underlying>(lhs) == rhs;
+}
+
 } // namespace genebits::engine
 #endif
