@@ -11,11 +11,11 @@ namespace genebits::engine
 
 struct Window::Pimpl
 {
-  GLFWwindow* handle_ {};
+  GLFWwindow* handle {};
 
-  std::string title_;
-  uint32_t width_;
-  uint32_t height_;
+  std::string title;
+  uint32_t width;
+  uint32_t height;
 
   struct
   {
@@ -23,21 +23,21 @@ struct Window::Pimpl
     uint32_t max_height = GLFW_DONT_CARE;
     uint32_t min_width = 720;
     uint32_t min_height = 480;
-  } size_limit_;
+  } size_limit;
 
   void ApplyWindowCreationHints(const WindowCreationHints& hints);
 
   // This is very heavyweight and will be replaced by events in the future, this only serves for PoC needs
-  std::function<void(Window*)> window_closing_user_callback_;
-  std::function<void(GLFWwindow*)> window_closing_internal_callback_;
+  std::function<void(Window*)> window_closing_user_callback;
+  std::function<void(GLFWwindow*)> window_closing_internal_callback;
 };
 
 Window::Window(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
   : pimpl_(new Pimpl)
 {
-  pimpl_->title_ = title;
-  pimpl_->width_ = width;
-  pimpl_->height_ = height;
+  pimpl_->title = title;
+  pimpl_->width = width;
+  pimpl_->height = height;
 
   glfwInit(); // Assert this
 
@@ -56,15 +56,15 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height, Window
 
 void Window::Create()
 {
-  pimpl_->handle_ = glfwCreateWindow(
-    static_cast<int>(pimpl_->width_), static_cast<int>(pimpl_->height_), pimpl_->title_.c_str(), nullptr, nullptr);
+  pimpl_->handle = glfwCreateWindow(
+    static_cast<int>(pimpl_->width), static_cast<int>(pimpl_->height), pimpl_->title.c_str(), nullptr, nullptr);
 
-  glfwSetWindowUserPointer(pimpl_->handle_, this);
+  glfwSetWindowUserPointer(pimpl_->handle, this);
 }
 
 Window::~Window()
 {
-  glfwDestroyWindow(pimpl_->handle_);
+  glfwDestroyWindow(pimpl_->handle);
 
   delete pimpl_;
   pimpl_ = nullptr;
@@ -89,21 +89,21 @@ void Window::WaitEvents(double timeout)
 
 const std::string& Window::GetTitle() const
 {
-  return pimpl_->title_;
+  return pimpl_->title;
 }
 
 void Window::SetTitle(const std::string& title)
 {
-  pimpl_->title_ = title;
+  pimpl_->title = title;
 
-  glfwSetWindowTitle(pimpl_->handle_, pimpl_->title_.c_str());
+  glfwSetWindowTitle(pimpl_->handle, pimpl_->title.c_str());
 }
 
 uint32_t Window::GetWidth() const
 {
   int width;
 
-  glfwGetWindowSize(pimpl_->handle_, &width, nullptr);
+  glfwGetWindowSize(pimpl_->handle, &width, nullptr);
 
   return static_cast<uint32_t>(width);
 }
@@ -112,14 +112,14 @@ uint32_t Window::GetHeight() const
 {
   int height;
 
-  glfwGetWindowSize(pimpl_->handle_, nullptr, &height);
+  glfwGetWindowSize(pimpl_->handle, nullptr, &height);
 
   return static_cast<uint32_t>(height);
 }
 
 void Window::Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensions)
 {
-  if (!glfwGetWindowAttrib(pimpl_->handle_, GLFW_MAXIMIZED))
+  if (!glfwGetWindowAttrib(pimpl_->handle, GLFW_MAXIMIZED))
   {
     if (overwrite_max_dimensions)
     {
@@ -128,50 +128,50 @@ void Window::Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensio
     }
     else
     {
-      glfwSetWindowSize(pimpl_->handle_, width, height);
+      glfwSetWindowSize(pimpl_->handle, width, height);
     }
   }
 }
 
 void Window::Focus()
 {
-  glfwFocusWindow(pimpl_->handle_);
+  glfwFocusWindow(pimpl_->handle);
 }
 
 void Window::Maximize()
 {
-  glfwMaximizeWindow(pimpl_->handle_);
+  glfwMaximizeWindow(pimpl_->handle);
 }
 
 void Window::Minimize()
 {
-  glfwIconifyWindow(pimpl_->handle_);
+  glfwIconifyWindow(pimpl_->handle);
 }
 
 template<>
 void Window::CreateWindowSurface<VkInstance, VkSurfaceKHR>(VkInstance instance, VkSurfaceKHR* surface)
 {
-  glfwCreateWindowSurface(instance, pimpl_->handle_, nullptr, surface);
+  glfwCreateWindowSurface(instance, pimpl_->handle, nullptr, surface);
 }
 
 void Window::Restore()
 {
-  glfwRestoreWindow(pimpl_->handle_);
+  glfwRestoreWindow(pimpl_->handle);
 }
 
 void Window::RequestAttention()
 {
-  glfwRequestWindowAttention(pimpl_->handle_);
+  glfwRequestWindowAttention(pimpl_->handle);
 }
 
 void Window::Close()
 {
-  glfwSetWindowShouldClose(pimpl_->handle_, 1);
+  glfwSetWindowShouldClose(pimpl_->handle, 1);
 }
 
 bool Window::IsClosed() const noexcept
 {
-  return glfwWindowShouldClose(pimpl_->handle_) != 0;
+  return glfwWindowShouldClose(pimpl_->handle) != 0;
 }
 
 void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
@@ -180,101 +180,101 @@ void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
   if (pixels != nullptr)
   {
     GLFWimage icon { static_cast<int>(width), static_cast<int>(height), pixels };
-    glfwSetWindowIcon(pimpl_->handle_, 1, &icon);
+    glfwSetWindowIcon(pimpl_->handle, 1, &icon);
   }
   else
   {
-    glfwSetWindowIcon(pimpl_->handle_, 0, nullptr);
+    glfwSetWindowIcon(pimpl_->handle, 0, nullptr);
   }
 }
 
 uint32_t Window::GetMonitorWidth() const
 {
-  GLFWmonitor* monitor_ptr = glfwGetWindowMonitor(pimpl_->handle_);
+  GLFWmonitor* monitor_ptr = glfwGetWindowMonitor(pimpl_->handle);
   return glfwGetVideoMode(monitor_ptr)->width;
 }
 
 uint32_t Window::GetMonitorHeight() const
 {
-  GLFWmonitor* monitor_ptr = glfwGetWindowMonitor(pimpl_->handle_);
+  GLFWmonitor* monitor_ptr = glfwGetWindowMonitor(pimpl_->handle);
   return glfwGetVideoMode(monitor_ptr)->height;
 }
 
 uint32_t Window::GetMinimumWidth() const noexcept
 {
-  return pimpl_->size_limit_.min_width;
+  return pimpl_->size_limit.min_width;
 }
 
 uint32_t Window::GetMinimumHeight() const noexcept
 {
-  return pimpl_->size_limit_.min_height;
+  return pimpl_->size_limit.min_height;
 }
 
 uint32_t Window::GetMaximumWidth() const
 {
-  if (pimpl_->size_limit_.max_width == GLFW_DONT_CARE)
+  if (pimpl_->size_limit.max_width == GLFW_DONT_CARE)
   {
     return GetMonitorWidth();
   }
   else
   {
-    return pimpl_->size_limit_.max_width;
+    return pimpl_->size_limit.max_width;
   }
 }
 
 uint32_t Window::GetMaximumHeight() const
 {
-  if (pimpl_->size_limit_.max_height == GLFW_DONT_CARE)
+  if (pimpl_->size_limit.max_height == GLFW_DONT_CARE)
   {
     return GetMonitorHeight();
   }
   else
   {
-    return pimpl_->size_limit_.max_height;
+    return pimpl_->size_limit.max_height;
   }
 }
 
 void Window::SetMaximumWidth(uint32_t width)
 {
-  auto& size_limit = pimpl_->size_limit_;
+  auto& size_limit = pimpl_->size_limit;
   size_limit.max_width = width;
-  glfwSetWindowSizeLimits(pimpl_->handle_, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
+  glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
 void Window::SetMaximumHeight(uint32_t height)
 {
-  auto& size_limit = pimpl_->size_limit_;
+  auto& size_limit = pimpl_->size_limit;
   size_limit.max_height = height;
-  glfwSetWindowSizeLimits(pimpl_->handle_, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
+  glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
 void Window::SetMinimumWidth(uint32_t width)
 {
-  auto& size_limit = pimpl_->size_limit_;
+  auto& size_limit = pimpl_->size_limit;
   size_limit.min_width = width;
-  glfwSetWindowSizeLimits(pimpl_->handle_, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
+  glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
 void Window::SetMinimumHeight(uint32_t height)
 {
-  auto& size_limit = pimpl_->size_limit_;
+  auto& size_limit = pimpl_->size_limit;
   size_limit.min_height = height;
-  glfwSetWindowSizeLimits(pimpl_->handle_, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
+  glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
 bool Window::IsIconified() const
 {
-  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle_, GLFW_ICONIFIED));
+  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_ICONIFIED));
 }
 
 bool Window::IsMaximised() const
 {
-  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle_, GLFW_MAXIMIZED));
+  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_MAXIMIZED));
 }
 
 bool Window::IsFocused() const
 {
-  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle_, GLFW_FOCUSED));
+  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_FOCUSED));
 }
 
 void Window::SetFullScreenRefreshRate(uint64_t refresh_rate)
@@ -284,17 +284,17 @@ void Window::SetFullScreenRefreshRate(uint64_t refresh_rate)
 
 void Window::SetWindowClosingCallback(std::function<void(Window*)> window_closing_callback)
 {
-  pimpl_->window_closing_user_callback_ = window_closing_callback;
+  pimpl_->window_closing_user_callback = window_closing_callback;
 
   auto callback = [](GLFWwindow* glfw_window_ptr) -> void
   {
     auto window_ptr = static_cast<Window*>(glfwGetWindowUserPointer(glfw_window_ptr));
-    window_ptr->pimpl_->window_closing_user_callback_(window_ptr);
+    window_ptr->pimpl_->window_closing_user_callback(window_ptr);
   };
 
-  pimpl_->window_closing_internal_callback_ = callback;
+  pimpl_->window_closing_internal_callback = callback;
 
-  glfwSetWindowCloseCallback(pimpl_->handle_, callback);
+  glfwSetWindowCloseCallback(pimpl_->handle, callback);
 }
 
 void Window::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
