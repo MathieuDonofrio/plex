@@ -8,7 +8,7 @@ namespace genebits::engine
 {
 namespace
 {
-  constexpr size_t cLargestFunctorSize = 16;
+  constexpr size_t cLargestFunctorSize = sizeof(void*) * 2;
 
   template<typename Event>
   class EventFunctor
