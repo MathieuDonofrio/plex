@@ -119,14 +119,17 @@ uint32_t Window::GetHeight() const
 
 void Window::Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensions)
 {
-  if (overwrite_max_dimensions)
+  if (!glfwGetWindowAttrib(pimpl_->handle_, GLFW_MAXIMIZED))
   {
-    SetMaximumWidth(std::max(pimpl_->size_limit_.max_width, width));
-    SetMaximumHeight(std::max(pimpl_->size_limit_.max_height, height));
-  }
-  else
-  {
-    glfwSetWindowSize(pimpl_->handle_, width, height);
+    if (overwrite_max_dimensions)
+    {
+      SetMaximumWidth(width);
+      SetMaximumHeight(height);
+    }
+    else
+    {
+      glfwSetWindowSize(pimpl_->handle_, width, height);
+    }
   }
 }
 
