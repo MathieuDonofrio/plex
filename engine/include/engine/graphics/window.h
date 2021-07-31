@@ -10,7 +10,8 @@
 namespace genebits::engine
 {
 
-ENUM_FLAGS(WindowCreationHints, uint64_t) {
+enum class WindowCreationHints : uint64_t
+{
   None = 0,
   Resizable = 1 << 0,
   Visible = 1 << 1,
@@ -24,6 +25,12 @@ ENUM_FLAGS(WindowCreationHints, uint64_t) {
   TransparentFramebuffer = 1 << 9,
   ScalingToMonitor = 1 << 10,
   Defaults = Resizable | Visible | Decorated | Focused | AutoIconified | CursorCentered | FocusingOnShow
+};
+
+template<>
+struct EnableBitwiseOperators<WindowCreationHints>
+{
+  static constexpr bool enable = true;
 };
 
 class Window
