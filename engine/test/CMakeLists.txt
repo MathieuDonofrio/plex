@@ -27,3 +27,4 @@ endfunction()
 #
 
 add_engine_test(util)
+add_engine_test(events)

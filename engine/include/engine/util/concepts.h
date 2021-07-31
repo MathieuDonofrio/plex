@@ -21,6 +21,7 @@ concept POT = Size != 0 && (Size & (Size - 1)) == 0;
 ///
 template<typename Type>
 concept POD = std::is_pod_v<Type>;
+
 } // namespace genebits::engine
 
 #endif
