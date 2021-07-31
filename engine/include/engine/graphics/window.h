@@ -10,7 +10,7 @@
 namespace genebits::engine
 {
 
-ENUM_FLAG(WindowCreationHints, uint64_t) {
+ENUM_FLAGS(WindowCreationHints, uint64_t) {
   None = 0,
   Resizable = 1 << 0,
   Visible = 1 << 1,
@@ -23,6 +23,7 @@ ENUM_FLAG(WindowCreationHints, uint64_t) {
   CursorCentered = 1 << 8,
   TransparentFramebuffer = 1 << 9,
   ScalingToMonitor = 1 << 10,
+  Defaults = Resizable | Visible | Decorated | Focused | AutoIconified | CursorCentered | FocusingOnShow
 };
 
 class Window

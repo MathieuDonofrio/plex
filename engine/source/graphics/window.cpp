@@ -17,7 +17,7 @@ struct Window::Pimpl
   uint32_t width_;
   uint32_t height_;
 
-  struct SizeLimit
+  struct
   {
     uint32_t max_width = GLFW_DONT_CARE;
     uint32_t max_height = GLFW_DONT_CARE;
@@ -160,8 +160,8 @@ void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
   //TODO add LOD icons (small, med, big)
   if (pixels != nullptr)
   {
-    GLFWimage icon[1] { { static_cast<int>(width), static_cast<int>(height), pixels } };
-    glfwSetWindowIcon(pimpl_->handle_, 1, icon);
+    GLFWimage icon { static_cast<int>(width), static_cast<int>(height), pixels };
+    glfwSetWindowIcon(pimpl_->handle_, 1, &icon);
   }
   else
   {
