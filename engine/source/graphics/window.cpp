@@ -282,14 +282,17 @@ void Window::SetFullScreenRefreshRate(uint64_t refresh_rate)
 
 void Window::SetWindowClosingCallback(std::function<void(Window*)> window_closing_callback)
 {
-  //  pimpl_->window_closing_user_callback_ = window_closing_callback;
-  //  pimpl_->window_closing_internal_callback_ = [](GLFWwindow* glfw_window_ptr) -> void
-  //  {
-  //    auto window_ptr = static_cast<Window*>(glfwGetWindowUserPointer(glfw_window_ptr));
-  //    window_ptr->pimpl_->window_closing_user_callback_(window_ptr);
-  //  };
+  pimpl_->window_closing_user_callback_ = window_closing_callback;
 
-  //glfwSetWindowCloseCallback(pimpl_->handle_, pimpl_->window_closing_internal_callback_)
+  auto callback = [](GLFWwindow* glfw_window_ptr) -> void
+  {
+    auto window_ptr = static_cast<Window*>(glfwGetWindowUserPointer(glfw_window_ptr));
+    window_ptr->pimpl_->window_closing_user_callback_(window_ptr);
+  };
+
+  pimpl_->window_closing_internal_callback_ = callback;
+
+  glfwSetWindowCloseCallback(pimpl_->handle_, callback);
 }
 
 void Window::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
