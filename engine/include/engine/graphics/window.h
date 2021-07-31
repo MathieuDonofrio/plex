@@ -49,14 +49,27 @@ public:
 
   void Restore();
 
+  ///
+  /// Request the attention of the user in an non-interrupting way.
+  ///
+  void RequestAttention();
+
+  ///
+  /// Put the window into a closing state.
+  ///
+  /// @note The visual window will not be closed by this function.
+  ///       It only sets closing state flags.
+  ///       Window destruction happens upon destruction of the window object.
+  ///
   void Close();
 
   void Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensions = false);
 
-  [[nodiscard]] bool IsClosed() const noexcept;
-
-  //glfwSetWindowCloseCallback
-
+  ///
+  /// Set the title of the window.
+  ///
+  /// @param[in] title New title of the window.
+  ///
   void SetTitle(const std::string& title);
 
   [[nodiscard]] const std::string& GetTitle() const;
@@ -87,8 +100,33 @@ public:
 
   void SetMinimumHeight(uint32_t height);
 
-  // Use 0 to disable refresh rate limit
-  static void SetFullScreenRefreshRate(uint64_t refresh_rate);
+  ///
+  /// Get the closed state of the window.
+  ///
+  /// @return Closed state of the window.
+  ///
+  [[nodiscard]] bool IsClosed() const noexcept;
+
+  ///
+  /// Get the iconified state of the window.
+  ///
+  /// @return Iconified state of the window.
+  ///
+  [[nodiscard]] bool IsIconified() const;
+
+  ///
+  /// Get the maximised state of the window.
+  ///
+  /// @return Maximised state of the window.
+  ///
+  [[nodiscard]] bool IsMaximised() const;
+
+  ///
+  /// Get the focused state of the window.
+  ///
+  /// @return Focused state of the window.
+  ///
+  [[nodiscard]] bool IsFocused() const;
 
   void SetWindowClosingCallback(WindowClosingCallback window_closing_callback);
 

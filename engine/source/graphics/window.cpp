@@ -139,6 +139,11 @@ void Window::Restore()
   glfwRestoreWindow(pimpl_->handle_);
 }
 
+void Window::RequestAttention()
+{
+  glfwRequestWindowAttention(pimpl_->handle_);
+}
+
 void Window::Close()
 {
   glfwSetWindowShouldClose(pimpl_->handle_, 1);
@@ -236,6 +241,21 @@ void Window::SetMinimumHeight(uint32_t height)
   auto& size_limit = pimpl_->size_limit_;
   size_limit.min_height = height;
   glfwSetWindowSizeLimits(pimpl_->handle_, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
+}
+
+bool Window::IsIconified() const
+{
+  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle_, GLFW_ICONIFIED));
+}
+
+bool Window::IsMaximised() const
+{
+  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle_, GLFW_MAXIMIZED));
+}
+
+bool Window::IsFocused() const
+{
+  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle_, GLFW_FOCUSED));
 }
 
 void Window::SetFullScreenRefreshRate(uint64_t refresh_rate)
