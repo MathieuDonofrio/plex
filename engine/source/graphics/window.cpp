@@ -25,6 +25,9 @@ struct Window::Pimpl
     uint32_t min_height = 480;
   } size_limit_;
 
+  void ApplyWindowCreationHints(const WindowCreationHints& hints);
+
+  // This is very heavyweight and will be replaced by events in the future, this only serves for PoC needs
   std::function<void(Window*)> window_closing_user_callback_;
   std::function<void(GLFWwindow*)> window_closing_internal_callback_;
 };
@@ -43,7 +46,7 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height, Window
   }
   else
   {
-    ApplyWindowCreationHints(window_creation_hints);
+    pimpl_->ApplyWindowCreationHints(window_creation_hints);
   }
 
   glfwInit(); // Assert this
@@ -252,7 +255,7 @@ void Window::SetWindowClosingCallback(std::function<void(Window*)> window_closin
   //glfwSetWindowCloseCallback(pimpl_->handle_, pimpl_->window_closing_internal_callback_)
 }
 
-void Window::ApplyWindowCreationHints(const WindowCreationHints& hints)
+void Window::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
 {
   //TODO might be good to keep track of some of those states
   glfwWindowHint(GLFW_RESIZABLE, (hints & WindowCreationHints::Resizable) != 0);

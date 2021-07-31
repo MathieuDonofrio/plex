@@ -96,10 +96,8 @@ public:
   void CreateWindowSurface(InstanceType instance, SurfaceType* surface);
 
 private:
-protected:
   struct Pimpl;
   Pimpl* pimpl_;
-  static void ApplyWindowCreationHints(const WindowCreationHints& hints);
 };
 
 } // namespace genebits::engine
