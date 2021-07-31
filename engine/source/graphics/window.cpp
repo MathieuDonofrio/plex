@@ -39,6 +39,8 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height, Window
   pimpl_->width_ = width;
   pimpl_->height_ = height;
 
+  glfwInit(); // Assert this
+
   //TODO Get the defaults but only modify glfw hints if creation hints are different
   if (window_creation_hints == WindowCreationHints::None)
   {
@@ -48,8 +50,6 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height, Window
   {
     pimpl_->ApplyWindowCreationHints(window_creation_hints);
   }
-
-  glfwInit(); // Assert this
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 }
