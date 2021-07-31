@@ -31,7 +31,17 @@ class Window
 public:
   using WindowClosingCallback = std::function<void(Window*)>;
 
-  Window(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints = WindowCreationHints::None);
+  ///
+  /// Window constructor.
+  ///
+  /// @param[in] title Title of the window.
+  /// @param[in] width The width in pixels of the drawable area .
+  /// @param[in] height The height in pixels of the drawable area.
+  /// @param[in] window_creation_hints Hints used to create the window.
+  ///
+  /// @note This only creates the window object. To create the visual window, call the Create() method.
+  ///
+  Window(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints = WindowCreationHints::Defaults);
 
   ~Window();
 
@@ -40,6 +50,9 @@ public:
   Window(Window&&) = delete;
   Window& operator=(Window&&) = delete;
 
+  ///
+  /// Create the visual window.
+  ///
   void Create();
 
   ///
@@ -61,10 +74,19 @@ public:
   ///
   void Focus();
 
+  ///
+  /// Maximise the size of the window according to its maximum size or the entire screen if there is no limits.
+  ///
   void Maximize();
 
+  ///
+  /// Minimise the size of the window according to its minimum size or the default minimum size if there is no limits.
+  ///
   void Minimize();
 
+  ///
+  /// Restore the window if it was iconified or maximized.
+  ///
   void Restore();
 
   ///
@@ -81,6 +103,15 @@ public:
   ///
   void Close();
 
+  ///
+  /// Resize the window drawable area
+  ///
+  /// @param[in] width New width in pixels of the drawable area.
+  /// @param[in] height New height in pixels of the drawable area.
+  /// @param[in] overwrite_max_dimension Optional, overwrite the maximum dimensions.
+  ///
+  /// @note Does nothing if the window is maximised.
+  ///
   void Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensions = false);
 
   ///
@@ -90,32 +121,108 @@ public:
   ///
   void SetTitle(const std::string& title);
 
+  ///
+  /// Get the title of the window
+  ///
+  /// @return const string ref of the window title
+  ///
   [[nodiscard]] const std::string& GetTitle() const;
 
+  ///
+  /// Set the icon for the window.
+  ///
+  /// @param[in] pixels Pointer to an array of pixels in the RGBA format.
+  /// @param[in] width Width in pixels of the icon.
+  /// @param[in] height height in pixels of the icon.
+  ///
+  /// @note Preferred sizes are: 16x16, 32x32 and 48x48.
+  ///
+  /// @note To remove to the window's icon, pass in a nullptr for the pixels pointer
+  ///
   void SetIcon(uint8_t* pixels, uint32_t width, uint32_t height);
 
+  ///
+  /// Get the width in screen coordinate of the current monitor the window is on.
+  ///
+  /// @return Width in screen coordinate of the monitor.
+  ///
   [[nodiscard]] uint32_t GetMonitorWidth() const;
 
+  ///
+  /// Get the height in screen coordinate of the current monitor the window is on.
+  ///
+  /// @return Height in screen coordinate of the monitor.
+  ///
   [[nodiscard]] uint32_t GetMonitorHeight() const;
 
+  ///
+  /// Get the current width in pixels of the drawable area.
+  ///
+  /// @return Current width in pixels of the drawable area.
+  ///
   [[nodiscard]] uint32_t GetWidth() const;
 
+  ///
+  /// Get the current height in pixels of the drawable area.
+  ///
+  /// @return Current height in pixels of the drawable area.
+  ///
   [[nodiscard]] uint32_t GetHeight() const;
 
+  ///
+  /// Get the minimum width in pixels of the drawable area.
+  ///
+  /// @return Minimum width in pixels of the drawable area.
+  ///
   [[nodiscard]] uint32_t GetMinimumWidth() const noexcept;
 
+  ///
+  /// Get the minimum height in pixels of the drawable area.
+  ///
+  /// @return Minimum height in pixels of the drawable area.
+  ///
   [[nodiscard]] uint32_t GetMinimumHeight() const noexcept;
 
+  ///
+  /// Get the maximum width in pixels of the drawable area.
+  ///
+  /// @return Maximum width in pixels of the drawable area.
+  ///
   [[nodiscard]] uint32_t GetMaximumWidth() const;
 
+  ///
+  /// Get the maximum height in pixels of the drawable area.
+  ///
+  /// @return Maximum height in pixels of the drawable area.
+  ///
   [[nodiscard]] uint32_t GetMaximumHeight() const;
 
+  ///
+  /// Set the maximum width in pixels of the drawable area.
+  ///
+  /// @param[in] width New maximum width in pixels of the drawable area.
+  ///
   void SetMaximumWidth(uint32_t width);
 
+  ///
+  /// Set the maximum height in pixels of the drawable area.
+  ///
+  /// @param[in] height New maximum height in pixels of the drawable area.
+  ///
   void SetMaximumHeight(uint32_t height);
 
+  ///
+  /// Set the minimum width in pixels of the drawable area.
+  ///
+  /// @param[in] height New minimum width in pixels of the drawable area.
+  ///
   void SetMinimumWidth(uint32_t width);
 
+  ///
+  /// Set the minimum height in pixels of the drawable area.
+  ///
+  /// @param[in] height New minimum height in pixels of the drawable area.
+  ///
   void SetMinimumHeight(uint32_t height);
 
   ///
@@ -146,8 +253,30 @@ public:
   ///
   [[nodiscard]] bool IsFocused() const;
 
+  ///
+  /// Set the refresh rate of the window when fullscreen.
+  ///
+  /// @param[in] refresh_rate Rate of refresh in frames per second.
+  ///
+  /// @note A value of 0 will disable the refresh rate limit.
+  ///
+  void SetFullScreenRefreshRate(uint64_t refresh_rate);
+
+  ///
+  /// Set the function that will be called when the window enters a closing state.
+  ///
+  /// @param[in] Function to be called when the window enters a closing state.
+  ///
+  /// @Note The callback does not occur if Close() is called. Only closing initiated by the user will do the callback.
+  ///
   void SetWindowClosingCallback(WindowClosingCallback window_closing_callback);
 
+  ///
+  /// Creates a Vulkan surface for the window's drawable area.
+  ///
+  /// @param[in] instance Vulkan instance of the application.
+  /// @param[out] surface Pointer to the Vulkan surface to create the surface at.
+  ///
   template<typename InstanceType, typename SurfaceType>
   void CreateWindowSurface(InstanceType instance, SurfaceType* surface);
 
