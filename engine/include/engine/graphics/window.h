@@ -42,6 +42,23 @@ public:
 
   void Create();
 
+  ///
+  /// Poll the OS for events associated with this window.
+  ///
+  /// @note Polling of events should be conducted every now and then to let the OS know that the process is still responsive.
+  ///
+  void PollEvents();
+
+  ///
+  /// Same as PollEvents() but waits for events to occur by making the thread sleep.
+  ///
+  /// @param[in] Optional maximum time to wait in seconds.
+  ///
+  void WaitEvents(double timeout = 0.0);
+
+  ///
+  /// Bring the window in focus.
+  ///
   void Focus();
 
   void Maximize();

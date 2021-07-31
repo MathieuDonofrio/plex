@@ -70,6 +70,23 @@ Window::~Window()
   pimpl_ = nullptr;
 }
 
+void Window::PollEvents()
+{
+  glfwPollEvents();
+}
+
+void Window::WaitEvents(double timeout)
+{
+  if (timeout > 0.0)
+  {
+    glfwWaitEvents();
+  }
+  else
+  {
+    glfwWaitEventsTimeout(timeout);
+  }
+}
+
 const std::string& Window::GetTitle() const
 {
   return pimpl_->title_;
