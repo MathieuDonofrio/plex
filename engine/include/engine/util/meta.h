@@ -8,7 +8,7 @@
 
 namespace genebits::engine
 {
-namespace details
+namespace
 {
   ///
   /// Returns the function name with a templated type. Can be used to probe type name.
@@ -48,7 +48,7 @@ namespace details
 
     return sequence++;
   }
-} // namespace details
+} // namespace
 
 ///
 /// Templated structure that contains meta information about the templated type.
@@ -68,8 +68,6 @@ public:
   ///
   static constexpr std::string_view FullName()
   {
-    using namespace details;
-
     std::string_view full_func_name = TemplatedFunctionName<Type>();
 
     full_func_name = full_func_name.substr(cStart, full_func_name.length() - cOffset);
@@ -137,7 +135,7 @@ public:
   template<typename Tag = void>
   static size_t UniqueId()
   {
-    static const size_t value = details::NextUniqueId<Tag>();
+    static const size_t value = NextUniqueId<Tag>();
 
     return value;
   }
