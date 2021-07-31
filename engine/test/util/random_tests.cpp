@@ -143,8 +143,8 @@ TEST(Random_Tests, TLRandom_DifferentThreads_DifferentRandomGenerator)
   std::thread t1([&random2]()
     { random2 = TLRandom(); });
 
-  ASSERT_NE(random1.State(), random2.State());
-
   t1.join();
+
+  ASSERT_NE(random1.State(), random2.State());
 }
 } // namespace genebits::engine::tests

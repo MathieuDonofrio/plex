@@ -74,7 +74,7 @@ public:
 
     full_func_name = full_func_name.substr(cStart, full_func_name.length() - cOffset);
 
-    size_t off = full_func_name.find_last_of(' '); // MSVC adds some extra stuff separated by a space
+    const size_t off = full_func_name.find_last_of(' '); // MSVC adds some extra stuff separated by a space
 
     return off == std::string_view::npos ? full_func_name : full_func_name.substr(off + 1);
   }
@@ -90,7 +90,7 @@ public:
   {
     const std::string_view full_name = FullName();
 
-    size_t off = full_name.find_last_of(':');
+    const size_t off = full_name.find_last_of(':');
 
     return off == std::string_view::npos ? full_name : full_name.substr(off + 1);
   }
