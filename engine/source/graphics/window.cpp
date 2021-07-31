@@ -174,7 +174,6 @@ bool Window::IsClosed() const noexcept
   return glfwWindowShouldClose(pimpl_->handle_) != 0;
 }
 
-//To revert to the default window icon, pass in a nullptr for the pixel array
 void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 {
   //TODO add LOD icons (small, med, big)
