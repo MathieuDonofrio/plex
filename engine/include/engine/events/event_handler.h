@@ -1,15 +1,10 @@
 #ifndef GENEBITS_ENGINE_UTIL_EVENTHANDLER_H
 #define GENEBITS_ENGINE_UTIL_EVENTHANDLER_H
 
-#include <concepts>
-#include <memory>
-
 namespace genebits::engine
 {
 namespace
 {
-  constexpr size_t cLargestFunctorSize = sizeof(void*) * 2;
-
   template<typename Event>
   class EventFunctor
   {
@@ -84,6 +79,8 @@ template<typename Event>
 class EventHandler
 {
 public:
+  static constexpr size_t cLargestFunctorSize = sizeof(&EventFunctor<Event>::operator()) + sizeof(void*);
+
   constexpr EventHandler(void (*function)(const Event& event)) noexcept
   {
     new (functor_) FreeEventFunctor<Event>(function);

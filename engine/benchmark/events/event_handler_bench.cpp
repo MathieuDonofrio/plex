@@ -10,17 +10,14 @@ namespace
 {
   struct TestEvent
   {
-    double value;
+    volatile double value;
   };
 
   struct TestListener
   {
-    void addValue(const TestEvent&)
+    void listen(const TestEvent&)
     {
-      // sum += event.value;
     }
-
-    double sum = 0;
   };
 } // namespace
 
@@ -32,7 +29,7 @@ static void EventHandler_STD_FunctionBind_Construct(benchmark::State& state)
 
   for (auto _ : state)
   {
-    std::function<void(TestEvent&)> handler = std::bind(&TestListener::addValue, &listener, _1);
+    std::function<void(TestEvent&)> handler = std::bind(&TestListener::listen, &listener, _1);
 
     benchmark::DoNotOptimize(handler);
   }
@@ -46,16 +43,17 @@ static void EventHandler_STD_FunctionBind_Invoke(benchmark::State& state)
 
   TestListener listener;
 
-  std::function<void(TestEvent&)> handler = std::bind(&TestListener::addValue, &listener, _1);
+  std::function<void(TestEvent&)> handler = std::bind(&TestListener::listen, &listener, _1);
+
+  TestEvent event { 1234.56789 };
 
   for (auto _ : state)
   {
-    TestEvent event { 1234.56789 };
-
     handler(event);
   }
 
-  benchmark::DoNotOptimize(listener.sum);
+  benchmark::DoNotOptimize(event);
+  benchmark::DoNotOptimize(listener);
 }
 
 BENCHMARK(EventHandler_STD_FunctionBind_Invoke);
@@ -68,10 +66,12 @@ static void EventHandler_Construct(benchmark::State& state)
 
   for (auto _ : state)
   {
-    EventHandler<TestEvent> handler(&TestListener::addValue, &listener);
+    EventHandler<TestEvent> handler(&TestListener::listen, &listener);
 
     benchmark::DoNotOptimize(handler);
   }
+
+  benchmark::DoNotOptimize(listener);
 }
 
 BENCHMARK(EventHandler_Construct);
@@ -80,16 +80,17 @@ static void EventHandler_Invoke(benchmark::State& state)
 {
   TestListener listener;
 
-  EventHandler<TestEvent> handler(&TestListener::addValue, &listener);
+  EventHandler<TestEvent> handler(&TestListener::listen, &listener);
+
+  TestEvent event { 1234.56789 };
 
   for (auto _ : state)
   {
-    TestEvent event { 1234.56789 };
-
     handler.Invoke(event);
   }
 
-  benchmark::DoNotOptimize(listener.sum);
+  benchmark::DoNotOptimize(event);
+  benchmark::DoNotOptimize(listener);
 }
 
 BENCHMARK(EventHandler_Invoke);
