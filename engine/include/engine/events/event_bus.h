@@ -113,7 +113,6 @@ private:
   std::mutex lock_;
 };
 
-template<typename Tag = void>
 class StaticEventBus
 {
 public:

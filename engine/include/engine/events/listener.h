@@ -14,12 +14,12 @@ public:
 
   StaticListener()
   {
-    StaticEventBus<Event>::Subscribe({ &Impl::listen, this });
+    StaticEventBus::Subscribe<Event>({ &Impl::listen, this });
   }
 
   ~StaticListener()
   {
-    StaticEventBus<Event>::Unsubscribe({ &Impl::listen, this });
+    StaticEventBus::Unsubscribe<Event>({ &Impl::listen, this });
   }
 };
 
@@ -29,12 +29,12 @@ class VirtualListener
 public:
   VirtualListener()
   {
-    StaticEventBus<Event>::Subscribe({ &listen, this });
+    StaticEventBus::Subscribe({ &listen, this });
   }
 
   ~VirtualListener()
   {
-    StaticEventBus<Event>::Unsubscribe({ &listen, this });
+    StaticEventBus::Unsubscribe({ &listen, this });
   }
 
   virtual void listen(const Event& event) = 0;
