@@ -55,6 +55,8 @@ namespace
 } // namespace
 
 static_assert(std::is_trivially_copyable_v<EventHandler<TestEvent>>, "EventHandler must be trivially copyable");
+static_assert(std::is_trivially_destructible_v<EventHandler<TestEvent>>, "EventHandler must be trivially destructible");
+static_assert(!std::is_polymorphic_v<EventHandler<TestEvent>>, "EventHandler cannot be polymorphic");
 
 TEST(EventHandler_Tests, Invoke_FreeFunction_DelegatesCall)
 {
