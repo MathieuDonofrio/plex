@@ -24,17 +24,17 @@ public:
 };
 
 template<typename Event>
-class VirtualListener
+class Listener
 {
 public:
-  VirtualListener()
+  Listener()
   {
-    StaticEventBus::Subscribe({ &listen, this });
+    StaticEventBus::Subscribe({ &Listener<Event>::listen, this });
   }
 
-  ~VirtualListener()
+  ~Listener()
   {
-    StaticEventBus::Unsubscribe({ &listen, this });
+    StaticEventBus::Unsubscribe({ &Listener<Event>::listen, this });
   }
 
   virtual void listen(const Event& event) = 0;
