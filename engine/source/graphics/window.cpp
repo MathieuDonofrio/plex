@@ -41,8 +41,7 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height, Window
 
   glfwInit(); // Assert this
 
-  //TODO Get the defaults but only modify glfw hints if creation hints are different
-  if (window_creation_hints == WindowCreationHints::None)
+  if (window_creation_hints == WindowCreationHints::Defaults)
   {
     glfwDefaultWindowHints();
   }
@@ -176,7 +175,7 @@ bool Window::IsClosed() const noexcept
 
 void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 {
-  //TODO add LOD icons (small, med, big)
+  // TODO add LOD icons (small, med, big)
   if (pixels != nullptr)
   {
     GLFWimage icon { static_cast<int>(width), static_cast<int>(height), pixels };
@@ -299,7 +298,7 @@ void Window::SetWindowClosingCallback(std::function<void(Window*)> window_closin
 
 void Window::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
 {
-  //TODO might be good to keep track of some of those states
+  // TODO might be good to keep track of some of those states
   glfwWindowHint(GLFW_RESIZABLE, (hints & WindowCreationHints::Resizable) != 0);
   glfwWindowHint(GLFW_VISIBLE, (hints & WindowCreationHints::Visible) != 0);
   glfwWindowHint(GLFW_DECORATED, (hints & WindowCreationHints::Decorated) != 0);

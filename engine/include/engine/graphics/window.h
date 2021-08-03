@@ -23,7 +23,7 @@ ENUM_FLAGS(WindowCreationHints, uint64_t) {
   CursorCentered = 1 << 8,
   TransparentFramebuffer = 1 << 9,
   ScalingToMonitor = 1 << 10,
-  Defaults = Resizable | Visible | Decorated | Focused | AutoIconified | CursorCentered | FocusingOnShow
+  Defaults = ~0ull
 };
 
 class Window
