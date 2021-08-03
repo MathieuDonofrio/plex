@@ -10,7 +10,7 @@ namespace
 {
   struct TestEvent
   {
-    volatile double value;
+    volatile size_t value;
   };
 
   struct TestListener
@@ -45,7 +45,7 @@ static void EventHandler_STD_FunctionBind_Invoke(benchmark::State& state)
 
   std::function<void(TestEvent&)> handler = std::bind(&TestListener::listen, &listener, _1);
 
-  TestEvent event { 1234.56789 };
+  TestEvent event { static_cast<size_t>(std::rand()) };
 
   for (auto _ : state)
   {
@@ -66,7 +66,8 @@ static void EventHandler_Construct(benchmark::State& state)
 
   for (auto _ : state)
   {
-    EventHandler<TestEvent> handler(&TestListener::listen, &listener);
+    EventHandler<TestEvent> handler;
+    handler.Bind<&TestListener::listen>(&listener);
 
     benchmark::DoNotOptimize(handler);
   }
@@ -80,9 +81,10 @@ static void EventHandler_Invoke(benchmark::State& state)
 {
   TestListener listener;
 
-  EventHandler<TestEvent> handler(&TestListener::listen, &listener);
+  EventHandler<TestEvent> handler;
+  handler.Bind<&TestListener::listen>(&listener);
 
-  TestEvent event { 1234.56789 };
+  TestEvent event { static_cast<size_t>(std::rand()) };
 
   for (auto _ : state)
   {

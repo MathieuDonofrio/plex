@@ -10,16 +10,21 @@ template<typename Impl /* Use Concepts */, typename Event>
 class StaticListener
 {
 public:
-  // Experimental: dont use yet
-
   StaticListener()
   {
-    StaticEventBus::Subscribe<Event>({ &Impl::listen, this });
+    StaticEventBus::Subscribe(handler());
   }
 
   ~StaticListener()
   {
-    StaticEventBus::Unsubscribe<Event>({ &Impl::listen, this });
+    StaticEventBus::Unsubscribe(handler());
+  }
+
+private:
+  EventHandler<Event> handler() const
+  {
+    EventHandler<Event> handler;
+    handler.bind<&Impl::listen>(this);
   }
 };
 
@@ -29,15 +34,22 @@ class Listener
 public:
   Listener()
   {
-    StaticEventBus::Subscribe({ &Listener<Event>::listen, this });
+    StaticEventBus::Subscribe(handler());
   }
 
   ~Listener()
   {
-    StaticEventBus::Unsubscribe({ &Listener<Event>::listen, this });
+    StaticEventBus::Unsubscribe(handler());
   }
 
   virtual void listen(const Event& event) = 0;
+
+private:
+  EventHandler<Event> handler() const
+  {
+    EventHandler<Event> handler;
+    handler.bind<&Listener::listen>(this);
+  }
 };
 } // namespace genebits::engine
 

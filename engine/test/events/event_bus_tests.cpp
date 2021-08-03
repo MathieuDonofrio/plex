@@ -34,11 +34,17 @@ TEST(EventBus_Tests, Subscribe_SingleEventType_IncreaseCount)
 {
   EventBus bus;
 
-  bus.Subscribe<TestEvent1>(listen1_1);
+  EventHandler<TestEvent1> handler1_1;
+  handler1_1.Bind<&listen1_1>();
+
+  bus.Subscribe<TestEvent1>(handler1_1);
 
   ASSERT_EQ(bus.Count<TestEvent1>(), 1u);
 
-  bus.Subscribe<TestEvent1>(listen1_2);
+  EventHandler<TestEvent1> handler1_2;
+  handler1_2.Bind<&listen1_2>();
+
+  bus.Subscribe<TestEvent1>(handler1_2);
 
   ASSERT_EQ(bus.Count<TestEvent1>(), 2u);
 }
@@ -47,8 +53,11 @@ TEST(EventBus_Tests, Unsubscribe_SingleEventType_DecreaseCount)
 {
   EventBus bus;
 
-  bus.Subscribe<TestEvent1>(listen1_1);
-  bus.Unsubscribe<TestEvent1>(listen1_1);
+  EventHandler<TestEvent1> handler1_1;
+  handler1_1.Bind<&listen1_1>();
+
+  bus.Subscribe<TestEvent1>(handler1_1);
+  bus.Unsubscribe<TestEvent1>(handler1_1);
 
   ASSERT_EQ(bus.Count<TestEvent1>(), 0u);
 }
@@ -57,7 +66,10 @@ TEST(EventBus_Tests, Publish_SingleSubscribe_CallsSubscribe)
 {
   EventBus bus;
 
-  bus.Subscribe<TestEvent1>(listen1_1);
+  EventHandler<TestEvent1> handler1_1;
+  handler1_1.Bind<&listen1_1>();
+
+  bus.Subscribe<TestEvent1>(handler1_1);
 
   sum1_1 = 0;
 

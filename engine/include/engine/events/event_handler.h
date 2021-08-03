@@ -1,144 +1,81 @@
 #ifndef GENEBITS_ENGINE_UTIL_EVENTHANDLER_H
 #define GENEBITS_ENGINE_UTIL_EVENTHANDLER_H
 
+#include <type_traits>
+
 namespace genebits::engine
 {
-namespace
-{
-  template<typename Event>
-  class EventFunctor
-  {
-  public:
-    virtual void operator()(const Event& event) = 0;
-  };
-
-  template<typename Event>
-  class FreeEventFunctor : public EventFunctor<Event>
-  {
-  public:
-    using FunctionType = void (*)(const Event&);
-
-    constexpr FreeEventFunctor(FunctionType function) noexcept
-      : function_(function)
-    {
-    }
-
-    void operator()(const Event& event) override
-    {
-      function_(event);
-    }
-
-  private:
-    FunctionType function_;
-  };
-
-  template<typename ClassType, typename Event>
-  class MemberEventFunctor : public EventFunctor<Event>
-  {
-  public:
-    using FunctionType = void (ClassType::*)(const Event&);
-
-    constexpr MemberEventFunctor(FunctionType function, ClassType* instance) noexcept
-      : function_(function), instance_(instance)
-    {
-    }
-
-    void operator()(const Event& event) override
-    {
-      (instance_->*function_)(event);
-    }
-
-  private:
-    FunctionType function_;
-    ClassType* instance_;
-  };
-
-  template<typename ClassType, typename Event>
-  class ConstMemberEventFunctor : public EventFunctor<Event>
-  {
-  public:
-    using FunctionType = void (ClassType::*)(const Event&) const;
-
-    constexpr ConstMemberEventFunctor(FunctionType function, ClassType* instance) noexcept
-      : function_(function), instance_(instance)
-    {
-    }
-
-    void operator()(const Event& event) override
-    {
-      (instance_->*function_)(event);
-    }
-
-  private:
-    FunctionType function_;
-    ClassType* instance_;
-  };
-
-  template<typename Event>
-  constexpr size_t LargestFunctorSize()
-  {
-    class FakeClass
-    {};
-
-    size_t max = 0;
-
-    max = sizeof(FreeEventFunctor<Event>) > max ? sizeof(FreeEventFunctor<Event>) : max;
-    max = sizeof(MemberEventFunctor<FakeClass, Event>) > max ? sizeof(MemberEventFunctor<FakeClass, Event>) : max;
-    max = sizeof(ConstMemberEventFunctor<FakeClass, Event>) > max ? sizeof(ConstMemberEventFunctor<FakeClass, Event>) : max;
-
-    return max;
-  }
-} // namespace
+template<typename Event, typename Invokable>
+concept EventHandlerInvokable = std::is_invocable_v<Invokable, const Event&> && std::is_trivially_destructible_v<Invokable> && std::is_trivially_copyable_v<Invokable> &&(sizeof(Invokable) < sizeof(void*));
 
 template<typename Event>
 class EventHandler
 {
 public:
-  static constexpr size_t cLargestFunctorSize = LargestFunctorSize<Event>();
-
-  constexpr EventHandler(void (*function)(const Event& event)) noexcept
-    : functor_ {}
+  constexpr EventHandler()
+    : function_(nullptr), storage_(nullptr)
   {
-    new (functor_) FreeEventFunctor<Event>(function);
   }
 
-  template<typename ClassType>
-  constexpr EventHandler(void (ClassType::*function)(const Event& event), ClassType* instance) noexcept
-    : functor_ {}
+  template<auto FreeFunction>
+  requires std::is_invocable_v<decltype(FreeFunction), const Event&>
+  constexpr void Bind() noexcept
   {
-    new (functor_) MemberEventFunctor<ClassType, Event>(function, instance);
-  }
+    storage_ = nullptr;
 
-  template<typename ClassType>
-  constexpr EventHandler(void (ClassType::*function)(const Event& event) const, ClassType* instance) noexcept
-    : functor_ {}
-  {
-    new (functor_) ConstMemberEventFunctor<ClassType, Event>(function, instance);
-  }
-
-  void Invoke(const Event& event)
-  {
-    (*reinterpret_cast<EventFunctor<Event>*>(&functor_))(event);
-  }
-
-  [[nodiscard]] bool operator==(EventHandler<Event> handler) const noexcept
-  {
-    for (size_t i = 0; i < cLargestFunctorSize; i++)
+    function_ = [](void*, const Event& event)
     {
-      if (functor_[i] != handler.functor_[i]) return false;
-    }
-
-    return true;
+      std::invoke(FreeFunction, event);
+    };
   }
 
-  [[nodiscard]] bool operator!=(EventHandler<Event> handler) const noexcept
+  template<auto MemberFunction, typename Type>
+  requires std::is_member_function_pointer_v<decltype(MemberFunction)>
+  // TODO check type is same as member function type
+  constexpr void Bind(Type* instance) noexcept
   {
-    return !(*this == handler);
+    storage_ = instance;
+
+    function_ = [](void* storage, const Event& event)
+    {
+      std::invoke(MemberFunction, static_cast<Type*>(storage), event);
+    };
+  }
+
+  template<EventHandlerInvokable<Event> Invokable>
+  constexpr void Bind(Invokable invokable) noexcept
+  {
+    new (storage_) Invokable { std::move(invokable) };
+
+    function_ = [](const void* storage, const Event& event)
+    {
+      (*reinterpret_cast<Invokable*>(storage))(event);
+    };
+  }
+
+  constexpr void Invoke(const Event& event)
+  {
+    function_(storage_, event);
+  }
+
+  [[nodiscard]] constexpr bool operator==(const EventHandler<Event> handler) const noexcept
+  {
+    return function_ == handler.function_ && storage_ == handler.storage_;
+  }
+
+  [[nodiscard]] constexpr bool operator!=(const EventHandler<Event> handler) const noexcept
+  {
+    return function_ != handler.function_ || storage_ != handler.storage_;
+  }
+
+  [[nodiscard]] constexpr operator bool() const noexcept
+  {
+    return function_ != nullptr;
   }
 
 private:
-  // Use stack memory and placement new to avoid heap allocation
-  char functor_[cLargestFunctorSize];
+  void (*function_)(void*, const Event&);
+  void* storage_;
 };
 
 } // namespace genebits::engine

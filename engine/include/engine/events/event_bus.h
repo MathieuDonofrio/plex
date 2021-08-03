@@ -112,6 +112,38 @@ private:
   std::vector<std::shared_ptr<void>> pools_;
   std::mutex lock_;
 };
+
+class StaticEventBus
+{
+public:
+  template<typename Event>
+  static void Publish(const Event& event)
+  {
+    bus.Publish(event);
+  }
+
+  template<typename Event>
+  static void Subscribe(EventHandler<Event> handler)
+  {
+    bus.Subscribe(handler);
+  }
+
+  template<typename Event>
+  static void Unsubscribe(EventHandler<Event> handler)
+  {
+    bus.Unsubscribe(handler);
+  }
+
+  template<typename Event>
+  static [[nodiscard]] size_t Count()
+  {
+    return bus.Count();
+  }
+
+private:
+  static EventBus bus;
+};
+
 } // namespace genebits::engine
 
 #endif
