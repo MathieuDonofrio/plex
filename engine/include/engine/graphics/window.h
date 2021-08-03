@@ -9,7 +9,7 @@
 
 namespace genebits::engine
 {
-
+// TODO Add method to query those flags from the window
 ENUM_FLAGS(WindowCreationHints, uint64_t) {
   None = 0,
   Resizable = 1 << 0,
