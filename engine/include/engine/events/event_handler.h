@@ -20,15 +20,14 @@ public:
   {
   }
 
-  template<auto FreeFunction>
-  requires std::is_invocable_v<decltype(FreeFunction), const Event&>
+  template<void (*FreeFunction)(const Event&)>
   constexpr void Bind() noexcept
   {
     storage_ = nullptr;
 
     function_ = [](void*, const Event& event)
     {
-      std::invoke(FreeFunction, event);
+      (*FreeFunction)(event);
     };
   }
 
@@ -40,7 +39,7 @@ public:
 
     function_ = [](void* storage, const Event& event)
     {
-      std::invoke(MemberFunction, static_cast<Type*>(storage), event);
+      (static_cast<Type*>(storage)->*MemberFunction)(event);
     };
   }
 
