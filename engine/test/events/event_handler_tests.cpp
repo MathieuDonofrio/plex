@@ -58,6 +58,21 @@ static_assert(std::is_trivially_copyable_v<EventHandler<TestEvent>>, "EventHandl
 static_assert(std::is_trivially_destructible_v<EventHandler<TestEvent>>, "EventHandler must be trivially destructible");
 static_assert(!std::is_polymorphic_v<EventHandler<TestEvent>>, "EventHandler cannot be polymorphic");
 
+TEST(EventHandler_Tests, Constructor_Default_Null)
+{
+  EventHandler<TestEvent> handler;
+
+  ASSERT_FALSE(handler);
+}
+
+TEST(EventHandler_Tests, Bind_FreeFunction_NotNull)
+{
+  EventHandler<TestEvent> handler;
+  handler.Bind<&addValue1Global>();
+
+  ASSERT_TRUE(handler);
+}
+
 TEST(EventHandler_Tests, Invoke_FreeFunction_DelegatesCall)
 {
   sumValue1Global = 0;
@@ -104,6 +119,23 @@ TEST(EventHandler_Tests, Invoke_ConstMemberFunction_DelegatesCall)
   handler.Invoke({ 10u });
 
   ASSERT_EQ(listener.sumValue1, 11u);
+}
+
+TEST(EventHandler_Tests, Invoke_Lambda_DelegatesCall)
+{
+  size_t sum = 0;
+
+  EventHandler<TestEvent> handler;
+  handler.Bind([&sum](const TestEvent& event)
+    { sum += event.value; });
+
+  handler.Invoke({ 1u });
+
+  ASSERT_EQ(sum, 1u);
+
+  handler.Invoke({ 10u });
+
+  ASSERT_EQ(sum, 11u);
 }
 
 TEST(EventHandler_Tests, Equality_FreeFunction_Equal)
@@ -227,6 +259,25 @@ TEST(EventHandler_Tests, Equality_ConstMemberFunction_NotEqual)
   ASSERT_NE(handler1, handler2);
 }
 
+TEST(EventHandler_Tests, Equality_Lambda_NotEqual)
+{
+  EventHandler<TestEvent> handler1;
+  handler1.Bind([](const TestEvent& event)
+    {
+      static volatile size_t sum = 0;
+      sum += event.value;
+    });
+
+  EventHandler<TestEvent> handler2;
+  handler2.Bind([](const TestEvent& event)
+    {
+      static volatile size_t sum = 0;
+      sum += event.value;
+    });
+
+  ASSERT_NE(handler1, handler2);
+}
+
 TEST(EventHandler_Tests, CopyAssignment_FreeFunction_Equal)
 {
   EventHandler<TestEvent> handler1;
@@ -255,6 +306,20 @@ TEST(EventHandler_Tests, CopyAssignment_ConstMemberFunction_Equal)
 
   EventHandler<TestEvent> handler1;
   handler1.Bind<&TestListener::addValueConst1>(&listener);
+
+  EventHandler<TestEvent> handler2 = handler1;
+
+  ASSERT_EQ(handler1, handler2);
+}
+
+TEST(EventHandler_Tests, CopyAssignment_Lambda_Equal)
+{
+  EventHandler<TestEvent> handler1;
+  handler1.Bind([](const TestEvent& event)
+    {
+      static volatile size_t sum = 0;
+      sum += event.value;
+    });
 
   EventHandler<TestEvent> handler2 = handler1;
 

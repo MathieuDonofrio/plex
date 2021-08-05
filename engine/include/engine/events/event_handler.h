@@ -5,14 +5,17 @@
 
 namespace genebits::engine
 {
-template<typename Event, typename Invokable>
-concept EventHandlerInvokable = std::is_invocable_v<Invokable, const Event&> && std::is_trivially_destructible_v<Invokable> && std::is_trivially_copyable_v<Invokable> &&(sizeof(Invokable) < sizeof(void*));
+template<typename Invokable, typename Event>
+concept EventHandlerInvokable = std::is_class_v<Invokable> && sizeof(Invokable) <= sizeof(void*) && requires(Invokable invokable, const Event& event)
+{
+  invokable(event);
+};
 
 template<typename Event>
 class EventHandler
 {
 public:
-  constexpr EventHandler()
+  constexpr EventHandler() noexcept
     : function_(nullptr), storage_(nullptr)
   {
   }
@@ -31,7 +34,6 @@ public:
 
   template<auto MemberFunction, typename Type>
   requires std::is_member_function_pointer_v<decltype(MemberFunction)>
-  // TODO check type is same as member function type
   constexpr void Bind(Type* instance) noexcept
   {
     storage_ = instance;
@@ -45,11 +47,11 @@ public:
   template<EventHandlerInvokable<Event> Invokable>
   constexpr void Bind(Invokable invokable) noexcept
   {
-    new (storage_) Invokable { std::move(invokable) };
+    new (&storage_) Invokable(std::move(invokable));
 
-    function_ = [](const void* storage, const Event& event)
+    function_ = [](void* storage, const Event& event)
     {
-      (*reinterpret_cast<Invokable*>(storage))(event);
+      reinterpret_cast<Invokable*>(&storage)->operator()(event);
     };
   }
 
