@@ -165,7 +165,7 @@ void Window::Close()
   glfwSetWindowShouldClose(pimpl_->handle, 1);
 }
 
-bool Window::IsClosed() const noexcept
+bool Window::IsClosing() const noexcept
 {
   return glfwWindowShouldClose(pimpl_->handle) != 0;
 }

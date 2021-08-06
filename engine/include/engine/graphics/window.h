@@ -223,7 +223,7 @@ public:
   ///
   /// @return Closed state of the window.
   ///
-  [[nodiscard]] bool IsClosed() const noexcept;
+  [[nodiscard]] bool IsClosing() const noexcept;
 
   ///
   /// Get the iconified state of the window.
