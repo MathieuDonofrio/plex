@@ -254,6 +254,13 @@ public:
   [[nodiscard]] bool IsFocused() const;
 
   ///
+  /// Get the visible state of the window.
+  ///
+  /// @return Visible state of the window.
+  ///
+  [[nodiscard]] bool IsVisible() const;
+
+  ///
   /// Set the refresh rate of the window when fullscreen.
   ///
   /// @param[in] refresh_rate Rate of refresh in frames per second.

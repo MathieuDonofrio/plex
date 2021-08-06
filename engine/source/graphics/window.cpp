@@ -276,6 +276,11 @@ bool Window::IsFocused() const
   return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_FOCUSED));
 }
 
+bool Window::IsVisible() const
+{
+  return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_VISIBLE));
+}
+
 void Window::SetFullScreenRefreshRate(uint64_t refresh_rate)
 {
   glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate);
