@@ -82,7 +82,7 @@ public:
   ///
   /// Minimise the size of the window according to its minimum size or the default minimum size if there is no limits.
   ///
-  void Minimize();
+  void Iconify();
 
   ///
   /// Restore the window if it was iconified or maximized.

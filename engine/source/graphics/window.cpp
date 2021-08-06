@@ -142,7 +142,7 @@ void Window::Maximize()
   glfwMaximizeWindow(pimpl_->handle);
 }
 
-void Window::Minimize()
+void Window::Iconify()
 {
   glfwIconifyWindow(pimpl_->handle);
 }
