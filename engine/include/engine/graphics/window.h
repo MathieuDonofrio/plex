@@ -39,8 +39,6 @@ public:
   /// @param[in] height The height in pixels of the drawable area.
   /// @param[in] window_creation_hints Hints used to create the window.
   ///
-  /// @note This only creates the window object. To create the visual window, call the Create() method.
-  ///
   Window(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints = WindowCreationHints::Defaults);
 
   ~Window();
@@ -49,11 +47,6 @@ public:
   Window& operator=(const Window&) = delete;
   Window(Window&&) = delete;
   Window& operator=(Window&&) = delete;
-
-  ///
-  /// Create the visual window.
-  ///
-  void Create();
 
   ///
   /// Poll the OS for events associated with this window.

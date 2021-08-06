@@ -51,10 +51,7 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height, Window
   }
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-}
 
-void Window::Create()
-{
   pimpl_->handle = glfwCreateWindow(
     static_cast<int>(pimpl_->width), static_cast<int>(pimpl_->height), pimpl_->title.c_str(), nullptr, nullptr);
 
