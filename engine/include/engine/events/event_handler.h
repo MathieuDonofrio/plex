@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_UTIL_EVENTHANDLER_H
 
 #include <type_traits>
+#include <utility>
 
 namespace genebits::engine
 {

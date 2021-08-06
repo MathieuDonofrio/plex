@@ -18,7 +18,7 @@ namespace
   /// @return The function name with the templated type.
   ///
   template<typename Type>
-  constexpr std::string_view TemplatedFunctionName()
+  consteval std::string_view TemplatedFunctionName()
   {
 #if COMPILER_MSVC
     return __FUNCSIG__;
@@ -66,10 +66,9 @@ public:
   ///
   /// @return Full name of templated type.
   ///
-  static constexpr std::string_view FullName()
+  [[nodiscard]] static consteval std::string_view FullName() noexcept
   {
     std::string_view full_func_name = TemplatedFunctionName<Type>();
-
     full_func_name = full_func_name.substr(cStart, full_func_name.length() - cOffset);
 
     const size_t off = full_func_name.find_last_of(' '); // MSVC adds some extra stuff separated by a space
@@ -84,7 +83,7 @@ public:
   ///
   /// @return Name of templated type.
   ///
-  static constexpr std::string_view Name()
+  [[nodiscard]] static consteval std::string_view Name() noexcept
   {
     const std::string_view full_name = FullName();
 
@@ -104,9 +103,9 @@ public:
   ///
   /// @return Type Hash of type.
   ///
-  static constexpr size_t Hash()
+  [[nodiscard]] static consteval size_t Hash() noexcept
   {
-    constexpr uint64_t prime = 0x100000001b3;
+    const uint64_t prime = 0x100000001b3;
 
     uint64_t hash = 14695981039346656037ul;
 
@@ -133,7 +132,7 @@ public:
   /// @return size_t The unique id for the type and sequence.
   ///
   template<typename Tag = void>
-  static size_t UniqueId()
+  static size_t UniqueId() noexcept
   {
     static const size_t value = NextUniqueId<Tag>();
 
