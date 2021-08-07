@@ -1,56 +1,88 @@
 #ifndef GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 #define GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 
-#include <limits>
-#include <type_traits>
+#include <vector>
 
-#include "engine/util/concepts.h"
 #include "engine/util/meta.h"
 
 namespace genebits::engine
 {
-
-// TODO maybe count size for debug builds and assert
-
-template<typename Value, size_t Size = 512>
+///
+/// Map used to map types to values where the type is the key.
+///
+/// The key is generated using the Meta util UniqueId method.
+///
+/// This map had extremely low overhead and performance oriented.
+///
+/// @tparam Value The value to map types to.
+///
+template<typename Value>
 class TypeMap
 {
 public:
-  TypeMap()
-    : type_names_ {}
-  {
-  }
-
+  ///
+  /// Safely returns the value reference for the type key.
+  ///
+  /// If the mapping never existed, this method will make sure that it is created.
+  ///
+  /// Usually O(1) with very little overhead, but sometimes during creating of the
+  /// mapping (only happends once per key) and internal resize must be called.
+  ///
+  /// @tparam Type The type to use as key.
+  ///
+  /// @return Reference to the value mapped by the type.
+  ///
   template<typename Type>
-  constexpr Value& Get() noexcept
+  Value& Assure() noexcept
   {
-    constexpr const char* type_name = Meta<Type>::FullName().data();
+    const size_t index = Key<Type>();
 
-    size_t key = Key<Type>();
-
-    [[unlikely]] while (type_names_[key] != type_name)
+    if (values_.size() <= index)
     {
-      if (!type_names_[key])
-      {
-        type_names_[key] = type_name;
-        break;
-      }
-      key++;
+      values_.resize(index + 1);
     }
 
-    return values_[key];
+    return values_[index];
   }
 
-private:
+  ///
+  /// Returns the value reference for the type key.
+  ///
+  /// Always O(1) with extremely low overhead. Essentially an array lookup.
+  ///
+  /// @warning
+  ///     Make sure Assure was called at least once for this type. Or else
+  ///     this method is undefined behaviour.
+  ///
+  /// @tparam Type The type to use as key.
+  ///
+  /// @return Reference to the value mapped by the type.
+  ///
   template<typename Type>
-  [[nodiscard]] static consteval size_t Key() noexcept
+  [[nodiscard]] const Value& Get() const noexcept
   {
-    return static_cast<size_t>(Meta<Type>::Hash() % Size);
+    return values_[Key<Type>()];
   }
 
 private:
-  const char* type_names_[Size];
-  Value values_[Size];
+  ///
+  /// Obtains the key for a type.
+  ///
+  /// Correctly implements the UniqueId fetching so that there is a new sequence generated
+  /// for every value type. This reduces the memory usage.
+  ///
+  /// @tparam Type The type to obtain key for.
+  ///
+  /// @return size_t key for the templated type.
+  ///
+  template<typename Type>
+  [[nodiscard]] static size_t Key() noexcept
+  {
+    return Meta<Type>::template UniqueId<TypeMap<Value>>();
+  }
+
+private:
+  std::vector<Value> values_;
 };
 
 } // namespace genebits::engine
