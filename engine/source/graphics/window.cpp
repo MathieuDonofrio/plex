@@ -194,13 +194,13 @@ void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 
 uint32_t Window::GetMonitorWidth() const
 {
-  GLFWmonitor* monitor_ptr = glfwGetWindowMonitor(pimpl_->handle);
+  GLFWmonitor* monitor_ptr = glfwGetPrimaryMonitor();
   return glfwGetVideoMode(monitor_ptr)->width;
 }
 
 uint32_t Window::GetMonitorHeight() const
 {
-  GLFWmonitor* monitor_ptr = glfwGetWindowMonitor(pimpl_->handle);
+  GLFWmonitor* monitor_ptr = glfwGetPrimaryMonitor();
   return glfwGetVideoMode(monitor_ptr)->height;
 }
 
