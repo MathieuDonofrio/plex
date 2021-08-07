@@ -61,24 +61,18 @@ public:
   template<typename Event>
   void Publish(const Event& event)
   {
-    std::scoped_lock<std::mutex> lock_guard(lock_);
-
     Assure<Event>()->Propagate(event);
   }
 
   template<typename Event>
   void Subscribe(EventHandler<Event> handler)
   {
-    std::scoped_lock<std::mutex> lock_guard(lock_);
-
     Assure<Event>()->Add(handler);
   }
 
   template<typename Event>
   void Unsubscribe(EventHandler<Event> handler)
   {
-    std::scoped_lock<std::mutex> lock_guard(lock_);
-
     Assure<Event>()->Remove(handler);
   }
 
@@ -104,7 +98,6 @@ private:
 
 private:
   TypeMap<std::shared_ptr<void>> pools_;
-  std::mutex lock_;
 };
 
 } // namespace genebits::engine
