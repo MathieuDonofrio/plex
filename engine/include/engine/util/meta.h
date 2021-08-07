@@ -1,6 +1,7 @@
 #ifndef GENEBITS_ENGINE_UTIL_META_H
 #define GENEBITS_ENGINE_UTIL_META_H
 
+#include <atomic>
 #include <string_view>
 #include <type_traits>
 
@@ -27,27 +28,73 @@ namespace
 #endif
   }
 
-  constexpr std::string_view cProbe = TemplatedFunctionName<void>();
+  namespace probing
+  {
+    // Probing technique:
+    // Get the templated function name of void type and use that to find the start and offset of the type.
 
-  constexpr size_t cStart = cProbe.find("void");
-  constexpr size_t cOffset = cProbe.length() - 4;
+    constexpr std::string_view cProbe = TemplatedFunctionName<void>();
+
+    constexpr size_t cStart = cProbe.find("void");
+    constexpr size_t cOffset = cProbe.length() - 4;
+  } // namespace probing
+
+  ///
+  /// Returns the next index for the list of sequences. Used to be able to have more than once
+  /// sequence to optimize memory usage in certain cases.
+  ///
+  /// An internal counter is incremented every time this method is called.
+  ///
+  /// @note
+  ///     The static variable in the function is a header-only solution for extern. This is
+  ///     guaranteed as long as ODR is not violated (No templates).
+  ///
+  /// @return size_t next index in the sequence
+  ///
+  inline size_t NextSequenceIndex()
+  {
+    static std::atomic_size_t sequence {};
+
+    return sequence.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  ///
+  /// Returns the sequence index for the tag type.
+  ///
+  /// @tparam Tag A type tag used to identify the sequence to use.
+  ///
+  /// @return size_t The sequence index for the tag.
+  ///
+  template<typename Tag>
+  static size_t SequenceIndex()
+  {
+    static const size_t value = NextSequenceIndex();
+
+    return value;
+  }
 
   ///
   /// Returns a unique integer identifier at runtime.
   ///
-  /// An internal counter is incremented each and every time this method is called.
+  /// The internal counter for the specified sequence is incremented every time
+  /// this method is called.
   ///
-  /// @tparam Tag for creating multiple sequences.
+  /// @note
+  ///     There is a max amount of sequences (512).
   ///
-  /// @return size_t
+  /// @return size_t next index in the specified sequence
   ///
-  template<typename Tag>
-  static size_t NextUniqueId()
+  inline size_t NextUniqueId(size_t sequence_index)
   {
-    static size_t sequence = 0;
+    constexpr size_t cMaxSequences = 1 << 9;
 
-    return sequence++;
+    static std::atomic_size_t sequences[cMaxSequences];
+
+    const size_t actual_index = sequence_index & (cMaxSequences - 1);
+
+    return sequences[actual_index].fetch_add(1, std::memory_order_relaxed);
   }
+
 } // namespace
 
 ///
@@ -69,7 +116,7 @@ public:
   [[nodiscard]] static consteval std::string_view FullName() noexcept
   {
     std::string_view full_func_name = TemplatedFunctionName<Type>();
-    full_func_name = full_func_name.substr(cStart, full_func_name.length() - cOffset);
+    full_func_name = full_func_name.substr(probing::cStart, full_func_name.length() - probing::cOffset);
 
     const size_t off = full_func_name.find_last_of(' '); // MSVC adds some extra stuff separated by a space
 
@@ -124,9 +171,6 @@ public:
   /// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
   /// distributed in a first come first serve fashion.
   ///
-  /// @warning Different libraries will result in different UniqueIds.
-  /// Do not uses this as global identifier.
-  ///
   /// @tparam Tag A type tag used to identify the sequence to use.
   ///
   /// @return size_t The unique id for the type and sequence.
@@ -134,7 +178,7 @@ public:
   template<typename Tag = void>
   static size_t UniqueId() noexcept
   {
-    static const size_t value = NextUniqueId<Tag>();
+    static const size_t value = NextUniqueId(SequenceIndex<Tag>());
 
     return value;
   }

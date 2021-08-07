@@ -19,6 +19,11 @@ enum TestTypeC
 {
 };
 
+template<size_t tag>
+class TestType
+{
+};
+
 // FullName static tests
 
 static_assert(Meta<int>::FullName() == "int");
@@ -65,4 +70,32 @@ TEST(Meta_Tests, UniqueId_DifferentTypeStruct_NotEqual)
 {
   ASSERT_NE(Meta<TestTypeA>::UniqueId(), Meta<test_namespace::TestTypeB>::UniqueId());
 }
+
+TEST(Meta_Tests, UniqueId_SameTypeDifferentTags_NotEqual)
+{
+  ASSERT_EQ(Meta<TestType<0>>::UniqueId<TestType<1>>(), Meta<TestType<0>>::UniqueId<TestType<2>>());
+}
+
+TEST(Meta_Tests, UniqueId_MultipleTypesSameTag_Increment)
+{
+  ASSERT_EQ(Meta<TestType<11>>::UniqueId<TestType<10>>(), 0);
+  ASSERT_EQ(Meta<TestType<12>>::UniqueId<TestType<10>>(), 1);
+  ASSERT_EQ(Meta<TestType<13>>::UniqueId<TestType<10>>(), 2);
+  ASSERT_EQ(Meta<TestType<14>>::UniqueId<TestType<10>>(), 3);
+  ASSERT_EQ(Meta<TestType<15>>::UniqueId<TestType<10>>(), 4);
+  ASSERT_EQ(Meta<TestType<16>>::UniqueId<TestType<10>>(), 5);
+  ASSERT_EQ(Meta<TestType<17>>::UniqueId<TestType<10>>(), 6);
+  ASSERT_EQ(Meta<TestType<18>>::UniqueId<TestType<10>>(), 7);
+  ASSERT_EQ(Meta<TestType<19>>::UniqueId<TestType<10>>(), 8);
+}
+
+TEST(Meta_Tests, UniqueId_MultipleTypesTwoTags_Increment)
+{
+  ASSERT_EQ(Meta<TestType<21>>::UniqueId<TestType<20>>(), 0);
+  ASSERT_EQ(Meta<TestType<22>>::UniqueId<TestType<20>>(), 1);
+
+  ASSERT_EQ(Meta<TestType<31>>::UniqueId<TestType<30>>(), 0);
+  ASSERT_EQ(Meta<TestType<32>>::UniqueId<TestType<30>>(), 1);
+}
+
 } // namespace genebits::engine::tests
