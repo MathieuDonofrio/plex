@@ -25,8 +25,6 @@ public:
   static constexpr bool cSmallType = sizeof(Type) <= 2 * sizeof(void*);
   static constexpr bool cTypePassedByValue = cSmallType && std::is_trivially_copy_constructible_v<Type>;
 
-  using OptimalPassType = std::conditional_t<cTypePassedByValue, Type, Type&>;
-
   FastVector()
     : array_(nullptr),
       size_(0), capacity_(0)
@@ -37,19 +35,21 @@ public:
   {
     Destroy();
 
-    allocator_.Deallocate(Block { array_, capacity_ });
+    allocator_.Deallocate(Block { reinterpret_cast<char*>(array_), capacity_ });
   }
 
-  void PushBack(const OptimalPassType value) noexcept
+  void PushBack(const Type& value) noexcept
   {
     PrepareInsertion();
-    new (array_[size_++]) Type(value);
+    new (array_ + size_) Type(value);
+    ++size_;
   }
 
   void PushBack(Type&& value) noexcept
   {
     PrepareInsertion();
-    new (array_[size_++]) Type(std::move(value));
+    new (array_ + size_) Type(std::move(value));
+    ++size_;
   }
 
   void PopBack() noexcept
@@ -73,49 +73,55 @@ public:
   }
 
 protected:
-  void Grow(uint32_t min_capacity) noexcept
+  void Grow(const uint32_t min_capacity) noexcept
   {
+    const size_t current_capacity_bytes = sizeof(Type) * capacity_;
+    const size_t min_capacity_bytes = sizeof(Type) * min_capacity;
+
     if constexpr (!std::is_trivially_copy_constructible_v<Type> && !std::is_trivially_move_constructible_v<Type>)
     {
-      Block block = allocator_.Allocate(min_capacity);
+      Block block = allocator_.Allocate(min_capacity_bytes);
 
-      for (uint32_t i = 0; i != size_; i++)
+      if (array_)
       {
-        Type* old_element = array_ + i;
-        Type* new_element = reinterpret_cast<Type*>(block.ptr) + i;
+        for (uint32_t i = 0; i != size_; i++)
+        {
+          Type* old_element = array_ + i;
+          Type* new_element = reinterpret_cast<Type*>(block.ptr) + i;
 
-        if constexpr (cTypePassedByValue)
-        {
-          new (new_element) Type(*old_element);
-        }
-        else if constexpr (std::is_move_constructible_v<Type>)
-        {
-          new (new_element) Type(std::move(*old_element));
-        }
-        else
-        {
-          new (new_element) Type(*old_element);
+          if constexpr (cTypePassedByValue)
+          {
+            new (new_element) Type(*old_element);
+          }
+          else if constexpr (std::is_move_constructible_v<Type>)
+          {
+            new (new_element) Type(std::move(*old_element));
+          }
+          else
+          {
+            new (new_element) Type(*old_element);
+          }
+
+          if constexpr (!std::is_trivially_destructible_v<Type>)
+          {
+            old_element->~Type();
+          }
         }
 
-        if constexpr (!std::is_trivially_destructible_v<Type>)
-        {
-          old_element->~Type();
-        }
+        allocator_.Deallocate(Block { reinterpret_cast<char*>(array_), current_capacity_bytes });
       }
 
-      allocator_.Deallocate(Block { array_, capacity_ });
-
       array_ = reinterpret_cast<Type*>(block.ptr);
-      capacity_ = static_cast<uint32_t>(block.size);
+      capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
     }
     else
     {
-      Block block { array_, capacity_ };
+      Block block { reinterpret_cast<char*>(array_), current_capacity_bytes };
 
-      allocator_.Reallocate(block, min_capacity);
+      allocator_.Reallocate(block, min_capacity_bytes);
 
       array_ = reinterpret_cast<Type*>(block.ptr);
-      capacity_ = static_cast<uint32_t>(block.size);
+      capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
     }
   }
 
