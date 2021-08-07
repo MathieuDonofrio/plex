@@ -168,7 +168,7 @@ public:
     block.ptr = static_cast<char*>(std::realloc(block.ptr, size));
     block.size = size;
 
-    return true;
+    return block.ptr != nullptr;
   }
 
   ///
