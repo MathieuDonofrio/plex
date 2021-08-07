@@ -4,6 +4,8 @@
 #define GLFW_INCLUDE_NONE // Removes OpenGL
 #define GLFW_INCLUDE_VULKAN
 
+#include <algorithm>
+
 #include "GLFW/glfw3.h"
 
 namespace genebits::engine
@@ -124,7 +126,13 @@ void Window::Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensio
     }
     else
     {
-      glfwSetWindowSize(pimpl_->handle, width, height);
+      uint32_t max_width = (pimpl_->size_limit.max_width == -1) ? GetMaximumWidth() : pimpl_->size_limit.max_width;
+      uint32_t max_height = (pimpl_->size_limit.max_height == -1) ? GetMaximumHeight() : pimpl_->size_limit.max_height;
+
+      uint32_t new_width = std::max(pimpl_->size_limit.min_width, std::min(width, max_width));
+      uint32_t new_height = std::max(pimpl_->size_limit.min_height, std::min(height, max_height));
+
+      glfwSetWindowSize(pimpl_->handle, static_cast<int>(new_width), static_cast<int>(new_height));
     }
   }
 }
@@ -233,28 +241,28 @@ uint32_t Window::GetMaximumHeight() const
 void Window::SetMaximumWidth(uint32_t width)
 {
   auto& size_limit = pimpl_->size_limit;
-  size_limit.max_width = width;
+  size_limit.max_width = std::max(width, pimpl_->size_limit.min_width);
   glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
 void Window::SetMaximumHeight(uint32_t height)
 {
   auto& size_limit = pimpl_->size_limit;
-  size_limit.max_height = height;
+  size_limit.max_height = std::max(height, pimpl_->size_limit.min_height);
   glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
 void Window::SetMinimumWidth(uint32_t width)
 {
   auto& size_limit = pimpl_->size_limit;
-  size_limit.min_width = width;
+  size_limit.min_width = std::min(width, pimpl_->size_limit.max_width);
   glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
 void Window::SetMinimumHeight(uint32_t height)
 {
   auto& size_limit = pimpl_->size_limit;
-  size_limit.min_height = height;
+  size_limit.min_height = std::min(height, pimpl_->size_limit.max_height);
   glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
