@@ -7,6 +7,7 @@
 
 #include "engine/events/event_handler.h"
 #include "engine/util/meta.h"
+#include "engine/util/type_map.h"
 
 namespace genebits::engine
 {
@@ -62,7 +63,7 @@ public:
   {
     std::scoped_lock<std::mutex> lock_guard(lock_);
 
-    assure<Event>()->Propagate(event);
+    Assure<Event>()->Propagate(event);
   }
 
   template<typename Event>
@@ -70,7 +71,7 @@ public:
   {
     std::scoped_lock<std::mutex> lock_guard(lock_);
 
-    assure<Event>()->Add(handler);
+    Assure<Event>()->Add(handler);
   }
 
   template<typename Event>
@@ -78,27 +79,20 @@ public:
   {
     std::scoped_lock<std::mutex> lock_guard(lock_);
 
-    assure<Event>()->Remove(handler);
+    Assure<Event>()->Remove(handler);
   }
 
   template<typename Event>
   [[nodiscard]] size_t Count()
   {
-    return assure<Event>()->Count();
+    return Assure<Event>()->Count();
   }
 
 private:
   template<typename Event>
-  std::shared_ptr<EventHandlerPool<Event>> assure()
+  std::shared_ptr<EventHandlerPool<Event>> Assure() noexcept
   {
-    size_t index = Meta<EventBus>::UniqueId<Event>();
-
-    if (index >= pools_.size())
-    {
-      pools_.resize(index + 1);
-    }
-
-    auto& pool = pools_[index];
+    auto& pool = pools_.template Assure<Event>();
 
     if (!pool)
     {
@@ -109,7 +103,7 @@ private:
   }
 
 private:
-  std::vector<std::shared_ptr<void>> pools_;
+  TypeMap<std::shared_ptr<void>> pools_;
   std::mutex lock_;
 };
 
