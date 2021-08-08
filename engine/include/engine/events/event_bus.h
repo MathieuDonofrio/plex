@@ -79,7 +79,6 @@ namespace
 /// @tparam TypeMapAllocator Allocator used to allocate memory for the type map.
 /// @tparam HandlersAllocator Allocator used to allocator memory for the handlers.
 ///
-template<Allocator TypeMapAllocator = Mallocator, Allocator HandlersAllocator = Mallocator>
 class EventBus
 {
 public:
@@ -138,6 +137,9 @@ public:
   }
 
 private:
+  using TypeMapAllocator = Mallocator;
+  using HandlersAllocator = Mallocator;
+
   ///
   /// Safely returns the event handler pool for the event type. Properly intializes the pool if
   /// it has never been accessed before.

@@ -13,7 +13,7 @@ namespace genebits::engine
 /// @tparam Type The type to check
 ///
 template<typename Type>
-concept TypeMapValueType = FastVectorType<Type>;
+concept TypeMapValueType = std::is_destructible_v<Type> && FastVectorType<Type>;
 
 ///
 /// Map used to map types to values where the type is the key.
@@ -25,7 +25,7 @@ concept TypeMapValueType = FastVectorType<Type>;
 /// @tparam Value Value to map types with.
 /// @tparam AllocatorImpl Allocator to use to allocate memory.
 ///
-template<TypeMapValueType Value, Allocator AllocatorImpl>
+template<TypeMapValueType Value, Allocator AllocatorImpl = Mallocator>
 class TypeMap
 {
 public:
