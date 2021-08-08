@@ -25,7 +25,7 @@ concept FastVectorType = std::is_copy_constructible_v<Type> || std::is_move_cons
 ///
 /// Optimizes for POD types. Uses reallocation when possible to optimize growing.
 ///
-/// Uses custom allocators to allow for better allocation stratergies.
+/// Uses custom allocators to allow for better allocation strategies.
 ///
 /// @warning
 ///     Not a replacement for std::vector. Used internally in the engine in the cases
@@ -44,8 +44,6 @@ private:
   static constexpr bool cTypePassedByValue = cSmallType && std::is_trivially_copy_constructible_v<Type>;
 
 public:
-  // The following definitions are for STL iterator compatibility
-
   using iterator_category = std::random_access_iterator_tag;
 
   using size_type = size_t;
@@ -78,11 +76,9 @@ public:
   reverse_iterator rend() { return reverse_iterator(begin()); }
   const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 
-  // Internal array accessor
+  // Internal array accessors
   pointer data() { return pointer(begin()); }
   const_pointer data() const { return const_pointer(begin()); }
-
-  // Explicit array accessor
   reference front() { return begin()[0]; }
   const_reference front() const { return begin()[0]; }
   reference back() { return end()[-1]; }
@@ -95,7 +91,7 @@ public:
   ///
   /// @return Const reference to element at the index.
   ///
-  [[nodiscard]] const_reference operator[](const size_type index) const noexcept
+  [[nodiscard]] constexpr const_reference operator[](const size_type index) const noexcept
   {
     return array_[index];
   }
@@ -107,7 +103,7 @@ public:
   ///
   /// @return Reference to element at the index.
   ///
-  [[nodiscard]] reference operator[](const size_type index) noexcept
+  [[nodiscard]] constexpr reference operator[](const size_type index) noexcept
   {
     return array_[index];
   }
@@ -116,7 +112,7 @@ public:
   ///
   /// Default constructor
   ///
-  FastVector()
+  constexpr FastVector() noexcept
     : array_(nullptr), size_(0), capacity_(0)
   {
   }
@@ -124,7 +120,7 @@ public:
   ///
   /// Destructor
   ///
-  ~FastVector()
+  ~FastVector() noexcept
   {
     if (array_)
     {
@@ -229,9 +225,10 @@ public:
   /// Best case O(n) operation, where n is the difference between current size and old size.
   /// Worst case O(n) operation, where n is the size of the vector.
   ///
-  /// @tparam Args
-  /// @param new_size
-  /// @param args
+  /// @tparam Args Argument types for new construction.
+  ///
+  /// @param new_size New size of the vector
+  /// @param args Arguments used for construction if needed.
   ///
   template<typename... Args>
   requires std::is_constructible_v<Type, Args...>

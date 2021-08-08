@@ -5,14 +5,31 @@
 
 namespace genebits::engine
 {
+///
+/// Class that holds instances of managers for the engine.
+///
+/// This class is usually provided as a singleton.
+///
 class Environment final
 {
 public:
+  ///
+  /// Returns the event bus for the environment. The event bus is used to
+  /// subscribe event handlers to and publish events.
+  ///
+  /// @return Environment event bus.
+  ///
   [[nodiscard]] EventBus& GetEventBus() noexcept
   {
     return event_bus_;
   }
 
+  ///
+  /// Returns the event bus for the environment. The event bus is used to
+  /// subscribe event handlers to and publish events.
+  ///
+  /// @return Environment event bus.
+  ///
   [[nodiscard]] const EventBus& GetEventBus() const noexcept
   {
     return event_bus_;
@@ -27,7 +44,13 @@ namespace details
   extern Environment environment;
 }
 
-[[maybe_unused]] inline Environment& GetEnvironment()
+///
+/// Returns the singleton instance of the environment. The environment holds various
+/// managers for the engine.
+///
+/// @return Global singleton environment instance.
+///
+inline Environment& GetEnvironment()
 {
   return details::environment;
 }

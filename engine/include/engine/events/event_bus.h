@@ -29,7 +29,7 @@ namespace
     ///
     /// @param event Event to propagate.
     ///
-    void Propagate(const Event& event)
+    void Propagate(const Event& event) noexcept
     {
       for (EventHandler<Event>& handler : handlers_)
       {
@@ -42,7 +42,7 @@ namespace
     ///
     /// @param handler Handler to add.
     ///
-    void Add(EventHandler<Event> handler)
+    void Add(EventHandler<Event> handler) noexcept
     {
       handlers_.PushBack(handler);
     }
@@ -52,7 +52,7 @@ namespace
     ///
     /// @param handler Handle to remove
     ///
-    void Remove(EventHandler<Event> handler)
+    void Remove(EventHandler<Event> handler) noexcept
     {
       handlers_.Erase(std::ranges::find(handlers_, handler));
     }
@@ -62,7 +62,7 @@ namespace
     ///
     /// @return Amount of stored handlers.
     ///
-    [[nodiscard]] size_t Count() const
+    [[nodiscard]] size_t Count() const noexcept
     {
       return handlers_.Size();
     }
@@ -90,7 +90,7 @@ public:
   /// @param event Event to publish.
   ///
   template<typename Event>
-  void Publish(const Event& event)
+  void Publish(const Event& event) noexcept
   {
     Assure<Event>()->Propagate(event);
   }
@@ -103,7 +103,7 @@ public:
   /// @param handler Handler of the event.
   ///
   template<typename Event>
-  void Subscribe(EventHandler<Event> handler)
+  void Subscribe(EventHandler<Event> handler) noexcept
   {
     Assure<Event>()->Add(handler);
   }
@@ -118,7 +118,7 @@ public:
   /// @param handler Handler of the event.
   ///
   template<typename Event>
-  void Unsubscribe(EventHandler<Event> handler)
+  void Unsubscribe(EventHandler<Event> handler) noexcept
   {
     Assure<Event>()->Remove(handler);
   }
