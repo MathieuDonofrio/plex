@@ -5,6 +5,7 @@
 #include <mutex>
 
 #include "engine/events/event_handler.h"
+#include "engine/util/erased_ptr.h"
 #include "engine/util/fast_vector.h"
 #include "engine/util/meta.h"
 #include "engine/util/type_map.h"
@@ -149,20 +150,20 @@ private:
   /// @return Event handler pool for the event type.
   ///
   template<typename Event>
-  std::shared_ptr<EventHandlerPool<Event, HandlersAllocator>> Assure() noexcept
+  EventHandlerPool<Event, HandlersAllocator>* Assure() noexcept
   {
     auto& pool = pools_.Assure<Event>();
 
-    if (!pool)
+    if (!pool) [[unlikely]]
     {
-      pool = std::static_pointer_cast<void>(std::make_shared<EventHandlerPool<Event, HandlersAllocator>>());
+      pool.Reset(new EventHandlerPool<Event, HandlersAllocator>());
     }
 
-    return std::static_pointer_cast<EventHandlerPool<Event, HandlersAllocator>>(pool);
+    return pool.Cast<EventHandlerPool<Event, HandlersAllocator>>();
   }
 
 private:
-  TypeMap<std::shared_ptr<void>, TypeMapAllocator> pools_;
+  TypeMap<ErasedPtr<void>, TypeMapAllocator> pools_;
 };
 
 } // namespace genebits::engine
