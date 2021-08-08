@@ -3,9 +3,9 @@
 
 #include <memory>
 #include <mutex>
-#include <vector>
 
 #include "engine/events/event_handler.h"
+#include "engine/util/fast_vector.h"
 #include "engine/util/meta.h"
 #include "engine/util/type_map.h"
 
@@ -27,31 +27,28 @@ namespace
 
     void Add(EventHandler<Event> handler)
     {
-      handlers_.push_back(handler);
+      handlers_.PushBack(handler);
     }
 
     void Remove(EventHandler<Event> handler)
     {
-      auto it = std::find(handlers_.begin(), handlers_.end(), handler);
-
-      [[likely]] if (it != handlers_.end())
+      for (size_t i = 0; i != handlers_.Size(); i++)
       {
-        [[likely]] if (handlers_.size() > 1)
+        if (handlers_[i] == handler)
         {
-          std::iter_swap(it, handlers_.end() - 1);
-          handlers_.pop_back();
+          handlers_.Erase(i);
+          return;
         }
-        else handlers_.clear();
       }
     }
 
     [[nodiscard]] size_t Count() const
     {
-      return handlers_.size();
+      return handlers_.Size();
     }
 
   private:
-    std::vector<EventHandler<Event>> handlers_;
+    FastVector<EventHandler<Event>> handlers_;
   };
 } // namespace
 

@@ -1,12 +1,20 @@
 #ifndef GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 #define GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 
-#include <vector>
-
+#include "engine/util/fast_vector.h"
 #include "engine/util/meta.h"
 
 namespace genebits::engine
 {
+
+///
+/// Concept that determines if the type can be used as the value of a type map.
+///
+/// @tparam Type The type to check
+///
+template<typename Type>
+concept TypeMapValueType = FastVectorType<Type>;
+
 ///
 /// Map used to map types to values where the type is the key.
 ///
@@ -16,7 +24,7 @@ namespace genebits::engine
 ///
 /// @tparam Value The value to map types to.
 ///
-template<typename Value>
+template<TypeMapValueType Value>
 class TypeMap
 {
 public:
@@ -37,9 +45,9 @@ public:
   {
     const size_t index = Key<Type>();
 
-    if (values_.size() <= index)
+    if (values_.Size() <= index) [[unlikely]]
     {
-      values_.resize(index + 1);
+      values_.Resize(index + 1);
     }
 
     return values_[index];
@@ -82,7 +90,7 @@ private:
   }
 
 private:
-  std::vector<Value> values_;
+  FastVector<Value> values_;
 };
 
 } // namespace genebits::engine

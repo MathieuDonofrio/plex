@@ -24,8 +24,6 @@ namespace
 
 static void EventBus_SubscribeUnsubscribe(benchmark::State& state)
 {
-  EventBus bus;
-
   TestListener listener;
 
   EventHandler<TestEvent> handler;
@@ -33,13 +31,16 @@ static void EventBus_SubscribeUnsubscribe(benchmark::State& state)
 
   for (auto _ : state)
   {
+    EventBus bus;
+
     bus.Subscribe(handler);
     bus.Unsubscribe(handler);
+
+    benchmark::DoNotOptimize(bus);
   }
 
   benchmark::DoNotOptimize(listener);
   benchmark::DoNotOptimize(handler);
-  benchmark::DoNotOptimize(bus);
 }
 
 BENCHMARK(EventBus_SubscribeUnsubscribe);
@@ -47,8 +48,6 @@ BENCHMARK(EventBus_SubscribeUnsubscribe);
 static void EventBus_SubscribeUnsubscribe_10(benchmark::State& state)
 {
   constexpr size_t cAmount = 10;
-
-  EventBus bus;
 
   TestListener listeners[cAmount];
   EventHandler<TestEvent> handlers[cAmount];
@@ -60,6 +59,8 @@ static void EventBus_SubscribeUnsubscribe_10(benchmark::State& state)
 
   for (auto _ : state)
   {
+    EventBus bus;
+
     for (size_t i = 0; i < cAmount; i++)
     {
       bus.Subscribe(handlers[i]);
@@ -69,9 +70,9 @@ static void EventBus_SubscribeUnsubscribe_10(benchmark::State& state)
     {
       bus.Unsubscribe(handlers[i]);
     }
-  }
 
-  benchmark::DoNotOptimize(bus);
+    benchmark::DoNotOptimize(bus);
+  }
 
   for (size_t i = 0; i < cAmount; i++)
   {
@@ -86,8 +87,6 @@ static void EventBus_SubscribeUnsubscribe_100(benchmark::State& state)
 {
   constexpr size_t cAmount = 100;
 
-  EventBus bus;
-
   TestListener listeners[cAmount];
   EventHandler<TestEvent> handlers[cAmount];
 
@@ -98,6 +97,8 @@ static void EventBus_SubscribeUnsubscribe_100(benchmark::State& state)
 
   for (auto _ : state)
   {
+    EventBus bus;
+
     for (size_t i = 0; i < cAmount; i++)
     {
       bus.Subscribe(handlers[i]);
@@ -107,9 +108,9 @@ static void EventBus_SubscribeUnsubscribe_100(benchmark::State& state)
     {
       bus.Unsubscribe(handlers[i]);
     }
-  }
 
-  benchmark::DoNotOptimize(bus);
+    benchmark::DoNotOptimize(bus);
+  }
 
   for (size_t i = 0; i < cAmount; i++)
   {

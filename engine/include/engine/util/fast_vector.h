@@ -42,8 +42,6 @@ public:
   using pointer = Type*;
   using const_pointer = const Type*;
 
-  using optimal_const_ret = std::conditional_t<cTypePassedByValue, value_type, const_reference>;
-
   // Forward iterator creation methods.
   iterator begin() { return array_; }
   const_iterator begin() const { return array_; }
@@ -64,11 +62,11 @@ public:
   const_pointer data() const { return const_pointer(begin()); }
 
   reference front() { return begin()[0]; }
-  optimal_const_ret front() const { return begin()[0]; }
+  const_reference front() const { return begin()[0]; }
   reference back() { return end()[-1]; }
-  optimal_const_ret back() const { return end()[-1]; }
+  const_reference back() const { return end()[-1]; }
 
-  [[nodiscard]] optimal_const_ret operator[](const size_type index) const noexcept
+  [[nodiscard]] const_reference operator[](const size_type index) const noexcept
   {
     return array_[index];
   }
