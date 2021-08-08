@@ -42,7 +42,7 @@ public:
   ///
   /// @param bus The bus to subscribe all event handlers to.
   ///
-  constexpr Listener(EventBus& bus) noexcept
+  constexpr explicit Listener(EventBus& bus) noexcept
     : bus_(&bus)
   {
     (bus_->Subscribe(GetEventHandler<Events>()), ...);

@@ -13,7 +13,7 @@ namespace genebits::engine
 /// @tparam Type The type to check
 ///
 template<typename Type>
-concept TypeMapValueType = std::is_destructible_v<Type> && FastVectorType<Type>;
+concept TypeMapValueType = std::is_default_constructible_v<Type> && FastVectorType<Type>;
 
 ///
 /// Map used to map types to values where the type is the key.
