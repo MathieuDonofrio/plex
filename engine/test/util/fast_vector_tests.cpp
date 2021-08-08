@@ -1,11 +1,11 @@
 #include "engine/util/fast_vector.h"
 
-#include <vector>
-
 #include <gtest/gtest.h>
 
 namespace genebits::engine::tests
 {
+static_assert(sizeof(FastVector<size_t>) == 16, "The size of FastVector should not need to be bigger than 16 bytes");
+
 TEST(FastVector_Tests, Empty_Trivial_AfterDefaultConstruction_True)
 {
   FastVector<double> vector;
@@ -182,6 +182,102 @@ TEST(FastVector_Tests, PopBack_Trivial_Single_SizeDecrease)
   ASSERT_TRUE(vector.Empty());
 }
 
+TEST(FastVector_Tests, Clear_Trivial_Empty)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(10);
+  vector.PushBack(11);
+
+  vector.Clear();
+
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_TRUE(vector.Empty());
+}
+
+TEST(FastVector_Tests, Clear_NonTrivial_Empty)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("10");
+  vector.PushBack("11");
+
+  vector.Clear();
+
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_TRUE(vector.Empty());
+}
+
+TEST(FastVector_Tests, Reserve_Trivial_Empty_CorrectCapacity)
+{
+  FastVector<double> vector;
+
+  vector.Reserve(10);
+
+  ASSERT_EQ(vector.Capacity(), 10);
+}
+
+TEST(FastVector_Tests, Reserve_NonTrivial_Empty_CorrectCapacity)
+{
+  FastVector<std::string> vector;
+
+  vector.Reserve(10);
+
+  ASSERT_EQ(vector.Capacity(), 10);
+}
+
+TEST(FastVector_Tests, Reserve_Trivial_Increase_CorrectCapacity)
+{
+  FastVector<double> vector;
+
+  vector.Reserve(5);
+
+  ASSERT_EQ(vector.Capacity(), 5);
+
+  vector.Reserve(10);
+
+  ASSERT_EQ(vector.Capacity(), 10);
+}
+
+TEST(FastVector_Tests, Reserve_NonTrivial_Increase_CorrectCapacity)
+{
+  FastVector<std::string> vector;
+
+  vector.Reserve(5);
+
+  ASSERT_EQ(vector.Capacity(), 5);
+
+  vector.Reserve(10);
+
+  ASSERT_EQ(vector.Capacity(), 10);
+}
+
+TEST(FastVector_Tests, Reserve_Trivial_Decrease_DoNothing)
+{
+  FastVector<double> vector;
+
+  vector.Reserve(10);
+
+  ASSERT_EQ(vector.Capacity(), 10);
+
+  vector.Reserve(5);
+
+  ASSERT_EQ(vector.Capacity(), 10);
+}
+
+TEST(FastVector_Tests, Reserve_NonTrivial_Decrease_DoNothing)
+{
+  FastVector<std::string> vector;
+
+  vector.Reserve(10);
+
+  ASSERT_EQ(vector.Capacity(), 10);
+
+  vector.Reserve(5);
+
+  ASSERT_EQ(vector.Capacity(), 10);
+}
+
 TEST(FastVector_Tests, PopBack_NonTrivial_Single_SizeDecrease)
 {
   FastVector<std::string> vector;
@@ -315,6 +411,228 @@ TEST(FastVector_Tests, PopBack_NonTrivial_PushPushPopPush_CorrectValues)
   ASSERT_EQ(vector[1], std::string { "3" });
 }
 
+TEST(FastVector_Tests, Erase_Trivial_Single_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.Erase(0);
+
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_TRUE(vector.Empty());
+}
+
+TEST(FastVector_Tests, Erase_NonTrivial_Single_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.Erase(0);
+
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_TRUE(vector.Empty());
+}
+
+TEST(FastVector_Tests, Erase_Trivial_Double_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+  vector.Erase(1);
+
+  ASSERT_EQ(vector.Size(), 1);
+  ASSERT_FALSE(vector.Empty());
+  ASSERT_EQ(vector[0], 1);
+
+  vector.Erase(0);
+
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_TRUE(vector.Empty());
+}
+
+TEST(FastVector_Tests, Erase_NonTrivial_Double_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+  vector.Erase(1);
+
+  ASSERT_EQ(vector.Size(), 1);
+  ASSERT_FALSE(vector.Empty());
+  ASSERT_EQ(vector[0], "1");
+
+  vector.Erase(0);
+
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_TRUE(vector.Empty());
+}
+
+TEST(FastVector_Tests, Erase_Trivial_PushPushErase_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+  vector.Erase(0);
+
+  ASSERT_EQ(vector.Size(), 1);
+  ASSERT_FALSE(vector.Empty());
+  ASSERT_EQ(vector[0], 2);
+}
+
+TEST(FastVector_Tests, Erase_NonTrivial_PushPushErase_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+  vector.Erase(0);
+
+  ASSERT_EQ(vector.Size(), 1);
+  ASSERT_FALSE(vector.Empty());
+  ASSERT_EQ(vector[0], "2");
+}
+
+TEST(FastVector_Tests, Resize_Trivial_Empty_SizeIncrease)
+{
+  constexpr size_t cAmount = 10;
+
+  FastVector<double> vector;
+
+  vector.Resize(cAmount);
+
+  ASSERT_EQ(vector.Size(), cAmount);
+  ASSERT_FALSE(vector.Empty());
+}
+
+TEST(FastVector_Tests, Resize_NonTrivial_Empty_SizeIncrease)
+{
+  constexpr size_t cAmount = 10;
+
+  FastVector<std::string> vector;
+
+  vector.Resize(cAmount);
+
+  ASSERT_EQ(vector.Size(), cAmount);
+  ASSERT_FALSE(vector.Empty());
+}
+
+TEST(FastVector_Tests, Resize_Trivial_Empty_DefaultValues)
+{
+  constexpr size_t cAmount = 10;
+
+  FastVector<double> vector;
+
+  vector.Resize(cAmount);
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    ASSERT_EQ(vector[i], double {});
+  }
+}
+
+TEST(FastVector_Tests, Resize_NonTrivial_Empty_DefaultValues)
+{
+  constexpr size_t cAmount = 10;
+
+  FastVector<std::string> vector;
+
+  vector.Resize(cAmount);
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    ASSERT_EQ(vector[i], std::string {});
+  }
+}
+
+TEST(FastVector_Tests, Resize_Trivial_Increase_CorrectValues)
+{
+  constexpr size_t cAmount = 10;
+
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  vector.Resize(cAmount);
+
+  ASSERT_EQ(vector.Size(), cAmount);
+
+  ASSERT_EQ(vector[0], 1);
+  ASSERT_EQ(vector[1], 2);
+
+  for (size_t i = 2; i < cAmount; i++)
+  {
+    ASSERT_EQ(vector[i], double {});
+  }
+}
+
+TEST(FastVector_Tests, Resize_NonTrivial_Increase_CorrectValues)
+{
+  constexpr size_t cAmount = 10;
+
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+
+  vector.Resize(cAmount);
+
+  ASSERT_EQ(vector.Size(), cAmount);
+
+  ASSERT_EQ(vector[0], std::string { "1" });
+  ASSERT_EQ(vector[1], std::string { "2" });
+
+  for (size_t i = 2; i < cAmount; i++)
+  {
+    ASSERT_EQ(vector[i], std::string {});
+  }
+}
+
+TEST(FastVector_Tests, Resize_Trivial_Decrease_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+  vector.PushBack(3);
+
+  vector.Resize(2);
+
+  ASSERT_EQ(vector.Size(), 2);
+  ASSERT_EQ(vector[0], 1);
+  ASSERT_EQ(vector[1], 2);
+
+  vector.PushBack(4);
+  vector.Resize(1);
+
+  ASSERT_EQ(vector.Size(), 1);
+  ASSERT_EQ(vector[0], 1);
+}
+
+TEST(FastVector_Tests, Resize_NonTrivial_Decrease_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+  vector.PushBack("3");
+
+  vector.Resize(2);
+
+  ASSERT_EQ(vector.Size(), 2);
+  ASSERT_EQ(vector[0], std::string { "1" });
+  ASSERT_EQ(vector[1], std::string { "2" });
+
+  vector.PushBack("4");
+  vector.Resize(1);
+
+  ASSERT_EQ(vector.Size(), 1);
+  ASSERT_EQ(vector[0], std::string { "1" });
+}
+
 TEST(FastVector_Tests, BuiltInForEach_Trivial_IterateMany_CorrectValues)
 {
   constexpr size_t cAmount = 100;
@@ -446,6 +764,150 @@ TEST(FastVector_Tests, Back_Trivial_CorrectValue)
   }
 
   ASSERT_EQ(vector.back(), cAmount - 1);
+}
+
+TEST(FastVector_Tests, MoveConstructor_Trivial_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  FastVector<double> copy { std::move(vector) };
+
+  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_EQ(vector.Capacity(), 0);
+
+  ASSERT_EQ(copy[0], 1);
+  ASSERT_EQ(copy[1], 2);
+}
+
+TEST(FastVector_Tests, MoveConstructor_NonTrivial_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+
+  FastVector<std::string> copy { std::move(vector) };
+
+  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_EQ(vector.Capacity(), 0);
+
+  ASSERT_EQ(copy[0], std::string { "1" });
+  ASSERT_EQ(copy[1], std::string { "2" });
+}
+
+TEST(FastVector_Tests, MoveAssignment_Trivial_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  FastVector<double> copy = std::move(vector);
+
+  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_EQ(vector.Capacity(), 0);
+
+  ASSERT_EQ(copy[0], 1);
+  ASSERT_EQ(copy[1], 2);
+}
+
+TEST(FastVector_Tests, MoveAssignment_NonTrivial_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+
+  FastVector<std::string> copy = std::move(vector);
+
+  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(vector.Size(), 0);
+  ASSERT_EQ(vector.Capacity(), 0);
+
+  ASSERT_EQ(copy[0], std::string { "1" });
+  ASSERT_EQ(copy[1], std::string { "2" });
+}
+
+TEST(FastVector_Tests, CopyConstructor_Trivial_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  FastVector<double> copy { vector };
+
+  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(copy.Capacity(), 2);
+  ASSERT_EQ(vector.Size(), 2);
+
+  ASSERT_EQ(vector[0], 1);
+  ASSERT_EQ(vector[1], 2);
+  ASSERT_EQ(copy[0], 1);
+  ASSERT_EQ(copy[1], 2);
+}
+
+TEST(FastVector_Tests, CopyConstructor_NonTrivial_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+
+  FastVector<std::string> copy { vector };
+
+  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(copy.Capacity(), 2);
+  ASSERT_EQ(vector.Size(), 2);
+
+  ASSERT_EQ(vector[0], std::string { "1" });
+  ASSERT_EQ(vector[1], std::string { "2" });
+  ASSERT_EQ(copy[0], std::string { "1" });
+  ASSERT_EQ(copy[1], std::string { "2" });
+}
+
+TEST(FastVector_Tests, CopyAssignment_Trivial_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  FastVector<double> copy = vector;
+
+  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(copy.Capacity(), 2);
+  ASSERT_EQ(vector.Size(), 2);
+
+  ASSERT_EQ(vector[0], 1);
+  ASSERT_EQ(vector[1], 2);
+  ASSERT_EQ(copy[0], 1);
+  ASSERT_EQ(copy[1], 2);
+}
+
+TEST(FastVector_Tests, CopyAssignment_NonTrivial_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+
+  FastVector<std::string> copy = vector;
+
+  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(copy.Capacity(), 2);
+  ASSERT_EQ(vector.Size(), 2);
+
+  ASSERT_EQ(vector[0], std::string { "1" });
+  ASSERT_EQ(vector[1], std::string { "2" });
+  ASSERT_EQ(copy[0], std::string { "1" });
+  ASSERT_EQ(copy[1], std::string { "2" });
 }
 
 } // namespace genebits::engine::tests

@@ -19,140 +19,15 @@ template<typename Type>
 concept FastVectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
 
 template<FastVectorType Type, Allocator AllocatorImpl = Mallocator>
-class FastVector
+class FastVector : private AllocatorImpl
 {
-public:
+private:
   static constexpr bool cSmallType = sizeof(Type) <= 2 * sizeof(void*);
   static constexpr bool cTypePassedByValue = cSmallType && std::is_trivially_copy_constructible_v<Type>;
 
-  FastVector()
-    : array_(nullptr),
-      size_(0), capacity_(0)
-  {
-  }
-
-  ~FastVector()
-  {
-    Destroy();
-
-    allocator_.Deallocate(Block { reinterpret_cast<char*>(array_), capacity_ });
-  }
-
-  void PushBack(const Type& value) noexcept
-  {
-    PrepareInsertion();
-    new (array_ + size_) Type(value);
-    ++size_;
-  }
-
-  void PushBack(Type&& value) noexcept
-  {
-    PrepareInsertion();
-    new (array_ + size_) Type(std::move(value));
-    ++size_;
-  }
-
-  void PopBack() noexcept
-  {
-    array_[--size_].~Type();
-  }
-
-  [[nodiscard]] constexpr size_t Size() const noexcept
-  {
-    return size_;
-  }
-
-  [[nodiscard]] constexpr size_t Capacity() const noexcept
-  {
-    return capacity_;
-  }
-
-  [[nodiscard]] constexpr bool Empty() const noexcept
-  {
-    return size_ == 0;
-  }
-
-protected:
-  void Grow(const uint32_t min_capacity) noexcept
-  {
-    const size_t current_capacity_bytes = sizeof(Type) * capacity_;
-    const size_t min_capacity_bytes = sizeof(Type) * min_capacity;
-
-    if constexpr (!std::is_trivially_copy_constructible_v<Type> && !std::is_trivially_move_constructible_v<Type>)
-    {
-      Block block = allocator_.Allocate(min_capacity_bytes);
-
-      if (array_)
-      {
-        for (uint32_t i = 0; i != size_; i++)
-        {
-          Type* old_element = array_ + i;
-          Type* new_element = reinterpret_cast<Type*>(block.ptr) + i;
-
-          if constexpr (cTypePassedByValue)
-          {
-            new (new_element) Type(*old_element);
-          }
-          else if constexpr (std::is_move_constructible_v<Type>)
-          {
-            new (new_element) Type(std::move(*old_element));
-          }
-          else
-          {
-            new (new_element) Type(*old_element);
-          }
-
-          if constexpr (!std::is_trivially_destructible_v<Type>)
-          {
-            old_element->~Type();
-          }
-        }
-
-        allocator_.Deallocate(Block { reinterpret_cast<char*>(array_), current_capacity_bytes });
-      }
-
-      array_ = reinterpret_cast<Type*>(block.ptr);
-      capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
-    }
-    else
-    {
-      Block block { reinterpret_cast<char*>(array_), current_capacity_bytes };
-
-      allocator_.Reallocate(block, min_capacity_bytes);
-
-      array_ = reinterpret_cast<Type*>(block.ptr);
-      capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
-    }
-  }
-
-  void GoldenGrow() noexcept
-  {
-    // We want the growth rate to be close to the golden ratio (~1.618). The golden ration
-    // maximizes reuse and is the optimal reallocation size. For simplicity and calculation
-    // speed we use 1.5 and small constant amount.
-    const uint32_t new_capacity = capacity_ + (capacity_ >> 1) + 8; // capacity * 1.5 + 8
-
-    Grow(new_capacity);
-  }
-
-  void PrepareInsertion() noexcept
-  {
-    if (size_ == capacity_) [[unlikely]]
-      GoldenGrow();
-  }
-
-  void Destroy() noexcept
-  {
-    if constexpr (!std::is_trivially_destructible_v<Type>)
-    {
-      for (uint32_t i = 0; i < size_; i++)
-      {
-        array_[i].~Type();
-      }
-    }
-  }
-
 public:
+  using iterator_category = std::random_access_iterator_tag;
+
   using size_type = size_t;
   using difference_type = ptrdiff_t;
   using value_type = Type;
@@ -203,14 +78,253 @@ public:
     return array_[index];
   }
 
+public:
+  FastVector()
+    : array_(nullptr),
+      size_(0), capacity_(0)
+  {
+  }
+
+  ~FastVector()
+  {
+    DestroyAll();
+    Deallocate();
+  }
+
+  void PushBack(const Type& value) noexcept
+  {
+    PrepareInsertion();
+    new (array_ + size_) Type(value);
+    ++size_;
+  }
+
+  void PushBack(Type&& value) noexcept
+  {
+    PrepareInsertion();
+    new (array_ + size_) Type(std::move(value));
+    ++size_;
+  }
+
+  void PopBack() noexcept
+  {
+    --size_;
+    array_[size_].~Type();
+  }
+
+  void Erase(size_t index) noexcept
+  {
+    if (size_ == 1) [[unlikely]]
+    {
+      array_[index].~Type();
+      size_ = 0;
+    }
+    else [[likely]]
+    {
+      --size_;
+      array_[index] = std::move(array_[size_]);
+    }
+  }
+
+  template<typename... Args>
+  requires std::is_constructible_v<Type, Args...>
+  void Resize(const size_t new_size, Args&&... args) noexcept
+  {
+    if (static_cast<uint32_t>(new_size) > capacity_)
+    {
+      Grow(static_cast<uint32_t>(new_size));
+    }
+
+    if (static_cast<uint32_t>(new_size) < size_)
+    {
+      for (size_t i = size_; i != new_size; i--)
+      {
+        array_[i].~Type();
+      }
+    }
+    else
+    {
+      for (size_t i = size_; i != new_size; i++)
+      {
+        new (array_ + i) Type(std::forward<Args>(args)...);
+      }
+    }
+
+    size_ = static_cast<uint32_t>(new_size);
+  }
+
+  void Reserve(const size_t min_capacity) noexcept
+  {
+    if (static_cast<uint32_t>(min_capacity) > capacity_)
+    {
+      Grow(static_cast<uint32_t>(min_capacity));
+    }
+  }
+
+  void Clear() noexcept
+  {
+    DestroyAll();
+
+    size_ = 0;
+  }
+
+  [[nodiscard]] constexpr size_t Size() const noexcept
+  {
+    return size_;
+  }
+
+  [[nodiscard]] constexpr size_t Capacity() const noexcept
+  {
+    return capacity_;
+  }
+
+  [[nodiscard]] constexpr bool Empty() const noexcept
+  {
+    return size_ == 0;
+  }
+
+public:
+  FastVector(const FastVector<Type, AllocatorImpl>& other) noexcept
+  {
+    CopyFrom(other);
+  }
+
+  constexpr FastVector(FastVector<Type, AllocatorImpl>&& other) noexcept
+    : array_(other.array_), size_(other.size_), capacity_(other.capacity_)
+  {
+    other.array_ = nullptr;
+    other.size_ = 0;
+    other.capacity_ = 0;
+  }
+
+  constexpr FastVector& operator=(FastVector<Type, AllocatorImpl>&& other) noexcept
+  {
+    array_ = other.array_;
+    other.array_ = nullptr;
+    size_ = other.size_;
+    other.size_ = 0;
+    capacity_ = other.capacity_;
+    other.capacity_ = 0;
+  }
+
+  FastVector& operator=(const FastVector<Type, AllocatorImpl>& other) noexcept
+  {
+    if (array_)
+    {
+      DestroyAll();
+      Deallocate();
+    }
+
+    CopyFrom(other);
+  }
+
+protected:
+  void Grow(const uint32_t min_capacity) noexcept
+  {
+    const size_t current_capacity_bytes = sizeof(Type) * capacity_;
+    const size_t min_capacity_bytes = sizeof(Type) * min_capacity;
+
+    if constexpr (!std::is_trivially_copy_constructible_v<Type> && !std::is_trivially_move_constructible_v<Type>)
+    {
+      Block block = AllocatorImpl::Allocate(min_capacity_bytes);
+
+      if (array_)
+      {
+        for (uint32_t i = 0; i != size_; i++)
+        {
+          Type* old_element = array_ + i;
+          Type* new_element = reinterpret_cast<Type*>(block.ptr) + i;
+
+          if constexpr (cTypePassedByValue)
+          {
+            new (new_element) Type(*old_element);
+          }
+          else if constexpr (std::is_move_constructible_v<Type>)
+          {
+            new (new_element) Type(std::move(*old_element));
+          }
+          else
+          {
+            new (new_element) Type(*old_element);
+          }
+
+          if constexpr (!std::is_trivially_destructible_v<Type>)
+          {
+            old_element->~Type();
+          }
+        }
+
+        AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), current_capacity_bytes });
+      }
+
+      array_ = reinterpret_cast<Type*>(block.ptr);
+      capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
+    }
+    else
+    {
+      Block block { reinterpret_cast<char*>(array_), current_capacity_bytes };
+
+      AllocatorImpl::Reallocate(block, min_capacity_bytes);
+
+      array_ = reinterpret_cast<Type*>(block.ptr);
+      capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
+    }
+  }
+
+  void GoldenGrow() noexcept
+  {
+    // We want the growth rate to be close to the golden ratio (~1.618). The golden ration
+    // maximizes reuse and is the optimal reallocation size. For simplicity and calculation
+    // speed we use 1.5 and small constant amount.
+    const uint32_t new_capacity = capacity_ + (capacity_ >> 1) + 8; // capacity * 1.5 + 8
+
+    Grow(new_capacity);
+  }
+
+  void PrepareInsertion() noexcept
+  {
+    if (size_ == capacity_) [[unlikely]]
+      GoldenGrow();
+  }
+
+  void DestroyAll() noexcept
+  {
+    if constexpr (!std::is_trivially_destructible_v<Type>)
+    {
+      for (auto& element : *this)
+      {
+        element.~Type();
+      }
+    }
+  }
+
+  void Deallocate() noexcept
+  {
+    AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), capacity_ });
+  }
+
+  template<Allocator OtherAllocator>
+  void CopyFrom(const FastVector<Type, OtherAllocator>& other) noexcept
+  {
+    const Block block = AllocatorImpl::Allocate(sizeof(Type) * other.size_);
+
+    array_ = reinterpret_cast<Type*>(block.ptr);
+    size_ = other.size_;
+    capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
+
+    for (uint32_t i = 0; i != size_; i++)
+    {
+      const Type* old_element = other.array_ + i;
+
+      new (array_ + i) Type(*old_element);
+    }
+  }
+
 private:
   Type* array_;
 
   // We use 32 bit size & capacity to reduce the size of the vector.
   uint32_t size_;
   uint32_t capacity_;
-
-  [[no_unique_address]] AllocatorImpl allocator_;
 };
 
 } // namespace genebits::engine
