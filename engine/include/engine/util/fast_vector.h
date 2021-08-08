@@ -187,18 +187,34 @@ public:
   ///
   /// @param value Element to add
   ///
-  void Erase(size_t index) noexcept
+  void Erase(iterator it) noexcept
   {
     if (size_ == 1) [[unlikely]]
     {
-      array_[index].~Type();
+      it->~Type();
       size_ = 0;
     }
     else [[likely]]
     {
       --size_;
-      array_[index] = std::move(array_[size_]);
+      *it = std::move(array_[size_]);
     }
+  }
+
+  ///
+  /// Remove the element at the specified index. Uses swap and pop technique.
+  ///
+  /// @warning
+  ///     This changes the order of elements by swapping the element at the end of
+  ///     the vector with the one at the erased index.
+  ///
+  /// Always O(1) operation.
+  ///
+  /// @param value Element to add
+  ///
+  void EraseAt(size_t index) noexcept
+  {
+    Erase(array_ + index);
   }
 
   ///

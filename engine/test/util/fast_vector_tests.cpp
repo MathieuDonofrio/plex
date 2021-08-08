@@ -411,62 +411,88 @@ TEST(FastVector_Tests, PopBack_NonTrivial_PushPushPopPush_CorrectValues)
   ASSERT_EQ(vector[1], std::string { "3" });
 }
 
-TEST(FastVector_Tests, Erase_Trivial_Single_CorrectValues)
+TEST(FastVector_Tests, EraseAt_Trivial_Single_CorrectValues)
 {
   FastVector<double> vector;
 
   vector.PushBack(1);
-  vector.Erase(0);
+  vector.EraseAt(0);
 
   ASSERT_EQ(vector.Size(), 0);
   ASSERT_TRUE(vector.Empty());
 }
 
-TEST(FastVector_Tests, Erase_NonTrivial_Single_CorrectValues)
+TEST(FastVector_Tests, EraseAt_NonTrivial_Single_CorrectValues)
 {
   FastVector<std::string> vector;
 
   vector.PushBack("1");
-  vector.Erase(0);
+  vector.EraseAt(0);
 
   ASSERT_EQ(vector.Size(), 0);
   ASSERT_TRUE(vector.Empty());
 }
 
-TEST(FastVector_Tests, Erase_Trivial_Double_CorrectValues)
+TEST(FastVector_Tests, EraseAt_Trivial_Double_CorrectValues)
 {
   FastVector<double> vector;
 
   vector.PushBack(1);
   vector.PushBack(2);
-  vector.Erase(1);
+  vector.EraseAt(1);
 
   ASSERT_EQ(vector.Size(), 1);
   ASSERT_FALSE(vector.Empty());
   ASSERT_EQ(vector[0], 1);
 
-  vector.Erase(0);
+  vector.EraseAt(0);
 
   ASSERT_EQ(vector.Size(), 0);
   ASSERT_TRUE(vector.Empty());
 }
 
-TEST(FastVector_Tests, Erase_NonTrivial_Double_CorrectValues)
+TEST(FastVector_Tests, EraseAt_NonTrivial_Double_CorrectValues)
 {
   FastVector<std::string> vector;
 
   vector.PushBack("1");
   vector.PushBack("2");
-  vector.Erase(1);
+  vector.EraseAt(1);
 
   ASSERT_EQ(vector.Size(), 1);
   ASSERT_FALSE(vector.Empty());
   ASSERT_EQ(vector[0], "1");
 
-  vector.Erase(0);
+  vector.EraseAt(0);
 
   ASSERT_EQ(vector.Size(), 0);
   ASSERT_TRUE(vector.Empty());
+}
+
+TEST(FastVector_Tests, EraseAt_Trivial_PushPushErase_CorrectValues)
+{
+  FastVector<double> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+  vector.EraseAt(0);
+
+  ASSERT_EQ(vector.Size(), 1);
+  ASSERT_FALSE(vector.Empty());
+  ASSERT_EQ(vector[0], 2);
+}
+
+TEST(FastVector_Tests, EraseAt_NonTrivial_PushPushErase_CorrectValues)
+{
+  FastVector<std::string> vector;
+
+  vector.PushBack("1");
+  vector.PushBack("2");
+  vector.EraseAt(0);
+
+  ASSERT_EQ(vector.Size(), 1);
+  ASSERT_FALSE(vector.Empty());
+  ASSERT_EQ(vector[0], "2");
 }
 
 TEST(FastVector_Tests, Erase_Trivial_PushPushErase_CorrectValues)
@@ -475,7 +501,8 @@ TEST(FastVector_Tests, Erase_Trivial_PushPushErase_CorrectValues)
 
   vector.PushBack(1);
   vector.PushBack(2);
-  vector.Erase(0);
+
+  vector.Erase(std::find(vector.begin(), vector.end(), 1));
 
   ASSERT_EQ(vector.Size(), 1);
   ASSERT_FALSE(vector.Empty());
@@ -488,11 +515,12 @@ TEST(FastVector_Tests, Erase_NonTrivial_PushPushErase_CorrectValues)
 
   vector.PushBack("1");
   vector.PushBack("2");
-  vector.Erase(0);
+
+  vector.Erase(std::find(vector.begin(), vector.end(), std::string { "1" }));
 
   ASSERT_EQ(vector.Size(), 1);
   ASSERT_FALSE(vector.Empty());
-  ASSERT_EQ(vector[0], "2");
+  ASSERT_EQ(vector[0], std::string { "2" });
 }
 
 TEST(FastVector_Tests, Resize_Trivial_Empty_SizeIncrease)

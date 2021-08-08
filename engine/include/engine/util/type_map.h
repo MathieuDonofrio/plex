@@ -22,9 +22,10 @@ concept TypeMapValueType = FastVectorType<Type>;
 ///
 /// This map had extremely low overhead and performance oriented.
 ///
-/// @tparam Value The value to map types to.
+/// @tparam Value Value to map types with.
+/// @tparam AllocatorImpl Allocator to use to allocate memory.
 ///
-template<TypeMapValueType Value>
+template<TypeMapValueType Value, Allocator AllocatorImpl>
 class TypeMap
 {
 public:
@@ -34,7 +35,7 @@ public:
   /// If the mapping never existed, this method will make sure that it is created.
   ///
   /// Usually O(1) with very little overhead, but sometimes during creating of the
-  /// mapping (only happends once per key) and internal resize must be called.
+  /// mapping (only happens once per key) and internal resize must be called.
   ///
   /// @tparam Type The type to use as key.
   ///
@@ -86,11 +87,11 @@ private:
   template<typename Type>
   [[nodiscard]] static size_t Key() noexcept
   {
-    return Meta<Type>::template UniqueId<TypeMap<Value>>();
+    return Meta<Type>::template UniqueId<TypeMap<Value, AllocatorImpl>>();
   }
 
 private:
-  FastVector<Value> values_;
+  FastVector<Value, AllocatorImpl> values_;
 };
 
 } // namespace genebits::engine
