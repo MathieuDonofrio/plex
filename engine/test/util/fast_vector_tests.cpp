@@ -835,14 +835,14 @@ TEST(FastVector_Tests, MoveAssignment_Trivial_CorrectValues)
   vector.PushBack(1);
   vector.PushBack(2);
 
-  FastVector<double> copy = std::move(vector);
+  FastVector<double> moved = std::move(vector);
 
-  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(moved.Size(), 2);
   ASSERT_EQ(vector.Size(), 0);
   ASSERT_EQ(vector.Capacity(), 0);
 
-  ASSERT_EQ(copy[0], 1);
-  ASSERT_EQ(copy[1], 2);
+  ASSERT_EQ(moved[0], 1);
+  ASSERT_EQ(moved[1], 2);
 }
 
 TEST(FastVector_Tests, MoveAssignment_NonTrivial_CorrectValues)
@@ -852,14 +852,14 @@ TEST(FastVector_Tests, MoveAssignment_NonTrivial_CorrectValues)
   vector.PushBack("1");
   vector.PushBack("2");
 
-  FastVector<std::string> copy = std::move(vector);
+  FastVector<std::string> moved = std::move(vector);
 
-  ASSERT_EQ(copy.Size(), 2);
+  ASSERT_EQ(moved.Size(), 2);
   ASSERT_EQ(vector.Size(), 0);
   ASSERT_EQ(vector.Capacity(), 0);
 
-  ASSERT_EQ(copy[0], std::string { "1" });
-  ASSERT_EQ(copy[1], std::string { "2" });
+  ASSERT_EQ(moved[0], std::string { "1" });
+  ASSERT_EQ(moved[1], std::string { "2" });
 }
 
 TEST(FastVector_Tests, CopyConstructor_Trivial_CorrectValues)

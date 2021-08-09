@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_UTIL_FASTVECTOR_H
 
 #include <iterator>
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -122,7 +123,7 @@ public:
   ///
   ~FastVector() noexcept
   {
-    if (array_)
+    if (array_) [[likely]]
     {
       DestroyAll();
       Deallocate();
@@ -241,10 +242,7 @@ public:
 
     if (static_cast<uint32_t>(new_size) < size_)
     {
-      for (size_t i = size_; i != new_size; i--)
-      {
-        array_[i].~Type();
-      }
+      std::destroy(array_ + new_size, array_ + size_);
     }
     else
     {
@@ -268,7 +266,7 @@ public:
   ///
   void Reserve(const size_t min_capacity) noexcept
   {
-    if (static_cast<uint32_t>(min_capacity) > capacity_)
+    if (static_cast<uint32_t>(min_capacity) > capacity_) [[likely]]
     {
       Grow(static_cast<uint32_t>(min_capacity));
     }
@@ -355,6 +353,8 @@ public:
     }
 
     CopyFrom(other);
+
+    return *this;
   }
 
   ///
@@ -370,6 +370,8 @@ public:
     other.size_ = 0;
     capacity_ = other.capacity_;
     other.capacity_ = 0;
+
+    return *this;
   }
 
 protected:
@@ -387,30 +389,16 @@ protected:
     {
       Block block = AllocatorImpl::Allocate(min_capacity_bytes);
 
-      if (array_)
+      if (array_) [[likely]]
       {
-        for (uint32_t i = 0; i != size_; i++)
+        if constexpr ((cTypePassedByValue && std::is_copy_constructible_v<Type>) || !std::is_move_constructible_v<Type>)
         {
-          Type* old_element = array_ + i;
-          Type* new_element = reinterpret_cast<Type*>(block.ptr) + i;
-
-          if constexpr (cTypePassedByValue)
-          {
-            new (new_element) Type(*old_element);
-          }
-          else if constexpr (std::is_move_constructible_v<Type>)
-          {
-            new (new_element) Type(std::move(*old_element));
-          }
-          else
-          {
-            new (new_element) Type(*old_element);
-          }
-
-          if constexpr (!std::is_trivially_destructible_v<Type>)
-          {
-            old_element->~Type();
-          }
+          std::uninitialized_copy(cbegin(), cend(), reinterpret_cast<Type*>(block.ptr));
+          std::destroy(begin(), end());
+        }
+        else
+        {
+          std::uninitialized_move(begin(), end(), reinterpret_cast<Type*>(block.ptr));
         }
 
         AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), current_capacity_bytes });
@@ -460,13 +448,7 @@ protected:
   ///
   void DestroyAll() noexcept
   {
-    if constexpr (!std::is_trivially_destructible_v<Type>)
-    {
-      for (auto& element : *this)
-      {
-        element.~Type();
-      }
-    }
+    std::destroy(begin(), end());
   }
 
   ///
@@ -486,6 +468,7 @@ protected:
   /// @param other The other vector
   ///
   template<Allocator OtherAllocator>
+  requires std::is_copy_constructible_v<Type>
   void CopyFrom(const FastVector<Type, OtherAllocator>& other) noexcept
   {
     const Block block = AllocatorImpl::Allocate(sizeof(Type) * other.size_);
@@ -494,12 +477,7 @@ protected:
     size_ = other.size_;
     capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
 
-    for (uint32_t i = 0; i != size_; i++)
-    {
-      const Type* old_element = other.array_ + i;
-
-      new (array_ + i) Type(*old_element);
-    }
+    std::uninitialized_copy(other.cbegin(), other.cend(), array_);
   }
 
 private:
