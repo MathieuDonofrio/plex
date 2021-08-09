@@ -1,6 +1,7 @@
 #ifndef GENEBITS_ENGINE_UTIL_META_H
 #define GENEBITS_ENGINE_UTIL_META_H
 
+#include <atomic>
 #include <string_view>
 #include <type_traits>
 
@@ -8,7 +9,7 @@
 
 namespace genebits::engine
 {
-namespace details
+namespace
 {
   ///
   /// Returns the function name with a templated type. Can be used to probe type name.
@@ -18,7 +19,7 @@ namespace details
   /// @return The function name with the templated type.
   ///
   template<typename Type>
-  constexpr std::string_view TemplatedFunctionName()
+  consteval std::string_view TemplatedFunctionName()
   {
 #if COMPILER_MSVC
     return __FUNCSIG__;
@@ -27,28 +28,74 @@ namespace details
 #endif
   }
 
-  constexpr std::string_view cProbe = TemplatedFunctionName<void>();
+  namespace probing
+  {
+    // Probing technique:
+    // Get the templated function name of void type and use that to find the start and offset of the type.
 
-  constexpr size_t cStart = cProbe.find("void");
-  constexpr size_t cOffset = cProbe.length() - 4;
+    constexpr std::string_view cProbe = TemplatedFunctionName<void>();
+
+    constexpr size_t cStart = cProbe.find("void");
+    constexpr size_t cOffset = cProbe.length() - 4;
+  } // namespace probing
+
+  ///
+  /// Returns the next index for the list of sequences. Used to be able to have more than once
+  /// sequence to optimize memory usage in certain cases.
+  ///
+  /// An internal counter is incremented every time this method is called.
+  ///
+  /// @note
+  ///     The static variable in the function is a header-only solution for extern. This is
+  ///     guaranteed as long as ODR is not violated (No templates).
+  ///
+  /// @return size_t next index in the sequence
+  ///
+  inline size_t NextSequenceIndex()
+  {
+    static std::atomic_size_t sequence {};
+
+    return sequence.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  ///
+  /// Returns the sequence index for the tag type.
+  ///
+  /// @tparam Tag A type tag used to identify the sequence to use.
+  ///
+  /// @return size_t The sequence index for the tag.
+  ///
+  template<typename Tag>
+  static size_t SequenceIndex()
+  {
+    static const size_t value = NextSequenceIndex();
+
+    return value;
+  }
 
   ///
   /// Returns a unique integer identifier at runtime.
   ///
-  /// An internal counter is incremented each and every time this method is called.
+  /// The internal counter for the specified sequence is incremented every time
+  /// this method is called.
   ///
-  /// @tparam Tag for creating multiple sequences.
+  /// @note
+  ///     There is a max amount of sequences (512).
   ///
-  /// @return size_t
+  /// @return size_t next index in the specified sequence
   ///
-  template<typename Tag>
-  static size_t NextUniqueId()
+  inline size_t NextUniqueId(size_t sequence_index)
   {
-    static size_t sequence = 0;
+    constexpr size_t cMaxSequences = 1 << 9;
 
-    return sequence++;
+    static std::atomic_size_t sequences[cMaxSequences];
+
+    const size_t actual_index = sequence_index & (cMaxSequences - 1);
+
+    return sequences[actual_index].fetch_add(1, std::memory_order_relaxed);
   }
-} // namespace details
+
+} // namespace
 
 ///
 /// Templated structure that contains meta information about the templated type.
@@ -66,15 +113,12 @@ public:
   ///
   /// @return Full name of templated type.
   ///
-  static constexpr std::string_view FullName()
+  [[nodiscard]] static consteval std::string_view FullName() noexcept
   {
-    using namespace details;
-
     std::string_view full_func_name = TemplatedFunctionName<Type>();
+    full_func_name = full_func_name.substr(probing::cStart, full_func_name.length() - probing::cOffset);
 
-    full_func_name = full_func_name.substr(cStart, full_func_name.length() - cOffset);
-
-    size_t off = full_func_name.find_last_of(' '); // MSVC adds some extra stuff separated by a space
+    const size_t off = full_func_name.find_last_of(' '); // MSVC adds some extra stuff separated by a space
 
     return off == std::string_view::npos ? full_func_name : full_func_name.substr(off + 1);
   }
@@ -86,11 +130,11 @@ public:
   ///
   /// @return Name of templated type.
   ///
-  static constexpr std::string_view Name()
+  [[nodiscard]] static consteval std::string_view Name() noexcept
   {
     const std::string_view full_name = FullName();
 
-    size_t off = full_name.find_last_of(':');
+    const size_t off = full_name.find_last_of(':');
 
     return off == std::string_view::npos ? full_name : full_name.substr(off + 1);
   }
@@ -106,9 +150,9 @@ public:
   ///
   /// @return Type Hash of type.
   ///
-  static constexpr size_t Hash()
+  [[nodiscard]] static consteval size_t Hash() noexcept
   {
-    constexpr uint64_t prime = 0x100000001b3;
+    const uint64_t prime = 0x100000001b3;
 
     uint64_t hash = 14695981039346656037ul;
 
@@ -127,17 +171,14 @@ public:
   /// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
   /// distributed in a first come first serve fashion.
   ///
-  /// @warning Different libraries will result in different UniqueIds.
-  /// Do not uses this as global identifier.
-  ///
   /// @tparam Tag A type tag used to identify the sequence to use.
   ///
   /// @return size_t The unique id for the type and sequence.
   ///
   template<typename Tag = void>
-  static size_t UniqueId()
+  static size_t UniqueId() noexcept
   {
-    static const size_t value = details::NextUniqueId<Tag>();
+    static const size_t value = NextUniqueId(SequenceIndex<Tag>());
 
     return value;
   }
