@@ -117,6 +117,9 @@ public:
   ///
   /// Invokes the stored function with the specified event.
   ///
+  /// @warning
+  ///     Undefined behaviour if no function is bound to this event handler.
+  ///
   /// @param event The event to invoke with.
   ///
   constexpr void Invoke(const Event& event)
