@@ -9,7 +9,10 @@
 namespace genebits::engine
 {
 ///
-/// Concept to verify is a listener class can listen to a specified event type.
+/// Concept to verify that a listener class can listen to a specified event type.
+///
+/// Meets the concept requirements if the listener type defines a listen method
+/// that takes a event of the event type as an argument.
 ///
 /// @tparam Listener Listener to check
 /// @tparam Event Event type to check.

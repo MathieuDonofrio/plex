@@ -20,7 +20,7 @@ concept TypeMapValueType = std::is_default_constructible_v<Type> && FastVectorTy
 ///
 /// The key is generated using the Meta util UniqueId method.
 ///
-/// This map had extremely low overhead and performance oriented.
+/// This map is extremely low overhead and performance oriented.
 ///
 /// @tparam Value Value to map types with.
 /// @tparam AllocatorImpl Allocator to use to allocate memory.

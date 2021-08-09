@@ -7,20 +7,21 @@
 namespace genebits::engine
 {
 ///
-/// Concept used to determine if an Invokable is eligible to be binded to an EventHandler.
+/// Concept used to determine if an Invokable is eligible to be bound to an EventHandler.
 ///
 /// This concept is more restrictive than invokable binding for other delegates like
 /// std::function. The justification is because we do not want to create additional overhead
 /// for something we will rarely use.
 ///
-/// @note
-///     The size of the invokable matters. There are size restrictions.
+/// To meet the requirements of an event handler invokable, the invokable must define a valid invoke
+/// operator with the event type as an argument. Also, the invokable cannot be larger than the size
+/// of a pointer (8 bytes on 64 bit) and must be trivially destructible.
 ///
 /// @tparam Invokable Type of the invokable (usually a lambda).
 /// @tparam Event Type of the event to invoke.
 ///
 template<typename Invokable, typename Event>
-concept EventHandlerInvokable = std::is_class_v<Invokable> && sizeof(Invokable) <= sizeof(void*) && requires(Invokable invokable, const Event& event)
+concept EventHandlerInvokable = std::is_class_v<Invokable> && std::is_trivially_destructible_v<Invokable> && sizeof(Invokable) <= sizeof(void*) && requires(Invokable invokable, const Event& event)
 {
   invokable(event);
 };
@@ -49,7 +50,7 @@ public:
   ///
   /// Binds a free function.
   ///
-  /// 8 bytes of memory overhead and no call overhead.
+  /// Pointer size (8 bytes for 64 bit) of memory overhead and no call overhead.
   ///
   /// @tparam FreeFunction Compile-time free function pointer.
   ///
@@ -87,13 +88,16 @@ public:
   }
 
   ///
-  /// Bind an invokable.
+  /// Binds an invokable.
   ///
-  /// Invokable are restricted but still supported. Restrictions include
-  /// a size of less or equal to a pointer size.
+  /// An invokable, also known as a functor, can be bound to the event handler if it meets the conditions.
+  /// of the EventHandlerInvokable concept. To summarize, the invokable must define a invoke operator with
+  /// the event type as an argument, must be trivially destructible and smaller than the size of a pointer.
   ///
-  /// No overhead of the invokable uses all the available size. Maximum of
-  /// 8 bytes of overhead.
+  /// No overhead if the invokable uses all the available size. Maximum of
+  /// pointer size (8 bytes on 64 bit) of overhead.
+  ///
+  /// @see EventHandlerInvokable
   ///
   /// @tparam Invokable The type of the invokable.
   ///
@@ -123,6 +127,8 @@ public:
   ///
   /// Equality operator.
   ///
+  /// Checks if the handlers have the same content (function & storage).
+  ///
   /// @param other Other handler to compare.
   ///
   /// @return True if the handlers are equal, false otherwise.
@@ -134,6 +140,8 @@ public:
 
   ///
   /// Inequality operator.
+  ///
+  /// Checks if the handlers has different content (function & storage).
   ///
   /// @param other Other handler to compare.
   ///
@@ -147,7 +155,7 @@ public:
   ///
   /// Bool operator.
   ///
-  /// return True if the handler had been binded with a function, false otherwise.
+  /// return True if the handler had been bound with a function, false otherwise.
   ///
   [[nodiscard]] constexpr operator bool() const noexcept
   {
