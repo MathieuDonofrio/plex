@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "engine/config/assertion.h"
+
 namespace genebits::engine
 {
 ///
@@ -124,6 +126,8 @@ public:
   ///
   constexpr void Invoke(const Event& event)
   {
+    ASSERT(function_ != nullptr, "No bound function");
+
     function_(storage_, event);
   }
 

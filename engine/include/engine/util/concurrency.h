@@ -6,8 +6,6 @@
 #include <new>
 #include <thread>
 
-#include "config.h"
-
 namespace genebits::engine
 {
 ///

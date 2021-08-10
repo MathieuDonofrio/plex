@@ -77,6 +77,7 @@ public:
   template<typename Event>
   requires EventListen<Impl, Event>
     EventHandler<Event> GetEventHandler()
+  noexcept
   {
     static_assert(std::is_base_of_v<Listener<Impl, Events...>, Impl>, "Listener must be base of implementation");
 
@@ -85,7 +86,8 @@ public:
     return handler;
   }
 
-private : EventBus* bus_;
+private:
+  EventBus* bus_;
 };
 
 } // namespace genebits::engine

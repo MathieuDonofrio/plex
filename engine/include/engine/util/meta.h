@@ -5,7 +5,7 @@
 #include <string_view>
 #include <type_traits>
 
-#include "config.h"
+#include "engine/config/compiler.h"
 
 namespace genebits::engine
 {

@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "engine/config/assertion.h"
 #include "engine/util/allocator.h"
 
 namespace genebits::engine
@@ -94,6 +95,7 @@ public:
   ///
   [[nodiscard]] constexpr const_reference operator[](const size_type index) const noexcept
   {
+    ASSERT(index < size_, "Index out of bounds");
     return array_[index];
   }
 
@@ -106,6 +108,7 @@ public:
   ///
   [[nodiscard]] constexpr reference operator[](const size_type index) noexcept
   {
+    ASSERT(index < size_, "Index out of bounds");
     return array_[index];
   }
 
@@ -169,6 +172,8 @@ public:
   ///
   void PopBack() noexcept
   {
+    ASSERT(size_ > 0, "Vector is empty");
+
     --size_;
     array_[size_].~Type();
   }
@@ -186,6 +191,8 @@ public:
   ///
   void Erase(iterator it) noexcept
   {
+    ASSERT(size_ > 0, "Vector is empty");
+
     if (size_ == 1) [[unlikely]]
     {
       it->~Type();

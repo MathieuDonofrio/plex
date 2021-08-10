@@ -16,7 +16,7 @@ namespace
 
 } // namespace
 
-static void TypeMap_STD_Map_Get(benchmark::State& state)
+static void TypeMap_STD_Map_Assure(benchmark::State& state)
 {
   std::map<size_t, int> map;
 
@@ -30,9 +30,9 @@ static void TypeMap_STD_Map_Get(benchmark::State& state)
   }
 }
 
-BENCHMARK(TypeMap_STD_Map_Get);
+BENCHMARK(TypeMap_STD_Map_Assure);
 
-static void TypeMap_STD_UnorderedMap_Get(benchmark::State& state)
+static void TypeMap_STD_UnorderedMap_Assure(benchmark::State& state)
 {
   std::unordered_map<size_t, int> map;
 
@@ -46,22 +46,22 @@ static void TypeMap_STD_UnorderedMap_Get(benchmark::State& state)
   }
 }
 
-BENCHMARK(TypeMap_STD_UnorderedMap_Get);
+BENCHMARK(TypeMap_STD_UnorderedMap_Assure);
 
-static void TypeMap_Get(benchmark::State& state)
+static void TypeMap_Assure(benchmark::State& state)
 {
   TypeMap<int> map;
 
-  benchmark::DoNotOptimize(map.Get<TestType<0>>());
-  benchmark::DoNotOptimize(map.Get<TestType<1>>());
-  benchmark::DoNotOptimize(map.Get<TestType<2>>());
+  benchmark::DoNotOptimize(map.Assure<TestType<0>>());
+  benchmark::DoNotOptimize(map.Assure<TestType<1>>());
+  benchmark::DoNotOptimize(map.Assure<TestType<2>>());
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(map.Get<TestType<9999>>());
+    benchmark::DoNotOptimize(map.Assure<TestType<9999>>());
   }
 }
 
-BENCHMARK(TypeMap_Get);
+BENCHMARK(TypeMap_Assure);
 
 } // namespace genebits::engine
