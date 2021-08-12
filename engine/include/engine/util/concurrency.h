@@ -35,22 +35,25 @@ enum class ConcurrencyGuarantee
 };
 
 #ifdef __cpp_lib_hardware_interference_size
-#define STANDARD_HARDWARE_INTERFERENCY_SIZE true
-#else
-#define STANDARD_HARDWARE_INTERFERENCY_SIZE false
-#endif
-
 ///
 /// Defines size of a cacheline. Can be used to fit variables on different
 /// cachelines to avoid cache synchronization after thread writes.
 ///
 /// @note 64 bytes on x86-64
 ///
-constexpr size_t cCacheLineSize = STANDARD_HARDWARE_INTERFERENCY_SIZE
-                                    ? std::hardware_destructive_interference_size
-                                    : 2 * sizeof(std::max_align_t);
-
-#undef STANDARD_HARDWARE_INTERFERENCY_SIZE
+constexpr size_t cCacheLineSize = std::hardware_destructive_interference_size;
+#else
+///
+/// Defines size of a cacheline. Can be used to fit variables on different
+/// cachelines to avoid cache synchronization after thread writes.
+///
+/// @warning
+///   Standard hardware interference size not defined. Using approximated method.
+///
+/// @note 64 bytes on x86-64
+///
+constexpr size_t cCacheLineSize = 2 * sizeof(std::max_align_t);
+#endif
 
 namespace this_thread
 {

@@ -25,3 +25,4 @@ endfunction()
 #
 
 add_engine_benchmark(util)
+add_engine_benchmark(events)

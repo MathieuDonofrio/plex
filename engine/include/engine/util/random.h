@@ -197,6 +197,7 @@ private:
 consteval uint64_t CompileTimeSeed(const std::source_location location = std::source_location::current())
 {
   // Time seed changes every new build
+  // Inspiration from Jason Turner video: https://www.youtube.com/watch?v=rpn_5Mrrxf8
   uint64_t time_seed = 0;
 
   for (const auto c : __TIME__)
@@ -240,10 +241,7 @@ inline uint64_t Seed()
     // Runs an LCG iteration for randomness in the seed.
     uint64_t next = current * Random::cMultiplier + Random::cIncrement;
 
-    if (current == state.exchange(next, std::memory_order_relaxed))
-    {
-      return next;
-    }
+    if (current == state.exchange(next, std::memory_order_relaxed)) return next;
   }
 }
 
