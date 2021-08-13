@@ -5,6 +5,7 @@
 #define GLFW_INCLUDE_VULKAN
 
 #include <algorithm>
+#include <iostream>
 
 #include "GLFW/glfw3.h"
 
@@ -28,14 +29,17 @@ struct Window::Pimpl
   } size_limit;
 
   void ApplyWindowCreationHints(const WindowCreationHints& hints);
+  void RegisterGLFWWindowCallbacks();
 
-  // This is very heavyweight and will be replaced by events in the future, this only serves for PoC needs
-  std::function<void(Window*)> window_closing_user_callback;
-  std::function<void(GLFWwindow*)> window_closing_internal_callback;
+  static void GLFWCloseEventCallback(GLFWwindow*);
+  static void GLFWMaximiseEventCallback(GLFWwindow*, int32_t current_state);
+  static void GLFWIconifyEventCallback(GLFWwindow*, int32_t current_state);
+  static void GLFWResizeEventCallback(GLFWwindow*, int32_t new_width, int32_t new_height);
+  static void GLFWFocusEventCallback(GLFWwindow*, int32_t current_state);
 };
 
 Window::Window(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
-  : pimpl_(new Pimpl)
+  : pimpl_(new Pimpl), Listener<Window, WindowCloseEvent>()
 {
   pimpl_->title = title;
   pimpl_->width = width;
@@ -58,6 +62,8 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height, Window
     static_cast<int>(pimpl_->width), static_cast<int>(pimpl_->height), pimpl_->title.c_str(), nullptr, nullptr);
 
   glfwSetWindowUserPointer(pimpl_->handle, this);
+
+  pimpl_->RegisterGLFWWindowCallbacks();
 }
 
 Window::~Window()
@@ -170,6 +176,7 @@ void Window::RequestAttention()
 
 void Window::Close()
 {
+  GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
   glfwSetWindowShouldClose(pimpl_->handle, 1);
 }
 
@@ -291,19 +298,9 @@ void Window::SetFullScreenRefreshRate(uint64_t refresh_rate)
   glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate);
 }
 
-void Window::SetWindowClosingCallback(std::function<void(Window*)> window_closing_callback)
+void Window::listen(const WindowCloseEvent&)
 {
-  pimpl_->window_closing_user_callback = window_closing_callback;
-
-  auto callback = [](GLFWwindow* glfw_window_ptr) -> void
-  {
-    auto window_ptr = static_cast<Window*>(glfwGetWindowUserPointer(glfw_window_ptr));
-    window_ptr->pimpl_->window_closing_user_callback(window_ptr);
-  };
-
-  pimpl_->window_closing_internal_callback = callback;
-
-  glfwSetWindowCloseCallback(pimpl_->handle, callback);
+  std::cout << "Event closing" << std::endl;
 }
 
 void Window::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
@@ -320,6 +317,59 @@ void Window::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
   glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, (hints & WindowCreationHints::TransparentFramebuffer) != 0);
   glfwWindowHint(GLFW_FOCUS_ON_SHOW, (hints & WindowCreationHints::FocusingOnShow) != 0);
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, (hints & WindowCreationHints::ScalingToMonitor) != 0);
+}
+
+void Window::Pimpl::GLFWCloseEventCallback(GLFWwindow*)
+{
+  // TODO add a way to pass the pointer to an object that lets other system say that they object the window closing (objection counter ?)
+  // That way some system can prevent closing of the program resulting in unwanted/undefined behaviour
+  // 2 brain stormed ideas:
+  // 1 -> Post events to see/update the objecting systems state(know if they agree to the closing of the window now)
+  // 2 -> Let the system post an event when they are ready to close
+  GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
+}
+
+void Window::Pimpl::GLFWMaximiseEventCallback(GLFWwindow*, int32_t current_state)
+{
+  if (current_state)
+  {
+    GetEnvironment().GetEventBus().Publish(WindowMaximiseEvent {});
+  }
+  else
+  {
+    GetEnvironment().GetEventBus().Publish(WindowRestoreEvent {});
+  }
+}
+
+void Window::Pimpl::GLFWIconifyEventCallback(GLFWwindow*, int32_t current_state)
+{
+  if (current_state)
+  {
+    GetEnvironment().GetEventBus().Publish(WindowIconifyEvent {});
+  }
+  else
+  {
+    GetEnvironment().GetEventBus().Publish(WindowRestoreEvent {});
+  }
+}
+
+void Window::Pimpl::GLFWResizeEventCallback(GLFWwindow*, int32_t new_width, int32_t new_height)
+{
+  GetEnvironment().GetEventBus().Publish(WindowResizeEvent { static_cast<uint32_t>(new_width), static_cast<uint32_t>(new_height) });
+}
+
+void Window::Pimpl::GLFWFocusEventCallback(GLFWwindow*, int32_t current_state)
+{
+  GetEnvironment().GetEventBus().Publish(WindowFocusEvent { static_cast<WindowFocusEventState>(current_state) });
+}
+
+void Window::Pimpl::RegisterGLFWWindowCallbacks()
+{
+  glfwSetWindowCloseCallback(handle, GLFWCloseEventCallback);
+  glfwSetWindowMaximizeCallback(handle, GLFWMaximiseEventCallback);
+  glfwSetWindowIconifyCallback(handle, GLFWIconifyEventCallback);
+  glfwSetWindowSizeCallback(handle, GLFWResizeEventCallback);
+  glfwSetWindowFocusCallback(handle, GLFWFocusEventCallback);
 }
 
 } // namespace genebits::engine

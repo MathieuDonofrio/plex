@@ -5,6 +5,7 @@
 #include <functional>
 #include <string>
 
+#include <engine/events/listener.h>
 #include <engine/util/enum_flag.h>
 
 namespace genebits::engine
@@ -26,11 +27,49 @@ ENUM_FLAGS(WindowCreationHints, uint64_t) {
   Defaults = ~0ull
 };
 
-class Window
+// TODO Create Abstract window class
+
+struct WindowCloseEvent
+{};
+
+// enum class MaximiseEventState {
+//   Restored = 0,
+//   Maximised = 1,
+// };
+
+struct WindowMaximiseEvent
+{
+  bool maximised;
+};
+
+struct WindowIconifyEvent
+{
+  bool iconified;
+};
+
+struct WindowResizeEvent
+{
+  uint32_t width;
+  uint32_t height;
+};
+
+struct WindowRestoreEvent
+{};
+
+enum class WindowFocusEventState
+{
+  Lost = 0,
+  Gained = 1
+};
+
+struct WindowFocusEvent
+{
+  WindowFocusEventState state;
+};
+
+class Window : public Listener<Window, WindowCloseEvent>
 {
 public:
-  using WindowClosingCallback = std::function<void(Window*)>;
-
   ///
   /// Window constructor.
   ///
@@ -53,7 +92,7 @@ public:
   ///
   /// @note Polling of events should be conducted every now and then to let the OS know that the process is still responsive.
   ///
-  void PollEvents();
+  void PollEvents(); // TODO register functions as callback to receive events
 
   ///
   /// Same as PollEvents() but waits for events to occur by making the thread sleep.
@@ -263,15 +302,6 @@ public:
   void SetFullScreenRefreshRate(uint64_t refresh_rate);
 
   ///
-  /// Set the function that will be called when the window enters a closing state.
-  ///
-  /// @param[in] Function to be called when the window enters a closing state.
-  ///
-  /// @Note The callback does not occur if Close() is called. Only closing initiated by the user will do the callback.
-  ///
-  void SetWindowClosingCallback(WindowClosingCallback window_closing_callback);
-
-  ///
   /// Creates a Vulkan surface for the window's drawable area.
   ///
   /// @param[in] instance Vulkan instance of the application.
@@ -279,6 +309,8 @@ public:
   ///
   template<typename InstanceType, typename SurfaceType>
   void CreateWindowSurface(InstanceType instance, SurfaceType* surface);
+
+  void listen(const WindowCloseEvent& event);
 
 private:
   struct Pimpl;
