@@ -45,7 +45,7 @@ public:
   ///
   /// @param bus The bus to subscribe all event handlers to.
   ///
-  constexpr explicit Listener(EventBus& bus) noexcept
+  explicit Listener(EventBus& bus) noexcept
     : bus_(&bus)
   {
     (bus_->Subscribe(GetEventHandler<Events>()), ...);
@@ -82,7 +82,8 @@ public:
     static_assert(std::is_base_of_v<Listener<Impl, Events...>, Impl>, "Listener must be base of implementation");
 
     EventHandler<Event> handler;
-    handler.template Bind<&Impl::listen, Impl>(static_cast<Impl*>(this));
+    handler.template Bind<Impl, &Impl::listen>(static_cast<Impl*>(this));
+
     return handler;
   }
 

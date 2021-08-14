@@ -77,8 +77,7 @@ public:
   ///
   /// @param instance The instance to call the member function for.
   ///
-  template<auto MemberFunction, typename Type>
-  requires std::is_member_function_pointer_v<decltype(MemberFunction)>
+  template<typename Type, void (Type::*MemberFunction)(const Event&)>
   constexpr void Bind(Type* instance) noexcept
   {
     storage_ = instance;
@@ -86,6 +85,27 @@ public:
     function_ = [](void* storage, const Event& event)
     {
       (static_cast<Type*>(storage)->*MemberFunction)(event);
+    };
+  }
+
+  ///
+  /// Binds a const member function.
+  ///
+  /// No overhead.
+  ///
+  /// @tparam MemberFunction Compile-time member function pointer.
+  /// @tparam Type The type of class the member function is for.
+  ///
+  /// @param instance The instance to call the member function for.
+  ///
+  template<typename Type, void (Type::*MemberFunction)(const Event&) const>
+  constexpr void Bind(Type* instance) noexcept
+  {
+    storage_ = instance;
+
+    function_ = [](void* storage, const Event& event)
+    {
+      (static_cast<const Type*>(storage)->*MemberFunction)(event);
     };
   }
 

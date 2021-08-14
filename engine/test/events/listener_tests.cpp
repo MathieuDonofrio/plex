@@ -11,6 +11,11 @@ namespace
     size_t value;
   };
 
+  struct TestEvent2
+  {
+    size_t value;
+  };
+
   struct TestListener : public Listener<TestListener, TestEvent>
   {
     TestListener(EventBus& bus)
@@ -19,6 +24,28 @@ namespace
     }
 
     void listen(const TestEvent& event)
+    {
+      sum += event.value;
+    }
+
+    size_t sum;
+  };
+
+  struct TestListener2 : public Listener<TestListener2, TestEvent, TestEvent2>
+  {
+    // Used to make sure it compiles
+
+    TestListener2(EventBus& bus)
+      : Listener<TestListener2, TestEvent, TestEvent2>(bus), sum(0)
+    {
+    }
+
+    void listen(const TestEvent& event)
+    {
+      sum += event.value;
+    }
+
+    void listen(const TestEvent2& event)
     {
       sum += event.value;
     }
