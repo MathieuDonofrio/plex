@@ -1,6 +1,6 @@
 
+#include "../../engine/source/graphics/glfw_window.h"
 #include <engine/events/listener.h>
-#include <engine/graphics/glfw_window.h>
 #include <iostream>
 
 namespace genebits::sandbox
@@ -12,8 +12,7 @@ struct TestWindowListener : public Listener<TestWindowListener,
                               WindowFocusEvent,
                               WindowMaximiseEvent,
                               WindowIconifyEvent,
-                              WindowResizeEvent,
-                              WindowRestoreEvent>
+                              WindowResizeEvent>
 {
   TestWindowListener()
     : Listener<TestWindowListener,
@@ -21,8 +20,7 @@ struct TestWindowListener : public Listener<TestWindowListener,
       WindowFocusEvent,
       WindowMaximiseEvent,
       WindowIconifyEvent,
-      WindowResizeEvent,
-      WindowRestoreEvent>() {};
+      WindowResizeEvent>() {};
 
   void listen(const WindowCloseEvent&)
   {
@@ -31,7 +29,7 @@ struct TestWindowListener : public Listener<TestWindowListener,
 
   void listen(const WindowFocusEvent& event)
   {
-    std::cout << "window focus event: " << ((event.state == WindowFocusEventState::Gained) ? "Gained" : "Lost")
+    std::cout << "window focus event: " << ((event.state == WindowFocusEvent::FocusState::Gained) ? "Gained" : "Lost")
               << std::endl;
   }
 
@@ -48,12 +46,6 @@ struct TestWindowListener : public Listener<TestWindowListener,
   void listen(const WindowResizeEvent& event)
   {
     std::cout << "window resize event: " << event.width << ", " << event.height << std::endl;
-  }
-
-  void listen(const WindowRestoreEvent& event)
-  {
-    std::cout << &event; // Prevent unused parameter warning treated as an error
-    std::cout << "window restore event" << std::endl;
   }
 };
 

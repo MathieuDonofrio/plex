@@ -1,23 +1,22 @@
-#ifndef GENEBITS_WINDOW_H
-#define GENEBITS_WINDOW_H
+#ifndef GENEBITS_ENGINE_GRAPHICS_WINDOW_H
+#define GENEBITS_ENGINE_GRAPHICS_WINDOW_H
 
 namespace genebits::engine
 {
 
 // TODO Check if docs need to be updated
+
 class Window
 {
 public:
   ///
-  /// Window constructor.
+  /// Default constructor
   ///
-  /// @param[in] title Title of the window.
-  /// @param[in] width The width in pixels of the drawable area .
-  /// @param[in] height The height in pixels of the drawable area.
-  /// @param[in] window_creation_hints Hints used to create the window.
-  ///
-  Window() {};
+  Window() = default;
 
+  ///
+  /// Destructor
+  ///
   virtual ~Window() = default;
 
   Window(const Window&) = delete;
@@ -28,16 +27,22 @@ public:
   ///
   /// Poll the OS for events associated with this window.
   ///
-  /// @note Polling of events should be conducted every now and then to let the OS know that the process is still responsive.
+  /// @note Polling of events should be conducted every now and then to let the OS know that the process is still
+  /// responsive.
   ///
   virtual void PollEvents() = 0;
 
   ///
   /// Same as PollEvents() but waits for events to occur by making the thread sleep.
   ///
-  /// @param[in] Optional maximum time to wait in seconds.
+  virtual void WaitEvents() = 0;
+
   ///
-  virtual void WaitEvents(double timeout = 0.0) = 0;
+  /// Same as PollEvents() but waits for events to occur by making the thread sleep.
+  ///
+  /// @param[in] timeout Maximum time to wait in seconds.
+  ///
+  virtual void WaitEvents(double timeout) = 0;
 
   ///
   /// Bring the window in focus.
@@ -78,11 +83,8 @@ public:
   ///
   /// @param[in] width New width in pixels of the drawable area.
   /// @param[in] height New height in pixels of the drawable area.
-  /// @param[in] overwrite_max_dimension Optional, overwrite the maximum dimensions.
   ///
-  /// @note Does nothing if the window is maximised.
-  ///
-  virtual void Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensions = false) = 0;
+  virtual void Resize(uint32_t width, uint32_t height) = 0;
 
   ///
   /// Set the title of the window.
@@ -140,67 +142,11 @@ public:
   [[nodiscard]] virtual uint32_t GetHeight() const = 0;
 
   ///
-  /// Get the minimum width in pixels of the drawable area.
-  ///
-  /// @return Minimum width in pixels of the drawable area.
-  ///
-  [[nodiscard]] virtual uint32_t GetMinimumWidth() const noexcept = 0;
-
-  ///
-  /// Get the minimum height in pixels of the drawable area.
-  ///
-  /// @return Minimum height in pixels of the drawable area.
-  ///
-  [[nodiscard]] virtual uint32_t GetMinimumHeight() const noexcept = 0;
-
-  ///
-  /// Get the maximum width in pixels of the drawable area.
-  ///
-  /// @return Maximum width in pixels of the drawable area.
-  ///
-  [[nodiscard]] virtual uint32_t GetMaximumWidth() const = 0;
-
-  ///
-  /// Get the maximum height in pixels of the drawable area.
-  ///
-  /// @return Maximum height in pixels of the drawable area.
-  ///
-  [[nodiscard]] virtual uint32_t GetMaximumHeight() const = 0;
-
-  ///
-  /// Set the maximum width in pixels of the drawable area.
-  ///
-  /// @param[in] width New maximum width in pixels of the drawable area.
-  ///
-  virtual void SetMaximumWidth(uint32_t width) = 0;
-
-  ///
-  /// Set the maximum height in pixels of the drawable area.
-  ///
-  /// @param[in] height New maximum height in pixels of the drawable area.
-  ///
-  virtual void SetMaximumHeight(uint32_t height) = 0;
-
-  ///
-  /// Set the minimum width in pixels of the drawable area.
-  ///
-  /// @param[in] height New minimum width in pixels of the drawable area.
-  ///
-  virtual void SetMinimumWidth(uint32_t width) = 0;
-
-  ///
-  /// Set the minimum height in pixels of the drawable area.
-  ///
-  /// @param[in] height New minimum height in pixels of the drawable area.
-  ///
-  virtual void SetMinimumHeight(uint32_t height) = 0;
-
-  ///
   /// Get the closed state of the window.
   ///
   /// @return Closed state of the window.
   ///
-  [[nodiscard]] virtual bool IsClosing() const noexcept = 0;
+  [[nodiscard]] virtual bool IsClosing() const = 0;
 
   ///
   /// Get the iconified state of the window.
@@ -238,11 +184,42 @@ public:
   /// @note A value of 0 will disable the refresh rate limit.
   ///
   virtual void SetFullScreenRefreshRate(uint64_t refresh_rate) = 0;
+};
 
-private:
-  struct Pimpl;
-  Pimpl* pimpl_;
+struct WindowEvent
+{
+  Window* window;
+};
+
+struct WindowCloseEvent : public WindowEvent
+{};
+
+struct WindowMaximiseEvent : public WindowEvent
+{
+  bool maximized;
+};
+
+struct WindowIconifyEvent : public WindowEvent
+{
+  bool iconified;
+};
+
+struct WindowResizeEvent : public WindowEvent
+{
+  uint32_t width;
+  uint32_t height;
+};
+
+struct WindowFocusEvent : public WindowEvent
+{
+  enum class FocusState
+  {
+    Lost = 0,
+    Gained = 1
+  };
+
+  FocusState state;
 };
 
 } // namespace genebits::engine
-#endif // GENEBITS_WINDOW_H
+#endif

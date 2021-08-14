@@ -1,4 +1,4 @@
-#include "engine/graphics/glfw_window.h"
+#include "../../source/graphics/glfw_window.h"
 
 #include <gtest/gtest.h>
 
@@ -28,7 +28,8 @@ protected:
     return instance_;
   }
 
-  void CreateWindow(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
+  void CreateWindow(
+    const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
   {
     instance_ = new GLFWWindow(title, width, height, window_creation_hints);
   }
@@ -194,102 +195,6 @@ TEST_F(TestFixtureWindow, Close_CloseWindow_Closing)
   CreateWindow();
   GetWindowPtr()->Close();
   ASSERT_TRUE(GetWindowPtr()->IsClosing());
-}
-
-TEST_F(TestFixtureWindow, GetMinimumWidth_DefaultConstruction_CorrectMinimumWidth)
-{
-  CreateWindow();
-  ASSERT_EQ(GetWindowPtr()->GetMinimumWidth(), 720u);
-}
-
-TEST_F(TestFixtureWindow, GetMaximumWidth_DefaultConstruction_CorrectMaximumWidth)
-{
-  CreateWindow();
-  ASSERT_NE(GetWindowPtr()->GetMaximumWidth(), -1u);
-}
-
-TEST_F(TestFixtureWindow, GetMinimumHeight_DefaultConstruction_CorrectMinimumHeight)
-{
-  CreateWindow();
-  ASSERT_EQ(GetWindowPtr()->GetMinimumHeight(), 480u);
-}
-
-TEST_F(TestFixtureWindow, GetMaximumHeight_DefaultConstruction_CorrectMaximumHeight)
-{
-  CreateWindow();
-  ASSERT_NE(GetWindowPtr()->GetMaximumHeight(), -1u);
-}
-
-TEST_F(TestFixtureWindow, SetMinimumWidth_NewMinumumWidth_CorrectMinimumWidth)
-{
-  uint32_t new_width = 100;
-  CreateWindow();
-  GetWindowPtr()->SetMinimumWidth(new_width);
-  ASSERT_EQ(GetWindowPtr()->GetMinimumWidth(), new_width);
-}
-
-TEST_F(TestFixtureWindow, SetMaximumWidth_NewMaximumWidth_CorrectMaximumWidth)
-{
-  uint32_t new_width = 800;
-  CreateWindow();
-  GetWindowPtr()->SetMaximumWidth(new_width);
-  ASSERT_EQ(GetWindowPtr()->GetMaximumWidth(), new_width);
-}
-
-TEST_F(TestFixtureWindow, SetMinimumHeight_NewMinimumHeight_CorrectMinimumHeight)
-{
-  uint32_t new_height = 100;
-  CreateWindow();
-  GetWindowPtr()->SetMinimumHeight(new_height);
-  ASSERT_EQ(GetWindowPtr()->GetMinimumHeight(), new_height);
-}
-
-TEST_F(TestFixtureWindow, SetMaximumHeight_NewMaximumHeight_CorrectMaximumHeight)
-{
-  uint32_t new_height = 800;
-  CreateWindow();
-  GetWindowPtr()->SetMaximumHeight(new_height);
-  ASSERT_EQ(GetWindowPtr()->GetMaximumHeight(), new_height);
-}
-
-TEST_F(TestFixtureWindow, SetWidth_ExceedingMinimumWidth_WidthWithinLimits)
-{
-  uint32_t new_width_limit = 400;
-  uint32_t out_of_bound_width = 300;
-  CreateWindow();
-  GetWindowPtr()->SetMinimumWidth(new_width_limit);
-  GetWindowPtr()->Resize(out_of_bound_width, GetWindowPtr()->GetHeight());
-  ASSERT_EQ(GetWindowPtr()->GetWidth(), new_width_limit);
-}
-
-TEST_F(TestFixtureWindow, SetWidth_ExceedingMaximumWidth_WidthWithinLimits)
-{
-  uint32_t new_width_limit = 750;
-  uint32_t out_of_bound_width = 800;
-  CreateWindow();
-  GetWindowPtr()->SetMaximumWidth(new_width_limit);
-  GetWindowPtr()->Resize(out_of_bound_width, GetWindowPtr()->GetHeight());
-  ASSERT_EQ(GetWindowPtr()->GetWidth(), new_width_limit);
-}
-
-TEST_F(TestFixtureWindow, SetHeight_ExceedingMinimumHeight_HeightWithinLimits)
-{
-  uint32_t new_height_limit = 400;
-  uint32_t out_of_bound_height = 300;
-  CreateWindow();
-  GetWindowPtr()->SetMinimumHeight(new_height_limit);
-  GetWindowPtr()->Resize(GetWindowPtr()->GetWidth(), out_of_bound_height);
-  ASSERT_EQ(GetWindowPtr()->GetHeight(), new_height_limit);
-}
-
-TEST_F(TestFixtureWindow, SetHeight_ExceedingMaximumHeight_HeightWithinLimits)
-{
-  uint32_t new_height_limit = 700;
-  uint32_t out_of_bound_height = 800;
-  CreateWindow();
-  GetWindowPtr()->SetMaximumHeight(new_height_limit);
-  GetWindowPtr()->Resize(GetWindowPtr()->GetWidth(), out_of_bound_height);
-  ASSERT_EQ(GetWindowPtr()->GetHeight(), new_height_limit);
 }
 
 } // namespace genebits::engine::test
