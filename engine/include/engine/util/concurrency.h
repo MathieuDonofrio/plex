@@ -6,8 +6,6 @@
 #include <new>
 #include <thread>
 
-#include "config.h"
-
 namespace genebits::engine
 {
 ///
@@ -82,8 +80,7 @@ public:
   ///
   /// Default Constructor
   ///
-  constexpr ExponentialBackoff()
-    : count_(0) {}
+  constexpr ExponentialBackoff() : count_(0) {}
 
   ///
   /// Spins an amount of times while yielding. Amount of loops increase
@@ -113,10 +110,7 @@ public:
   ///
   /// Default constructor
   ///
-  constexpr SpinMutex()
-    : lock_ { false }
-  {
-  }
+  constexpr SpinMutex() : lock_ { false } {}
 
   ///
   /// Locks the spin lock, blocks if the lock is not available.

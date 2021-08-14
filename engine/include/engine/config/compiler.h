@@ -1,9 +1,5 @@
-#ifndef GENEBITS_CONFIG_CONFIG_HPP
-#define GENEBITS_CONFIG_CONFIG_HPP
-
-#include "version.h"
-
-// Platform
+#ifndef GENEBITS_ENGINE_COMPILER_H
+#define GENEBITS_ENGINE_COMPILER_H
 
 #if defined(__linux__)
 #define PLATFORM_LINUX 1
@@ -21,8 +17,6 @@
 #error Platform not supported
 #endif
 
-// Compilers
-
 #if defined(__clang__)
 #define COMPILER_CLANG 1
 #define COMPILER_GCC 0
@@ -38,8 +32,6 @@
 #else
 #error Compiler not supported
 #endif
-
-// C++ Standard
 
 #if defined(__cplusplus)
 #if COMPILER_MSVC
@@ -60,16 +52,6 @@
 #error Non standard C++ not supported
 #endif
 
-// Inline
-
-#if COMPILER_GCC || COMPILER_CLANG
-#define FORCEINLINE inline __attribute__((always_inline))
-#else
-#define FORCEINLINE inline
-#endif
-
-// SIMD
-
 #if defined(__AVX512F__)
 #define SIMD_WIDTH 16
 #elif defined(__AVX2__) || defined(__AVX__)
@@ -78,15 +60,6 @@
 #define SIMD_WIDTH 4
 #else
 #define SIMD_WIDTH 1
-#endif
-
-// Assert
-
-#ifdef BUILD_DEBUG
-#include <cassert>
-#define ASSERT(condition, ...) assert(condition)
-#else
-#define ASSERT(...) (void(0))
 #endif
 
 #endif

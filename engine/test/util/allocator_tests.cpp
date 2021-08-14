@@ -7,7 +7,8 @@
 
 namespace genebits::engine::tests
 {
-static_assert(sizeof(Block) == sizeof(char*) + sizeof(size_t), "The size of a block cannot excede that of a char* and size_t");
+static_assert(
+  sizeof(Block) == sizeof(char*) + sizeof(size_t), "The  size of a block cannot excede that of a char* and size_t");
 
 static_assert((cMaxAlignment & (cMaxAlignment - 1)) == 0, "Max alignment should be a power of two");
 

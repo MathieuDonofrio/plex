@@ -20,9 +20,7 @@ namespace
       sum += event.value * event.value;
     }
 
-    void listenZeroOverhead(const TestEvent&)
-    {
-    }
+    void listenZeroOverhead(const TestEvent&) {}
 
     size_t sum;
   };
@@ -95,7 +93,7 @@ static void EventHandler_Construct(benchmark::State& state)
   for (auto _ : state)
   {
     EventHandler<TestEvent> handler;
-    handler.Bind<&TestListener::listenOverhead>(&listener);
+    handler.Bind<TestListener, &TestListener::listenOverhead>(&listener);
 
     benchmark::DoNotOptimize(handler);
   }
@@ -110,7 +108,7 @@ static void EventHandler_Invoke_Overhead(benchmark::State& state)
   TestListener listener;
 
   EventHandler<TestEvent> handler;
-  handler.Bind<&TestListener::listenOverhead>(&listener);
+  handler.Bind<TestListener, &TestListener::listenOverhead>(&listener);
 
   TestEvent event { static_cast<size_t>(std::rand()) };
 
@@ -130,7 +128,7 @@ static void EventHandler_Invoke_ZeroOverhead(benchmark::State& state)
   TestListener listener;
 
   EventHandler<TestEvent> handler;
-  handler.Bind<&TestListener::listenZeroOverhead>(&listener);
+  handler.Bind<TestListener, &TestListener::listenZeroOverhead>(&listener);
 
   TestEvent event { static_cast<size_t>(std::rand()) };
 

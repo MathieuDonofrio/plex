@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "engine/config/assertion.h"
 #include "engine/util/allocator.h"
 
 namespace genebits::engine
@@ -45,6 +46,9 @@ private:
   static constexpr bool cTypePassedByValue = cSmallType && std::is_trivially_copy_constructible_v<Type>;
 
 public:
+  // Style Exception: STL
+  // clang-format off
+
   using iterator_category = std::random_access_iterator_tag;
 
   using size_type = size_t;
@@ -85,6 +89,8 @@ public:
   reference back() { return end()[-1]; }
   const_reference back() const { return end()[-1]; }
 
+  // clang-format on
+
   ///
   /// Const array access operator.
   ///
@@ -92,8 +98,9 @@ public:
   ///
   /// @return Const reference to element at the index.
   ///
-  [[nodiscard]] constexpr const_reference operator[](const size_type index) const noexcept
+  [[nodiscard]] constexpr const Type& operator[](const size_type index) const noexcept
   {
+    ASSERT(index < size_, "Index out of bounds");
     return array_[index];
   }
 
@@ -104,8 +111,9 @@ public:
   ///
   /// @return Reference to element at the index.
   ///
-  [[nodiscard]] constexpr reference operator[](const size_type index) noexcept
+  [[nodiscard]] constexpr Type& operator[](const size_type index) noexcept
   {
+    ASSERT(index < size_, "Index out of bounds");
     return array_[index];
   }
 
@@ -113,10 +121,7 @@ public:
   ///
   /// Default constructor
   ///
-  constexpr FastVector() noexcept
-    : array_(nullptr), size_(0), capacity_(0)
-  {
-  }
+  constexpr FastVector() noexcept : array_(nullptr), size_(0), capacity_(0) {}
 
   ///
   /// Destructor
@@ -169,6 +174,8 @@ public:
   ///
   void PopBack() noexcept
   {
+    ASSERT(size_ > 0, "Vector is empty");
+
     --size_;
     array_[size_].~Type();
   }
@@ -186,6 +193,8 @@ public:
   ///
   void Erase(iterator it) noexcept
   {
+    ASSERT(size_ > 0, "Vector is empty");
+
     if (size_ == 1) [[unlikely]]
     {
       it->~Type();
@@ -235,15 +244,9 @@ public:
   requires std::is_constructible_v<Type, Args...>
   void Resize(const size_t new_size, Args&&... args) noexcept
   {
-    if (static_cast<uint32_t>(new_size) > capacity_)
-    {
-      Grow(static_cast<uint32_t>(new_size));
-    }
+    if (static_cast<uint32_t>(new_size) > capacity_) { Grow(static_cast<uint32_t>(new_size)); }
 
-    if (static_cast<uint32_t>(new_size) < size_)
-    {
-      std::destroy(array_ + new_size, array_ + size_);
-    }
+    if (static_cast<uint32_t>(new_size) < size_) { std::destroy(array_ + new_size, array_ + size_); }
     else
     {
       for (size_t i = size_; i != new_size; i++)
@@ -266,10 +269,7 @@ public:
   ///
   void Reserve(const size_t min_capacity) noexcept
   {
-    if (static_cast<uint32_t>(min_capacity) > capacity_) [[likely]]
-    {
-      Grow(static_cast<uint32_t>(min_capacity));
-    }
+    if (static_cast<uint32_t>(min_capacity) > capacity_) [[likely]] { Grow(static_cast<uint32_t>(min_capacity)); }
   }
 
   ///

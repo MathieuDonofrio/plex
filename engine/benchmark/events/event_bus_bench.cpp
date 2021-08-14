@@ -27,7 +27,7 @@ static void EventBus_SubscribeUnsubscribe(benchmark::State& state)
   TestListener listener;
 
   EventHandler<TestEvent> handler;
-  handler.Bind<&TestListener::listen>(&listener);
+  handler.Bind<TestListener, &TestListener::listen>(&listener);
 
   for (auto _ : state)
   {
@@ -54,7 +54,7 @@ static void EventBus_SubscribeUnsubscribe_10(benchmark::State& state)
 
   for (size_t i = 0; i < cAmount; i++)
   {
-    handlers[i].Bind<&TestListener::listen>(&listeners[i]);
+    handlers[i].Bind<TestListener, &TestListener::listen>(&listeners[i]);
   }
 
   for (auto _ : state)
@@ -92,7 +92,7 @@ static void EventBus_SubscribeUnsubscribe_100(benchmark::State& state)
 
   for (size_t i = 0; i < cAmount; i++)
   {
-    handlers[i].Bind<&TestListener::listen>(&listeners[i]);
+    handlers[i].Bind<TestListener, &TestListener::listen>(&listeners[i]);
   }
 
   for (auto _ : state)
@@ -128,7 +128,7 @@ static void EventBus_Publish(benchmark::State& state)
   TestListener listener;
 
   EventHandler<TestEvent> handler;
-  handler.Bind<&TestListener::listen>(&listener);
+  handler.Bind<TestListener, &TestListener::listen>(&listener);
 
   bus.Subscribe(handler);
 
@@ -158,7 +158,7 @@ static void EventBus_Publish_10(benchmark::State& state)
 
   for (size_t i = 0; i < cAmount; i++)
   {
-    handlers[i].Bind<&TestListener::listen>(&listeners[i]);
+    handlers[i].Bind<TestListener, &TestListener::listen>(&listeners[i]);
     bus.Subscribe(handlers[i]);
   }
 
@@ -192,7 +192,7 @@ static void EventBus_Publish_100(benchmark::State& state)
 
   for (size_t i = 0; i < cAmount; i++)
   {
-    handlers[i].Bind<&TestListener::listen>(&listeners[i]);
+    handlers[i].Bind<TestListener, &TestListener::listen>(&listeners[i]);
     bus.Subscribe(handlers[i]);
   }
 

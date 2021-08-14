@@ -3,14 +3,12 @@
 #include <gtest/gtest.h>
 
 struct TestTypeA
-{
-};
+{};
 
 namespace test_namespace
 {
 class TestTypeB
-{
-};
+{};
 } // namespace test_namespace
 
 namespace genebits::engine::tests
@@ -21,8 +19,7 @@ enum TestTypeC
 
 template<size_t tag>
 class TestType
-{
-};
+{};
 
 // FullName static tests
 

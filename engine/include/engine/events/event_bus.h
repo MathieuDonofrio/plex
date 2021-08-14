@@ -154,10 +154,7 @@ private:
   {
     auto& pool = pools_.Assure<Event>();
 
-    if (!pool) [[unlikely]]
-    {
-      pool.Reset(new EventHandlerPool<Event, HandlersAllocator>());
-    }
+    if (!pool) [[unlikely]] { pool.Reset(new EventHandlerPool<Event, HandlersAllocator>()); }
 
     return pool.Cast<EventHandlerPool<Event, HandlersAllocator>>();
   }

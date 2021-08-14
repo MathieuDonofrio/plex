@@ -94,7 +94,7 @@ TEST(EventHandler_Tests, Invoke_MemberFunction_DelegatesCall)
   TestListener listener;
 
   EventHandler<TestEvent> handler;
-  handler.Bind<&TestListener::addValue1>(&listener);
+  handler.Bind<TestListener, &TestListener::addValue1>(&listener);
 
   handler.Invoke({ 1u });
 
@@ -110,7 +110,7 @@ TEST(EventHandler_Tests, Invoke_ConstMemberFunction_DelegatesCall)
   TestListener listener;
 
   EventHandler<TestEvent> handler;
-  handler.Bind<&TestListener::addValueConst1>(&listener);
+  handler.Bind<TestListener, &TestListener::addValueConst1>(&listener);
 
   handler.Invoke({ 1u });
 
@@ -126,8 +126,7 @@ TEST(EventHandler_Tests, Invoke_Lambda_DelegatesCall)
   size_t sum = 0;
 
   EventHandler<TestEvent> handler;
-  handler.Bind([&sum](const TestEvent& event)
-    { sum += event.value; });
+  handler.Bind([&sum](const TestEvent& event) { sum += event.value; });
 
   handler.Invoke({ 1u });
 
@@ -162,7 +161,7 @@ TEST(EventHandler_Tests, Equality_MemberFunction_Equal)
   TestListener listener;
 
   EventHandler<TestEvent> handler;
-  handler.Bind<&TestListener::addValue1>(&listener);
+  handler.Bind<TestListener, &TestListener::addValue1>(&listener);
 
   ASSERT_EQ(handler, handler);
 }
@@ -172,10 +171,10 @@ TEST(EventHandler_Tests, Equality_MemberFunction_FunctionNotEqual)
   TestListener listener;
 
   EventHandler<TestEvent> handler1;
-  handler1.Bind<&TestListener::addValue1>(&listener);
+  handler1.Bind<TestListener, &TestListener::addValue1>(&listener);
 
   EventHandler<TestEvent> handler2;
-  handler2.Bind<&TestListener::addValue2>(&listener);
+  handler2.Bind<TestListener, &TestListener::addValue2>(&listener);
 
   ASSERT_NE(handler1, handler2);
 }
@@ -186,10 +185,10 @@ TEST(EventHandler_Tests, Equality_MemberFunction_InstanceNotEqual)
   TestListener listener2;
 
   EventHandler<TestEvent> handler1;
-  handler1.Bind<&TestListener::addValue1>(&listener1);
+  handler1.Bind<TestListener, &TestListener::addValue1>(&listener1);
 
   EventHandler<TestEvent> handler2;
-  handler2.Bind<&TestListener::addValue1>(&listener2);
+  handler2.Bind<TestListener, &TestListener::addValue1>(&listener2);
 
   ASSERT_NE(handler1, handler2);
 }
@@ -200,10 +199,10 @@ TEST(EventHandler_Tests, Equality_MemberFunction_NotEqual)
   TestListener listener2;
 
   EventHandler<TestEvent> handler1;
-  handler1.Bind<&TestListener::addValue1>(&listener1);
+  handler1.Bind<TestListener, &TestListener::addValue1>(&listener1);
 
   EventHandler<TestEvent> handler2;
-  handler2.Bind<&TestListener::addValue2>(&listener2);
+  handler2.Bind<TestListener, &TestListener::addValue2>(&listener2);
 
   ASSERT_NE(handler1, handler2);
 }
@@ -213,7 +212,7 @@ TEST(EventHandler_Tests, Equality_ConstMemberFunction_Equal)
   TestListener listener;
 
   EventHandler<TestEvent> handler;
-  handler.Bind<&TestListener::addValueConst1>(&listener);
+  handler.Bind<TestListener, &TestListener::addValueConst1>(&listener);
 
   ASSERT_EQ(handler, handler);
 }
@@ -223,10 +222,10 @@ TEST(EventHandler_Tests, Equality_ConstMemberFunction_FunctionNotEqual)
   TestListener listener;
 
   EventHandler<TestEvent> handler1;
-  handler1.Bind<&TestListener::addValueConst1>(&listener);
+  handler1.Bind<TestListener, &TestListener::addValueConst1>(&listener);
 
   EventHandler<TestEvent> handler2;
-  handler2.Bind<&TestListener::addValueConst2>(&listener);
+  handler2.Bind<TestListener, &TestListener::addValueConst2>(&listener);
 
   ASSERT_NE(handler1, handler2);
 }
@@ -237,10 +236,10 @@ TEST(EventHandler_Tests, Equality_ConstMemberFunction_InstanceNotEqual)
   TestListener listener2;
 
   EventHandler<TestEvent> handler1;
-  handler1.Bind<&TestListener::addValueConst1>(&listener1);
+  handler1.Bind<TestListener, &TestListener::addValueConst1>(&listener1);
 
   EventHandler<TestEvent> handler2;
-  handler2.Bind<&TestListener::addValueConst1>(&listener2);
+  handler2.Bind<TestListener, &TestListener::addValueConst1>(&listener2);
 
   ASSERT_NE(handler1, handler2);
 }
@@ -251,10 +250,10 @@ TEST(EventHandler_Tests, Equality_ConstMemberFunction_NotEqual)
   TestListener listener2;
 
   EventHandler<TestEvent> handler1;
-  handler1.Bind<&TestListener::addValueConst2>(&listener1);
+  handler1.Bind<TestListener, &TestListener::addValueConst2>(&listener1);
 
   EventHandler<TestEvent> handler2;
-  handler2.Bind<&TestListener::addValueConst2>(&listener2);
+  handler2.Bind<TestListener, &TestListener::addValueConst2>(&listener2);
 
   ASSERT_NE(handler1, handler2);
 }
@@ -262,14 +261,16 @@ TEST(EventHandler_Tests, Equality_ConstMemberFunction_NotEqual)
 TEST(EventHandler_Tests, Equality_Lambda_NotEqual)
 {
   EventHandler<TestEvent> handler1;
-  handler1.Bind([](const TestEvent& event)
+  handler1.Bind(
+    [](const TestEvent& event)
     {
       static volatile size_t sum = 0;
       sum += event.value;
     });
 
   EventHandler<TestEvent> handler2;
-  handler2.Bind([](const TestEvent& event)
+  handler2.Bind(
+    [](const TestEvent& event)
     {
       static volatile size_t sum = 0;
       sum += event.value;
@@ -293,7 +294,7 @@ TEST(EventHandler_Tests, CopyAssignment_MemberFunction_Equal)
   TestListener listener;
 
   EventHandler<TestEvent> handler1;
-  handler1.Bind<&TestListener::addValue1>(&listener);
+  handler1.Bind<TestListener, &TestListener::addValue1>(&listener);
 
   EventHandler<TestEvent> handler2 = handler1;
 
@@ -305,7 +306,7 @@ TEST(EventHandler_Tests, CopyAssignment_ConstMemberFunction_Equal)
   TestListener listener;
 
   EventHandler<TestEvent> handler1;
-  handler1.Bind<&TestListener::addValueConst1>(&listener);
+  handler1.Bind<TestListener, &TestListener::addValueConst1>(&listener);
 
   EventHandler<TestEvent> handler2 = handler1;
 
@@ -315,7 +316,8 @@ TEST(EventHandler_Tests, CopyAssignment_ConstMemberFunction_Equal)
 TEST(EventHandler_Tests, CopyAssignment_Lambda_Equal)
 {
   EventHandler<TestEvent> handler1;
-  handler1.Bind([](const TestEvent& event)
+  handler1.Bind(
+    [](const TestEvent& event)
     {
       static volatile size_t sum = 0;
       sum += event.value;

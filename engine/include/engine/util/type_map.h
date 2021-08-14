@@ -1,12 +1,12 @@
 #ifndef GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 #define GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 
+#include "engine/config/assertion.h"
 #include "engine/util/fast_vector.h"
 #include "engine/util/meta.h"
 
 namespace genebits::engine
 {
-
 ///
 /// Concept that determines if the type can be used as the value of a type map.
 ///
@@ -48,6 +48,8 @@ public:
 
     if (values_.Size() <= index) [[unlikely]]
     {
+      ASSERT(index < 10000, "To many types"); // Highly unlikely the map exceeds 10k types, probably a bug.
+
       values_.Resize(index + 1);
     }
 
@@ -70,6 +72,8 @@ public:
   template<typename Type>
   [[nodiscard]] const Value& Get() const noexcept
   {
+    ASSERT(values_.Size() > Key<Type>(), "Type maps out of bounds");
+
     return values_[Key<Type>()];
   }
 

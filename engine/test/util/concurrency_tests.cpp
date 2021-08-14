@@ -14,7 +14,8 @@ TEST(Concurrency_Tests, SpinLock_Lock_LocksAfterDefaultState)
 
   std::atomic<bool> locked = false;
 
-  std::thread thread([&]()
+  std::thread thread(
+    [&]()
     {
       mutex.lock();
       locked = true;
@@ -37,7 +38,8 @@ TEST(Concurrency_Tests, SpinLock_Lock_AlreadyLocked)
 
   std::atomic<bool> locked = true;
 
-  std::thread thread([&]()
+  std::thread thread(
+    [&]()
     {
       mutex.lock();
       locked = false;
@@ -62,7 +64,8 @@ TEST(Concurrency_Tests, SpinLock_Unlock_AllowLocking)
 
   std::atomic<bool> locked = false;
 
-  std::thread thread([&]()
+  std::thread thread(
+    [&]()
     {
       mutex.lock();
       locked = true;
@@ -105,7 +108,8 @@ TEST(Concurrency_Tests, SpinLock_TryLock_LocksAfterDefaultState)
 
   std::atomic<bool> locked = true;
 
-  std::thread thread([&]()
+  std::thread thread(
+    [&]()
     {
       mutex.lock();
       locked = false;
