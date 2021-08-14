@@ -5,14 +5,13 @@
 #include <functional>
 #include <string>
 
+#include "vulkan/vulkan_core.h"
+
 #include "engine/graphics/window.h"
-#include <engine/events/listener.h>
-#include <engine/util/enum_flag.h>
+#include "engine/util/enum_flag.h"
 
-#define GLFW_INCLUDE_NONE // Removes OpenGL
-#define GLFW_INCLUDE_VULKAN
-
-#include "GLFW/glfw3.h"
+// Forward declare
+class GLFWwindow;
 
 namespace genebits::engine
 {
@@ -218,7 +217,7 @@ public:
   /// @param[in] instance Vulkan instance of the application.
   /// @param[out] surface Pointer to the Vulkan surface to create the surface at.
   ///
-  void CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
+  void CreateVulkanWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 
 private:
   using GLFWWindowHandle = ::GLFWwindow*;
