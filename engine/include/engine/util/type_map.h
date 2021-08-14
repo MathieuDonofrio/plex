@@ -7,7 +7,6 @@
 
 namespace genebits::engine
 {
-
 ///
 /// Concept that determines if the type can be used as the value of a type map.
 ///

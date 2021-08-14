@@ -45,8 +45,7 @@ public:
   ///
   /// @param bus The bus to subscribe all event handlers to.
   ///
-  explicit Listener(EventBus& bus) noexcept
-    : bus_(&bus)
+  explicit Listener(EventBus& bus) noexcept : bus_(&bus)
   {
     (bus_->Subscribe(GetEventHandler<Events>()), ...);
   }
@@ -54,10 +53,7 @@ public:
   ///
   /// Default constructor. Uses the environment event bus.
   ///
-  Listener() noexcept
-    : Listener(GetEnvironment().GetEventBus())
-  {
-  }
+  Listener() noexcept : Listener(GetEnvironment().GetEventBus()) {}
 
   ///
   /// Destructor.
@@ -75,8 +71,7 @@ public:
   /// @return Event handler for event type.
   ///
   template<typename Event>
-  requires EventListen<Impl, Event>
-    EventHandler<Event> GetEventHandler()
+  requires EventListen<Impl, Event> EventHandler<Event> GetEventHandler()
   noexcept
   {
     static_assert(std::is_base_of_v<Listener<Impl, Events...>, Impl>, "Listener must be base of implementation");

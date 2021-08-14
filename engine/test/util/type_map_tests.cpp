@@ -13,8 +13,7 @@ namespace
 
   template<size_t Tag = 0>
   struct TestKey
-  {
-  };
+  {};
 } // namespace
 
 TEST(TypeMap_Tests, Assure_FirstTime_DefaultState)

@@ -20,9 +20,7 @@ namespace
       sum += event.value * event.value;
     }
 
-    void listenZeroOverhead(const TestEvent&)
-    {
-    }
+    void listenZeroOverhead(const TestEvent&) {}
 
     size_t sum;
   };

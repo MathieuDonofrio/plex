@@ -34,9 +34,7 @@ public:
   ///
   /// Default Constructor
   ///
-  constexpr ErasedPtr() noexcept
-    : instance_(nullptr), deleter_(nullptr)
-  {}
+  constexpr ErasedPtr() noexcept : instance_(nullptr), deleter_(nullptr) {}
 
   ///
   /// Parametric Constructor
@@ -44,9 +42,7 @@ public:
   /// @param instance Instance to handle.
   /// @param deleter Deleter to delete the instance.
   ///
-  constexpr ErasedPtr(Base* instance, void (*deleter)(Base*)) noexcept
-    : instance_(instance), deleter_(deleter)
-  {}
+  constexpr ErasedPtr(Base* instance, void (*deleter)(Base*)) noexcept : instance_(instance), deleter_(deleter) {}
 
   ///
   /// Parametric Constructor. Uses default deleter.
@@ -54,8 +50,7 @@ public:
   /// @param instance Instance to handle.
   ///
   template<typename Type>
-  constexpr ErasedPtr(Type* instance) noexcept
-    : ErasedPtr(instance, DefaultDeleter<Base, Type>)
+  constexpr ErasedPtr(Type* instance) noexcept : ErasedPtr(instance, DefaultDeleter<Base, Type>)
   {}
 
   ///
@@ -63,8 +58,7 @@ public:
   ///
   /// @param other Other erased ptr to move into this one.
   ///
-  constexpr ErasedPtr(ErasedPtr<Base>&& other) noexcept
-    : ErasedPtr(other.instance_, other.deleter_)
+  constexpr ErasedPtr(ErasedPtr<Base>&& other) noexcept : ErasedPtr(other.instance_, other.deleter_)
   {
     other.instance_ = nullptr;
     other.deleter_ = nullptr;

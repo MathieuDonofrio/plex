@@ -16,7 +16,8 @@ namespace genebits::engine
 /// @tparam Guarantee The concurrency guarantee of the ring buffer.
 ///
 template<POD Type, size_t Capacity, ConcurrencyGuarantee Guarantee = ConcurrencyGuarantee::None>
-requires POT<Capacity> class RingBuffer;
+requires POT<Capacity>
+class RingBuffer;
 
 ///
 /// High performance circular buffer. Not guaranteed to be thread-safe.
@@ -33,10 +34,7 @@ public:
   ///
   /// Default Constructor.
   ///
-  constexpr RingBuffer()
-    : head_(0), tail_(0)
-  {
-  }
+  constexpr RingBuffer() : head_(0), tail_(0) {}
 
   ///
   /// Adds the item to the head of the ring buffer.
@@ -127,18 +125,14 @@ namespace details
   class ConcurrentRingBuffer
   {
   public:
-    static constexpr size_t cCachePaddedBufferSize = Capacity * sizeof(Type) < cCacheLineSize
-                                                       ? cCacheLineSize / sizeof(Type)
-                                                       : Capacity;
+    static constexpr size_t cCachePaddedBufferSize =
+      Capacity * sizeof(Type) < cCacheLineSize ? cCacheLineSize / sizeof(Type) : Capacity;
     static constexpr size_t cMask = Capacity - 1;
 
     ///
     /// Default Constructor.
     ///
-    ConcurrentRingBuffer()
-      : head_(0), tail_(0)
-    {
-    }
+    ConcurrentRingBuffer() : head_(0), tail_(0) {}
 
   protected:
     ///

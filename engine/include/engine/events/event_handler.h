@@ -23,7 +23,10 @@ namespace genebits::engine
 /// @tparam Event Type of the event to invoke.
 ///
 template<typename Invokable, typename Event>
-concept EventHandlerInvokable = std::is_class_v<Invokable> && std::is_trivially_destructible_v<Invokable> && sizeof(Invokable) <= sizeof(void*) && requires(Invokable invokable, const Event& event)
+concept EventHandlerInvokable = std::is_class_v<Invokable> && std::is_trivially_destructible_v<Invokable> && sizeof(
+                                  Invokable)
+                                  <= sizeof(void*)
+                                && requires(Invokable invokable, const Event& event)
 {
   invokable(event);
 };
@@ -44,10 +47,7 @@ public:
   ///
   /// Default Constructor
   ///
-  constexpr EventHandler() noexcept
-    : function_(nullptr), storage_(nullptr)
-  {
-  }
+  constexpr EventHandler() noexcept : function_(nullptr), storage_(nullptr) {}
 
   ///
   /// Binds a free function.
@@ -61,10 +61,7 @@ public:
   {
     storage_ = nullptr;
 
-    function_ = [](void*, const Event& event)
-    {
-      (*FreeFunction)(event);
-    };
+    function_ = [](void*, const Event& event) { (*FreeFunction)(event); };
   }
 
   ///
@@ -82,10 +79,7 @@ public:
   {
     storage_ = instance;
 
-    function_ = [](void* storage, const Event& event)
-    {
-      (static_cast<Type*>(storage)->*MemberFunction)(event);
-    };
+    function_ = [](void* storage, const Event& event) { (static_cast<Type*>(storage)->*MemberFunction)(event); };
   }
 
   ///
@@ -103,10 +97,7 @@ public:
   {
     storage_ = instance;
 
-    function_ = [](void* storage, const Event& event)
-    {
-      (static_cast<const Type*>(storage)->*MemberFunction)(event);
-    };
+    function_ = [](void* storage, const Event& event) { (static_cast<const Type*>(storage)->*MemberFunction)(event); };
   }
 
   ///
@@ -130,10 +121,7 @@ public:
   {
     new (&storage_) Invokable(std::move(invokable));
 
-    function_ = [](void* storage, const Event& event)
-    {
-      reinterpret_cast<Invokable*>(&storage)->operator()(event);
-    };
+    function_ = [](void* storage, const Event& event) { reinterpret_cast<Invokable*>(&storage)->operator()(event); };
   }
 
   ///

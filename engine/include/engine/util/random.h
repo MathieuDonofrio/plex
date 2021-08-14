@@ -29,16 +29,12 @@ public:
   ///
   /// Default constructor
   ///
-  constexpr Random()
-    : state_(cMultiplier ^ cScramble)
-  {
-  }
+  constexpr Random() : state_(cMultiplier ^ cScramble) {}
 
   ///
   /// Constructor with user specified seed.
   ///
-  constexpr explicit Random(const uint64_t seed) noexcept
-    : state_(seed ^ cScramble)
+  constexpr explicit Random(const uint64_t seed) noexcept : state_(seed ^ cScramble)
   {
     // Run two LCG iterations to correctly initialize
     state_ = state_ * cMultiplier + cIncrement;
@@ -55,7 +51,9 @@ public:
   ///
   [[nodiscard]] constexpr float NextFloat(const float lower_bound, const float upper_bound) noexcept
   {
-    return lower_bound + (upper_bound - lower_bound) * static_cast<float>(Next()) / static_cast<float>(std::numeric_limits<uint32_t>::max());
+    return lower_bound
+           + (upper_bound - lower_bound) * static_cast<float>(Next())
+               / static_cast<float>(std::numeric_limits<uint32_t>::max());
   }
 
   ///
@@ -153,8 +151,7 @@ private:
     while (true)
     {
       const uint32_t r = Next();
-      if (r >= threshold)
-        return r % bound;
+      if (r >= threshold) return r % bound;
     }
   }
 
@@ -239,7 +236,7 @@ inline uint64_t Seed()
     uint64_t current = state;
 
     // Runs an LCG iteration for randomness in the seed.
-    uint64_t next = current * Random::cMultiplier + Random::cIncrement;
+    const uint64_t next = current * Random::cMultiplier + Random::cIncrement;
 
     if (current == state.exchange(next, std::memory_order_relaxed)) return next;
   }

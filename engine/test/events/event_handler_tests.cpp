@@ -126,8 +126,7 @@ TEST(EventHandler_Tests, Invoke_Lambda_DelegatesCall)
   size_t sum = 0;
 
   EventHandler<TestEvent> handler;
-  handler.Bind([&sum](const TestEvent& event)
-    { sum += event.value; });
+  handler.Bind([&sum](const TestEvent& event) { sum += event.value; });
 
   handler.Invoke({ 1u });
 
@@ -262,14 +261,16 @@ TEST(EventHandler_Tests, Equality_ConstMemberFunction_NotEqual)
 TEST(EventHandler_Tests, Equality_Lambda_NotEqual)
 {
   EventHandler<TestEvent> handler1;
-  handler1.Bind([](const TestEvent& event)
+  handler1.Bind(
+    [](const TestEvent& event)
     {
       static volatile size_t sum = 0;
       sum += event.value;
     });
 
   EventHandler<TestEvent> handler2;
-  handler2.Bind([](const TestEvent& event)
+  handler2.Bind(
+    [](const TestEvent& event)
     {
       static volatile size_t sum = 0;
       sum += event.value;
@@ -315,7 +316,8 @@ TEST(EventHandler_Tests, CopyAssignment_ConstMemberFunction_Equal)
 TEST(EventHandler_Tests, CopyAssignment_Lambda_Equal)
 {
   EventHandler<TestEvent> handler1;
-  handler1.Bind([](const TestEvent& event)
+  handler1.Bind(
+    [](const TestEvent& event)
     {
       static volatile size_t sum = 0;
       sum += event.value;

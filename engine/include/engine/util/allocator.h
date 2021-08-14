@@ -59,8 +59,7 @@ concept Allocator = requires(AllocatorImpl allocator, Block block)
   // was not successful.
   {
     allocator.Allocate(size_t {})
-  }
-  ->std::convertible_to<Block>;
+    } -> std::convertible_to<Block>;
 
   // Deallocates a block of memory
   allocator.Deallocate(Block {});
@@ -69,14 +68,12 @@ concept Allocator = requires(AllocatorImpl allocator, Block block)
   // returns false.
   {
     allocator.Reallocate(block, size_t {})
-  }
-  ->std::convertible_to<bool>;
+    } -> std::convertible_to<bool>;
 
   // Checks if the allocator has ownership of the block.
   {
     allocator.Owns(Block {})
-  }
-  ->std::convertible_to<bool>;
+    } -> std::convertible_to<bool>;
 };
 
 ///
@@ -210,10 +207,7 @@ public:
   {
     const size_t aligned_size = RoundToAligned(size);
 
-    if (aligned_size > static_cast<size_t>((data_ + Size) - ptr_))
-    {
-      return { nullptr, 0 };
-    }
+    if (aligned_size > static_cast<size_t>((data_ + Size) - ptr_)) { return { nullptr, 0 }; }
 
     Block block { ptr_, size };
     ptr_ += aligned_size;
@@ -232,10 +226,7 @@ public:
   ///
   constexpr void Deallocate(const Block block) noexcept
   {
-    if (LastAllocation(block))
-    {
-      ptr_ = block.ptr;
-    }
+    if (LastAllocation(block)) { ptr_ = block.ptr; }
   }
 
   ///
@@ -257,10 +248,7 @@ public:
 
     const size_t aligned_size = RoundToAligned(size);
 
-    if (aligned_size > static_cast<size_t>((data_ + Size) - ptr))
-    {
-      return false;
-    }
+    if (aligned_size > static_cast<size_t>((data_ + Size) - ptr)) { return false; }
 
     block.ptr = ptr;
     block.size = aligned_size;
@@ -323,10 +311,7 @@ public:
   {
     Block block = Primary::Allocate(size);
 
-    if (!block.ptr)
-    {
-      block = Fallback::Allocate(size);
-    }
+    if (!block.ptr) { block = Fallback::Allocate(size); }
 
     return block;
   }
@@ -340,10 +325,7 @@ public:
   ///
   void Deallocate(const Block block)
   {
-    if (Primary::Owns(block))
-    {
-      Primary::Deallocate(block);
-    }
+    if (Primary::Owns(block)) { Primary::Deallocate(block); }
     else
     {
       Fallback::Deallocate(block);
@@ -424,10 +406,7 @@ public:
   ///
   [[nodiscard]] Block Allocate(const size_t size)
   {
-    if (size <= Threshold)
-    {
-      return SmallAllocator::Allocate(size);
-    }
+    if (size <= Threshold) { return SmallAllocator::Allocate(size); }
 
     return LargeAllocator::Allocate(size);
   }
@@ -442,10 +421,7 @@ public:
   ///
   void Deallocate(const Block block)
   {
-    if (block.size <= Threshold)
-    {
-      return SmallAllocator::Deallocate(block);
-    }
+    if (block.size <= Threshold) { return SmallAllocator::Deallocate(block); }
 
     return LargeAllocator::Deallocate(block);
   }
@@ -468,10 +444,7 @@ public:
   {
     if (block.size <= Threshold)
     {
-      if (size <= Threshold)
-      {
-        return SmallAllocator::Reallocate(block, size);
-      }
+      if (size <= Threshold) { return SmallAllocator::Reallocate(block, size); }
 
       Block large_block = LargeAllocator::Allocate(size);
 

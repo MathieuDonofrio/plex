@@ -140,8 +140,7 @@ TEST(Random_Tests, TLRandom_DifferentThreads_DifferentRandomGenerator)
 
   Random random2;
 
-  std::thread t1([&random2]()
-    { random2 = TLRandom(); });
+  std::thread t1([&random2]() { random2 = TLRandom(); });
 
   t1.join();
 

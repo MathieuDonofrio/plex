@@ -18,10 +18,7 @@ namespace
 
   struct TestListener : public Listener<TestListener, TestEvent>
   {
-    TestListener(EventBus& bus)
-      : Listener<TestListener, TestEvent>(bus), sum(0)
-    {
-    }
+    TestListener(EventBus& bus) : Listener<TestListener, TestEvent>(bus), sum(0) {}
 
     void listen(const TestEvent& event)
     {
@@ -35,10 +32,7 @@ namespace
   {
     // Used to make sure it compiles
 
-    TestListener2(EventBus& bus)
-      : Listener<TestListener2, TestEvent, TestEvent2>(bus), sum(0)
-    {
-    }
+    TestListener2(EventBus& bus) : Listener<TestListener2, TestEvent, TestEvent2>(bus), sum(0) {}
 
     void listen(const TestEvent& event)
     {

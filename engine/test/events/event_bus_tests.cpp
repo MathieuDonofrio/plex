@@ -18,9 +18,7 @@ namespace
     sum1_1 = event.value;
   }
 
-  void listen1_2(const TestEvent1&)
-  {
-  }
+  void listen1_2(const TestEvent1&) {}
 } // namespace
 
 TEST(EventBus_Tests, Count_OnConstruction_Zero)
