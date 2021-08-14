@@ -80,15 +80,18 @@ namespace
   /// this method is called.
   ///
   /// @note
-  ///     There is a max amount of sequences (512).
+  ///     There is a max amount of sequences (256). If there are more than 256 sequences
+  ///     they will be reused. Using multiple sequences allows for more packed arrays
+  ///     when the ids are used for lookup. This means better cache locality and potential
+  ///     for less memory usage.
   ///
   /// @return size_t next index in the specified sequence
   ///
   inline size_t NextUniqueId(size_t sequence_index)
   {
-    constexpr size_t cMaxSequences = 1 << 9;
+    constexpr size_t cMaxSequences = 1 << 8; // 256
 
-    static std::atomic_size_t sequences[cMaxSequences];
+    static std::atomic_uint32_t sequences[cMaxSequences]; // 32 bit is enough (4294967296 unique ids per sequence)
 
     const size_t actual_index = sequence_index & (cMaxSequences - 1);
 
