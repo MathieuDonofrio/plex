@@ -1,6 +1,6 @@
 
 #include <engine/events/listener.h>
-#include <engine/graphics/window.h>
+#include <engine/graphics/glfw_window.h>
 #include <iostream>
 
 int main(int, char**)
@@ -8,7 +8,7 @@ int main(int, char**)
   using namespace genebits::engine;
 
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
-  auto* window = new Window("Hello world", 256, 256, hints);
+  auto* window = new GLFWWindow("Hello world", 256, 256, hints);
 
   struct TestWindowListener : public Listener<TestWindowListener, WindowCloseEvent, WindowFocusEvent, WindowMaximiseEvent, WindowIconifyEvent, WindowResizeEvent, WindowRestoreEvent>
   {

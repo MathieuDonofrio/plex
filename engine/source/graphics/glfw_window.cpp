@@ -1,5 +1,5 @@
 
-#include "engine/graphics/window.h"
+#include "engine/graphics/glfw_window.h"
 
 #define GLFW_INCLUDE_NONE // Removes OpenGL
 #define GLFW_INCLUDE_VULKAN
@@ -12,7 +12,7 @@
 namespace genebits::engine
 {
 
-struct Window::Pimpl
+struct GLFWWindow::Pimpl
 {
   GLFWwindow* handle {};
 
@@ -38,8 +38,8 @@ struct Window::Pimpl
   static void GLFWFocusEventCallback(GLFWwindow*, int32_t current_state);
 };
 
-Window::Window(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
-  : pimpl_(new Pimpl), Listener<Window, WindowCloseEvent>()
+GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
+  : pimpl_(new Pimpl), Listener<GLFWWindow, WindowCloseEvent>()
 {
   pimpl_->title = title;
   pimpl_->width = width;
@@ -66,7 +66,7 @@ Window::Window(const std::string& title, uint32_t width, uint32_t height, Window
   pimpl_->RegisterGLFWWindowCallbacks();
 }
 
-Window::~Window()
+GLFWWindow::~GLFWWindow()
 {
   glfwDestroyWindow(pimpl_->handle);
 
@@ -74,12 +74,12 @@ Window::~Window()
   pimpl_ = nullptr;
 }
 
-void Window::PollEvents()
+void GLFWWindow::PollEvents()
 {
   glfwPollEvents();
 }
 
-void Window::WaitEvents(double timeout)
+void GLFWWindow::WaitEvents(double timeout)
 {
   if (timeout > 0.0)
   {
@@ -91,19 +91,19 @@ void Window::WaitEvents(double timeout)
   }
 }
 
-const std::string& Window::GetTitle() const
+const std::string& GLFWWindow::GetTitle() const
 {
   return pimpl_->title;
 }
 
-void Window::SetTitle(const std::string& title)
+void GLFWWindow::SetTitle(const std::string& title)
 {
   pimpl_->title = title;
 
   glfwSetWindowTitle(pimpl_->handle, pimpl_->title.c_str());
 }
 
-uint32_t Window::GetWidth() const
+uint32_t GLFWWindow::GetWidth() const
 {
   int width;
 
@@ -112,7 +112,7 @@ uint32_t Window::GetWidth() const
   return static_cast<uint32_t>(width);
 }
 
-uint32_t Window::GetHeight() const
+uint32_t GLFWWindow::GetHeight() const
 {
   int height;
 
@@ -121,7 +121,7 @@ uint32_t Window::GetHeight() const
   return static_cast<uint32_t>(height);
 }
 
-void Window::Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensions)
+void GLFWWindow::Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensions)
 {
   if (!glfwGetWindowAttrib(pimpl_->handle, GLFW_MAXIMIZED))
   {
@@ -143,49 +143,49 @@ void Window::Resize(uint32_t width, uint32_t height, bool overwrite_max_dimensio
   }
 }
 
-void Window::Focus()
+void GLFWWindow::Focus()
 {
   glfwFocusWindow(pimpl_->handle);
 }
 
-void Window::Maximize()
+void GLFWWindow::Maximize()
 {
   glfwMaximizeWindow(pimpl_->handle);
 }
 
-void Window::Iconify()
+void GLFWWindow::Iconify()
 {
   glfwIconifyWindow(pimpl_->handle);
 }
 
 template<>
-void Window::CreateWindowSurface<VkInstance, VkSurfaceKHR>(VkInstance instance, VkSurfaceKHR* surface)
+void GLFWWindow::CreateWindowSurface<VkInstance, VkSurfaceKHR>(VkInstance instance, VkSurfaceKHR* surface)
 {
   glfwCreateWindowSurface(instance, pimpl_->handle, nullptr, surface);
 }
 
-void Window::Restore()
+void GLFWWindow::Restore()
 {
   glfwRestoreWindow(pimpl_->handle);
 }
 
-void Window::RequestAttention()
+void GLFWWindow::RequestAttention()
 {
   glfwRequestWindowAttention(pimpl_->handle);
 }
 
-void Window::Close()
+void GLFWWindow::Close()
 {
   GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
   glfwSetWindowShouldClose(pimpl_->handle, 1);
 }
 
-bool Window::IsClosing() const noexcept
+bool GLFWWindow::IsClosing() const noexcept
 {
   return glfwWindowShouldClose(pimpl_->handle) != 0;
 }
 
-void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
+void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 {
   // TODO add LOD icons (small, med, big)
   if (pixels != nullptr)
@@ -199,29 +199,29 @@ void Window::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
   }
 }
 
-uint32_t Window::GetMonitorWidth() const
+uint32_t GLFWWindow::GetMonitorWidth() const
 {
   GLFWmonitor* monitor_ptr = glfwGetPrimaryMonitor();
   return glfwGetVideoMode(monitor_ptr)->width;
 }
 
-uint32_t Window::GetMonitorHeight() const
+uint32_t GLFWWindow::GetMonitorHeight() const
 {
   GLFWmonitor* monitor_ptr = glfwGetPrimaryMonitor();
   return glfwGetVideoMode(monitor_ptr)->height;
 }
 
-uint32_t Window::GetMinimumWidth() const noexcept
+uint32_t GLFWWindow::GetMinimumWidth() const noexcept
 {
   return pimpl_->size_limit.min_width;
 }
 
-uint32_t Window::GetMinimumHeight() const noexcept
+uint32_t GLFWWindow::GetMinimumHeight() const noexcept
 {
   return pimpl_->size_limit.min_height;
 }
 
-uint32_t Window::GetMaximumWidth() const
+uint32_t GLFWWindow::GetMaximumWidth() const
 {
   if (pimpl_->size_limit.max_width == GLFW_DONT_CARE)
   {
@@ -233,7 +233,7 @@ uint32_t Window::GetMaximumWidth() const
   }
 }
 
-uint32_t Window::GetMaximumHeight() const
+uint32_t GLFWWindow::GetMaximumHeight() const
 {
   if (pimpl_->size_limit.max_height == GLFW_DONT_CARE)
   {
@@ -245,65 +245,65 @@ uint32_t Window::GetMaximumHeight() const
   }
 }
 
-void Window::SetMaximumWidth(uint32_t width)
+void GLFWWindow::SetMaximumWidth(uint32_t width)
 {
   auto& size_limit = pimpl_->size_limit;
   size_limit.max_width = std::max(width, pimpl_->size_limit.min_width);
   glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
-void Window::SetMaximumHeight(uint32_t height)
+void GLFWWindow::SetMaximumHeight(uint32_t height)
 {
   auto& size_limit = pimpl_->size_limit;
   size_limit.max_height = std::max(height, pimpl_->size_limit.min_height);
   glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
-void Window::SetMinimumWidth(uint32_t width)
+void GLFWWindow::SetMinimumWidth(uint32_t width)
 {
   auto& size_limit = pimpl_->size_limit;
   size_limit.min_width = std::min(width, pimpl_->size_limit.max_width);
   glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
-void Window::SetMinimumHeight(uint32_t height)
+void GLFWWindow::SetMinimumHeight(uint32_t height)
 {
   auto& size_limit = pimpl_->size_limit;
   size_limit.min_height = std::min(height, pimpl_->size_limit.max_height);
   glfwSetWindowSizeLimits(pimpl_->handle, size_limit.min_width, size_limit.min_height, size_limit.max_width, size_limit.max_height);
 }
 
-bool Window::IsIconified() const
+bool GLFWWindow::IsIconified() const
 {
   return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_ICONIFIED));
 }
 
-bool Window::IsMaximised() const
+bool GLFWWindow::IsMaximised() const
 {
   return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_MAXIMIZED));
 }
 
-bool Window::IsFocused() const
+bool GLFWWindow::IsFocused() const
 {
   return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_FOCUSED));
 }
 
-bool Window::IsVisible() const
+bool GLFWWindow::IsVisible() const
 {
   return static_cast<bool>(glfwGetWindowAttrib(pimpl_->handle, GLFW_VISIBLE));
 }
 
-void Window::SetFullScreenRefreshRate(uint64_t refresh_rate)
+void GLFWWindow::SetFullScreenRefreshRate(uint64_t refresh_rate)
 {
   glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate);
 }
 
-void Window::listen(const WindowCloseEvent&)
+void GLFWWindow::listen(const WindowCloseEvent&)
 {
   std::cout << "Event closing" << std::endl;
 }
 
-void Window::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
+void GLFWWindow::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
 {
   // TODO might be good to keep track of some of those states
   glfwWindowHint(GLFW_RESIZABLE, (hints & WindowCreationHints::Resizable) != 0);
@@ -319,7 +319,7 @@ void Window::Pimpl::ApplyWindowCreationHints(const WindowCreationHints& hints)
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, (hints & WindowCreationHints::ScalingToMonitor) != 0);
 }
 
-void Window::Pimpl::GLFWCloseEventCallback(GLFWwindow*)
+void GLFWWindow::Pimpl::GLFWCloseEventCallback(GLFWwindow*)
 {
   // TODO add a way to pass the pointer to an object that lets other system say that they object the window closing (objection counter ?)
   // That way some system can prevent closing of the program resulting in unwanted/undefined behaviour
@@ -329,7 +329,7 @@ void Window::Pimpl::GLFWCloseEventCallback(GLFWwindow*)
   GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
 }
 
-void Window::Pimpl::GLFWMaximiseEventCallback(GLFWwindow*, int32_t current_state)
+void GLFWWindow::Pimpl::GLFWMaximiseEventCallback(GLFWwindow*, int32_t current_state)
 {
   if (current_state)
   {
@@ -341,7 +341,7 @@ void Window::Pimpl::GLFWMaximiseEventCallback(GLFWwindow*, int32_t current_state
   }
 }
 
-void Window::Pimpl::GLFWIconifyEventCallback(GLFWwindow*, int32_t current_state)
+void GLFWWindow::Pimpl::GLFWIconifyEventCallback(GLFWwindow*, int32_t current_state)
 {
   if (current_state)
   {
@@ -353,17 +353,17 @@ void Window::Pimpl::GLFWIconifyEventCallback(GLFWwindow*, int32_t current_state)
   }
 }
 
-void Window::Pimpl::GLFWResizeEventCallback(GLFWwindow*, int32_t new_width, int32_t new_height)
+void GLFWWindow::Pimpl::GLFWResizeEventCallback(GLFWwindow*, int32_t new_width, int32_t new_height)
 {
   GetEnvironment().GetEventBus().Publish(WindowResizeEvent { static_cast<uint32_t>(new_width), static_cast<uint32_t>(new_height) });
 }
 
-void Window::Pimpl::GLFWFocusEventCallback(GLFWwindow*, int32_t current_state)
+void GLFWWindow::Pimpl::GLFWFocusEventCallback(GLFWwindow*, int32_t current_state)
 {
   GetEnvironment().GetEventBus().Publish(WindowFocusEvent { static_cast<WindowFocusEventState>(current_state) });
 }
 
-void Window::Pimpl::RegisterGLFWWindowCallbacks()
+void GLFWWindow::Pimpl::RegisterGLFWWindowCallbacks()
 {
   glfwSetWindowCloseCallback(handle, GLFWCloseEventCallback);
   glfwSetWindowMaximizeCallback(handle, GLFWMaximiseEventCallback);

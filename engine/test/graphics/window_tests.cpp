@@ -1,4 +1,4 @@
-#include "engine/graphics/window.h"
+#include "engine/graphics/glfw_window.h"
 
 #include <gtest/gtest.h>
 
@@ -23,14 +23,14 @@ protected:
     return title_;
   }
 
-  Window* GetWindowPtr()
+  GLFWWindow* GetWindowPtr()
   {
     return instance_;
   }
 
   void CreateWindow(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
   {
-    instance_ = new Window(title, width, height, window_creation_hints);
+    instance_ = new GLFWWindow(title, width, height, window_creation_hints);
   }
 
   void CreateWindow(WindowCreationHints hints = WindowCreationHints::Defaults)
@@ -48,7 +48,7 @@ protected:
   }
 
 private:
-  Window* instance_;
+  GLFWWindow* instance_;
 
   const std::string title_ = "Title";
 
