@@ -70,12 +70,17 @@ inline void UnreferenceGlfw()
 
 } // namespace
 
+// GLFW assertion is useful for obtaining descriptive error handling. Obtaining the last error does incur some
+// overhead so two macros are provided:
+// - GLFW_ASSERT: For non-performance critical, handles errors even for release builds.
+// - GLFW_ASSERT_DEBUG_ONLY: For performance critical, handles errors only for debug builds.
+
 #define GLFW_ASSERT AssertLastGlfwCall()
 
 #ifdef NDEBUG
-#define GLFW_ASSERT_DEBUG_ONLY GLFW_ASSERT
-#else
 #define GLFW_ASSERT_DEBUG_ONLY (void)(0)
+#else
+#define GLFW_ASSERT_DEBUG_ONLY GLFW_ASSERT
 #endif
 
 namespace genebits::engine
@@ -274,7 +279,7 @@ bool GLFWWindow::IsIconified() const
   return iconified;
 }
 
-bool GLFWWindow::IsMaximised() const
+bool GLFWWindow::IsMaximized() const
 {
   const bool maximized = glfwGetWindowAttrib(handle_, GLFW_MAXIMIZED);
   GLFW_ASSERT_DEBUG_ONLY;

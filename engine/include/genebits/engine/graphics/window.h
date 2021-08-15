@@ -177,11 +177,11 @@ public:
   [[nodiscard]] virtual bool IsIconified() const = 0;
 
   ///
-  /// Get the maximised state of the window.
+  /// Get the maximized state of the window.
   ///
-  /// @return Maximised state of the window.
+  /// @return Maximized state of the window.
   ///
-  [[nodiscard]] virtual bool IsMaximised() const = 0;
+  [[nodiscard]] virtual bool IsMaximized() const = 0;
 
   ///
   /// Get the focused state of the window.

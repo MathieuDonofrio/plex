@@ -176,7 +176,7 @@ public:
   ///
   /// @return Maximised state of the window.
   ///
-  [[nodiscard]] bool IsMaximised() const override;
+  [[nodiscard]] bool IsMaximized() const override;
 
   ///
   /// Get the focused state of the window.
