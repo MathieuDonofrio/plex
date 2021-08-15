@@ -6,7 +6,7 @@
 # Utilities
 #
 
-set(engine_include_directories ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/config)
+set(engine_include_directories ${CMAKE_CURRENT_SOURCE_DIR}/../engine/include)
 
 function(add_sandbox_project subdirectory)
     message(STATUS "Adding Sandbox Project: " ${subdirectory})
@@ -24,4 +24,4 @@ endfunction()
 # Sandboxes
 #
 
-add_sandbox_project(hello_world)
+add_sandbox_project(basic_window)

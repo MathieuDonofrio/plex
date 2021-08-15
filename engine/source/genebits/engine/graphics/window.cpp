@@ -1,6 +1,6 @@
 
-#include "engine/graphics/window.h"
-#include "glfw_window.h"
+#include "genebits/engine/graphics/window.h"
+#include "genebits/engine/graphics/glfw_window.h"
 
 namespace genebits::engine
 {

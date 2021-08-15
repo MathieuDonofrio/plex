@@ -1,12 +1,8 @@
-
-
 #include <iostream>
 
-#include "engine/events/listener.h"
-#include "engine/graphics/window.h"
+#include "genebits/engine/events/listener.h"
+#include "genebits/engine/graphics/window.h"
 
-namespace genebits::sandbox
-{
 using namespace genebits::engine;
 
 struct TestWindowListener : public Listener<TestWindowListener,
@@ -27,14 +23,14 @@ struct TestWindowListener : public Listener<TestWindowListener,
               << std::endl;
   }
 
-  void listen(const WindowMaximizeEvent&)
+  void listen(const WindowMaximizeEvent& event)
   {
-    std::cout << "window maximise event" << std::endl;
+    std::cout << "window maximise event: " << event.maximized << std::endl;
   }
 
-  void listen(const WindowIconifyEvent&)
+  void listen(const WindowIconifyEvent& event)
   {
-    std::cout << "window iconify event" << std::endl;
+    std::cout << "window iconify event: " << event.iconified << std::endl;
   }
 
   void listen(const WindowResizeEvent& event)
@@ -43,13 +39,19 @@ struct TestWindowListener : public Listener<TestWindowListener,
   }
 };
 
-int run()
+int main(int, char**)
 {
+  // Setup listener
+
+  TestWindowListener listener {};
+
+  // Create Window
+
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
 
   Window* window = CreateWindow("Hello world", 256, 256, hints);
 
-  TestWindowListener listener {};
+  // Window loop
 
   while (!window->IsClosing())
   {
@@ -57,13 +59,9 @@ int run()
     window->PollEvents();
   }
 
+  // Cleanup
+
   delete window;
 
   return 0;
-}
-} // namespace genebits::sandbox
-
-int main(int, char**)
-{
-  return genebits::sandbox::run();
 }

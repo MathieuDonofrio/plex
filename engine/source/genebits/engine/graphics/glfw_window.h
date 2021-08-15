@@ -4,12 +4,12 @@
 #include <cstdint>
 #include <string>
 
-#include "engine/graphics/window.h"
-#include "engine/util/enum_flag.h"
-#include "vulkan_capable_window.h"
+#include "genebits/engine/graphics/vulkan_capable_window.h"
+#include "genebits/engine/graphics/window.h"
+#include "genebits/engine/util/enum_flag.h"
 
 // Forward declare
-class GLFWwindow;
+class GLFWwindow; // from glfw
 
 namespace genebits::engine
 {

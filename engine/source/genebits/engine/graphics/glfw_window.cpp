@@ -1,10 +1,9 @@
-
-#include "glfw_window.h"
+#include "genebits/engine/graphics/glfw_window.h"
 
 #include <atomic>
 
-#include "engine/config/assertion.h"
-#include "engine/core/environment.h"
+#include "genebits/engine/config/assertion.h"
+#include "genebits/engine/core/environment.h"
 
 #define GLFW_INCLUDE_NONE // Removes OpenGL
 #include "GLFW/glfw3.h"

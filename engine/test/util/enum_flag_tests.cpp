@@ -1,4 +1,4 @@
-#include <engine/util/enum_flag.h>
+#include <genebits/engine/util/enum_flag.h>
 
 #include <concepts>
 
@@ -29,41 +29,31 @@ struct NotAnEnum
 template<typename T>
 concept EnumBitwiseAnd = requires(T enum_flag)
 {
-  {
-    enum_flag & enum_flag
-  };
+  { enum_flag & enum_flag };
 };
 
 template<typename T>
 concept EnumBitwiseOr = requires(T enum_flag)
 {
-  {
-    enum_flag | enum_flag
-  };
+  { enum_flag | enum_flag };
 };
 
 template<typename T>
 concept EnumBitwiseComplement = requires(T enum_flag)
 {
-  {
-    ~enum_flag
-  };
+  { ~enum_flag };
 };
 
 template<typename T>
 concept EnumBitwiseAndAssignment = requires(T enum_flag, T enum_flag2)
 {
-  {
-    enum_flag &= enum_flag2
-  };
+  { enum_flag &= enum_flag2 };
 };
 
 template<typename T>
 concept EnumBitwiseOrAssignment = requires(T enum_flag, T enum_flag2)
 {
-  {
-    enum_flag |= enum_flag2
-  };
+  { enum_flag |= enum_flag2 };
 };
 
 template<typename E, typename T>
@@ -71,8 +61,7 @@ concept EnumLogicNotEqual = requires(E enum_flag, T compared_type)
 {
   {
     enum_flag != compared_type
-    }
-    -> std::same_as<bool>;
+    } -> std::same_as<bool>;
 };
 
 template<typename E, typename T>
@@ -80,8 +69,7 @@ concept EnumLogicEqual = requires(E enum_flag, T compared_type)
 {
   {
     enum_flag == compared_type
-    }
-    -> std::same_as<bool>;
+    } -> std::same_as<bool>;
 };
 
 TEST(Enum_Flag_Tests, OperatorOverload_Specialized_Compilable)

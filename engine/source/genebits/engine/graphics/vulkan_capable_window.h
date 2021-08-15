@@ -1,7 +1,7 @@
-#ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_CAPABLE_WINDOW_H
-#define GENEBITS_ENGINE_GRAPHICS_VULKAN_CAPABLE_WINDOW_H
+#ifndef GENEBITS_ENGINE_GRAPHICS_VULKANCAPABLEWINDOW_H
+#define GENEBITS_ENGINE_GRAPHICS_VULKANCAPABLEWINDOW_H
 
-#include "vulkan/vulkan_core.h"
+#include <vulkan/vulkan_core.h>
 
 namespace genebits::engine
 {

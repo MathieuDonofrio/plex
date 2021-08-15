@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "engine/util/enum_flag.h"
+#include "genebits/engine/util/enum_flag.h"
 
 namespace genebits::engine
 {
