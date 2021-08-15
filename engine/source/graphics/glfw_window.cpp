@@ -7,7 +7,6 @@
 #include "engine/core/environment.h"
 
 #define GLFW_INCLUDE_NONE // Removes OpenGL
-#define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
 
 namespace
@@ -35,7 +34,7 @@ inline void AssertLastGlfwCall()
 ///
 /// This is important to properly terminate GLFW when it is no longer required.
 ///
-static std::atomic_uint glfw_ref_count = 0;
+std::atomic_uint glfw_ref_count = 0;
 
 ///
 /// Attempts to initialize GLFW and increase the reference count.
@@ -46,7 +45,7 @@ inline bool ReferenceGlfw()
 {
   int glfw_init_result = glfwInit();
 
-  if (glfw_init_result == GLFW_TRUE) { ++glfw_ref_count; }
+  if (glfw_init_result == GLFW_TRUE) { glfw_ref_count.fetch_add(1, std::memory_order_relaxed); }
 
   ASSERT(glfw_init_result == GLFW_TRUE, "GLFW initialization failed");
 
@@ -63,9 +62,11 @@ inline bool ReferenceGlfw()
 ///
 inline void UnreferenceGlfw()
 {
-  --glfw_ref_count;
-
-  if (glfw_ref_count == 0) { glfwTerminate(); }
+  if (glfw_ref_count.load(std::memory_order_relaxed) <= 1) glfwTerminate();
+  else
+  {
+    glfw_ref_count.fetch_sub(1, std::memory_order_relaxed);
+  }
 }
 
 } // namespace
@@ -80,13 +81,12 @@ inline void UnreferenceGlfw()
 
 namespace genebits::engine
 {
-GLFWWindow::GLFWWindow(
-  const std::string& title, uint32_t width, uint32_t height, WindowCreationHints window_creation_hints)
+GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints hints)
   : title_(title)
 {
   if (!ReferenceGlfw()) return;
 
-  ApplyWindowCreationHints(window_creation_hints);
+  ApplyWindowCreationHints(hints);
   GLFW_ASSERT;
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -102,7 +102,16 @@ GLFWWindow::GLFWWindow(
   glfwSetWindowUserPointer(handle_, this);
   GLFW_ASSERT;
 
-  RegisterGLFWWindowCallbacks();
+  glfwSetWindowSizeCallback(handle_, GLFWResizeEventCallback);
+  GLFW_ASSERT;
+  glfwSetWindowCloseCallback(handle_, GLFWCloseEventCallback);
+  GLFW_ASSERT;
+  glfwSetWindowMaximizeCallback(handle_, GLFWMaximizeEventCallback);
+  GLFW_ASSERT;
+  glfwSetWindowIconifyCallback(handle_, GLFWIconifyEventCallback);
+  GLFW_ASSERT;
+  glfwSetWindowFocusCallback(handle_, GLFWFocusEventCallback);
+  GLFW_ASSERT;
 }
 
 GLFWWindow::~GLFWWindow()
@@ -203,10 +212,10 @@ void GLFWWindow::RequestAttention()
 void GLFWWindow::Close()
 {
   // TODO Matt: Brainstorm ideas for closing protocol
+  glfwSetWindowShouldClose(handle_, 1);
 
   GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
 
-  glfwSetWindowShouldClose(handle_, 1);
   GLFW_ASSERT_DEBUG_ONLY;
 }
 
@@ -290,10 +299,42 @@ bool GLFWWindow::IsVisible() const
   return visible;
 }
 
-void GLFWWindow::SetFullScreenRefreshRate(uint64_t refresh_rate)
+void GLFWWindow::SetFullScreenRefreshRate(uint32_t refresh_rate)
 {
-  glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate);
+  glfwWindowHint(GLFW_REFRESH_RATE, static_cast<int>(refresh_rate));
   GLFW_ASSERT_DEBUG_ONLY;
+}
+
+VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
+{
+  VkSurfaceKHR* surface = nullptr;
+
+  VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
+  GLFW_ASSERT;
+
+  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
+  (void)result; // Suppress warning
+
+  return surface;
+}
+
+VulkanInstanceExtensions GLFWWindow::GetRequiredInstanceExtensions()
+{
+  VulkanInstanceExtensions extensions { nullptr, 0 };
+
+  extensions.extensions = glfwGetRequiredInstanceExtensions(&extensions.count);
+  GLFW_ASSERT;
+
+  return extensions;
+}
+
+bool GLFWWindow::GetPhysicalDevicePresentationSupport(
+  VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index)
+{
+  bool supported = glfwGetPhysicalDevicePresentationSupport(instance, physical_device, queue_family_index);
+  GLFW_ASSERT;
+
+  return supported;
 }
 
 void GLFWWindow::ApplyWindowCreationHints(const WindowCreationHints& hints)
@@ -330,20 +371,6 @@ void GLFWWindow::ApplyWindowCreationHints(const WindowCreationHints& hints)
   GLFW_ASSERT;
 }
 
-void GLFWWindow::RegisterGLFWWindowCallbacks()
-{
-  glfwSetWindowCloseCallback(handle_, GLFWCloseEventCallback);
-  GLFW_ASSERT;
-  glfwSetWindowMaximizeCallback(handle_, GLFWMaximiseEventCallback);
-  GLFW_ASSERT;
-  glfwSetWindowIconifyCallback(handle_, GLFWIconifyEventCallback);
-  GLFW_ASSERT;
-  glfwSetWindowSizeCallback(handle_, GLFWResizeEventCallback);
-  GLFW_ASSERT;
-  glfwSetWindowFocusCallback(handle_, GLFWFocusEventCallback);
-  GLFW_ASSERT;
-}
-
 void GLFWWindow::GLFWCloseEventCallback(GLFWWindowHandle handle)
 {
   WindowCloseEvent event;
@@ -354,13 +381,13 @@ void GLFWWindow::GLFWCloseEventCallback(GLFWWindowHandle handle)
   GetEnvironment().GetEventBus().Publish(event);
 }
 
-void GLFWWindow::GLFWMaximiseEventCallback(GLFWWindowHandle handle, int32_t current_state)
+void GLFWWindow::GLFWMaximizeEventCallback(GLFWWindowHandle handle, int32_t current_state)
 {
-  WindowMaximiseEvent event;
+  WindowMaximizeEvent event;
 
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.maximized = current_state == GLFW_TRUE ? true : false;
+  event.maximized = current_state == GLFW_TRUE;
 
   GetEnvironment().GetEventBus().Publish(event);
 }
@@ -371,7 +398,7 @@ void GLFWWindow::GLFWIconifyEventCallback(GLFWWindowHandle handle, int32_t curre
 
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.iconified = current_state == GLFW_TRUE ? true : false;
+  event.iconified = current_state == GLFW_TRUE;
 
   GetEnvironment().GetEventBus().Publish(event);
 }
@@ -397,11 +424,6 @@ void GLFWWindow::GLFWFocusEventCallback(GLFWWindowHandle handle, int32_t current
   event.state = static_cast<WindowFocusEvent::FocusState>(current_state);
 
   GetEnvironment().GetEventBus().Publish(event);
-}
-
-void GLFWWindow::CreateVulkanWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
-{
-  glfwCreateWindowSurface(instance, handle_, nullptr, surface);
 }
 
 } // namespace genebits::engine

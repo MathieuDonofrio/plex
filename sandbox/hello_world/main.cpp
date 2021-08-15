@@ -1,7 +1,9 @@
 
-#include "../../engine/source/graphics/glfw_window.h"
-#include <engine/events/listener.h>
+
 #include <iostream>
+
+#include "engine/events/listener.h"
+#include "engine/graphics/window.h"
 
 namespace genebits::sandbox
 {
@@ -10,18 +12,10 @@ using namespace genebits::engine;
 struct TestWindowListener : public Listener<TestWindowListener,
                               WindowCloseEvent,
                               WindowFocusEvent,
-                              WindowMaximiseEvent,
+                              WindowMaximizeEvent,
                               WindowIconifyEvent,
                               WindowResizeEvent>
 {
-  TestWindowListener()
-    : Listener<TestWindowListener,
-      WindowCloseEvent,
-      WindowFocusEvent,
-      WindowMaximiseEvent,
-      WindowIconifyEvent,
-      WindowResizeEvent>() {};
-
   void listen(const WindowCloseEvent&)
   {
     std::cout << "window close event" << std::endl;
@@ -33,7 +27,7 @@ struct TestWindowListener : public Listener<TestWindowListener,
               << std::endl;
   }
 
-  void listen(const WindowMaximiseEvent&)
+  void listen(const WindowMaximizeEvent&)
   {
     std::cout << "window maximise event" << std::endl;
   }
@@ -52,17 +46,18 @@ struct TestWindowListener : public Listener<TestWindowListener,
 int run()
 {
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
-  auto* window = new GLFWWindow("Hello world", 256, 256, hints);
+
+  Window* window = CreateWindow("Hello world", 256, 256, hints);
 
   TestWindowListener listener {};
 
-  unsigned long long i = 0;
-  while (i < 600 && !window->IsClosing())
+  while (!window->IsClosing())
   {
     window->WaitEvents(0.5);
     window->PollEvents();
-    i++;
   }
+
+  delete window;
 
   return 0;
 }

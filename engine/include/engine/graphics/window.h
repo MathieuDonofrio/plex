@@ -1,11 +1,29 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_WINDOW_H
 #define GENEBITS_ENGINE_GRAPHICS_WINDOW_H
 
+#include <string>
+
+#include "engine/util/enum_flag.h"
+
 namespace genebits::engine
 {
+ENUM_FLAGS(WindowCreationHints, uint64_t) { None = 0,
+  Resizable = 1 << 0,
+  Visible = 1 << 1,
+  Decorated = 1 << 2,
+  Focused = 1 << 3,
+  AutoIconified = 1 << 4,
+  FocusingOnShow = 1 << 5,
+  Floating = 1 << 6,
+  Maximised = 1 << 7,
+  CursorCentered = 1 << 8,
+  TransparentFramebuffer = 1 << 9,
+  ScalingToMonitor = 1 << 10,
+  Defaults = ~0ull };
 
-// TODO Check if docs need to be updated
-
+///
+/// Window interface.
+///
 class Window
 {
 public:
@@ -27,8 +45,9 @@ public:
   ///
   /// Poll the OS for events associated with this window.
   ///
-  /// @note Polling of events should be conducted every now and then to let the OS know that the process is still
-  /// responsive.
+  /// @note
+  ///     Polling of events should be conducted every now and then to let the OS know
+  ///     that the process is still responsive.
   ///
   virtual void PollEvents() = 0;
 
@@ -50,12 +69,14 @@ public:
   virtual void Focus() = 0;
 
   ///
-  /// Maximise the size of the window according to its maximum size or the entire screen if there is no limits.
+  /// Maximise the size of the window according to its maximum size or the entire
+  /// screen if there is no limits.
   ///
   virtual void Maximize() = 0;
 
   ///
-  /// Minimise the size of the window according to its minimum size or the default minimum size if there is no limits.
+  /// Minimise the size of the window according to its minimum size or the default
+  /// minimum size if there is no limits.
   ///
   virtual void Iconify() = 0;
 
@@ -72,9 +93,9 @@ public:
   ///
   /// Put the window into a closing state.
   ///
-  /// @note The visual window will not be closed by this function.
-  ///       It only sets closing state flags.
-  ///       Window destruction happens upon destruction of the window object.
+  /// @note
+  ///     The visual window will not be closed by this function. It only sets closing
+  ///     state flags. Window destruction happens upon destruction of the window object.
   ///
   virtual void Close() = 0;
 
@@ -183,33 +204,43 @@ public:
   ///
   /// @note A value of 0 will disable the refresh rate limit.
   ///
-  virtual void SetFullScreenRefreshRate(uint64_t refresh_rate) = 0;
+  virtual void SetFullScreenRefreshRate(uint32_t refresh_rate) = 0;
 };
 
+///
+/// Window event base.
+///
+/// Contains the window pointer.
+///
 struct WindowEvent
 {
   Window* window;
 };
 
-struct WindowCloseEvent : public WindowEvent
-{};
-
-struct WindowMaximiseEvent : public WindowEvent
-{
-  bool maximized;
-};
-
-struct WindowIconifyEvent : public WindowEvent
-{
-  bool iconified;
-};
-
+///
+/// Window resize event.
+///
+/// Published when a window resizes.
+///
 struct WindowResizeEvent : public WindowEvent
 {
   uint32_t width;
   uint32_t height;
 };
 
+///
+/// Window close event.
+///
+/// Published when a user attempts to close a window.
+///
+struct WindowCloseEvent : public WindowEvent
+{};
+
+///
+/// Window focus event.
+///
+/// Published when a window gains or loses input focus.
+///
 struct WindowFocusEvent : public WindowEvent
 {
   enum class FocusState
@@ -220,6 +251,41 @@ struct WindowFocusEvent : public WindowEvent
 
   FocusState state;
 };
+
+///
+/// Window iconify event.
+///
+/// Published when a window is iconified or restored
+///
+struct WindowIconifyEvent : public WindowEvent
+{
+  bool iconified;
+};
+
+///
+/// Window maximize event.
+///
+/// Published when a window is maximized or restored.
+///
+struct WindowMaximizeEvent : public WindowEvent
+{
+  bool maximized;
+};
+
+///
+/// Creates a window.
+///
+/// Factory method for creating windows.
+///
+/// @param title Title of the window.
+/// @param width Width of the window.
+/// @param height Height of the window.
+/// @param hints Window creation hints.
+///
+/// @return Window instance pointer.
+///
+Window* CreateWindow(
+  const std::string& title, uint32_t width, uint32_t height, WindowCreationHints hints = WindowCreationHints::Defaults);
 
 } // namespace genebits::engine
 #endif

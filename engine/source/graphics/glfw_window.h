@@ -2,53 +2,43 @@
 #define GENEBITS_ENGINE_GRAPHICS_GLFWWINDOW_H
 
 #include <cstdint>
-#include <functional>
 #include <string>
-
-#include "vulkan/vulkan_core.h"
 
 #include "engine/graphics/window.h"
 #include "engine/util/enum_flag.h"
+#include "vulkan_capable_window.h"
 
 // Forward declare
 class GLFWwindow;
 
 namespace genebits::engine
 {
-// TODO Add method to query those flags from the window
-ENUM_FLAGS(WindowCreationHints, uint64_t) { None = 0,
-  Resizable = 1 << 0,
-  Visible = 1 << 1,
-  Decorated = 1 << 2,
-  Focused = 1 << 3,
-  AutoIconified = 1 << 4,
-  FocusingOnShow = 1 << 5,
-  Floating = 1 << 6,
-  Maximised = 1 << 7,
-  CursorCentered = 1 << 8,
-  TransparentFramebuffer = 1 << 9,
-  ScalingToMonitor = 1 << 10,
-  Defaults = ~0ull };
-
-// TODO Create Abstract window class
-
-class GLFWWindow : public Window
+///
+/// Vulkan capable GLFW window.
+///
+/// @see https://www.glfw.org/docs/3.3/group__window.html
+/// @see https://www.glfw.org/docs/3.3.1/vulkan_guide.html
+///
+class GLFWWindow : public Window, public VulkanCapableWindow
 {
 public:
   ///
-  /// Window constructor.
+  /// Parametric constructor.
   ///
   /// @param[in] title Title of the window.
   /// @param[in] width The width in pixels of the drawable area .
   /// @param[in] height The height in pixels of the drawable area.
-  /// @param[in] window_creation_hints Hints used to create the window.
+  /// @param[in] hints Hints used to create the window.
   ///
   GLFWWindow(const std::string& title,
     uint32_t width,
     uint32_t height,
-    WindowCreationHints window_creation_hints = WindowCreationHints::Defaults);
+    WindowCreationHints hints = WindowCreationHints::Defaults);
 
-  ~GLFWWindow();
+  ///
+  /// Destructor
+  ///
+  ~GLFWWindow() override;
 
   ///
   /// Poll the OS for events associated with this window.
@@ -68,7 +58,7 @@ public:
   ///
   /// @param[in] timeout Maximum time to wait in seconds.
   ///
-  void WaitEvents(double timeout = 0.0) override;
+  void WaitEvents(double timeout) override;
 
   ///
   /// Bring the window in focus.
@@ -209,15 +199,37 @@ public:
   ///
   /// @note A value of 0 will disable the refresh rate limit.
   ///
-  void SetFullScreenRefreshRate(uint64_t refresh_rate) override;
+  void SetFullScreenRefreshRate(uint32_t refresh_rate) override;
 
   ///
   /// Creates a Vulkan surface for the window's drawable area.
   ///
   /// @param[in] instance Vulkan instance of the application.
-  /// @param[out] surface Pointer to the Vulkan surface to create the surface at.
   ///
-  void CreateVulkanWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
+  /// @Return Vulkan surface
+  ///
+  VkSurfaceKHR* CreateWindowSurface(VkInstance instance) override;
+
+  ///
+  /// Returns the names of vulkan instance extensions required by the window API to create
+  /// vulkan surfaces for the window.
+  ///
+  /// @return Vulkan instance extensions required for the window.
+  ///
+  VulkanInstanceExtensions GetRequiredInstanceExtensions() override;
+
+  ///
+  /// Checks whether or not a specific queue family of a physical device supports image
+  /// presentation.
+  ///
+  /// @param[in] instance Vulkan instance.
+  /// @param[in] physical_device Vulkan physical device.
+  /// @param[in] queue_family_index Queue family index.
+  ///
+  /// @return True if queue family of physical device supports image presentation, false otherwise.
+  ///
+  bool GetPhysicalDevicePresentationSupport(
+    VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index) override;
 
 private:
   using GLFWWindowHandle = ::GLFWwindow*;
@@ -225,24 +237,50 @@ private:
   ///
   /// Applies window creation hints to the next window to be created.
   ///
-  /// @param hints[in] Hints to apply
+  /// @param[in] hints Hints to apply.
   ///
-  void ApplyWindowCreationHints(const WindowCreationHints& hints);
+  static void ApplyWindowCreationHints(const WindowCreationHints& hints);
 
   ///
-  /// Registers all the glfw window callbacks
+  /// Callback for when the window is resized.
   ///
-  void RegisterGLFWWindowCallbacks();
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] new_width The new width in screen coordinates.
+  /// @param[in] new_height The new height in screen coordinates.
+  ///
+  static void GLFWResizeEventCallback(GLFWWindowHandle handle, int32_t new_width, int32_t new_height);
 
-  static void GLFWCloseEventCallback(GLFWWindowHandle window);
+  ///
+  /// Callback for when the user attempts to close the window. Example, by clicking the close widget
+  /// in the title bar.
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  ///
+  static void GLFWCloseEventCallback(GLFWWindowHandle handle);
 
-  static void GLFWMaximiseEventCallback(GLFWWindowHandle window, int32_t current_state);
+  ///
+  /// Callback for when the window gains or loses input focus.
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] current_state State of the focus.
+  ///
+  static void GLFWFocusEventCallback(GLFWWindowHandle handle, int32_t current_state);
 
-  static void GLFWIconifyEventCallback(GLFWWindowHandle window, int32_t current_state);
+  ///
+  /// Callback for when the window is iconified or restored.
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] current_state State of the iconification.
+  ///
+  static void GLFWIconifyEventCallback(GLFWWindowHandle handle, int32_t current_state);
 
-  static void GLFWResizeEventCallback(GLFWWindowHandle window, int32_t new_width, int32_t new_height);
-
-  static void GLFWFocusEventCallback(GLFWWindowHandle window, int32_t current_state);
+  ///
+  /// Callback for when the window is maximized or restored.
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] current_state State of the maximization.
+  ///
+  static void GLFWMaximizeEventCallback(GLFWWindowHandle handle, int32_t current_state);
 
 private:
   GLFWWindowHandle handle_;
