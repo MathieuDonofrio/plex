@@ -6,8 +6,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "engine/config/assertion.h"
-#include "engine/util/allocator.h"
+#include "genebits/engine/config/assertion.h"
+#include "genebits/engine/util/allocator.h"
 
 namespace genebits::engine
 {
@@ -94,7 +94,7 @@ public:
   ///
   /// Const array access operator.
   ///
-  /// @param index Index to access
+  /// @param[in] index Index to access
   ///
   /// @return Const reference to element at the index.
   ///
@@ -107,7 +107,7 @@ public:
   ///
   /// Array access operator.
   ///
-  /// @param index Index to access
+  /// @param[in] index Index to access
   ///
   /// @return Reference to element at the index.
   ///
@@ -141,7 +141,7 @@ public:
   /// Best case O(1) operation (common), when vector has sufficient capacity.
   /// Worst case O(n) operation (rare), where n is the size of the vector.
   ///
-  /// @param value Element to add
+  /// @param[in] value Element to add
   ///
   void PushBack(const Type& value) noexcept
   {
@@ -156,7 +156,7 @@ public:
   /// Best case O(1) operation (common), when vector has sufficient capacity.
   /// Worst case O(n) operation (rare), where n is the size of the vector.
   ///
-  /// @param value Element to add
+  /// @param[in] value Element to add
   ///
   void PushBack(Type&& value) noexcept
   {
@@ -169,8 +169,6 @@ public:
   /// Remove the element at the back of the vector.
   ///
   /// Always O(1) operation.
-  ///
-  /// @param value Element to add
   ///
   void PopBack() noexcept
   {
@@ -189,7 +187,7 @@ public:
   ///
   /// Always O(1) operation.
   ///
-  /// @param value Element to add
+  /// @param[in] value Iterator for element to erase
   ///
   void Erase(iterator it) noexcept
   {
@@ -216,7 +214,7 @@ public:
   ///
   /// Always O(1) operation.
   ///
-  /// @param value Element to add
+  /// @param[in] index Index of element to erase
   ///
   void EraseAt(size_t index) noexcept
   {
@@ -237,8 +235,8 @@ public:
   ///
   /// @tparam Args Argument types for new construction.
   ///
-  /// @param new_size New size of the vector
-  /// @param args Arguments used for construction if needed.
+  /// @param[in] new_size New size of the vector
+  /// @param[in] args Arguments used for construction if needed.
   ///
   template<typename... Args>
   requires std::is_constructible_v<Type, Args...>
@@ -265,7 +263,7 @@ public:
   /// Best case O(1).
   /// Worst case O(n), where n is the size of the vector.
   ///
-  /// @param min_capacity Minimum capacity the vector should have.
+  /// @param[in] min_capacity Minimum capacity the vector should have.
   ///
   void Reserve(const size_t min_capacity) noexcept
   {
@@ -319,7 +317,7 @@ public:
   ///
   /// Copy constructor.
   ///
-  /// @param other Vector to copy from.
+  /// @param[in] other Vector to copy from.
   ///
   FastVector(const FastVector<Type, AllocatorImpl>& other) noexcept
   {
@@ -329,7 +327,7 @@ public:
   ///
   /// Move constructor
   ///
-  /// @param other Vector to move into this one.
+  /// @param[in] other Vector to move into this one.
   ///
   constexpr FastVector(FastVector<Type, AllocatorImpl>&& other) noexcept
     : array_(other.array_), size_(other.size_), capacity_(other.capacity_)
@@ -342,7 +340,7 @@ public:
   ///
   /// Copy assignment operator.
   ///
-  /// @param other Vector to copy from.
+  /// @param[in] other Vector to copy from.
   ///
   FastVector& operator=(const FastVector<Type, AllocatorImpl>& other) noexcept
   {
@@ -360,7 +358,7 @@ public:
   ///
   /// Move assignment operator.
   ///
-  /// @param other Vector to move into this one.
+  /// @param[in] other Vector to move into this one.
   ///
   constexpr FastVector& operator=(FastVector<Type, AllocatorImpl>&& other) noexcept
   {
@@ -378,7 +376,7 @@ protected:
   ///
   /// Grows the internal array to at least fit the specified amount of elements.
   ///
-  /// @param min_capacity Minimum capacity to grow to.
+  /// @param[in] min_capacity Minimum capacity to grow to.
   ///
   void Grow(const uint32_t min_capacity) noexcept
   {
@@ -465,7 +463,7 @@ protected:
   ///
   /// @tparam OtherAllocator The allocator the other vector uses.
   ///
-  /// @param other The other vector
+  /// @param[in] other The other vector
   ///
   template<Allocator OtherAllocator>
   requires std::is_copy_constructible_v<Type>

@@ -3,8 +3,8 @@
 
 #include <type_traits>
 
-#include "engine/core/environment.h"
-#include "engine/events/event_bus.h"
+#include "genebits/engine/core/environment.h"
+#include "genebits/engine/events/event_bus.h"
 
 namespace genebits::engine
 {
@@ -43,7 +43,7 @@ public:
   ///
   /// Parametric constructor.
   ///
-  /// @param bus The bus to subscribe all event handlers to.
+  /// @param[in] bus The bus to subscribe all event handlers to.
   ///
   explicit Listener(EventBus& bus) noexcept : bus_(&bus)
   {

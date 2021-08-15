@@ -11,7 +11,7 @@ namespace
   /// @tparam Base Base used to erase type with.
   /// @tparam Type Exact type of the instance to delete.
   ///
-  /// @param instance Instance to delete.
+  /// @param[in] instance Instance to delete.
   ///
   template<typename Base, typename Type>
   void DefaultDeleter(Base* instance)
@@ -39,15 +39,15 @@ public:
   ///
   /// Parametric Constructor
   ///
-  /// @param instance Instance to handle.
-  /// @param deleter Deleter to delete the instance.
+  /// @param[in] instance Instance to handle.
+  /// @param[in] deleter Deleter to delete the instance.
   ///
   constexpr ErasedPtr(Base* instance, void (*deleter)(Base*)) noexcept : instance_(instance), deleter_(deleter) {}
 
   ///
   /// Parametric Constructor. Uses default deleter.
   ///
-  /// @param instance Instance to handle.
+  /// @param[in] instance Instance to handle.
   ///
   template<typename Type>
   constexpr ErasedPtr(Type* instance) noexcept : ErasedPtr(instance, DefaultDeleter<Base, Type>)
@@ -56,7 +56,7 @@ public:
   ///
   /// Move constructor.
   ///
-  /// @param other Other erased ptr to move into this one.
+  /// @param[in] other Other erased ptr to move into this one.
   ///
   constexpr ErasedPtr(ErasedPtr<Base>&& other) noexcept : ErasedPtr(other.instance_, other.deleter_)
   {
@@ -67,7 +67,7 @@ public:
   ///
   /// Move assignment operator.
   ///
-  /// @param other Other erased ptr to move into this one.
+  /// @param[in] other Other erased ptr to move into this one.
   ///
   /// @return Erased ptr that was assigned.
   ///
@@ -97,8 +97,8 @@ public:
   ///
   /// Resets the handled instance. Destroys the current instance if any.
   ///
-  /// @param instance Instance to handle.
-  /// @param deleter Deleter to delete the instance.
+  /// @param[in] instance Instance to handle.
+  /// @param[in] deleter Deleter to delete the instance.
   ///
   constexpr void Reset(Base* instance, void (*deleter)(Base*)) noexcept
   {

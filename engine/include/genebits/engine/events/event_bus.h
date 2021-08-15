@@ -4,11 +4,11 @@
 #include <memory>
 #include <mutex>
 
-#include "engine/events/event_handler.h"
-#include "engine/util/erased_ptr.h"
-#include "engine/util/fast_vector.h"
-#include "engine/util/meta.h"
-#include "engine/util/type_map.h"
+#include "genebits/engine/events/event_handler.h"
+#include "genebits/engine/util/erased_ptr.h"
+#include "genebits/engine/util/fast_vector.h"
+#include "genebits/engine/util/meta.h"
+#include "genebits/engine/util/type_map.h"
 
 namespace genebits::engine
 {
@@ -27,7 +27,7 @@ namespace
     ///
     /// Propagates the event by invoking every handler sequentially.
     ///
-    /// @param event Event to propagate.
+    /// @param[in] event Event to propagate.
     ///
     void Propagate(const Event& event) noexcept
     {
@@ -40,7 +40,7 @@ namespace
     ///
     /// Adds the event handler to the pool.
     ///
-    /// @param handler Handler to add.
+    /// @param[in] handler Handler to add.
     ///
     void Add(EventHandler<Event> handler) noexcept
     {
@@ -50,7 +50,7 @@ namespace
     ///
     /// Removes the event handler from the pool.
     ///
-    /// @param handler Handle to remove
+    /// @param[in] handler Handle to remove
     ///
     void Remove(EventHandler<Event> handler) noexcept
     {
@@ -87,7 +87,8 @@ public:
   /// Publishes the specified event to all event handlers for the event type.
   ///
   /// @tparam Event Type of event to publish.
-  /// @param event Event to publish.
+  ///
+  /// @param[in] event Event to publish.
   ///
   template<typename Event>
   void Publish(const Event& event) noexcept
@@ -100,7 +101,8 @@ public:
   /// receive all published event of the same type.
   ///
   /// @tparam Event Type of event.
-  /// @param handler Handler of the event.
+  ///
+  /// @param[in] handler Handler of the event.
   ///
   template<typename Event>
   void Subscribe(EventHandler<Event> handler) noexcept
@@ -115,7 +117,8 @@ public:
   /// event bus.
   ///
   /// @tparam Event Type of event.
-  /// @param handler Handler of the event.
+  ///
+  /// @param[in] handler Handler of the event.
   ///
   template<typename Event>
   void Unsubscribe(EventHandler<Event> handler) noexcept
