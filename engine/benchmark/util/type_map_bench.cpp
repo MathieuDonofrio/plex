@@ -1,4 +1,4 @@
-#include "engine/util/type_map.h"
+#include "genebits/engine/util/type_map.h"
 
 #include <map>
 #include <unordered_map>
@@ -11,8 +11,7 @@ namespace
 {
   template<size_t Tag = 0>
   struct TestType
-  {
-  };
+  {};
 
 } // namespace
 

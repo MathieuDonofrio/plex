@@ -1,9 +1,9 @@
 #ifndef GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 #define GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 
-#include "engine/config/assertion.h"
-#include "engine/util/fast_vector.h"
-#include "engine/util/meta.h"
+#include "genebits/engine/config/assertion.h"
+#include "genebits/engine/util/fast_vector.h"
+#include "genebits/engine/util/meta.h"
 
 namespace genebits::engine
 {

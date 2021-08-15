@@ -5,7 +5,7 @@
 #include <string_view>
 #include <type_traits>
 
-#include "engine/config/compiler.h"
+#include "genebits/engine/config/compiler.h"
 
 namespace genebits::engine
 {
@@ -84,6 +84,8 @@ namespace
   ///     they will be reused. Using multiple sequences allows for more packed arrays
   ///     when the ids are used for lookup. This means better cache locality and potential
   ///     for less memory usage.
+  ///
+  /// @param[in] sequence_index Index of the sequence to get the next unique id from.
   ///
   /// @return size_t next index in the specified sequence
   ///

@@ -3,8 +3,8 @@
 
 #include <mutex>
 
-#include "engine/util/concepts.h"
-#include "engine/util/concurrency.h"
+#include "genebits/engine/util/concepts.h"
+#include "genebits/engine/util/concurrency.h"
 
 namespace genebits::engine
 {

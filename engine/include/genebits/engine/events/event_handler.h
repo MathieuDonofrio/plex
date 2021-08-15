@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "engine/config/assertion.h"
+#include "genebits/engine/config/assertion.h"
 
 namespace genebits::engine
 {
@@ -72,7 +72,7 @@ public:
   /// @tparam MemberFunction Compile-time member function pointer.
   /// @tparam Type The type of class the member function is for.
   ///
-  /// @param instance The instance to call the member function for.
+  /// @param[in] instance The instance to call the member function for.
   ///
   template<typename Type, void (Type::*MemberFunction)(const Event&)>
   constexpr void Bind(Type* instance) noexcept
@@ -90,7 +90,7 @@ public:
   /// @tparam MemberFunction Compile-time member function pointer.
   /// @tparam Type The type of class the member function is for.
   ///
-  /// @param instance The instance to call the member function for.
+  /// @param[in] instance The instance to call the member function for.
   ///
   template<typename Type, void (Type::*MemberFunction)(const Event&) const>
   constexpr void Bind(Type* instance) noexcept
@@ -114,7 +114,7 @@ public:
   ///
   /// @tparam Invokable The type of the invokable.
   ///
-  /// @param invokable The instance of the invokable.
+  /// @param[in] invokable The instance of the invokable.
   ///
   template<EventHandlerInvokable<Event> Invokable>
   constexpr void Bind(Invokable&& invokable) noexcept
@@ -130,7 +130,7 @@ public:
   /// @warning
   ///     Undefined behaviour if no function is bound to this event handler.
   ///
-  /// @param event The event to invoke with.
+  /// @param[in] event The event to invoke with.
   ///
   constexpr void Invoke(const Event& event)
   {
@@ -144,7 +144,7 @@ public:
   ///
   /// Checks if the handlers have the same content (function & storage).
   ///
-  /// @param other Other handler to compare.
+  /// @param[in] other Other handler to compare.
   ///
   /// @return True if the handlers are equal, false otherwise.
   ///
@@ -158,7 +158,7 @@ public:
   ///
   /// Checks if the handlers has different content (function & storage).
   ///
-  /// @param other Other handler to compare.
+  /// @param[in] other Other handler to compare.
   ///
   /// @return True if the handlers are unequal, false otherwise.
   ///
@@ -170,7 +170,7 @@ public:
   ///
   /// Bool operator.
   ///
-  /// return True if the handler had been bound with a function, false otherwise.
+  /// @return True if the handler had been bound with a function, false otherwise.
   ///
   [[nodiscard]] constexpr operator bool() const noexcept
   {

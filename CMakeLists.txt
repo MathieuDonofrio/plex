@@ -18,7 +18,7 @@ endif ()
 #
 
 set(GENEBITS_VERSION_REGEX "#define GENEBITS_VERSION_.*[ \t]+(.+)")
-file(STRINGS "engine/include/engine/config/version.h" GENEBITS_VERSION REGEX ${GENEBITS_VERSION_REGEX})
+file(STRINGS "engine/include/genebits/engine/config/version.h" GENEBITS_VERSION REGEX ${GENEBITS_VERSION_REGEX})
 list(TRANSFORM GENEBITS_VERSION REPLACE ${GENEBITS_VERSION_REGEX} "\\1")
 string(JOIN "." GENEBITS_VERSION ${GENEBITS_VERSION})
 

@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_CORE_ENVIRONMENT_H
 #define GENEBITS_ENGINE_CORE_ENVIRONMENT_H
 
-#include "engine/events/event_bus.h"
+#include "genebits/engine/events/event_bus.h"
 
 namespace genebits::engine
 {
