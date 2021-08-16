@@ -18,12 +18,9 @@ inline void AssertLastGlfwCall()
   const char* error_description;
   const int error_code = glfwGetError(&error_description);
 
-  if (error_description)
-  {
-    // TODO log error
-  }
+  if (error_description) {}
 
-  ASSERT(error_code != GLFW_NO_ERROR, "GLFW error occurred");
+  ASSERT(error_code == GLFW_NO_ERROR, "GLFW error occurred");
 
   (void)(error_code); // Suppress warnings
 }
@@ -251,7 +248,7 @@ void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 
 uint32_t GLFWWindow::GetMonitorWidth() const
 {
-  GLFWmonitor* monitor = glfwGetWindowMonitor(handle_);
+  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
   GLFW_ASSERT_DEBUG_ONLY;
 
   const uint32_t width = glfwGetVideoMode(monitor)->width;
@@ -262,7 +259,7 @@ uint32_t GLFWWindow::GetMonitorWidth() const
 
 uint32_t GLFWWindow::GetMonitorHeight() const
 {
-  GLFWmonitor* monitor = glfwGetWindowMonitor(handle_);
+  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
   GLFW_ASSERT_DEBUG_ONLY;
 
   const uint32_t height = glfwGetVideoMode(monitor)->height;

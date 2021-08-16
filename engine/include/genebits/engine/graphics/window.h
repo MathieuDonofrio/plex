@@ -7,19 +7,24 @@
 
 namespace genebits::engine
 {
-ENUM_FLAGS(WindowCreationHints, uint64_t) { None = 0,
-  Resizable = 1 << 0,
-  Visible = 1 << 1,
-  Decorated = 1 << 2,
-  Focused = 1 << 3,
-  AutoIconified = 1 << 4,
-  FocusingOnShow = 1 << 5,
-  Floating = 1 << 6,
-  Maximised = 1 << 7,
-  CursorCentered = 1 << 8,
-  TransparentFramebuffer = 1 << 9,
-  ScalingToMonitor = 1 << 10,
-  Defaults = ~0ull };
+enum class WindowCreationHints : uint64_t
+{
+  None = 0,
+  Resizable = BitFlag(0),
+  Visible = BitFlag(1),
+  Decorated = BitFlag(2),
+  Focused = BitFlag(3),
+  AutoIconified = BitFlag(4),
+  FocusingOnShow = BitFlag(5),
+  Floating = BitFlag(6),
+  Maximised = BitFlag(7),
+  CursorCentered = BitFlag(8),
+  TransparentFramebuffer = BitFlag(9),
+  ScalingToMonitor = BitFlag(10),
+  Defaults = ~0ull
+};
+
+DEFINE_ENUM_FLAG_OPERATORS(WindowCreationHints)
 
 ///
 /// Window interface.

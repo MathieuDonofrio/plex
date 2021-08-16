@@ -1,75 +1,99 @@
 #ifndef GENEBITS_ENGINE_UTIL_ENUM_FLAG_H
 #define GENEBITS_ENGINE_UTIL_ENUM_FLAG_H
 
+#include <concepts>
 #include <type_traits>
 
 namespace genebits::engine
 {
 
-template<typename E>
-struct EnableBitwiseOperators;
-
-#define ENUM_FLAGS(Name, Type)                          \
-  enum class Name : Type;                               \
-  template<>                                            \
-  struct genebits::engine::EnableBitwiseOperators<Name> \
-  {};                                                   \
-  enum class Name : Type
-
-template<class E>
-concept EnumFlags = std::is_enum_v<E> && requires
+///
+/// Concept used to determine if an enum is enum flag.
+///
+/// To be an enum flag, the enum must define all bitwise operators.
+///
+/// @tparam EnumType Enum type to check
+///
+template<typename EnumType>
+concept EnumFlag = std::is_enum_v<EnumType> && requires(EnumType lhs, EnumType rhs)
 {
-  EnableBitwiseOperators<E> {};
+  {
+    lhs | rhs
+    } -> std::convertible_to<EnumType>;
+  {
+    lhs& rhs
+    } -> std::convertible_to<EnumType>;
+  {
+    lhs ^ rhs
+    } -> std::convertible_to<EnumType>;
+  {
+    lhs |= rhs
+    } -> std::convertible_to<EnumType&>;
+  {
+    lhs &= rhs
+    } -> std::convertible_to<EnumType&>;
+  {
+    lhs ^= rhs
+    } -> std::convertible_to<EnumType&>;
+  ~lhs;
 };
 
-template<EnumFlags EnumType>
-constexpr EnumType operator|(const EnumType lhs, const EnumType rhs) noexcept
-{
-  using underlying = std::underlying_type_t<EnumType>;
-  return static_cast<EnumType>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs));
-}
+// Utility for defining enum flag operators.
+// Defines all bitwise operators and equality operators with the underlying type.
+#define DEFINE_ENUM_FLAG_OPERATORS(EnumType)                                                         \
+                                                                                                     \
+  static_assert(std::is_enum_v<EnumType>, "Type must be an enum to define enum flag operators");     \
+                                                                                                     \
+  constexpr EnumType operator|(const EnumType lhs, const EnumType rhs) noexcept                      \
+  {                                                                                                  \
+    using Underlying = std::underlying_type_t<EnumType>;                                             \
+    return static_cast<EnumType>(static_cast<Underlying>(lhs) | static_cast<Underlying>(rhs));       \
+  }                                                                                                  \
+                                                                                                     \
+  constexpr EnumType operator&(const EnumType lhs, const EnumType rhs) noexcept                      \
+  {                                                                                                  \
+    using Underlying = std::underlying_type_t<EnumType>;                                             \
+    return static_cast<EnumType>(static_cast<Underlying>(lhs) & static_cast<Underlying>(rhs));       \
+  }                                                                                                  \
+                                                                                                     \
+  constexpr EnumType operator^(const EnumType lhs, const EnumType rhs) noexcept                      \
+  {                                                                                                  \
+    using Underlying = std::underlying_type_t<EnumType>;                                             \
+    return static_cast<EnumType>(static_cast<Underlying>(lhs) ^ static_cast<Underlying>(rhs));       \
+  }                                                                                                  \
+                                                                                                     \
+  constexpr EnumType& operator&=(EnumType& lhs, const EnumType rhs) noexcept                         \
+  {                                                                                                  \
+    return (lhs = lhs & rhs);                                                                        \
+  }                                                                                                  \
+                                                                                                     \
+  constexpr EnumType& operator|=(EnumType& lhs, const EnumType rhs) noexcept                         \
+  {                                                                                                  \
+    return (lhs = lhs | rhs);                                                                        \
+  }                                                                                                  \
+                                                                                                     \
+  constexpr EnumType& operator^=(EnumType& lhs, const EnumType rhs) noexcept                         \
+  {                                                                                                  \
+    return (lhs = lhs ^ rhs);                                                                        \
+  }                                                                                                  \
+                                                                                                     \
+  constexpr bool operator!=(const EnumType lhs, const std::underlying_type_t<EnumType> rhs) noexcept \
+  {                                                                                                  \
+    return static_cast<std::underlying_type_t<EnumType>>(lhs) != rhs;                                \
+  }                                                                                                  \
+                                                                                                     \
+  constexpr bool operator==(const EnumType lhs, const std::underlying_type_t<EnumType> rhs) noexcept \
+  {                                                                                                  \
+    return static_cast<std::underlying_type_t<EnumType>>(lhs) == rhs;                                \
+  }                                                                                                  \
+                                                                                                     \
+  constexpr EnumType operator~(const EnumType rhs) noexcept                                          \
+  {                                                                                                  \
+    return static_cast<EnumType>(~static_cast<std::underlying_type_t<EnumType>>(rhs));               \
+  } // namespace genebits::engine
 
-template<EnumFlags EnumType>
-constexpr EnumType operator&(const EnumType lhs, const EnumType rhs) noexcept
-{
-  using underlying = std::underlying_type_t<EnumType>;
-  return static_cast<EnumType>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs));
-}
-
-template<EnumFlags EnumType>
-constexpr EnumType operator~(const EnumType rhs) noexcept
-{
-  using underlying = std::underlying_type_t<EnumType>;
-  return static_cast<EnumType>(~static_cast<underlying>(rhs));
-}
-
-template<EnumFlags EnumType>
-constexpr bool operator!=(const EnumType lhs, const std::underlying_type_t<EnumType> rhs) noexcept
-{
-  using underlying = std::underlying_type_t<EnumType>;
-  return static_cast<underlying>(lhs) != rhs;
-}
-
-template<EnumFlags EnumType>
-constexpr bool operator==(const EnumType lhs, const std::underlying_type_t<EnumType> rhs) noexcept
-{
-  using underlying = std::underlying_type_t<EnumType>;
-  return static_cast<underlying>(lhs) == rhs;
-}
-
-template<EnumFlags EnumType>
-constexpr EnumType& operator&=(EnumType& rhs, const EnumType lhs) noexcept
-{
-  rhs = rhs & lhs;
-  return rhs;
-}
-
-template<EnumFlags EnumType>
-constexpr EnumType& operator|=(EnumType& rhs, const EnumType lhs) noexcept
-{
-  rhs = rhs | lhs;
-  return rhs;
-}
+// Utility for creating bit flags in a more readable way
+#define BitFlag(Bit) (1 << Bit)
 
 } // namespace genebits::engine
 #endif
