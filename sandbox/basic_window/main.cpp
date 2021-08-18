@@ -10,7 +10,8 @@ struct TestWindowListener : public Listener<TestWindowListener,
                               WindowFocusEvent,
                               WindowMaximizeEvent,
                               WindowIconifyEvent,
-                              WindowResizeEvent>
+                              WindowResizeEvent,
+                              WindowKeyboardEvent>
 {
   void listen(const WindowCloseEvent&)
   {
@@ -36,6 +37,12 @@ struct TestWindowListener : public Listener<TestWindowListener,
   void listen(const WindowResizeEvent& event)
   {
     std::cout << "window resize event: " << event.width << ", " << event.height << std::endl;
+  }
+
+  void listen(const WindowKeyboardEvent& event)
+  {
+    std::cout << "keyboard event: " << KeyCodeToString(event.keycode) << ", " << static_cast<uint32_t>(event.modifiers)
+              << std::endl;
   }
 };
 
