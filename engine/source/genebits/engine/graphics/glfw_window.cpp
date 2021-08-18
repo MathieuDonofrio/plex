@@ -103,6 +103,11 @@ GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height
   glfwSetWindowUserPointer(handle_, this);
   GLFW_ASSERT;
 
+  glfwSetInputMode(
+    handle_, GLFW_LOCK_KEY_MODS, GLFW_TRUE); // Tell glfw that we want the state of "caps lock" and "num lock"
+  // when receiving keyboard events
+  GLFW_ASSERT;
+
   glfwSetWindowSizeCallback(handle_, GLFWResizeEventCallback);
   GLFW_ASSERT;
   glfwSetWindowCloseCallback(handle_, GLFWCloseEventCallback);
@@ -112,6 +117,8 @@ GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height
   glfwSetWindowIconifyCallback(handle_, GLFWIconifyEventCallback);
   GLFW_ASSERT;
   glfwSetWindowFocusCallback(handle_, GLFWFocusEventCallback);
+  GLFW_ASSERT;
+  glfwSetKeyCallback(handle_, GLFWKeyCallback);
   GLFW_ASSERT;
 }
 
@@ -423,6 +430,20 @@ void GLFWWindow::GLFWFocusEventCallback(GLFWWindowHandle handle, int32_t current
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
   event.state = static_cast<WindowFocusEvent::FocusState>(current_state);
+
+  GetEnvironment().GetEventBus().Publish(event);
+}
+
+void GLFWWindow::GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t scancode, int32_t action, int32_t mods)
+{
+  WindowKeyboardEvent event;
+
+  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  GLFW_ASSERT_DEBUG_ONLY;
+  event.keycode = static_cast<KeyCode>(key);
+  event.modifiers = static_cast<ModifierKeys>(mods);
+  event.scancode = scancode;
+  event.action = static_cast<WindowKeyboardEvent::KeyAction>(action);
 
   GetEnvironment().GetEventBus().Publish(event);
 }

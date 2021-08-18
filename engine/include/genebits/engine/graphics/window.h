@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "genebits/engine/graphics/key_codes.h"
 #include "genebits/engine/util/enum_flag.h"
 
 namespace genebits::engine
@@ -275,6 +276,41 @@ struct WindowIconifyEvent : public WindowEvent
 struct WindowMaximizeEvent : public WindowEvent
 {
   bool maximized;
+};
+
+///
+/// Flags depicting the states of modifiers keys
+///
+enum class ModifierKeys : uint32_t
+{
+  Shift = BitFlag(0),
+  Control = BitFlag(1),
+  Alt = BitFlag(2),
+  Super = BitFlag(3),
+  CapsLock = BitFlag(4),
+  NumLock = BitFlag(5)
+};
+
+DEFINE_ENUM_FLAG_OPERATORS(ModifierKeys);
+
+///
+/// Window keyboard event.
+///
+/// Published when a window is in focus and receives a keyboard input.
+///
+struct WindowKeyboardEvent : public WindowEvent
+{
+  enum class KeyAction : uint32_t
+  {
+    Released,
+    Pressed,
+    Repeated
+  };
+
+  KeyCode keycode;
+  uint32_t scancode;
+  KeyAction action;
+  ModifierKeys modifiers;
 };
 
 ///
