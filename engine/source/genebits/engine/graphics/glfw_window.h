@@ -289,7 +289,7 @@ private:
   /// @param[in] key Key code from the USB HID Usage Tables v1.12(p. 53-60) but re-arranged to map to 7-bit ASCII for
   /// printable keys
   /// @param[in] scancode Value emitted by the keyboard (hardware)
-  /// @param[in] action What state is the key in: Pressed, Released, Repeated or Unknown
+  /// @param[in] action What state is the key in: Pressed, Released or Repeated
   /// @param[in] mods Flags representing the state of modifier keys (ALT, CTRL, SHIFT, ect...)
   ///
   static void GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t scancode, int32_t action, int32_t mods);
