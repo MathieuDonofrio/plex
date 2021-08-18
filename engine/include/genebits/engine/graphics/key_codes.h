@@ -5,6 +5,7 @@
 
 namespace genebits::engine
 {
+
 // Key code from the USB HID Usage Tables v1.12(p. 53-60) but re-arranged to map to 7-bit ASCII for printable keys
 enum KeyCode : int32_t
 {
@@ -24,10 +25,10 @@ enum KeyCode : int32_t
   Num6 = 54,
   Num7 = 55,
   Num8 = 56,
-  Num9 = 57, /**/
-  Semicolon = 59, /*-*/
-  Equal = 61, /*-*/
-  A = 65, /**/
+  Num9 = 57,
+  Semicolon = 59,
+  Equal = 61,
+  A = 65,
   B = 66,
   C = 67,
   D = 68,
@@ -55,8 +56,8 @@ enum KeyCode : int32_t
   Z = 90,
   LeftBracket = 91,
   Backslash = 92,
-  RightBracket = 93, /**/
-  GraveAccent = 96, /**/
+  RightBracket = 93,
+  GraveAccent = 96,
   World1 = 161,
   World2 = 162,
   Escape = 256,
