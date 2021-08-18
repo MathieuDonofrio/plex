@@ -132,8 +132,9 @@ enum KeyCode : int32_t
   Menu = 348
 };
 
-std::string_view KeyCodeToString(KeyCode keycode) noexcept;
+const char* KeyCodeToString(KeyCode keycode) noexcept;
 
+const char* KeyCodeToStringSwitch(KeyCode keycode) noexcept;
 } // namespace genebits::engine
 
 #endif // GENEBITS_KEY_CODES_H
