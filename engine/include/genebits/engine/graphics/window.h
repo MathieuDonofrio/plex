@@ -314,6 +314,58 @@ struct WindowKeyboardEvent : public WindowEvent
 };
 
 ///
+/// Window cursor movement event.
+///
+/// Published when a window is in focus and receives a cursor movement input.
+///
+struct WindowCursorMoveEvent : public WindowEvent
+{
+  // TODO convert to uint if applicable
+  double x_pos;
+  double y_pos;
+};
+
+///
+/// Window cursor enter/leave event.
+///
+/// Published when the cursor leaves or enter the window
+///
+struct WindowCursorEnterEvent : public WindowEvent
+{
+  enum class CursorHoverState : uint32_t
+  {
+    Left,
+    Entered
+  };
+
+  CursorHoverState cursor_hover_state;
+};
+
+///
+/// Window mouse button event.
+///
+/// Published when a button is pressed or released on the mouse while in the window
+///
+struct WindowMouseButtonEvent : public WindowEvent
+{
+  // TODO add full enum
+  //  enum class CursorButton : uint32_t
+  //  {
+  //    Left,
+  //    Right
+  //  };
+
+  enum class CursorButtonAction : uint32_t
+  {
+    Released,
+    Pressed
+  };
+
+  int32_t button;
+  CursorButtonAction action;
+};
+
+///
 /// Creates a window.
 ///
 /// Factory method for creating windows.

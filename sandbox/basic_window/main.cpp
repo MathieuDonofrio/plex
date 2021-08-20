@@ -11,7 +11,10 @@ struct TestWindowListener : public Listener<TestWindowListener,
                               WindowMaximizeEvent,
                               WindowIconifyEvent,
                               WindowResizeEvent,
-                              WindowKeyboardEvent>
+                              WindowKeyboardEvent,
+                              WindowCursorEnterEvent,
+                              WindowCursorMoveEvent,
+                              WindowMouseButtonEvent>
 {
   void listen(const WindowCloseEvent&)
   {
@@ -43,6 +46,25 @@ struct TestWindowListener : public Listener<TestWindowListener,
   {
     std::cout << "keyboard event: " << KeyCodeToString(event.keycode) << ", " << static_cast<uint32_t>(event.modifiers)
               << std::endl;
+  }
+
+  void listen(const WindowCursorMoveEvent& event)
+  {
+    std::cout << "Cursor move event: x=" << event.x_pos << " y=" << event.y_pos << std::endl;
+  }
+
+  void listen(const WindowCursorEnterEvent& event)
+  {
+    std::cout << "Cursor enter/leave event: "
+              << ((event.cursor_hover_state == WindowCursorEnterEvent::CursorHoverState::Entered) ? "Entered" : "Left")
+              << std::endl;
+  }
+
+  void listen(const WindowMouseButtonEvent& event)
+  {
+    std::cout << "Mouse button event: "
+              << ((event.action == WindowMouseButtonEvent::CursorButtonAction::Pressed) ? "Pressed" : "Released")
+              << " Button: " << event.button << std::endl;
   }
 };
 
