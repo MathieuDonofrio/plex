@@ -296,23 +296,32 @@ DEFINE_ENUM_FLAG_OPERATORS(ModifierKeys);
 std::string ModifierKeysToString(const ModifierKeys modifier_key);
 
 ///
-/// Window keyboard event.
+/// Window button event base
 ///
-/// Published when a window is in focus and receives a keyboard input.
+/// Contains common data for button related events
 ///
-struct WindowKeyboardEvent : public WindowEvent
+struct ButtonEvent
 {
-  enum class KeyAction : uint32_t
+  enum class ButtonAction : uint32_t
   {
     Released,
     Pressed,
     Repeated
   };
 
+  ModifierKeys modifiers;
+  ButtonAction action;
+};
+
+///
+/// Window keyboard event.
+///
+/// Published when a window is in focus and receives a keyboard input.
+///
+struct WindowKeyboardEvent : public WindowEvent, public ButtonEvent
+{
   KeyCode keycode;
   uint32_t scancode;
-  KeyAction action;
-  ModifierKeys modifiers;
 };
 
 ///
@@ -348,23 +357,17 @@ struct WindowCursorEnterEvent : public WindowEvent
 ///
 /// Published when a button is pressed or released on the mouse while in the window
 ///
-struct WindowMouseButtonEvent : public WindowEvent
+struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
 {
-  // TODO add full enum
-  //  enum class CursorButton : uint32_t
-  //  {
-  //    Left,
-  //    Right
-  //  };
 
-  enum class CursorButtonAction : uint32_t
+  enum class CursorButton : uint32_t
   {
-    Released,
-    Pressed
+    Left,
+    ScrollWheel,
+    Right
   };
 
-  int32_t button;
-  CursorButtonAction action;
+  CursorButton button;
 };
 
 ///
