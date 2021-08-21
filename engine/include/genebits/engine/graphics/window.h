@@ -293,6 +293,8 @@ enum class ModifierKeys : uint32_t
 
 DEFINE_ENUM_FLAG_OPERATORS(ModifierKeys);
 
+std::string ModifierKeysToString(const ModifierKeys modifier_key);
+
 ///
 /// Window keyboard event.
 ///
