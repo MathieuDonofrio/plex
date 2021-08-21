@@ -63,8 +63,9 @@ struct TestWindowListener : public Listener<TestWindowListener,
   void listen(const WindowMouseButtonEvent& event)
   {
     std::cout << "Mouse button event: "
-              << ((event.action == WindowMouseButtonEvent::CursorButtonAction::Pressed) ? "Pressed" : "Released")
-              << " Button: " << event.button << std::endl;
+              << ((event.action == WindowMouseButtonEvent::ButtonAction::Pressed) ? "Pressed" : "Released")
+              << " Button: " << static_cast<uint32_t>(event.button)
+              << " Mods: " << ModifierKeysToString(event.modifiers) << std::endl;
   }
 };
 
