@@ -279,31 +279,7 @@ struct WindowMaximizeEvent : public WindowEvent
   bool maximized;
 };
 
-///
-/// Flags depicting the states of modifiers keys
-///
-enum class ModifierKeys : uint32_t
-{
-  Shift = BitFlag(0),
-  Control = BitFlag(1),
-  Alt = BitFlag(2),
-  Super = BitFlag(3),
-  CapsLock = BitFlag(4),
-  NumLock = BitFlag(5)
-};
-
-DEFINE_ENUM_FLAG_OPERATORS(ModifierKeys);
-
 // TODO add enum class operation/util for non-flags type
-// TODO add Enum operators for member enums
-enum class ButtonAction : uint32_t
-{
-  Released = 1,
-  Pressed = 2,
-  Repeated = 3
-};
-
-DEFINE_ENUM_FLAG_OPERATORS(ButtonAction);
 
 ///
 /// Window button event base
@@ -312,6 +288,33 @@ DEFINE_ENUM_FLAG_OPERATORS(ButtonAction);
 ///
 struct ButtonEvent
 {
+
+  ///
+  /// Flags depicting the states of modifiers keys
+  ///
+  enum class ModifierKeys : uint32_t
+  {
+    Shift = BitFlag(0),
+    Control = BitFlag(1),
+    Alt = BitFlag(2),
+    Super = BitFlag(3),
+    CapsLock = BitFlag(4),
+    NumLock = BitFlag(5)
+  };
+
+  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(ModifierKeys);
+  ///
+  /// Enum depicting the action a key made
+  ///
+  enum class ButtonAction : uint32_t
+  {
+    Released = 1,
+    Pressed = 2,
+    Repeated = 3
+  };
+
+  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(ButtonAction);
+
   ModifierKeys modifiers;
   ButtonAction action;
 
@@ -344,14 +347,6 @@ struct WindowCursorMoveEvent : public WindowEvent
   double y_pos;
 };
 
-enum class CursorHoverState : uint32_t
-{
-  Left = 0,
-  Entered = 1,
-};
-
-DEFINE_ENUM_FLAG_OPERATORS(CursorHoverState)
-
 ///
 /// Window cursor enter/leave event.
 ///
@@ -359,20 +354,21 @@ DEFINE_ENUM_FLAG_OPERATORS(CursorHoverState)
 ///
 struct WindowCursorEnterEvent : public WindowEvent
 {
+  ///
+  /// Enum depicting if the cursor entered or left the window drawable area
+  ///
+  enum class CursorHoverState : uint32_t
+  {
+    Left = 0,
+    Entered = 1,
+  };
+
+  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(CursorHoverState)
 
   CursorHoverState cursor_hover_state;
 
   [[nodiscard]] std::string CursorHoverStateToString() const;
 };
-
-enum class CursorButton : uint32_t
-{
-  Left = 0,
-  Right = 1,
-  Middle = 2
-};
-
-DEFINE_ENUM_FLAG_OPERATORS(CursorButton)
 
 ///
 /// Window mouse button event.
@@ -381,6 +377,18 @@ DEFINE_ENUM_FLAG_OPERATORS(CursorButton)
 ///
 struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
 {
+  ///
+  /// Enum depicting which button of the mouse had caused the event
+  ///
+  enum class CursorButton : uint32_t
+  {
+    Left = 0,
+    Right = 1,
+    Middle = 2
+  };
+
+  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(CursorButton)
+
   CursorButton button;
 
   [[nodiscard]] std::string CursorButtonToString() const;

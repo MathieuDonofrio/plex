@@ -98,6 +98,66 @@ concept EnumFlag = std::is_enum_v<EnumType> && requires(EnumType lhs, EnumType r
     return static_cast<EnumType>(static_cast<Underlying>(lhs) & rhs);                                    \
   }
 
+  // Utility for defining member (or scoped) enum flag operators.
+  // Defines all bitwise operators and equality operators with the underlying type for a member enum.
+#define DEFINE_MEMBER_ENUM_FLAG_OPERATORS(EnumType)                                                             \
+                                                                                                                \
+  static_assert(std::is_enum_v<EnumType>, "Type must be an enum to define enum flag operators");                \
+                                                                                                                \
+  friend constexpr EnumType operator|(const EnumType lhs, const EnumType rhs) noexcept                          \
+  {                                                                                                             \
+    using Underlying = std::underlying_type_t<EnumType>;                                                        \
+    return static_cast<EnumType>(static_cast<Underlying>(lhs) | static_cast<Underlying>(rhs));                  \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr EnumType operator&(const EnumType lhs, const EnumType rhs) noexcept                          \
+  {                                                                                                             \
+    using Underlying = std::underlying_type_t<EnumType>;                                                        \
+    return static_cast<EnumType>(static_cast<Underlying>(lhs) & static_cast<Underlying>(rhs));                  \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr EnumType operator^(const EnumType lhs, const EnumType rhs) noexcept                          \
+  {                                                                                                             \
+    using Underlying = std::underlying_type_t<EnumType>;                                                        \
+    return static_cast<EnumType>(static_cast<Underlying>(lhs) ^ static_cast<Underlying>(rhs));                  \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr EnumType& operator&=(EnumType& lhs, const EnumType rhs) noexcept                             \
+  {                                                                                                             \
+    return (lhs = lhs & rhs);                                                                                   \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr EnumType& operator|=(EnumType& lhs, const EnumType rhs) noexcept                             \
+  {                                                                                                             \
+    return (lhs = lhs | rhs);                                                                                   \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr EnumType& operator^=(EnumType& lhs, const EnumType rhs) noexcept                             \
+  {                                                                                                             \
+    return (lhs = lhs ^ rhs);                                                                                   \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr bool operator!=(const EnumType lhs, const std::underlying_type_t<EnumType> rhs) noexcept     \
+  {                                                                                                             \
+    return static_cast<std::underlying_type_t<EnumType>>(lhs) != rhs;                                           \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr bool operator==(const EnumType lhs, const std::underlying_type_t<EnumType> rhs) noexcept     \
+  {                                                                                                             \
+    return static_cast<std::underlying_type_t<EnumType>>(lhs) == rhs;                                           \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr EnumType operator~(const EnumType rhs) noexcept                                              \
+  {                                                                                                             \
+    return static_cast<EnumType>(~static_cast<std::underlying_type_t<EnumType>>(rhs));                          \
+  }                                                                                                             \
+                                                                                                                \
+  friend constexpr EnumType operator&(const EnumType lhs, const std::underlying_type_t<EnumType>(rhs)) noexcept \
+  {                                                                                                             \
+    using Underlying = std::underlying_type_t<EnumType>;                                                        \
+    return static_cast<EnumType>(static_cast<Underlying>(lhs) & rhs);                                           \
+  }
+
 // Utility for creating bit flags in a more readable way
 #define BitFlag(Bit) (1 << Bit)
 
