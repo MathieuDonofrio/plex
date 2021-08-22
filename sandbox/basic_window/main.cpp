@@ -44,8 +44,8 @@ struct TestWindowListener : public Listener<TestWindowListener,
 
   void listen(const WindowKeyboardEvent& event)
   {
-    std::cout << "keyboard event: " << KeyCodeToString(event.keycode) << ", " << static_cast<uint32_t>(event.modifiers)
-              << std::endl;
+    std::cout << "keyboard event: " << event.KeyCodeToString() << ", " << event.ModifierKeysToString() << ", "
+              << event.ButtonActionToString() << std::endl;
   }
 
   void listen(const WindowCursorMoveEvent& event)
@@ -55,17 +55,13 @@ struct TestWindowListener : public Listener<TestWindowListener,
 
   void listen(const WindowCursorEnterEvent& event)
   {
-    std::cout << "Cursor enter/leave event: "
-              << ((event.cursor_hover_state == WindowCursorEnterEvent::CursorHoverState::Entered) ? "Entered" : "Left")
-              << std::endl;
+    std::cout << "Cursor enter/leave event: " << event.CursorHoverStateToString() << std::endl;
   }
 
   void listen(const WindowMouseButtonEvent& event)
   {
-    std::cout << "Mouse button event: "
-              << ((event.action == WindowMouseButtonEvent::ButtonAction::Pressed) ? "Pressed" : "Released")
-              << " Button: " << static_cast<uint32_t>(event.button)
-              << " Mods: " << ModifierKeysToString(event.modifiers) << std::endl;
+    std::cout << "Mouse button event: " << event.ButtonActionToString() << ", " << event.CursorButtonToString()
+              << ", Mods: " << event.ModifierKeysToString() << std::endl;
   }
 };
 

@@ -8,6 +8,7 @@
 
 namespace genebits::engine
 {
+
 enum class WindowCreationHints : uint64_t
 {
   None = 0,
@@ -293,7 +294,16 @@ enum class ModifierKeys : uint32_t
 
 DEFINE_ENUM_FLAG_OPERATORS(ModifierKeys);
 
-std::string ModifierKeysToString(const ModifierKeys modifier_key);
+// TODO add enum class operation/util for non-flags type
+// TODO add Enum operators for member enums
+enum class ButtonAction : uint32_t
+{
+  Released = 1,
+  Pressed = 2,
+  Repeated = 3
+};
+
+DEFINE_ENUM_FLAG_OPERATORS(ButtonAction);
 
 ///
 /// Window button event base
@@ -302,15 +312,11 @@ std::string ModifierKeysToString(const ModifierKeys modifier_key);
 ///
 struct ButtonEvent
 {
-  enum class ButtonAction : uint32_t
-  {
-    Released,
-    Pressed,
-    Repeated
-  };
-
   ModifierKeys modifiers;
   ButtonAction action;
+
+  [[nodiscard]] std::string ModifierKeysToString() const;
+  [[nodiscard]] std::string ButtonActionToString() const;
 };
 
 ///
@@ -322,6 +328,8 @@ struct WindowKeyboardEvent : public WindowEvent, public ButtonEvent
 {
   KeyCode keycode;
   uint32_t scancode;
+
+  [[nodiscard]] std::string KeyCodeToString() const;
 };
 
 ///
@@ -336,6 +344,14 @@ struct WindowCursorMoveEvent : public WindowEvent
   double y_pos;
 };
 
+enum class CursorHoverState : uint32_t
+{
+  Left = 0,
+  Entered = 1,
+};
+
+DEFINE_ENUM_FLAG_OPERATORS(CursorHoverState)
+
 ///
 /// Window cursor enter/leave event.
 ///
@@ -343,14 +359,20 @@ struct WindowCursorMoveEvent : public WindowEvent
 ///
 struct WindowCursorEnterEvent : public WindowEvent
 {
-  enum class CursorHoverState : uint32_t
-  {
-    Left,
-    Entered
-  };
 
   CursorHoverState cursor_hover_state;
+
+  [[nodiscard]] std::string CursorHoverStateToString() const;
 };
+
+enum class CursorButton : uint32_t
+{
+  Left = 0,
+  Right = 1,
+  Middle = 2
+};
+
+DEFINE_ENUM_FLAG_OPERATORS(CursorButton)
 
 ///
 /// Window mouse button event.
@@ -359,15 +381,9 @@ struct WindowCursorEnterEvent : public WindowEvent
 ///
 struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
 {
-
-  enum class CursorButton : uint32_t
-  {
-    Left,
-    ScrollWheel,
-    Right
-  };
-
   CursorButton button;
+
+  [[nodiscard]] std::string CursorButtonToString() const;
 };
 
 ///

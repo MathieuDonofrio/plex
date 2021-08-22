@@ -451,7 +451,7 @@ void GLFWWindow::GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t s
   event.keycode = static_cast<KeyCode>(key);
   event.modifiers = static_cast<ModifierKeys>(mods);
   event.scancode = scancode;
-  event.action = static_cast<WindowKeyboardEvent::ButtonAction>(action);
+  event.action = static_cast<ButtonAction>(action);
 
   GetEnvironment().GetEventBus().Publish(event);
 }
@@ -474,7 +474,7 @@ void GLFWWindow::GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entere
 
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.cursor_hover_state = static_cast<WindowCursorEnterEvent::CursorHoverState>(entered);
+  event.cursor_hover_state = static_cast<CursorHoverState>(entered);
 
   GetEnvironment().GetEventBus().Publish(event);
 }
@@ -487,8 +487,8 @@ void GLFWWindow::GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
   // event.button = static_cast<WindowMouseButtonEvent::CursorButton>(button);
-  event.button = static_cast<WindowMouseButtonEvent::CursorButton>(button);
-  event.action = static_cast<ButtonEvent::ButtonAction>(action);
+  event.button = static_cast<CursorButton>(button);
+  event.action = static_cast<ButtonAction>(action);
   event.modifiers = static_cast<ModifierKeys>(mods);
 
   GetEnvironment().GetEventBus().Publish(event);

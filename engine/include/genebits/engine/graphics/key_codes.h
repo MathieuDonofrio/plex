@@ -131,7 +131,7 @@ enum KeyCode : int32_t
   Menu = 348
 };
 
-constexpr const char* KeyCodeToStringSwitch(KeyCode keycode) noexcept
+constexpr const char* KeyCodeToString(KeyCode keycode) noexcept
 {
   switch (keycode)
   {
