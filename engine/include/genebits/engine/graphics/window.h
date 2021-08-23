@@ -302,7 +302,6 @@ struct ButtonEvent
     NumLock = BitFlag(5)
   };
 
-  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(ModifierKeys);
   ///
   /// Enum depicting the action a key made
   ///
@@ -313,13 +312,15 @@ struct ButtonEvent
     Repeated = 3
   };
 
-  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(ButtonAction);
+  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(ModifierKeys);
+  DEFINE_MEMBER_ENUM_OPERATORS(ButtonAction);
 
   ModifierKeys modifiers;
   ButtonAction action;
 
-  [[nodiscard]] std::string ModifierKeysToString() const;
-  [[nodiscard]] std::string ButtonActionToString() const;
+  DEFINE_MEMBER_ENUM_FLAG_TO_STRING(
+    ModifierKeys, ModifierKeysToString, modifiers, "Shift", "Control", "Alt", "Super", "CapsLock", "NumLock")
+  DEFINE_MEMBER_ENUM_TO_STRING(ButtonAction, ButtonActionToString, action, "Released", "Pressed", "Repeated")
 };
 
 ///
@@ -363,11 +364,11 @@ struct WindowCursorEnterEvent : public WindowEvent
     Entered = 1,
   };
 
-  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(CursorHoverState)
+  DEFINE_MEMBER_ENUM_OPERATORS(CursorHoverState)
 
   CursorHoverState cursor_hover_state;
 
-  [[nodiscard]] std::string CursorHoverStateToString() const;
+  DEFINE_MEMBER_ENUM_TO_STRING(CursorHoverState, CursorHoverStateToString, cursor_hover_state, "Left", "Entered")
 };
 
 ///
@@ -387,11 +388,10 @@ struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
     Middle = 2
   };
 
-  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(CursorButton)
-
   CursorButton button;
 
-  [[nodiscard]] std::string CursorButtonToString() const;
+  DEFINE_MEMBER_ENUM_OPERATORS(CursorButton)
+  DEFINE_MEMBER_ENUM_TO_STRING(CursorButton, CursorButtonToString, button, "Left", "Right", "Middle")
 };
 
 ///
