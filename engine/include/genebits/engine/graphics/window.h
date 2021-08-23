@@ -343,9 +343,8 @@ struct WindowKeyboardEvent : public WindowEvent, public ButtonEvent
 ///
 struct WindowCursorMoveEvent : public WindowEvent
 {
-  // TODO convert to uint if applicable
-  double x_pos;
-  double y_pos;
+  uint32_t x_pos;
+  uint32_t y_pos;
 };
 
 ///
@@ -401,7 +400,7 @@ struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
 ///
 struct WindowMouseScrollEvent : public WindowEvent
 {
-  double vertical_offset;
+  uint32_t vertical_offset;
 };
 
 ///

@@ -464,8 +464,8 @@ void GLFWWindow::GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, do
 
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.x_pos = x_pos;
-  event.y_pos = y_pos;
+  event.x_pos = static_cast<uint32_t>(x_pos);
+  event.y_pos = static_cast<uint32_t>(y_pos);
 
   GetEnvironment().GetEventBus().Publish(event);
 }
@@ -501,7 +501,7 @@ void GLFWWindow::GLFWMouseScrollCallback(GLFWWindow::GLFWWindowHandle handle, do
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
 
-  event.vertical_offset = y_offset;
+  event.vertical_offset = static_cast<uint32_t>(y_offset);
 
   GetEnvironment().GetEventBus().Publish(event);
 }
