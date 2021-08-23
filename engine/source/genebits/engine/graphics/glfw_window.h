@@ -313,7 +313,7 @@ private:
   static void GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entered);
 
   ///
-  /// Callback for when the window receives mouse inputs
+  /// Callback for when the window receives mouse button inputs
   ///
   /// @param[in] handle GLFW window handle for the event.
   /// @param[in] button Which button triggered the event
@@ -321,6 +321,15 @@ private:
   /// @param[in] mods Flags representing the state of modifier keys (ALT, CTRL, SHIFT, ect...)
   ///
   static void GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button, int32_t action, int32_t mods);
+
+  ///
+  /// Callback for when the window receives mouse scroll inputs
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] x_offset Non-conventional horizontal offset for special mouse's
+  /// @param[in] y_offset  Vertical offset of the scroll
+  ///
+  static void GLFWMouseScrollCallback(GLFWWindowHandle handle, double, double y_offset);
 
 private:
   GLFWWindowHandle handle_;

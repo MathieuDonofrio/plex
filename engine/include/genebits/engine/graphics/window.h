@@ -395,6 +395,16 @@ struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
 };
 
 ///
+/// Window mouse scroll event.
+///
+/// Published when the mouse's scroll-wheel is scrolled
+///
+struct WindowMouseScrollEvent : public WindowEvent
+{
+  double vertical_offset;
+};
+
+///
 /// Creates a window.
 ///
 /// Factory method for creating windows.

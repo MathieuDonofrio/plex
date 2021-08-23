@@ -126,6 +126,8 @@ GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height
   GLFW_ASSERT;
   glfwSetMouseButtonCallback(handle_, GLFWMouseButtonCallback);
   GLFW_ASSERT;
+  glfwSetScrollCallback(handle_, GLFWMouseScrollCallback);
+  GLFW_ASSERT;
 }
 
 GLFWWindow::~GLFWWindow()
@@ -481,15 +483,25 @@ void GLFWWindow::GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entere
 
 void GLFWWindow::GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button, int32_t action, int32_t mods)
 {
-  // TODO add modifier bits -> create parent event for button related event
   WindowMouseButtonEvent event;
 
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  // event.button = static_cast<WindowMouseButtonEvent::CursorButton>(button);
   event.button = static_cast<WindowMouseButtonEvent::CursorButton>(button);
   event.action = static_cast<ButtonEvent::ButtonAction>(action);
   event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
+
+  GetEnvironment().GetEventBus().Publish(event);
+}
+
+void GLFWWindow::GLFWMouseScrollCallback(GLFWWindow::GLFWWindowHandle handle, double, double y_offset)
+{
+  WindowMouseScrollEvent event;
+
+  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  GLFW_ASSERT_DEBUG_ONLY;
+
+  event.vertical_offset = y_offset;
 
   GetEnvironment().GetEventBus().Publish(event);
 }
