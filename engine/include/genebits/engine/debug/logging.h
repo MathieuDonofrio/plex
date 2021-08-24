@@ -28,7 +28,7 @@ struct LogMetadata
 {
   LogLevel level;
   StackTrace stack_trace;
-  char* file_name;
+  const char* file_name;
   size_t line;
 };
 
@@ -51,56 +51,19 @@ struct LogEvent
   Log log;
 };
 
-///
-/// Returns the amount frames to get when creating the stack trace for logs.
-///
-/// Increases the amount of frames based on the severity of the log, error being the highest.
-///
-/// @param level Level of the log.
-///
-/// @return The amount of stack frames for the log level.
-///
-constexpr size_t GetLogAmountStackFrames(LogLevel level)
+[[nodiscard]] constexpr size_t GetStackFramesAmount(const LogLevel leve)
 {
-  switch (level)
+  switch (leve)
   {
   case LogLevel::Trace: return 0;
-  case LogLevel::Info: return 3;
-  case LogLevel::Warn: return 5;
-  case LogLevel::Error: return 10;
+  case LogLevel::Info: return 4;
+  case LogLevel::Warn: return 8;
+  case LogLevel::Error: return 16;
+  default: return 0;
   }
-
-  return 0;
 }
 
-///
-/// Creates the log metadata for the log level.
-///
-/// @tparam level Log level
-///
-/// @param location Current source location.
-/// @param stack_trace Current stack trace.
-///
-/// @return Metadata for the log level.
-///
-template<LogLevel level>
-LogMetadata CreateLogMetadata(StackTrace stack_trace = StackBackTrace(GetLogAmountStackFrames(level)),
-  const std::source_location location = std::source_location::current())
-{
-  LogMetadata log_metadata;
-
-  log_metadata.level = level;
-  log_metadata.stack_trace = std::move(stack_trace);
-  // log_metadata.file_name = location.file_name();
-  // log_metadata.line = location.line();
-
-  return log_metadata;
-}
-
-template<LogLevel level>
-void PublishLog(std::string&& message,
-  EventBus& bus = GetEnvironment().GetEventBus(),
-  LogMetadata metadata = CreateLogMetadata<level>())
+inline void PublishLog(std::string&& message, LogMetadata metadata, EventBus& bus = GetEnvironment().GetEventBus())
 {
   LogEvent event;
 
@@ -112,16 +75,30 @@ void PublishLog(std::string&& message,
 
 } // namespace genebits::engine
 
+#define CREATE_LOG_METADATA(level)                                                             \
+  ::genebits::engine::LogMetadata                                                              \
+  {                                                                                            \
+    level, ::genebits::engine::StackBackTrace(GetStackFramesAmount(level)), __FILE__, __LINE__ \
+  }
+
 #ifndef NDEBUG
-#define TRACE(...) ::genebits::engine::PublishLog<::genebits::engine::LogLevel::Trace>(::std::format(__VA_ARGS__))
-#define INFO(...) ::genebits::engine::PublishLog<::genebits::engine::LogLevel::Info>(::std::format(__VA_ARGS__))
-#define WARN(...) ::genebits::engine::PublishLog<::genebits::engine::LogLevel::Warn>(::std::format(__VA_ARGS__))
-#define ERROR(...) ::genebits::engine::PublishLog<::genebits::engine::LogLevel::Error>(::std::format(__VA_ARGS__))
+
+#define LOG(level, ...) ::genebits::engine::PublishLog(::std::format(__VA_ARGS__), CREATE_LOG_METADATA(level))
+
+#define TRACE(...) LOG(::genebits::engine::LogLevel::Trace, __VA_ARGS__)
+#define INFO(...) LOG(::genebits::engine::LogLevel::Info, __VA_ARGS__)
+#define WARN(...) LOG(::genebits::engine::LogLevel::Warn, __VA_ARGS__)
+#define ERROR(...) LOG(::genebits::engine::LogLevel::Error, __VA_ARGS__)
+
 #else
+
+#define LOG(level, ...)
+
 #define TRACE(...)
 #define INFO(...)
 #define WARN(...)
 #define ERROR(...)
+
 #endif
 
 #endif
