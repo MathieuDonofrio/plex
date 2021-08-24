@@ -1,4 +1,4 @@
-#include "genebits/engine/logging/stacktrace.h"
+#include "genebits/engine/debug/stacktrace.h"
 
 #include "genebits/engine/config/compiler.h"
 
@@ -27,6 +27,8 @@ constexpr size_t cMaxFunctionNameLength = 256;
 
 StackTrace StackBackTrace(size_t max_frames)
 {
+  if (max_frames == 0) return {};
+
   max_frames = max_frames < cMaxFrames ? max_frames : cMaxFrames;
 
   void* stack[cMaxFrames];
@@ -72,9 +74,9 @@ StackTrace StackBackTrace(size_t max_frames)
 
 #else
 
-#define NO_BACKTRACE
-
 // TODO implement for GCC and CLANG
+
+#define NO_BACKTRACE
 
 // GCC:
 // https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes

@@ -2,8 +2,8 @@
 
 #include <atomic>
 
-#include "genebits/engine/config/assertion.h"
 #include "genebits/engine/core/environment.h"
+#include "genebits/engine/debug/assertion.h"
 
 #define GLFW_INCLUDE_NONE // Removes OpenGL
 #include "GLFW/glfw3.h"

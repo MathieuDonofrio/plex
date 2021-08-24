@@ -1,5 +1,5 @@
 
-#include "genebits/engine/logging/stacktrace.h"
+#include "genebits/engine/debug/stacktrace.h"
 
 #include <iostream>
 

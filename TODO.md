@@ -1,6 +1,6 @@
 # Genebits TODO
 
-Compleated tasks are marked with and 'x', they will be removed at the next release.
+Completed tasks are marked with and 'x', they will be removed at the next release.
 
 If there is nothing todo the list will be: [x] None
 
@@ -14,9 +14,10 @@ These tasks may be minor bug fixes or optimizations. They do not change the inte
 
 ## Minor
 
-These tasks are small or large updates that are non breaking for non deprecated functionalities.
+These tasks are small or large updates that are non-breaking for non deprecated functionalities.
 
-- [x] None
+- [ ] Implement stack tracing for GCC
+- [ ] Implement stack tracing for Clang
 
 ## Major
 

@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "genebits/engine/config/assertion.h"
+#include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/util/allocator.h"
 
 namespace genebits::engine
