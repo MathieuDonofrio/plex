@@ -6,7 +6,13 @@
 namespace genebits::engine
 {
 
-// Key code from the USB HID Usage Tables v1.12(p. 53-60) but re-arranged to map to 7-bit ASCII for printable keys
+///
+/// Key code of the key pressed during keyboard events
+///
+/// @note Printable characters can be directly casted to char for usage in strings
+///
+/// @ref Key code from the USB HID Usage Tables v1.12(p. 53-60) but re-arranged to map to 7-bit ASCII for printable keys
+///
 enum KeyCode : int32_t
 {
   Unknown = -1,
