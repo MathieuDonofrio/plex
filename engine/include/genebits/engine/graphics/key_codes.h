@@ -138,6 +138,13 @@ enum KeyCode : int32_t
   Menu = 348
 };
 
+///
+/// Utility to convert a KeyCode value to its value name
+///
+/// @param[in] keycode KeyCode value to be converted
+///
+/// @return string Corresponding to the given KeyCode value name
+///
 constexpr const char* KeyCodeToString(KeyCode keycode) noexcept
 {
   switch (keycode)
