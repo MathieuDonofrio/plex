@@ -279,8 +279,6 @@ struct WindowMaximizeEvent : public WindowEvent
   bool maximized;
 };
 
-// TODO add enum class operation/util for non-flags type
-
 ///
 /// Window button event base
 ///
@@ -317,10 +315,6 @@ struct ButtonEvent
 
   ModifierKeys modifiers;
   ButtonAction action;
-
-  DEFINE_MEMBER_ENUM_FLAG_TO_STRING(
-    ModifierKeys, ModifierKeysToString, modifiers, "Shift", "Control", "Alt", "Super", "CapsLock", "NumLock")
-  DEFINE_MEMBER_ENUM_TO_STRING(ButtonAction, ButtonActionToString, action, "Released", "Pressed", "Repeated")
 };
 
 ///
@@ -366,8 +360,6 @@ struct WindowCursorEnterEvent : public WindowEvent
   DEFINE_MEMBER_ENUM_OPERATORS(CursorHoverState)
 
   CursorHoverState cursor_hover_state;
-
-  DEFINE_MEMBER_ENUM_TO_STRING(CursorHoverState, CursorHoverStateToString, cursor_hover_state, "Left", "Entered")
 };
 
 ///
@@ -390,7 +382,6 @@ struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
   CursorButton button;
 
   DEFINE_MEMBER_ENUM_OPERATORS(CursorButton)
-  DEFINE_MEMBER_ENUM_TO_STRING(CursorButton, CursorButtonToString, button, "Left", "Right", "Middle")
 };
 
 ///
