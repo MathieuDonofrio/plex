@@ -85,19 +85,19 @@ inline void PublishLog(std::string&& message, LogMetadata metadata, EventBus& bu
 
 #define LOG(level, ...) ::genebits::engine::PublishLog(::std::format(__VA_ARGS__), CREATE_LOG_METADATA(level))
 
-#define TRACE(...) LOG(::genebits::engine::LogLevel::Trace, __VA_ARGS__)
-#define INFO(...) LOG(::genebits::engine::LogLevel::Info, __VA_ARGS__)
-#define WARN(...) LOG(::genebits::engine::LogLevel::Warn, __VA_ARGS__)
-#define ERROR(...) LOG(::genebits::engine::LogLevel::Error, __VA_ARGS__)
+#define LOG_TRACE(...) LOG(::genebits::engine::LogLevel::Trace, __VA_ARGS__)
+#define LOG_INFO(...) LOG(::genebits::engine::LogLevel::Info, __VA_ARGS__)
+#define LOG_WARN(...) LOG(::genebits::engine::LogLevel::Warn, __VA_ARGS__)
+#define LOG_ERROR(...) LOG(::genebits::engine::LogLevel::Error, __VA_ARGS__)
 
 #else
 
 #define LOG(level, ...)
 
-#define TRACE(...)
-#define INFO(...)
-#define WARN(...)
-#define ERROR(...)
+#define LOG_TRACE(...)
+#define LOG_INFO(...)
+#define LOG_WARN(...)
+#define LOG_ERROR(...)
 
 #endif
 

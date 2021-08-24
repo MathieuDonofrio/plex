@@ -6,6 +6,7 @@
 #if PLATFORM_WINDOWS
 // Lean windows include
 #define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
 #include <Windows.h>
 
 // Include Dbghelp after Windows.h
@@ -91,9 +92,7 @@ StackTrace StackBackTrace(size_t max_frames)
 
 StackTrace StackBackTrace(size_t)
 {
-  StackTrace stacktrace;
-
-  return stacktrace;
+  return {};
 }
 
 #endif
