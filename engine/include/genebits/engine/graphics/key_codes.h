@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_GRAPHICS_KEY_CODES_H
 
 #include <cstdint>
+
 namespace genebits::engine
 {
 
