@@ -391,7 +391,7 @@ struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
 ///
 struct WindowMouseScrollEvent : public WindowEvent
 {
-  uint32_t vertical_offset;
+  int32_t vertical_offset;
 };
 
 ///
