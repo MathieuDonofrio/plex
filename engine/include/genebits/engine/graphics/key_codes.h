@@ -145,7 +145,7 @@ enum KeyCode : int32_t
 ///
 /// @return string Corresponding to the given KeyCode value name
 ///
-constexpr const char* KeyCodeToString(const KeyCode keycode) noexcept
+[[nodiscard]] constexpr const char* KeyCodeToString(const KeyCode keycode) noexcept
 {
   switch (keycode)
   {
