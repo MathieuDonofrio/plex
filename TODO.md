@@ -16,7 +16,7 @@ These tasks may be minor bug fixes or optimizations. They do not change the inte
 
 These tasks are small or large updates that are non breaking for non deprecated functionalities.
 
-- [x] None
+- [ ] Automatic ToString() generation for enums and enum flags
 
 ## Major
 
