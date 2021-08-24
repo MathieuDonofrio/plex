@@ -13,7 +13,7 @@ static void Worst_KeyCodeToStringSwitch(benchmark::State& state)
   const uint32_t worst_case = 348;
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(KeyCodeToStringSwitch(static_cast<KeyCode>(worst_case)));
+    benchmark::DoNotOptimize(KeyCodeToString(static_cast<KeyCode>(worst_case)));
   }
 }
 
@@ -128,7 +128,7 @@ static void Random_KeyCodeToStringSwitch(benchmark::State& state)
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(KeyCodeToStringSwitch(static_cast<KeyCode>(rnd[i])));
+    benchmark::DoNotOptimize(KeyCodeToString(static_cast<KeyCode>(rnd[i])));
   }
   if (i == 99) { i = 0; }
 }
