@@ -227,7 +227,7 @@ void GLFWWindow::RequestAttention()
 
 void GLFWWindow::Close()
 {
-  // TODO Matt: Brainstorm ideas for closing protocol
+
   glfwSetWindowShouldClose(handle_, 1);
 
   GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
