@@ -321,7 +321,7 @@ struct ButtonEvent
   ///
   /// Enum depicting the action a key made
   ///
-  enum class ButtonAction : uint32_t
+  enum class Action : uint32_t
   {
     Released = 1,
     Pressed = 2,
@@ -329,11 +329,11 @@ struct ButtonEvent
   };
 
   ModifierKeys modifiers;
-  ButtonAction action;
+  Action action;
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(ButtonEvent::ModifierKeys);
-DEFINE_ENUM_OPERATORS(ButtonEvent::ButtonAction);
+DEFINE_ENUM_OPERATORS(ButtonEvent::Action);
 
 ///
 /// Window keyboard event.
