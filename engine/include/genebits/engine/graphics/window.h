@@ -415,10 +415,10 @@ struct WindowMouseScrollEvent : public WindowEvent
 ///
 /// Factory method for creating windows.
 ///
-/// @param title Title of the window.
-/// @param width Width of the window.
-/// @param height Height of the window.
-/// @param hints Window creation hints.
+/// @param[in] title Title of the window.
+/// @param[in] width Width of the window.
+/// @param[in] height Height of the window.
+/// @param[in] hints Window creation hints.
 ///
 /// @return Window instance pointer.
 ///
