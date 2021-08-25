@@ -328,12 +328,12 @@ struct ButtonEvent
     Repeated = 3
   };
 
-  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(ModifierKeys);
-  DEFINE_MEMBER_ENUM_OPERATORS(ButtonAction);
-
   ModifierKeys modifiers;
   ButtonAction action;
 };
+
+DEFINE_ENUM_FLAG_OPERATORS(ButtonEvent::ModifierKeys);
+DEFINE_ENUM_OPERATORS(ButtonEvent::ButtonAction);
 
 ///
 /// Window keyboard event.
@@ -375,10 +375,10 @@ struct WindowCursorEnterEvent : public WindowEvent
     Entered = 1,
   };
 
-  DEFINE_MEMBER_ENUM_OPERATORS(CursorHoverState)
-
   CursorHoverState cursor_hover_state;
 };
+
+DEFINE_ENUM_OPERATORS(WindowCursorEnterEvent::CursorHoverState)
 
 ///
 /// Window mouse button event.
@@ -398,9 +398,9 @@ struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
   };
 
   CursorButton button;
-
-  DEFINE_MEMBER_ENUM_OPERATORS(CursorButton)
 };
+
+DEFINE_ENUM_OPERATORS(WindowMouseButtonEvent::CursorButton)
 
 ///
 /// Window mouse scroll event.
