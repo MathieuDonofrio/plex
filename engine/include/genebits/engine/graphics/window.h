@@ -353,8 +353,8 @@ struct WindowKeyboardEvent : public WindowEvent, public ButtonEvent
 ///
 struct WindowCursorMoveEvent : public WindowEvent
 {
-  int32_t x_pos;
-  int32_t y_pos;
+  int32_t pos_x;
+  int32_t pos_y;
 };
 
 ///

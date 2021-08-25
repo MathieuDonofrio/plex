@@ -51,7 +51,7 @@ struct TestWindowListener : public Listener<TestWindowListener,
 
   void listen(const WindowCursorMoveEvent& event)
   {
-    std::cout << "Cursor move event: x=" << event.x_pos << " y=" << event.y_pos << std::endl;
+    std::cout << "Cursor move event: x=" << event.pos_x << " y=" << event.pos_y << std::endl;
   }
 
   void listen(const WindowCursorEnterEvent& event)
