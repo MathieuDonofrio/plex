@@ -51,7 +51,8 @@ struct Environment::Pimpl
 Environment::Environment() : pimpl_(new Pimpl())
 {
 #ifndef NDEBUG
-  signal(SIGSEGV, handler);
+  signal(SIGSEGV, handler); // On segmentation fault
+  signal(SIGABRT_COMPAT, handler); // On abort (assert)
 
   pimpl_->terminal_logger = new TerminalLogger(this->GetEventBus());
 #endif
