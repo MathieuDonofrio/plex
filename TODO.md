@@ -20,6 +20,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Implement stack tracing for Clang
 - [ ] Automatic ToString() generation for enums and enum flags
 - [ ] Simplify ring buffer
+- [ ] Verify logging functionality for linux (gcc and clang)
 
 ## Major
 
