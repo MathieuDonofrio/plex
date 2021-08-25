@@ -32,7 +32,7 @@ enum class WindowCreationHints : uint64_t
 DEFINE_ENUM_FLAG_OPERATORS(WindowCreationHints)
 
 ///
-/// Window interface.
+/// Window interface. Specifies the method to implemented for a fully functional window implementation
 ///
 class Window
 {
