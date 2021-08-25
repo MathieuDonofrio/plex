@@ -462,8 +462,8 @@ void GLFWWindow::GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, do
 
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.x_pos = static_cast<uint32_t>(x_pos);
-  event.y_pos = static_cast<uint32_t>(y_pos);
+  event.x_pos = static_cast<int32_t>(x_pos);
+  event.y_pos = static_cast<int32_t>(y_pos);
 
   GetEnvironment().GetEventBus().Publish(event);
 }
