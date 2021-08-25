@@ -20,7 +20,7 @@ namespace
   {
     TestListener(EventBus& bus) : Listener<TestListener, TestEvent>(bus), sum(0) {}
 
-    void listen(const TestEvent& event)
+    void Listen(const TestEvent& event)
     {
       sum += event.value;
     }
@@ -34,12 +34,12 @@ namespace
 
     TestListener2(EventBus& bus) : Listener<TestListener2, TestEvent, TestEvent2>(bus), sum(0) {}
 
-    void listen(const TestEvent& event)
+    void Listen(const TestEvent& event)
     {
       sum += event.value;
     }
 
-    void listen(const TestEvent2& event)
+    void Listen(const TestEvent2& event)
     {
       sum += event.value;
     }

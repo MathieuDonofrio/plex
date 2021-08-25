@@ -79,8 +79,9 @@ StackTrace StackBackTrace(size_t max_frames)
 
 #define NO_BACKTRACE
 
-// GCC:
+// GNU Libc:
 // https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
+// https://stackoverflow.com/questions/691719/c-display-stack-trace-on-exception
 
 #endif
 

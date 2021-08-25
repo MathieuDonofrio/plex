@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_DEBUG_CONSOLE_COLOR_H
-#define GENEBITS_ENGINE_DEBUG_CONSOLE_COLOR_H
+#ifndef GENEBITS_ENGINE_DEBUG_PRINT_H
+#define GENEBITS_ENGINE_DEBUG_PRINT_H
 
 #include <string>
 #include <string_view>
@@ -29,18 +29,47 @@ enum class TColor
   White
 };
 
+///
+/// Prints the string view to the console output (stdout).
+///
+/// @param[in] string The string view to print.
+///
+void Print(std::string_view string);
+
+///
+/// Prints the string to the console output (stdout).
+///
+/// @param[in] string The string view to print.
+///
 void Print(const std::string& string);
 
-void Print(const std::string_view string);
+///
+/// Prints the character to the console output (stdout).
+///
+/// @param[in] character The character to print.
+///
+void Print(char character);
 
-void Print(const char character);
+///
+/// Prints/Sets the color to the console output (stdout).
+///
+/// @param[in] color The color to print/set.
+///
+void PrintColor(TColor color);
 
-void PrintColor(const TColor color);
-
+///
+/// Prints/Sets the default color to the console output (stdout) to reset the color..
+///
 void PrintColorReset();
 
+///
+/// Prints a new line ('\n') to the console output (stdout).
+///
 void PrintLine();
 
+///
+/// Flushes the console output (stdout).
+///
 void PrintFlush();
 
 } // namespace genebits::engine

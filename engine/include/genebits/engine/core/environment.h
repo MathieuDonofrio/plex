@@ -14,6 +14,16 @@ class Environment final
 {
 public:
   ///
+  /// Default constructor
+  ///
+  Environment();
+
+  ///
+  /// Destructor
+  ///
+  ~Environment();
+
+  ///
   /// Returns the event bus for the environment. The event bus is used to
   /// subscribe event handlers to and publish events.
   ///
@@ -24,19 +34,12 @@ public:
     return event_bus_;
   }
 
-  ///
-  /// Returns the event bus for the environment. The event bus is used to
-  /// subscribe event handlers to and publish events.
-  ///
-  /// @return Environment event bus.
-  ///
-  [[nodiscard]] const EventBus& GetEventBus() const noexcept
-  {
-    return event_bus_;
-  }
-
 private:
   EventBus event_bus_;
+
+  // Pimpl for hidden dependencies
+  struct Pimpl;
+  Pimpl* pimpl_;
 };
 
 namespace details

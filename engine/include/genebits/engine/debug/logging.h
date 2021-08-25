@@ -1,8 +1,7 @@
-#ifndef GENEBITS_ENGINE_LOGGING_LOGGER_H
-#define GENEBITS_ENGINE_LOGGING_LOGGER_H
+#ifndef GENEBITS_ENGINE_DEBUG_LOGGING_H
+#define GENEBITS_ENGINE_DEBUG_LOGGING_H
 
 #include <format>
-#include <source_location>
 
 #include "genebits/engine/core/environment.h"
 #include "genebits/engine/debug/stacktrace.h"
@@ -51,18 +50,29 @@ struct LogEvent
   Log log;
 };
 
-[[nodiscard]] constexpr size_t GetStackFramesAmount(const LogLevel leve)
+///
+/// Returns the amount of stack frames to get when logging.
+///
+/// Usually only errors obtain a stacktrace when debugging.
+///
+/// @param[in] level The log level to check stacktrace size for.
+///
+/// @return The amount of stack frames to get for the log level.
+///
+[[nodiscard]] constexpr size_t GetStackFramesAmount(const LogLevel level)
 {
-  switch (leve)
-  {
-  case LogLevel::Trace: return 0;
-  case LogLevel::Info: return 4;
-  case LogLevel::Warn: return 8;
-  case LogLevel::Error: return 16;
-  default: return 0;
-  }
+  if (level == LogLevel::Warn) return 4;
+  if (level == LogLevel::Error) return 16;
+  return 0;
 }
 
+///
+/// Constructs & publishes a log event on the event bus.
+///
+/// @param[in] message The log message.
+/// @param[in] metadata The log metadata.
+/// @param[in] bus The event bus to publish on.
+///
 inline void PublishLog(std::string&& message, LogMetadata metadata, EventBus& bus = GetEnvironment().GetEventBus())
 {
   LogEvent event;
@@ -92,12 +102,12 @@ inline void PublishLog(std::string&& message, LogMetadata metadata, EventBus& bu
 
 #else
 
-#define LOG(level, ...)
+#define LOG(level, ...) ((void)0)
 
-#define LOG_TRACE(...)
-#define LOG_INFO(...)
-#define LOG_WARN(...)
-#define LOG_ERROR(...)
+#define LOG_TRACE(...) ((void)0)
+#define LOG_INFO(...) ((void)0)
+#define LOG_WARN(...) ((void)0)
+#define LOG_ERROR(...) ((void)0)
 
 #endif
 

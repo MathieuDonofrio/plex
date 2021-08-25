@@ -1,42 +1,38 @@
 
 #include "genebits/engine/debug/logging.h"
-#include "genebits/engine/debug/print.h"
-
-#include <iostream>
-#include <string>
 
 using namespace genebits::engine;
 
-void println(const std::string& s, TColor textcolor)
+namespace my_namespace
 {
-  PrintColor(textcolor);
-  Print(s);
-  PrintColorReset();
-  PrintLine();
-  PrintFlush();
+void func3()
+{
+  LOG_TRACE("Test");
+  LOG_TRACE("Test");
+  LOG_TRACE("Test");
+  LOG_TRACE("Test");
+  LOG_TRACE("Test");
+  LOG_INFO("Test");
+  LOG_WARN("Test");
+  LOG_INFO("Test");
+  LOG_INFO("Test");
+  LOG_ERROR("Test");
 }
 
-void listen(const LogEvent& event)
+void func2()
 {
-  std::cout << "File=" << event.log.metadata.file_name;
-  std::cout << " Line=" << event.log.metadata.line;
-  std::cout << " Message=" << event.log.message;
-  std::cout << std::endl;
+  func3();
 }
+
+void func1()
+{
+  func2();
+}
+} // namespace my_namespace
 
 int main()
 {
-  EventHandler<LogEvent> handler;
-  handler.Bind<&listen>();
-
-  GetEnvironment().GetEventBus().Subscribe(handler);
-
-  LOG_INFO("Test");
-
-  GetEnvironment().GetEventBus().Unsubscribe(handler);
-
-  println("Test Color", TColor::DarkRed);
-  println("Test Color", TColor::Red);
+  my_namespace::func1();
 
   return 0;
 }

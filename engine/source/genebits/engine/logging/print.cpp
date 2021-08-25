@@ -58,7 +58,7 @@ namespace genebits::engine
 
 void Print(const std::string& string)
 {
-  fwrite(string.c_str(), sizeof(char), string.size(), stdout);
+  fwrite(string.data(), sizeof(char), string.size(), stdout);
 }
 
 void Print(const std::string_view string)
