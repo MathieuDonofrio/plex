@@ -85,7 +85,7 @@ public:
   virtual void WaitEvents(double timeout) = 0;
 
   ///
-  /// Bring the window in focus.
+  /// Bring the window in front of all other windows present on the desktop.
   ///
   virtual void Focus() = 0;
 
