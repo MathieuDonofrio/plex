@@ -4,7 +4,7 @@
 #include <string>
 
 #include "genebits/engine/graphics/key_codes.h"
-#include "genebits/engine/util/enum_flag.h"
+#include "genebits/engine/util/enumerator.h"
 
 namespace genebits::engine
 {

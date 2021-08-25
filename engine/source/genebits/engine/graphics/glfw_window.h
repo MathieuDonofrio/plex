@@ -6,7 +6,7 @@
 
 #include "genebits/engine/graphics/vulkan_capable_window.h"
 #include "genebits/engine/graphics/window.h"
-#include "genebits/engine/util/enum_flag.h"
+#include "genebits/engine/util/enumerator.h"
 
 // Forward declare
 class GLFWwindow; // from glfw
