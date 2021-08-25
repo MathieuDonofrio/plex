@@ -344,8 +344,6 @@ struct WindowKeyboardEvent : public WindowEvent, public ButtonEvent
 {
   KeyCode keycode;
   uint32_t scancode;
-
-  [[nodiscard]] std::string KeyCodeToString() const;
 };
 
 ///
