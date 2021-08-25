@@ -9,6 +9,9 @@
 namespace genebits::engine
 {
 
+///
+/// Enum flags used to specify features to be enabled or disabled during the creation of the window
+///
 enum class WindowCreationHints : uint64_t
 {
   None = 0,
