@@ -90,7 +90,7 @@ public:
   virtual void Focus() = 0;
 
   ///
-  /// Maximise the size of the window according to its maximum size or the entire
+  /// Maximize the size of the window according to its maximum size or the entire
   /// screen if there is no limits.
   ///
   virtual void Maximize() = 0;
