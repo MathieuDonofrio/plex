@@ -325,7 +325,6 @@ VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
   GLFW_ASSERT;
 
   ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
-  (void)result; // Suppress warning
 
   return surface;
 }

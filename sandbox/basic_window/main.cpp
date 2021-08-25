@@ -45,8 +45,8 @@ struct TestWindowListener : public Listener<TestWindowListener,
 
   void listen(const WindowKeyboardEvent& event)
   {
-    std::cout << "keyboard event: " << event.KeyCodeToString() << ", " << static_cast<uint32_t>(event.modifiers) << ", "
-              << static_cast<uint32_t>(event.action) << std::endl;
+    std::cout << "keyboard event: " << KeyCodeToString(event.keycode) << ", " << static_cast<uint32_t>(event.modifiers)
+              << ", " << static_cast<uint32_t>(event.action) << std::endl;
   }
 
   void listen(const WindowCursorMoveEvent& event)
