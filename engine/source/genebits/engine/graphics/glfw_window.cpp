@@ -103,6 +103,11 @@ GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height
   glfwSetWindowUserPointer(handle_, this);
   GLFW_ASSERT;
 
+  glfwSetInputMode(
+    handle_, GLFW_LOCK_KEY_MODS, GLFW_TRUE); // Tell glfw that we want the state of "caps lock" and "num lock"
+  // when receiving keyboard events
+  GLFW_ASSERT;
+
   glfwSetWindowSizeCallback(handle_, GLFWResizeEventCallback);
   GLFW_ASSERT;
   glfwSetWindowCloseCallback(handle_, GLFWCloseEventCallback);
@@ -112,6 +117,16 @@ GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height
   glfwSetWindowIconifyCallback(handle_, GLFWIconifyEventCallback);
   GLFW_ASSERT;
   glfwSetWindowFocusCallback(handle_, GLFWFocusEventCallback);
+  GLFW_ASSERT;
+  glfwSetKeyCallback(handle_, GLFWKeyCallback);
+  GLFW_ASSERT;
+  glfwSetCursorPosCallback(handle_, GLFWCursorPosCallback);
+  GLFW_ASSERT;
+  glfwSetCursorEnterCallback(handle_, GLFWCursorEnterCallback);
+  GLFW_ASSERT;
+  glfwSetMouseButtonCallback(handle_, GLFWMouseButtonCallback);
+  GLFW_ASSERT;
+  glfwSetScrollCallback(handle_, GLFWMouseScrollCallback);
   GLFW_ASSERT;
 }
 
@@ -310,11 +325,11 @@ VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
 {
   VkSurfaceKHR* surface = nullptr;
 
-  VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
-  GLFW_ASSERT;
-
-  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
-  (void)result; // Suppress warning
+  //  VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
+  //  GLFW_ASSERT;
+  //
+  //  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
+  //  (void)result; // Suppress warning
 
   return surface;
 }
@@ -322,9 +337,9 @@ VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
 VulkanInstanceExtensions GLFWWindow::GetRequiredInstanceExtensions()
 {
   VulkanInstanceExtensions extensions { nullptr, 0 };
-
-  extensions.extensions = glfwGetRequiredInstanceExtensions(&extensions.count);
-  GLFW_ASSERT;
+  // Not implemented yet
+  //  extensions.extensions = glfwGetRequiredInstanceExtensions(&extensions.count);
+  //  GLFW_ASSERT;
 
   return extensions;
 }
@@ -332,9 +347,11 @@ VulkanInstanceExtensions GLFWWindow::GetRequiredInstanceExtensions()
 bool GLFWWindow::GetPhysicalDevicePresentationSupport(
   VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index)
 {
-  bool supported = glfwGetPhysicalDevicePresentationSupport(instance, physical_device, queue_family_index);
+  // Not implemented yet
+  // bool supported = glfwGetPhysicalDevicePresentationSupport(instance, physical_device, queue_family_index);
   GLFW_ASSERT;
 
+  bool supported = false;
   return supported;
 }
 
@@ -423,6 +440,68 @@ void GLFWWindow::GLFWFocusEventCallback(GLFWWindowHandle handle, int32_t current
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
   event.state = static_cast<WindowFocusEvent::FocusState>(current_state);
+
+  GetEnvironment().GetEventBus().Publish(event);
+}
+
+void GLFWWindow::GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t scancode, int32_t action, int32_t mods)
+{
+  WindowKeyboardEvent event;
+
+  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  GLFW_ASSERT_DEBUG_ONLY;
+  event.keycode = static_cast<KeyCode>(key);
+  event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
+  event.scancode = scancode;
+  event.action = static_cast<ButtonEvent::ButtonAction>(action);
+
+  GetEnvironment().GetEventBus().Publish(event);
+}
+
+void GLFWWindow::GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, double y_pos)
+{
+  WindowCursorMoveEvent event;
+
+  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  GLFW_ASSERT_DEBUG_ONLY;
+  event.x_pos = static_cast<uint32_t>(x_pos);
+  event.y_pos = static_cast<uint32_t>(y_pos);
+
+  GetEnvironment().GetEventBus().Publish(event);
+}
+
+void GLFWWindow::GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entered)
+{
+  WindowCursorEnterEvent event;
+
+  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  GLFW_ASSERT_DEBUG_ONLY;
+  event.cursor_hover_state = static_cast<WindowCursorEnterEvent::CursorHoverState>(entered);
+
+  GetEnvironment().GetEventBus().Publish(event);
+}
+
+void GLFWWindow::GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button, int32_t action, int32_t mods)
+{
+  WindowMouseButtonEvent event;
+
+  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  GLFW_ASSERT_DEBUG_ONLY;
+  event.button = static_cast<WindowMouseButtonEvent::CursorButton>(button);
+  event.action = static_cast<ButtonEvent::ButtonAction>(action);
+  event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
+
+  GetEnvironment().GetEventBus().Publish(event);
+}
+
+void GLFWWindow::GLFWMouseScrollCallback(GLFWWindow::GLFWWindowHandle handle, double, double y_offset)
+{
+  WindowMouseScrollEvent event;
+
+  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  GLFW_ASSERT_DEBUG_ONLY;
+
+  event.vertical_offset = static_cast<uint32_t>(y_offset);
 
   GetEnvironment().GetEventBus().Publish(event);
 }

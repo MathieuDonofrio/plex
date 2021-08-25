@@ -282,6 +282,55 @@ private:
   ///
   static void GLFWMaximizeEventCallback(GLFWWindowHandle handle, int32_t current_state);
 
+  ///
+  /// Callback for when the window receives keyboard inputs
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] key Key code from the USB HID Usage Tables v1.12(p. 53-60) but re-arranged to map to 7-bit ASCII for
+  /// printable keys
+  /// @param[in] scancode Value emitted by the keyboard (hardware)
+  /// @param[in] action What state is the key in: Pressed, Released or Repeated
+  /// @param[in] mods Flags representing the state of modifier keys (ALT, CTRL, SHIFT, ect...)
+  ///
+  static void GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t scancode, int32_t action, int32_t mods);
+
+  ///
+  /// Callback for when the window receives cursor movement inputs
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] x_pos Position in x coordinate of the cursor
+  /// @param[in] y_pos Position in y coordinate of the cursor
+  ///
+  static void GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, double y_pos);
+
+  ///
+  /// Callback for when the cursor leaves or enter the window
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] x_pos Position in x coordinate of the mouse
+  /// @param[in] y_pos Position in y coordinate of the mouse
+  ///
+  static void GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entered);
+
+  ///
+  /// Callback for when the window receives mouse button inputs
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] button Which button triggered the event
+  /// @param[in] action What state the button is in: Pressed, Released
+  /// @param[in] mods Flags representing the state of modifier keys (ALT, CTRL, SHIFT, ect...)
+  ///
+  static void GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button, int32_t action, int32_t mods);
+
+  ///
+  /// Callback for when the window receives mouse scroll inputs
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] x_offset Non-conventional horizontal offset for special mouse's
+  /// @param[in] y_offset  Vertical offset of the scroll
+  ///
+  static void GLFWMouseScrollCallback(GLFWWindowHandle handle, double, double y_offset);
+
 private:
   GLFWWindowHandle handle_;
 

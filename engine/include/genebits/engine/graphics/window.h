@@ -3,10 +3,12 @@
 
 #include <string>
 
+#include "genebits/engine/graphics/key_codes.h"
 #include "genebits/engine/util/enum_flag.h"
 
 namespace genebits::engine
 {
+
 enum class WindowCreationHints : uint64_t
 {
   None = 0,
@@ -275,6 +277,121 @@ struct WindowIconifyEvent : public WindowEvent
 struct WindowMaximizeEvent : public WindowEvent
 {
   bool maximized;
+};
+
+///
+/// Window button event base
+///
+/// Contains common data for button related events
+///
+struct ButtonEvent
+{
+
+  ///
+  /// Flags depicting the states of modifiers keys
+  ///
+  enum class ModifierKeys : uint32_t
+  {
+    Shift = BitFlag(0),
+    Control = BitFlag(1),
+    Alt = BitFlag(2),
+    Super = BitFlag(3),
+    CapsLock = BitFlag(4),
+    NumLock = BitFlag(5)
+  };
+
+  ///
+  /// Enum depicting the action a key made
+  ///
+  enum class ButtonAction : uint32_t
+  {
+    Released = 1,
+    Pressed = 2,
+    Repeated = 3
+  };
+
+  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(ModifierKeys);
+  DEFINE_MEMBER_ENUM_OPERATORS(ButtonAction);
+
+  ModifierKeys modifiers;
+  ButtonAction action;
+};
+
+///
+/// Window keyboard event.
+///
+/// Published when a window is in focus and receives a keyboard input.
+///
+struct WindowKeyboardEvent : public WindowEvent, public ButtonEvent
+{
+  KeyCode keycode;
+  uint32_t scancode;
+
+  [[nodiscard]] std::string KeyCodeToString() const;
+};
+
+///
+/// Window cursor movement event.
+///
+/// Published when a window is in focus and receives a cursor movement input.
+///
+struct WindowCursorMoveEvent : public WindowEvent
+{
+  uint32_t x_pos;
+  uint32_t y_pos;
+};
+
+///
+/// Window cursor enter/leave event.
+///
+/// Published when the cursor leaves or enter the window
+///
+struct WindowCursorEnterEvent : public WindowEvent
+{
+  ///
+  /// Enum depicting if the cursor entered or left the window drawable area
+  ///
+  enum class CursorHoverState : uint32_t
+  {
+    Left = 0,
+    Entered = 1,
+  };
+
+  DEFINE_MEMBER_ENUM_OPERATORS(CursorHoverState)
+
+  CursorHoverState cursor_hover_state;
+};
+
+///
+/// Window mouse button event.
+///
+/// Published when a button is pressed or released on the mouse while in the window
+///
+struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
+{
+  ///
+  /// Enum depicting which button of the mouse had caused the event
+  ///
+  enum class CursorButton : uint32_t
+  {
+    Left = 0,
+    Right = 1,
+    Middle = 2
+  };
+
+  CursorButton button;
+
+  DEFINE_MEMBER_ENUM_OPERATORS(CursorButton)
+};
+
+///
+/// Window mouse scroll event.
+///
+/// Published when the mouse's scroll-wheel is scrolled
+///
+struct WindowMouseScrollEvent : public WindowEvent
+{
+  int32_t vertical_offset;
 };
 
 ///
