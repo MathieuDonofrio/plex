@@ -227,12 +227,11 @@ void GLFWWindow::RequestAttention()
 
 void GLFWWindow::Close()
 {
-
   glfwSetWindowShouldClose(handle_, 1);
 
-  GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
-
   GLFW_ASSERT_DEBUG_ONLY;
+
+  GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
 }
 
 bool GLFWWindow::IsClosing() const
@@ -245,8 +244,6 @@ bool GLFWWindow::IsClosing() const
 
 void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 {
-  // TODO Matt: Simplify
-
   // TODO add LOD icons (small, med, big)
   if (pixels != nullptr)
   {
