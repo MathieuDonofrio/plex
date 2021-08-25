@@ -244,7 +244,6 @@ bool GLFWWindow::IsClosing() const
 
 void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 {
-  // TODO add LOD icons (small, med, big)
   if (pixels != nullptr)
   {
     GLFWimage icon { static_cast<int>(width), static_cast<int>(height), pixels };

@@ -18,6 +18,7 @@ These tasks are small or large updates that are non breaking for non deprecated 
 
 - [ ] Automatic ToString() generation for enums and enum flags
 - [ ] Find window closing protocol
+- [ ] Add LOD icons for the window (small, med, big)
 
 ## Major
 
