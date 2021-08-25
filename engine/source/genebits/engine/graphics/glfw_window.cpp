@@ -325,11 +325,11 @@ VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
 {
   VkSurfaceKHR* surface = nullptr;
 
-  //  VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
-  //  GLFW_ASSERT;
-  //
-  //  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
-  //  (void)result; // Suppress warning
+  VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
+  GLFW_ASSERT;
+
+  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
+  (void)result; // Suppress warning
 
   return surface;
 }
@@ -337,9 +337,9 @@ VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
 VulkanInstanceExtensions GLFWWindow::GetRequiredInstanceExtensions()
 {
   VulkanInstanceExtensions extensions { nullptr, 0 };
-  // Not implemented yet
-  //  extensions.extensions = glfwGetRequiredInstanceExtensions(&extensions.count);
-  //  GLFW_ASSERT;
+
+  extensions.extensions = glfwGetRequiredInstanceExtensions(&extensions.count);
+  GLFW_ASSERT;
 
   return extensions;
 }
@@ -347,11 +347,9 @@ VulkanInstanceExtensions GLFWWindow::GetRequiredInstanceExtensions()
 bool GLFWWindow::GetPhysicalDevicePresentationSupport(
   VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index)
 {
-  // Not implemented yet
-  // bool supported = glfwGetPhysicalDevicePresentationSupport(instance, physical_device, queue_family_index);
+  bool supported = glfwGetPhysicalDevicePresentationSupport(instance, physical_device, queue_family_index);
   GLFW_ASSERT;
 
-  bool supported = false;
   return supported;
 }
 
