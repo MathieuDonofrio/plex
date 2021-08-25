@@ -63,14 +63,24 @@ public:
   virtual void PollEvents() = 0;
 
   ///
-  /// Same as PollEvents() but waits for events to occur by making the thread sleep.
+  /// Same as PollEvents() but waits for events to occur by making the thread sleep indefinitely.
+  /// Events like user inputs (example: focus, minimise, close, maximise, cursor movements...) will wake the thread and
+  /// unblock this method.
+  ///
+  /// @warning This will block the thread indefinitely if no events are generated
   ///
   virtual void WaitEvents() = 0;
 
   ///
-  /// Same as PollEvents() but waits for events to occur by making the thread sleep.
+  /// Same as PollEvents() but waits for events to occur by making the thread sleep until a specified amount of time has
+  /// elapsed.
+  /// Events like user inputs (example: focus, minimise, close, maximise, cursor movements...) will wake the thread and
+  /// unblock this method.
   ///
   /// @param[in] timeout Maximum time to wait in seconds.
+  ///
+  /// @note Safer to use than WaitEvents() without timeout as this method is guaranteed to unblock after the timeout if
+  /// no events occurred
   ///
   virtual void WaitEvents(double timeout) = 0;
 
