@@ -334,14 +334,14 @@ VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
   return surface;
 }
 
-VulkanInstanceExtensions GLFWWindow::GetRequiredInstanceExtensions()
+std::vector<const char*> GLFWWindow::GetRequiredInstanceExtensions()
 {
-  VulkanInstanceExtensions extensions { nullptr, 0 };
-
-  extensions.extensions = glfwGetRequiredInstanceExtensions(&extensions.count);
+  uint32_t glfw_extension_count = 0;
+  const char** glfw_extension_string_ptrs;
+  glfw_extension_string_ptrs = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
   GLFW_ASSERT;
 
-  return extensions;
+  return { glfw_extension_string_ptrs, glfw_extension_string_ptrs + glfw_extension_count };
 }
 
 bool GLFWWindow::GetPhysicalDevicePresentationSupport(

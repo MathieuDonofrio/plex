@@ -216,7 +216,7 @@ public:
   ///
   /// @return Vulkan instance extensions required for the window.
   ///
-  VulkanInstanceExtensions GetRequiredInstanceExtensions() override;
+  std::vector<const char*> GetRequiredInstanceExtensions() override;
 
   ///
   /// Checks whether or not a specific queue family of a physical device supports image
