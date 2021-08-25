@@ -107,7 +107,11 @@ public:
   virtual void Restore() = 0;
 
   ///
-  /// Request the attention of the user in an non-interrupting way.
+  /// Request the attention of the user in an non-interrupting way by signaling (visually and/or audibly) the user that
+  /// the window needs to be looked upon.
+  ///
+  /// @note The way in which attention is requested is OS dependant, which means that the behavior can differ or that no
+  /// mechanism is in place.
   ///
   virtual void RequestAttention() = 0;
 
