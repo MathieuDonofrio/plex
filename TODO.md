@@ -21,6 +21,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Automatic ToString() generation for enums and enum flags
 - [ ] Simplify ring buffer
 - [ ] Verify logging functionality for linux (gcc and clang)
+- [ ] Debate on macro prefixes (ex: GENEBITS_ASSERT vs ASSERT)
 
 ## Major
 
