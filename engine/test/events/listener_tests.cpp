@@ -55,7 +55,7 @@ TEST(Listener_Tests, Constructor_SingleListener_SubscribeCountIncrease)
 
   TestListener listener(bus);
 
-  ASSERT_EQ(bus.Count<TestEvent>(), 1);
+  ASSERT_EQ(bus.Count<TestEvent>(), 1u);
 }
 
 TEST(Listener_Tests, Constructor_MultipleListeners_SubscribeCountIncrease)
@@ -66,7 +66,7 @@ TEST(Listener_Tests, Constructor_MultipleListeners_SubscribeCountIncrease)
   TestListener listener2(bus);
   TestListener listener3(bus);
 
-  ASSERT_EQ(bus.Count<TestEvent>(), 3);
+  ASSERT_EQ(bus.Count<TestEvent>(), 3u);
 }
 
 TEST(Listener_Tests, Destructor_SingleListener_SubscribeCountDecrease)
@@ -75,10 +75,10 @@ TEST(Listener_Tests, Destructor_SingleListener_SubscribeCountDecrease)
 
   {
     TestListener listener(bus);
-    ASSERT_EQ(bus.Count<TestEvent>(), 1);
+    ASSERT_EQ(bus.Count<TestEvent>(), 1u);
   }
 
-  ASSERT_EQ(bus.Count<TestEvent>(), 0);
+  ASSERT_EQ(bus.Count<TestEvent>(), 0u);
 }
 
 TEST(Listener_Tests, Destructor_MultipleListeners_SubscribeCountDecrease)
@@ -91,14 +91,14 @@ TEST(Listener_Tests, Destructor_MultipleListeners_SubscribeCountDecrease)
       TestListener listener2(bus);
       {
         TestListener listener3(bus);
-        ASSERT_EQ(bus.Count<TestEvent>(), 3);
+        ASSERT_EQ(bus.Count<TestEvent>(), 3u);
       }
-      ASSERT_EQ(bus.Count<TestEvent>(), 2);
+      ASSERT_EQ(bus.Count<TestEvent>(), 2u);
     }
-    ASSERT_EQ(bus.Count<TestEvent>(), 1);
+    ASSERT_EQ(bus.Count<TestEvent>(), 1u);
   }
 
-  ASSERT_EQ(bus.Count<TestEvent>(), 0);
+  ASSERT_EQ(bus.Count<TestEvent>(), 0u);
 }
 
 TEST(Listener_Tests, Listen_SinglePublish_ReceivedEvent)
@@ -111,7 +111,7 @@ TEST(Listener_Tests, Listen_SinglePublish_ReceivedEvent)
 
   bus.Publish(event);
 
-  ASSERT_EQ(listener.sum, 10);
+  ASSERT_EQ(listener.sum, 10u);
 }
 
 TEST(Listener_Tests, Listen_MultiPublish_ReceivedEvent)
@@ -126,7 +126,7 @@ TEST(Listener_Tests, Listen_MultiPublish_ReceivedEvent)
   bus.Publish(event);
   bus.Publish(event);
 
-  ASSERT_EQ(listener.sum, 30);
+  ASSERT_EQ(listener.sum, 30u);
 }
 
 } // namespace genebits::engine::tests

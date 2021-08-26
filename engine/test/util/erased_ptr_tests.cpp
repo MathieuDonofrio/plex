@@ -64,14 +64,14 @@ TEST(ErasedPtr_Tests, Cast_Trivial_CorrectValue)
 {
   ErasedPtr ptr(new size_t(10));
 
-  ASSERT_EQ(*ptr.Cast<size_t>(), 10);
+  ASSERT_EQ(*ptr.Cast<size_t>(), 10u);
 }
 
 TEST(ErasedPtr_Tests, ConstCast_Trivial_CorrectValue)
 {
   const ErasedPtr ptr(new size_t(10));
 
-  ASSERT_EQ(*ptr.Cast<size_t>(), 10);
+  ASSERT_EQ(*ptr.Cast<size_t>(), 10u);
 }
 
 TEST(ErasedPtr_Tests, MoveConstructor_Trivial_CorrectValue)
@@ -82,7 +82,7 @@ TEST(ErasedPtr_Tests, MoveConstructor_Trivial_CorrectValue)
 
   ASSERT_TRUE(moved);
   ASSERT_FALSE(original);
-  ASSERT_EQ(*moved.Cast<size_t>(), 10);
+  ASSERT_EQ(*moved.Cast<size_t>(), 10u);
 }
 
 TEST(ErasedPtr_Tests, MoveAssignment_Trivial_CorrectValue)
@@ -93,28 +93,28 @@ TEST(ErasedPtr_Tests, MoveAssignment_Trivial_CorrectValue)
 
   ASSERT_TRUE(moved);
   ASSERT_FALSE(original);
-  ASSERT_EQ(*moved.Cast<size_t>(), 10);
+  ASSERT_EQ(*moved.Cast<size_t>(), 10u);
 }
 
 TEST(ErasedPtr_Tests, Cast_VirtualTypeExactCast_CorrectCast)
 {
   ErasedPtr ptr(new TestType());
 
-  ASSERT_EQ(ptr.Cast<TestType>()->Test2(), 20);
+  ASSERT_EQ(ptr.Cast<TestType>()->Test2(), 20u);
 }
 
 TEST(ErasedPtr_Tests, DynamicCast_VirtualTypeBaseCast_CorrectCast)
 {
   ErasedPtr<TestBase> ptr(new TestType());
 
-  ASSERT_EQ(ptr.DynamicCast<Test2Base>()->Test2(), 20);
+  ASSERT_EQ(ptr.DynamicCast<Test2Base>()->Test2(), 20u);
 }
 
 TEST(ErasedPtr_Tests, ConstDynamicCast_VirtualTypeBaseCast_CorrectCast)
 {
   const ErasedPtr<TestBase> ptr(new TestType());
 
-  ASSERT_EQ(ptr.DynamicCast<Test2Base>()->Test2(), 20);
+  ASSERT_EQ(ptr.DynamicCast<Test2Base>()->Test2(), 20u);
 }
 
 } // namespace genebits::engine::tests
