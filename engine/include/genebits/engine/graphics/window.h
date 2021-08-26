@@ -323,9 +323,9 @@ struct ButtonEvent
   ///
   enum class Action : uint32_t
   {
-    Released = 1,
-    Pressed = 2,
-    Repeated = 3
+    Released = 0,
+    Pressed = 1,
+    Repeated = 2
   };
 
   ModifierKeys modifiers;
