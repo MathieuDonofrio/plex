@@ -257,10 +257,87 @@ void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
   }
 }
 
+///
+/// Retrieve the monitor on which the window is overlapping the most.
+///
+/// @param[in] handle glfw window handle of the window to retrieve the monitor of
+///
+/// @return glfw monitor pointer of the monitor on which the window is overlapping the most
+///
+GLFWmonitor* GetWindowMonitor(GLFWwindow* handle)
+{
+  int32_t monitor_count = 0;
+  GLFWmonitor** monitor_ptrs = nullptr;
+  monitor_ptrs = glfwGetMonitors(&monitor_count);
+  GLFW_ASSERT_DEBUG_ONLY;
+
+  std::vector<GLFWmonitor*> monitors { monitor_ptrs, monitor_ptrs + monitor_count };
+
+  struct Rectangle
+  {
+    int32_t x;
+    int32_t y;
+    int32_t width;
+    int32_t height;
+  };
+
+  struct MonitorRectangle : Rectangle
+  {
+    GLFWmonitor* monitor_ptr;
+  };
+
+  std::vector<MonitorRectangle> monitor_rectangles;
+  monitor_rectangles.reserve(monitor_count);
+
+  for (GLFWmonitor* monitor : monitors)
+  {
+    MonitorRectangle monitor_rectangle { .monitor_ptr = monitor };
+
+    glfwGetMonitorPos(monitor, &monitor_rectangle.x, &monitor_rectangle.y);
+    GLFW_ASSERT_DEBUG_ONLY;
+    const GLFWvidmode* video_mode = glfwGetVideoMode(monitor);
+    GLFW_ASSERT_DEBUG_ONLY;
+
+    monitor_rectangle.width = video_mode->width;
+    monitor_rectangle.height = video_mode->height;
+
+    monitor_rectangles.emplace_back(monitor_rectangle);
+  }
+
+  Rectangle window_rectangle;
+  glfwGetWindowPos(handle, &window_rectangle.x, &window_rectangle.y);
+  GLFW_ASSERT_DEBUG_ONLY;
+  glfwGetWindowSize(handle, &window_rectangle.width, &window_rectangle.height);
+  GLFW_ASSERT_DEBUG_ONLY;
+
+  // This function does not measure how much the window is overlapping the monitor but if the center of the window is
+  // inside the monitor. This is much simpler and can be done because of the symmetric nature of the window.
+  // In other words: If the center of the window is inside the monitor then that monitor is the one that contains the
+  // most window area of all the monitors and can be deemed as the window's monitor
+  auto IsWindowInsideMonitor = [window_rectangle](const MonitorRectangle monitor_rectangle) -> bool
+  {
+    int32_t window_center_pos_x = window_rectangle.x + window_rectangle.width / 2;
+    int32_t window_center_pos_y = window_rectangle.y + window_rectangle.height / 2;
+
+    bool is_inside_x =
+      window_center_pos_x >= monitor_rectangle.x && window_center_pos_x < monitor_rectangle.x + monitor_rectangle.width;
+    bool is_inside_y = window_center_pos_y >= monitor_rectangle.y
+                       && window_center_pos_y < monitor_rectangle.y + monitor_rectangle.height;
+    return is_inside_x && is_inside_y;
+  };
+
+  for (const MonitorRectangle& monitor_rectangle : monitor_rectangles)
+  {
+    if (IsWindowInsideMonitor(monitor_rectangle)) { return monitor_rectangle.monitor_ptr; }
+  }
+
+  ASSERT(false, "The window should be inside one of the monitor, but it is not");
+  return nullptr;
+}
+
 uint32_t GLFWWindow::GetMonitorWidth() const
 {
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-  GLFW_ASSERT_DEBUG_ONLY;
+  GLFWmonitor* monitor = GetWindowMonitor(handle_);
 
   const uint32_t width = glfwGetVideoMode(monitor)->width;
   GLFW_ASSERT_DEBUG_ONLY;
@@ -270,8 +347,7 @@ uint32_t GLFWWindow::GetMonitorWidth() const
 
 uint32_t GLFWWindow::GetMonitorHeight() const
 {
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-  GLFW_ASSERT_DEBUG_ONLY;
+  GLFWmonitor* monitor = GetWindowMonitor(handle_);
 
   const uint32_t height = glfwGetVideoMode(monitor)->height;
   GLFW_ASSERT_DEBUG_ONLY;

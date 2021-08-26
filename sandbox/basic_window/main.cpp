@@ -47,6 +47,12 @@ struct TestWindowListener : public Listener<TestWindowListener,
   {
     std::cout << "keyboard event: " << KeyCodeToString(event.keycode) << ", " << static_cast<uint32_t>(event.modifiers)
               << ", " << static_cast<uint32_t>(event.action) << std::endl;
+
+    if (event.keycode == genebits::engine::W && event.action == genebits::engine::ButtonEvent::Action::Pressed)
+    {
+      std::cout << "Window monitor query: " << event.window->GetMonitorWidth() << "x"
+                << event.window->GetMonitorHeight() << std::endl;
+    }
   }
 
   void listen(const WindowCursorMoveEvent& event)
