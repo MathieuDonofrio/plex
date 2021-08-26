@@ -6,8 +6,6 @@ namespace genebits::engine
 {
 void PrintPrefix(const LogLevel level)
 {
-  PrintColor(TColor::White);
-
   Print('[');
 
   switch (level)
@@ -36,13 +34,12 @@ void PrintPrefix(const LogLevel level)
     Print(std::string_view { "ERROR" });
     break;
   }
+  default: Print(std::string_view { "?????" }); break;
   }
 
-  PrintColor(TColor::White);
+  PrintColorReset();
 
   Print(std::string_view { "] " });
-
-  PrintColorReset();
 }
 
 void PrintStackTrace(const StackTrace stack_trace)

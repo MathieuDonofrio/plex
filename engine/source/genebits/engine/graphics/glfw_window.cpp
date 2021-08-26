@@ -21,7 +21,9 @@ inline void AssertLastGlfwCall()
 
   if (error_description) LOG_ERROR("GLFW Error: Code={} Description={}", error_code, error_description);
 
-  (void)(error_code); // Suppress warnings for non-debug builds
+  ASSERT(error_code == GLFW_NO_ERROR, "GLFW error occurred");
+
+  (void)(error_code); // Suppress warnings for non debug builds
 }
 
 ///

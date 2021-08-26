@@ -197,7 +197,7 @@ consteval uint64_t CompileTimeSeed(const std::source_location location = std::so
   // Inspiration from Jason Turner video: https://www.youtube.com/watch?v=rpn_5Mrrxf8
   uint64_t time_seed = 0;
 
-  for (const auto c : __TIME__)
+  for (const char c : __TIME__)
   {
     time_seed <<= 8u;
     time_seed |= static_cast<uint8_t>(c);
@@ -206,11 +206,14 @@ consteval uint64_t CompileTimeSeed(const std::source_location location = std::so
   // Location seed changes when called in a different location
   uint64_t location_seed = location.column() + (location.line() << 6) + (location.line() >> 2);
 
+  const char* file_name = location.file_name();
+
   size_t rot = 0;
 
-  for (const auto c : location.file_name())
+  while (*file_name != '\0')
   {
-    location_seed ^= static_cast<uint8_t>(c) << ((rot++ << 3) & 31u);
+    location_seed ^= static_cast<uint8_t>(*file_name) << ((rot++ << 3) & 31u);
+    ++file_name;
   }
 
   return time_seed ^ location_seed;

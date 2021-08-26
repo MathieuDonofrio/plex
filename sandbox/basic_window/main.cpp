@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "genebits/engine/debug/logging.h"
 #include "genebits/engine/events/listener.h"
 #include "genebits/engine/graphics/window.h"
 
