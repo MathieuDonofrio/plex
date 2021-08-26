@@ -1,4 +1,4 @@
-#include <genebits/engine/util/enum_flag.h>
+#include <genebits/engine/util/enumerator.h>
 
 #include <concepts>
 

@@ -46,13 +46,19 @@ struct TestWindowListener : public Listener<TestWindowListener,
 
   void Listen(const WindowKeyboardEvent& event)
   {
-    std::cout << "keyboard event: " << event.KeyCodeToString() << ", " << static_cast<uint32_t>(event.modifiers) << ", "
-              << static_cast<uint32_t>(event.action) << std::endl;
+    std::cout << "keyboard event: " << KeyCodeToString(event.keycode) << ", " << static_cast<uint32_t>(event.modifiers)
+              << ", " << static_cast<uint32_t>(event.action) << std::endl;
+
+    if (event.keycode == genebits::engine::W && event.action == genebits::engine::ButtonEvent::Action::Pressed)
+    {
+      std::cout << "Window monitor query: " << event.window->GetMonitorWidth() << "x"
+                << event.window->GetMonitorHeight() << std::endl;
+    }
   }
 
   void Listen(const WindowCursorMoveEvent& event)
   {
-    std::cout << "Cursor move event: x=" << event.x_pos << " y=" << event.y_pos << std::endl;
+    std::cout << "Cursor move event: x=" << event.pos_x << " y=" << event.pos_y << std::endl;
   }
 
   void Listen(const WindowCursorEnterEvent& event)

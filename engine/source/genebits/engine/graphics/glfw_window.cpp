@@ -228,12 +228,11 @@ void GLFWWindow::RequestAttention()
 
 void GLFWWindow::Close()
 {
-  // TODO Matt: Brainstorm ideas for closing protocol
   glfwSetWindowShouldClose(handle_, 1);
 
-  GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
-
   GLFW_ASSERT_DEBUG_ONLY;
+
+  GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
 }
 
 bool GLFWWindow::IsClosing() const
@@ -246,9 +245,6 @@ bool GLFWWindow::IsClosing() const
 
 void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 {
-  // TODO Matt: Simplify
-
-  // TODO add LOD icons (small, med, big)
   if (pixels != nullptr)
   {
     GLFWimage icon { static_cast<int>(width), static_cast<int>(height), pixels };
@@ -262,10 +258,87 @@ void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
   }
 }
 
+///
+/// Retrieve the monitor on which the window is overlapping the most.
+///
+/// @param[in] handle glfw window handle of the window to retrieve the monitor of
+///
+/// @return glfw monitor pointer of the monitor on which the window is overlapping the most
+///
+GLFWmonitor* GetWindowMonitor(GLFWwindow* handle)
+{
+  int32_t monitor_count = 0;
+  GLFWmonitor** monitor_ptrs = nullptr;
+  monitor_ptrs = glfwGetMonitors(&monitor_count);
+  GLFW_ASSERT_DEBUG_ONLY;
+
+  std::vector<GLFWmonitor*> monitors { monitor_ptrs, monitor_ptrs + monitor_count };
+
+  struct Rectangle
+  {
+    int32_t x;
+    int32_t y;
+    int32_t width;
+    int32_t height;
+  };
+
+  struct MonitorRectangle : Rectangle
+  {
+    GLFWmonitor* monitor_ptr;
+  };
+
+  std::vector<MonitorRectangle> monitor_rectangles;
+  monitor_rectangles.reserve(monitor_count);
+
+  for (GLFWmonitor* monitor : monitors)
+  {
+    MonitorRectangle monitor_rectangle { .monitor_ptr = monitor };
+
+    glfwGetMonitorPos(monitor, &monitor_rectangle.x, &monitor_rectangle.y);
+    GLFW_ASSERT_DEBUG_ONLY;
+    const GLFWvidmode* video_mode = glfwGetVideoMode(monitor);
+    GLFW_ASSERT_DEBUG_ONLY;
+
+    monitor_rectangle.width = video_mode->width;
+    monitor_rectangle.height = video_mode->height;
+
+    monitor_rectangles.emplace_back(monitor_rectangle);
+  }
+
+  Rectangle window_rectangle;
+  glfwGetWindowPos(handle, &window_rectangle.x, &window_rectangle.y);
+  GLFW_ASSERT_DEBUG_ONLY;
+  glfwGetWindowSize(handle, &window_rectangle.width, &window_rectangle.height);
+  GLFW_ASSERT_DEBUG_ONLY;
+
+  // This function does not measure how much the window is overlapping the monitor but if the center of the window is
+  // inside the monitor. This is much simpler and can be done because of the symmetric nature of the window.
+  // In other words: If the center of the window is inside the monitor then that monitor is the one that contains the
+  // most window area of all the monitors and can be deemed as the window's monitor
+  auto IsWindowInsideMonitor = [window_rectangle](const MonitorRectangle monitor_rectangle) -> bool
+  {
+    int32_t window_center_pos_x = window_rectangle.x + window_rectangle.width / 2;
+    int32_t window_center_pos_y = window_rectangle.y + window_rectangle.height / 2;
+
+    bool is_inside_x =
+      window_center_pos_x >= monitor_rectangle.x && window_center_pos_x < monitor_rectangle.x + monitor_rectangle.width;
+    bool is_inside_y = window_center_pos_y >= monitor_rectangle.y
+                       && window_center_pos_y < monitor_rectangle.y + monitor_rectangle.height;
+    return is_inside_x && is_inside_y;
+  };
+
+  for (const MonitorRectangle& monitor_rectangle : monitor_rectangles)
+  {
+    if (IsWindowInsideMonitor(monitor_rectangle)) { return monitor_rectangle.monitor_ptr; }
+  }
+
+  ASSERT(false, "The window should be inside one of the monitor, but it is not");
+  return nullptr;
+}
+
 uint32_t GLFWWindow::GetMonitorWidth() const
 {
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-  GLFW_ASSERT_DEBUG_ONLY;
+  GLFWmonitor* monitor = GetWindowMonitor(handle_);
 
   const uint32_t width = glfwGetVideoMode(monitor)->width;
   GLFW_ASSERT_DEBUG_ONLY;
@@ -275,8 +348,7 @@ uint32_t GLFWWindow::GetMonitorWidth() const
 
 uint32_t GLFWWindow::GetMonitorHeight() const
 {
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-  GLFW_ASSERT_DEBUG_ONLY;
+  GLFWmonitor* monitor = GetWindowMonitor(handle_);
 
   const uint32_t height = glfwGetVideoMode(monitor)->height;
   GLFW_ASSERT_DEBUG_ONLY;
@@ -326,33 +398,30 @@ VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
 {
   VkSurfaceKHR* surface = nullptr;
 
-  //  VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
-  //  GLFW_ASSERT;
-  //
-  //  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
-  //  (void)result; // Suppress warning
+  VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
+  GLFW_ASSERT;
+
+  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
 
   return surface;
 }
 
-VulkanInstanceExtensions GLFWWindow::GetRequiredInstanceExtensions()
+std::vector<const char*> GLFWWindow::GetRequiredInstanceExtensions()
 {
-  VulkanInstanceExtensions extensions { nullptr, 0 };
-  // Not implemented yet
-  //  extensions.extensions = glfwGetRequiredInstanceExtensions(&extensions.count);
-  //  GLFW_ASSERT;
+  uint32_t glfw_extension_count = 0;
+  const char** glfw_extension_string_ptrs;
+  glfw_extension_string_ptrs = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+  GLFW_ASSERT;
 
-  return extensions;
+  return { glfw_extension_string_ptrs, glfw_extension_string_ptrs + glfw_extension_count };
 }
 
 bool GLFWWindow::GetPhysicalDevicePresentationSupport(
   VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index)
 {
-  // Not implemented yet
-  // bool supported = glfwGetPhysicalDevicePresentationSupport(instance, physical_device, queue_family_index);
+  bool supported = glfwGetPhysicalDevicePresentationSupport(instance, physical_device, queue_family_index);
   GLFW_ASSERT;
 
-  bool supported = false;
   return supported;
 }
 
@@ -454,7 +523,7 @@ void GLFWWindow::GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t s
   event.keycode = static_cast<KeyCode>(key);
   event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
   event.scancode = scancode;
-  event.action = static_cast<ButtonEvent::ButtonAction>(action);
+  event.action = static_cast<ButtonEvent::Action>(action);
 
   GetEnvironment().GetEventBus().Publish(event);
 }
@@ -465,8 +534,8 @@ void GLFWWindow::GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, do
 
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.x_pos = static_cast<uint32_t>(x_pos);
-  event.y_pos = static_cast<uint32_t>(y_pos);
+  event.pos_x = static_cast<int32_t>(x_pos);
+  event.pos_y = static_cast<int32_t>(y_pos);
 
   GetEnvironment().GetEventBus().Publish(event);
 }
@@ -489,7 +558,7 @@ void GLFWWindow::GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button
   event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
   event.button = static_cast<WindowMouseButtonEvent::CursorButton>(button);
-  event.action = static_cast<ButtonEvent::ButtonAction>(action);
+  event.action = static_cast<ButtonEvent::Action>(action);
   event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
 
   GetEnvironment().GetEventBus().Publish(event);

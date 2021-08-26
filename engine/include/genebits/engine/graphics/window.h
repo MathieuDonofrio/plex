@@ -4,11 +4,14 @@
 #include <string>
 
 #include "genebits/engine/graphics/key_codes.h"
-#include "genebits/engine/util/enum_flag.h"
+#include "genebits/engine/util/enumerator.h"
 
 namespace genebits::engine
 {
 
+///
+/// Enum flags used to specify features to be enabled or disabled during the creation of the window
+///
 enum class WindowCreationHints : uint64_t
 {
   None = 0,
@@ -29,7 +32,8 @@ enum class WindowCreationHints : uint64_t
 DEFINE_ENUM_FLAG_OPERATORS(WindowCreationHints)
 
 ///
-/// Window interface.
+/// Window interface. Specifies the methods to be implemented for a fully functional window implementation.
+/// User input handling, window manipulation and creation are the principal features of a fully fledged window.
 ///
 class Window
 {
@@ -59,24 +63,34 @@ public:
   virtual void PollEvents() = 0;
 
   ///
-  /// Same as PollEvents() but waits for events to occur by making the thread sleep.
+  /// Same as PollEvents() but waits for events to occur by making the thread sleep indefinitely.
+  /// Events like user inputs (example: focus, minimise, close, maximise, cursor movements...) will wake the thread and
+  /// unblock this method.
+  ///
+  /// @warning This will block the thread indefinitely if no events are generated
   ///
   virtual void WaitEvents() = 0;
 
   ///
-  /// Same as PollEvents() but waits for events to occur by making the thread sleep.
+  /// Same as PollEvents() but waits for events to occur by making the thread sleep until a specified amount of time has
+  /// elapsed.
+  /// Events like user inputs (example: focus, minimise, close, maximise, cursor movements...) will wake the thread and
+  /// unblock this method.
   ///
   /// @param[in] timeout Maximum time to wait in seconds.
+  ///
+  /// @note Safer to use than WaitEvents() without timeout as this method is guaranteed to unblock after the timeout if
+  /// no events occurred
   ///
   virtual void WaitEvents(double timeout) = 0;
 
   ///
-  /// Bring the window in focus.
+  /// Bring the window in front of all other windows present on the desktop.
   ///
   virtual void Focus() = 0;
 
   ///
-  /// Maximise the size of the window according to its maximum size or the entire
+  /// Maximize the size of the window according to its maximum size or the entire
   /// screen if there is no limits.
   ///
   virtual void Maximize() = 0;
@@ -93,7 +107,11 @@ public:
   virtual void Restore() = 0;
 
   ///
-  /// Request the attention of the user in an non-interrupting way.
+  /// Request the attention of the user in an non-interrupting way by signaling (visually and/or audibly) the user that
+  /// the window needs to be looked upon.
+  ///
+  /// @note The way in which attention is requested is OS dependant, which means that the behavior can differ or that no
+  /// mechanism is in place.
   ///
   virtual void RequestAttention() = 0;
 
@@ -303,19 +321,19 @@ struct ButtonEvent
   ///
   /// Enum depicting the action a key made
   ///
-  enum class ButtonAction : uint32_t
+  enum class Action : uint32_t
   {
-    Released = 1,
-    Pressed = 2,
-    Repeated = 3
+    Released = 0,
+    Pressed = 1,
+    Repeated = 2
   };
 
-  DEFINE_MEMBER_ENUM_FLAG_OPERATORS(ModifierKeys);
-  DEFINE_MEMBER_ENUM_OPERATORS(ButtonAction);
-
   ModifierKeys modifiers;
-  ButtonAction action;
+  Action action;
 };
+
+DEFINE_ENUM_FLAG_OPERATORS(ButtonEvent::ModifierKeys);
+DEFINE_ENUM_OPERATORS(ButtonEvent::Action);
 
 ///
 /// Window keyboard event.
@@ -326,8 +344,6 @@ struct WindowKeyboardEvent : public WindowEvent, public ButtonEvent
 {
   KeyCode keycode;
   uint32_t scancode;
-
-  [[nodiscard]] std::string KeyCodeToString() const;
 };
 
 ///
@@ -337,8 +353,8 @@ struct WindowKeyboardEvent : public WindowEvent, public ButtonEvent
 ///
 struct WindowCursorMoveEvent : public WindowEvent
 {
-  uint32_t x_pos;
-  uint32_t y_pos;
+  int32_t pos_x;
+  int32_t pos_y;
 };
 
 ///
@@ -357,10 +373,10 @@ struct WindowCursorEnterEvent : public WindowEvent
     Entered = 1,
   };
 
-  DEFINE_MEMBER_ENUM_OPERATORS(CursorHoverState)
-
   CursorHoverState cursor_hover_state;
 };
+
+DEFINE_ENUM_OPERATORS(WindowCursorEnterEvent::CursorHoverState)
 
 ///
 /// Window mouse button event.
@@ -380,9 +396,9 @@ struct WindowMouseButtonEvent : public WindowEvent, public ButtonEvent
   };
 
   CursorButton button;
-
-  DEFINE_MEMBER_ENUM_OPERATORS(CursorButton)
 };
+
+DEFINE_ENUM_OPERATORS(WindowMouseButtonEvent::CursorButton)
 
 ///
 /// Window mouse scroll event.
@@ -399,10 +415,10 @@ struct WindowMouseScrollEvent : public WindowEvent
 ///
 /// Factory method for creating windows.
 ///
-/// @param title Title of the window.
-/// @param width Width of the window.
-/// @param height Height of the window.
-/// @param hints Window creation hints.
+/// @param[in] title Title of the window.
+/// @param[in] width Width of the window.
+/// @param[in] height Height of the window.
+/// @param[in] hints Window creation hints.
 ///
 /// @return Window instance pointer.
 ///

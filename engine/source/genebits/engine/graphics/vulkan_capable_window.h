@@ -1,18 +1,12 @@
-#ifndef GENEBITS_ENGINE_GRAPHICS_VULKANCAPABLEWINDOW_H
-#define GENEBITS_ENGINE_GRAPHICS_VULKANCAPABLEWINDOW_H
+#ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_CAPABLE_WINDOW_H
+#define GENEBITS_ENGINE_GRAPHICS_VULKAN_CAPABLE_WINDOW_H
 
 #include <vulkan/vulkan_core.h>
 
+#include <vector>
+
 namespace genebits::engine
 {
-///
-/// Structure for holding the vulkan instance extension names.
-///
-struct VulkanInstanceExtensions
-{
-  const char** extensions;
-  uint32_t count;
-};
 
 ///
 /// Interface for windows that are vulkan capable.
@@ -37,7 +31,7 @@ public:
   ///
   /// @return Vulkan instance extensions required for the window.
   ///
-  virtual VulkanInstanceExtensions GetRequiredInstanceExtensions() = 0;
+  virtual std::vector<const char*> GetRequiredInstanceExtensions() = 0;
 
   ///
   /// Checks whether or not a specific queue family of a physical device supports image

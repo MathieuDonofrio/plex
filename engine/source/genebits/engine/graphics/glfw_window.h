@@ -1,12 +1,12 @@
-#ifndef GENEBITS_ENGINE_GRAPHICS_GLFWWINDOW_H
-#define GENEBITS_ENGINE_GRAPHICS_GLFWWINDOW_H
+#ifndef GENEBITS_ENGINE_GRAPHICS_GLFW_WINDOW_H
+#define GENEBITS_ENGINE_GRAPHICS_GLFW_WINDOW_H
 
 #include <cstdint>
 #include <string>
 
 #include "genebits/engine/graphics/vulkan_capable_window.h"
 #include "genebits/engine/graphics/window.h"
-#include "genebits/engine/util/enum_flag.h"
+#include "genebits/engine/util/enumerator.h"
 
 // Forward declare
 class GLFWwindow; // from glfw
@@ -216,7 +216,7 @@ public:
   ///
   /// @return Vulkan instance extensions required for the window.
   ///
-  VulkanInstanceExtensions GetRequiredInstanceExtensions() override;
+  std::vector<const char*> GetRequiredInstanceExtensions() override;
 
   ///
   /// Checks whether or not a specific queue family of a physical device supports image
