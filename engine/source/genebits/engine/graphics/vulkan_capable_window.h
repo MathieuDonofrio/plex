@@ -1,13 +1,12 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_CAPABLE_WINDOW_H
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_CAPABLE_WINDOW_H
 
-#include <vulkan/vulkan_core.h>
-
 #include <vector>
+
+#include <vulkan/vulkan_core.h>
 
 namespace genebits::engine
 {
-
 ///
 /// Interface for windows that are vulkan capable.
 ///

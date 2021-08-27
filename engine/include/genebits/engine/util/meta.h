@@ -131,7 +131,7 @@ public:
   ///
   /// @return size_t The unique id for the type and sequence.
   ///
-  static size_t UniqueId(size_t sequence_index = 0)
+  static size_t UniqueId(const size_t sequence_index = 0)
   {
     static const size_t value = engine::UniqueId(FullName(), sequence_index);
 

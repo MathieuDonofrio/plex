@@ -8,8 +8,11 @@
 #include "genebits/engine/graphics/window.h"
 #include "genebits/engine/util/enumerator.h"
 
+namespace
+{
 // Forward declare
 class GLFWwindow; // from glfw
+} // namespace
 
 namespace genebits::engine
 {
