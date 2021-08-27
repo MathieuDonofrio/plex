@@ -70,29 +70,29 @@ TEST(Meta_Tests, UniqueId_DifferentTypeStruct_NotEqual)
 
 TEST(Meta_Tests, UniqueId_SameTypeDifferentTags_NotEqual)
 {
-  ASSERT_EQ(Meta<TestType<0>>::UniqueId(1), Meta<TestType<0>>::UniqueId(2));
+  ASSERT_EQ(Meta<TestType<0>>::UniqueId<1>(), Meta<TestType<0>>::UniqueId<2>());
 }
 
 TEST(Meta_Tests, UniqueId_MultipleTypesSameTag_Increment)
 {
-  ASSERT_EQ(Meta<TestType<11>>::UniqueId(10), 0);
-  ASSERT_EQ(Meta<TestType<12>>::UniqueId(10), 1);
-  ASSERT_EQ(Meta<TestType<13>>::UniqueId(10), 2);
-  ASSERT_EQ(Meta<TestType<14>>::UniqueId(10), 3);
-  ASSERT_EQ(Meta<TestType<15>>::UniqueId(10), 4);
-  ASSERT_EQ(Meta<TestType<16>>::UniqueId(10), 5);
-  ASSERT_EQ(Meta<TestType<17>>::UniqueId(10), 6);
-  ASSERT_EQ(Meta<TestType<18>>::UniqueId(10), 7);
-  ASSERT_EQ(Meta<TestType<19>>::UniqueId(10), 8);
+  ASSERT_EQ(Meta<TestType<11>>::UniqueId<10>(), 0);
+  ASSERT_EQ(Meta<TestType<12>>::UniqueId<10>(), 1);
+  ASSERT_EQ(Meta<TestType<13>>::UniqueId<10>(), 2);
+  ASSERT_EQ(Meta<TestType<14>>::UniqueId<10>(), 3);
+  ASSERT_EQ(Meta<TestType<15>>::UniqueId<10>(), 4);
+  ASSERT_EQ(Meta<TestType<16>>::UniqueId<10>(), 5);
+  ASSERT_EQ(Meta<TestType<17>>::UniqueId<10>(), 6);
+  ASSERT_EQ(Meta<TestType<18>>::UniqueId<10>(), 7);
+  ASSERT_EQ(Meta<TestType<19>>::UniqueId<10>(), 8);
 }
 
 TEST(Meta_Tests, UniqueId_MultipleTypesTwoTags_Increment)
 {
-  ASSERT_EQ(Meta<TestType<21>>::UniqueId(20), 0);
-  ASSERT_EQ(Meta<TestType<22>>::UniqueId(20), 1);
+  ASSERT_EQ(Meta<TestType<21>>::UniqueId<20>(), 0);
+  ASSERT_EQ(Meta<TestType<22>>::UniqueId<20>(), 1);
 
-  ASSERT_EQ(Meta<TestType<31>>::UniqueId(30), 0);
-  ASSERT_EQ(Meta<TestType<32>>::UniqueId(30), 1);
+  ASSERT_EQ(Meta<TestType<31>>::UniqueId<30>(), 0);
+  ASSERT_EQ(Meta<TestType<32>>::UniqueId<30>(), 1);
 }
 
 } // namespace genebits::engine::tests

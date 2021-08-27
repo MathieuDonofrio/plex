@@ -127,13 +127,14 @@ public:
   /// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
   /// distributed in a first come first serve fashion.
   ///
-  /// @tparam sequence_index A index used as a tag use a unique sequence.
+  /// @tparam SequenceIndex A index used as a tag use a unique sequence.
   ///
   /// @return size_t The unique id for the type and sequence.
   ///
-  static size_t UniqueId(const size_t sequence_index = 0)
+  template<size_t SequenceIndex = 0>
+  static size_t UniqueId()
   {
-    static const size_t value = engine::UniqueId(FullName(), sequence_index);
+    static const size_t value = engine::UniqueId(FullName(), SequenceIndex);
 
     return value;
   }
