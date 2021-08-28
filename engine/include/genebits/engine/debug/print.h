@@ -34,14 +34,14 @@ enum class TColor
 ///
 /// Prints the string view to the console output (stdout).
 ///
-/// @param[in] string The string view to print.
+/// @param[in] string The string to print.
 ///
 void Print(std::string_view string);
 
 ///
 /// Prints the string to the console output (stdout).
 ///
-/// @param[in] string The string view to print.
+/// @param[in] string The string to print.
 ///
 void Print(const std::string& string);
 
@@ -53,14 +53,14 @@ void Print(const std::string& string);
 void Print(char character);
 
 ///
-/// Prints/Sets the color to the console output (stdout).
+/// Prints the color code to the console output (stdout) to set the color.
 ///
 /// @param[in] color The color to print/set.
 ///
 void PrintColor(TColor color);
 
 ///
-/// Prints/Sets the default color to the console output (stdout) to reset the color..
+/// Prints the default color code to the console output (stdout) to reset the color.
 ///
 void PrintColorReset();
 
