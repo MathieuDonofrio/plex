@@ -13,7 +13,7 @@ public:
   {
     const ViewId id = GetViewId<Components...>();
 
-    if (!views[id].initialized)
+    if (id >= views.Size() || !views[id].initialized)
     {
       std::scoped_lock<std::mutex> lock(mutex);
 
@@ -29,7 +29,7 @@ public:
   {
     const ArchetypeId id = GetArchetypeId<Components...>();
 
-    if (!archetypes[id].initialized)
+    if (id >= archetypes.Size() || !archetypes[id].initialized)
     {
       std::scoped_lock<std::mutex> lock(mutex);
 
