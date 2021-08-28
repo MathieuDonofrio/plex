@@ -128,6 +128,8 @@ GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height
   GLFW_ASSERT;
   glfwSetScrollCallback(handle_, GLFWMouseScrollCallback);
   GLFW_ASSERT;
+  glfwSetFramebufferSizeCallback(handle_, GLFWFramebufferResizeCallback);
+  GLFW_ASSERT;
 }
 
 GLFWWindow::~GLFWWindow()
@@ -571,6 +573,19 @@ void GLFWWindow::GLFWMouseScrollCallback(GLFWWindow::GLFWWindowHandle handle, do
   GLFW_ASSERT_DEBUG_ONLY;
 
   event.vertical_offset = static_cast<uint32_t>(y_offset);
+
+  GetEnvironment().GetEventBus().Publish(event);
+}
+
+void GLFWWindow::GLFWFramebufferResizeCallback(GLFWWindowHandle handle, int32_t new_width, int32_t new_height)
+{
+  WindowFramebufferResizeEvent event;
+
+  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  GLFW_ASSERT_DEBUG_ONLY;
+
+  event.width = static_cast<uint32_t>(new_width);
+  event.height = static_cast<uint32_t>(new_height);
 
   GetEnvironment().GetEventBus().Publish(event);
 }

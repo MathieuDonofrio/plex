@@ -16,7 +16,8 @@ struct TestWindowListener : public Listener<TestWindowListener,
                               WindowCursorEnterEvent,
                               WindowCursorMoveEvent,
                               WindowMouseButtonEvent,
-                              WindowMouseScrollEvent>
+                              WindowMouseScrollEvent,
+                              WindowFramebufferResizeEvent>
 {
   void Listen(const WindowCloseEvent&)
   {
@@ -76,6 +77,11 @@ struct TestWindowListener : public Listener<TestWindowListener,
   void Listen(const WindowMouseScrollEvent& event)
   {
     std::cout << "Mouse scroll event: offset: " << event.vertical_offset << std::endl;
+  }
+
+  void listen(const WindowFramebufferResizeEvent& event)
+  {
+    std::cout << "Window framebuffer resize event: " << event.width << "x" << event.height << std::endl;
   }
 };
 
