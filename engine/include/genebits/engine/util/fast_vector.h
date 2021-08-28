@@ -342,8 +342,13 @@ public:
   ///
   /// @param[in] other Vector to copy from.
   ///
+  /// @return Reference to this vector.
+  ///
   FastVector& operator=(const FastVector<Type, AllocatorImpl>& other) noexcept
   {
+    // Avoid self-assignment
+    if (other.array_ == array_) return *this;
+
     if (array_)
     {
       DestroyAll();
@@ -360,8 +365,13 @@ public:
   ///
   /// @param[in] other Vector to move into this one.
   ///
+  /// @return Reference to this vector.
+  ///
   constexpr FastVector& operator=(FastVector<Type, AllocatorImpl>&& other) noexcept
   {
+    // Avoid self-move
+    if (other.array_ == array_) return *this;
+
     array_ = other.array_;
     other.array_ = nullptr;
     size_ = other.size_;
@@ -370,6 +380,33 @@ public:
     other.capacity_ = 0;
 
     return *this;
+  }
+
+  ///
+  /// Equality operator.
+  ///
+  /// @param[in] other Vector to compare.
+  ///
+  /// @return True if vectors are equal, false otherwise.
+  ///
+  [[nodiscard]] constexpr bool operator==(const FastVector<Type, AllocatorImpl>& other) const noexcept
+  {
+    if (array_ == other.array_) return true; // Checks for same instance or two empty vectors.
+    if (size_ != other.size_) return false;
+
+    return std::equal(begin(), end(), other.begin());
+  }
+
+  ///
+  /// Inequality operator.
+  ///
+  /// @param[in] other Vector to compare.
+  ///
+  /// @return True if vectors are not equal, false otherwise.
+  ///
+  [[nodiscard]] constexpr bool operator!=(const FastVector<Type, AllocatorImpl>& other) const noexcept
+  {
+    return !(*this == other);
   }
 
 protected:

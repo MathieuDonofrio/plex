@@ -862,6 +862,20 @@ TEST(FastVector_Tests, MoveAssignment_NonTrivial_CorrectValues)
   ASSERT_EQ(moved[1], std::string { "2" });
 }
 
+TEST(FastVector_Tests, MoveAssignment_SelfMove_DoNothing)
+{
+  FastVector<int> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  vector = std::move(vector);
+
+  ASSERT_EQ(vector.Size(), 2);
+  ASSERT_EQ(vector[0], 1);
+  ASSERT_EQ(vector[1], 2);
+}
+
 TEST(FastVector_Tests, CopyConstructor_Trivial_CorrectValues)
 {
   FastVector<double> vector;
@@ -936,6 +950,89 @@ TEST(FastVector_Tests, CopyAssignment_NonTrivial_CorrectValues)
   ASSERT_EQ(vector[1], std::string { "2" });
   ASSERT_EQ(copy[0], std::string { "1" });
   ASSERT_EQ(copy[1], std::string { "2" });
+}
+
+TEST(FastVector_Tests, CopyAssignment_SelfAssignement_DoNothing)
+{
+  FastVector<int> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  vector = vector;
+
+  ASSERT_EQ(vector.Size(), 2);
+  ASSERT_EQ(vector[0], 1);
+  ASSERT_EQ(vector[1], 2);
+}
+
+TEST(FastVector_Tests, Equality_Empty_Equal)
+{
+  FastVector<int> vector1;
+
+  FastVector<int> vector2;
+
+  ASSERT_EQ(vector1, vector2);
+}
+
+TEST(FastVector_Tests, Equality_SelfEquality_Equal)
+{
+  FastVector<int> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  ASSERT_EQ(vector, vector);
+}
+
+TEST(FastVector_Tests, Equality_SameValues_Equal)
+{
+  FastVector<int> vector1;
+
+  vector1.PushBack(1);
+  vector1.PushBack(2);
+  vector1.PushBack(3);
+
+  FastVector<int> vector2;
+
+  vector2.PushBack(1);
+  vector2.PushBack(2);
+  vector2.PushBack(3);
+
+  ASSERT_EQ(vector1, vector2);
+}
+
+TEST(FastVector_Tests, Inequality_DifferentSize_NotEqual)
+{
+  FastVector<int> vector1;
+
+  vector1.PushBack(1);
+  vector1.PushBack(2);
+
+  FastVector<int> vector2;
+
+  vector2.PushBack(1);
+  vector2.PushBack(2);
+  vector2.PushBack(3);
+
+  ASSERT_NE(vector1, vector2);
+}
+
+TEST(FastVector_Tests, Inequality_DifferentValues_NotEqual)
+{
+  FastVector<int> vector1;
+
+  vector1.PushBack(1);
+  vector1.PushBack(4);
+  vector1.PushBack(3);
+
+  FastVector<int> vector2;
+
+  vector2.PushBack(1);
+  vector2.PushBack(2);
+  vector2.PushBack(3);
+
+  ASSERT_NE(vector1, vector2);
 }
 
 } // namespace genebits::engine::tests
