@@ -24,6 +24,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Debate on macro prefixes (ex: GENEBITS_ASSERT vs ASSERT)
 - [ ] Find window closing protocol
 - [ ] Add LOD icons for the window (small, med, big)
+- [ ] Add nested namespace for benchmarks (like tests)
 
 ## Major
 
