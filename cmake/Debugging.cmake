@@ -11,7 +11,7 @@ endif ()
 if (BUILD_DEBUGGING)
     message(STATUS "Building with debugging")
 
-    # MSVC doesn't like _DEBUG on release builds. See PR 4379.
+    # MSVC doesn't like _DEBUG on release builds.
     if (NOT MSVC)
         add_definitions(-D_DEBUG)
     endif ()

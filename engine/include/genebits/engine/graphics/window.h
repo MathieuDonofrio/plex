@@ -246,6 +246,7 @@ struct WindowEvent
 /// Window resize event.
 ///
 /// Published when a window resizes.
+/// Size is in screen coordinate and represents the drawable area
 ///
 struct WindowResizeEvent : public WindowEvent
 {
@@ -408,6 +409,18 @@ DEFINE_ENUM_OPERATORS(WindowMouseButtonEvent::CursorButton)
 struct WindowMouseScrollEvent : public WindowEvent
 {
   int32_t vertical_offset;
+};
+
+///
+/// Window framebuffer resize event.
+///
+/// Published when a window's framebuffer resizes.
+/// Width and height are in pixels
+///
+struct WindowFramebufferResizeEvent : public WindowEvent
+{
+  uint32_t width;
+  uint32_t height;
 };
 
 ///

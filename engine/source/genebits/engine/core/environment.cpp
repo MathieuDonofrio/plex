@@ -18,15 +18,18 @@ using namespace genebits::engine;
 ///
 /// @param[in] signal The crash signal
 ///
-void handler(int signal)
+void CrashSignalHandler(int signal)
 {
+  // We must skip same frames because they give us useless stack frames about signal handling.
+  static constexpr size_t cSkipFrames = 2;
+
   std::cerr << "Error: Signal=" << signal << '\n';
 
-  StackTrace stack_trace = StackBackTrace(18); // 16 (18 - 2)
+  StackTrace stack_trace = StackBackTrace(16 + cSkipFrames);
 
-  if (stack_trace.frames.size() > 2)
+  if (stack_trace.frames.size() > cSkipFrames)
   {
-    for (auto it = stack_trace.frames.begin() + 2; it != stack_trace.frames.end(); ++it)
+    for (auto it = stack_trace.frames.begin() + cSkipFrames; it != stack_trace.frames.end(); ++it)
     {
       std::cerr << "\tat " << it->name << '(' << it->file_name << ':' << it->line << ")\n";
     }
@@ -51,8 +54,8 @@ struct Environment::Pimpl
 Environment::Environment() : pimpl_(new Pimpl())
 {
 #ifndef NDEBUG
-  signal(SIGSEGV, handler); // On segmentation fault
-  signal(SIGABRT_COMPAT, handler); // On abort (assert)
+  signal(SIGSEGV, CrashSignalHandler); // On segmentation fault
+  signal(SIGABRT_COMPAT, CrashSignalHandler); // On abort (assert)
 
   pimpl_->terminal_logger = new TerminalLogger(this->GetEventBus());
 #endif

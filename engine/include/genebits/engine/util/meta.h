@@ -46,8 +46,10 @@ namespace
 /// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
 /// distributed in a first come first serve fashion.
 ///
+/// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
+///
 /// @param[in] full_name The name of the type.
-/// @param[in] sequence_index A index used as a tag use a unique sequence.
+/// @param[in] sequence_index An index used as an identifier to a sequence.
 ///
 /// @return size_t The unique id for the type name and sequence.
 ///
@@ -127,7 +129,9 @@ public:
   /// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
   /// distributed in a first come first serve fashion.
   ///
-  /// @tparam SequenceIndex A index used as a tag use a unique sequence.
+  /// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
+  ///
+  /// @param[in] sequence_index An index used as an identifier to a sequence.
   ///
   /// @return size_t The unique id for the type and sequence.
   ///

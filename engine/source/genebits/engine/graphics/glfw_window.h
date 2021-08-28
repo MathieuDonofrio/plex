@@ -334,6 +334,15 @@ private:
   ///
   static void GLFWMouseScrollCallback(GLFWWindowHandle handle, double, double y_offset);
 
+  ///
+  /// Callback for when the framebuffer of the window is resized.
+  ///
+  /// @param[in] handle GLFW window handle for the event.
+  /// @param[in] new_width The new width of the buffer in pixels.
+  /// @param[in] new_height The new height of the buffer in pixels.
+  ///
+  static void GLFWFramebufferResizeCallback(GLFWWindowHandle handle, int32_t new_width, int32_t new_height);
+
 private:
   GLFWWindowHandle handle_;
 

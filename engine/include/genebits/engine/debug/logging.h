@@ -59,7 +59,7 @@ struct LogEvent
 ///
 /// @return The amount of stack frames to get for the log level.
 ///
-[[nodiscard]] constexpr size_t GetStackFramesAmount(const LogLevel level)
+[[nodiscard]] constexpr size_t GetStackTraceDepth(const LogLevel level)
 {
   if (level == LogLevel::Warn) return 4;
   if (level == LogLevel::Error) return 16;
@@ -73,7 +73,7 @@ struct LogEvent
 /// @param[in] metadata The log metadata.
 /// @param[in] bus The event bus to publish on.
 ///
-inline void PublishLog(std::string&& message, LogMetadata metadata, EventBus& bus = GetEnvironment().GetEventBus())
+inline void PublishLog(std::string&& message, LogMetadata&& metadata, EventBus& bus = GetEnvironment().GetEventBus())
 {
   LogEvent event;
 
@@ -85,10 +85,10 @@ inline void PublishLog(std::string&& message, LogMetadata metadata, EventBus& bu
 
 } // namespace genebits::engine
 
-#define CREATE_LOG_METADATA(level)                                                             \
-  ::genebits::engine::LogMetadata                                                              \
-  {                                                                                            \
-    level, ::genebits::engine::StackBackTrace(GetStackFramesAmount(level)), __FILE__, __LINE__ \
+#define CREATE_LOG_METADATA(level)                                                           \
+  ::genebits::engine::LogMetadata                                                            \
+  {                                                                                          \
+    level, ::genebits::engine::StackBackTrace(GetStackTraceDepth(level)), __FILE__, __LINE__ \
   }
 
 #ifndef NDEBUG
