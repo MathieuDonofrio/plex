@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 #define GENEBITS_ENGINE_UTIL_TYPE_MAP_H
 
-#include "genebits/engine/config/assertion.h"
+#include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/util/fast_vector.h"
 #include "genebits/engine/util/meta.h"
 
@@ -91,7 +91,7 @@ private:
   template<typename Type>
   [[nodiscard]] static size_t Key() noexcept
   {
-    return Meta<Type>::template UniqueId<TypeMap<Value, AllocatorImpl>>();
+    return Meta<Type>::template UniqueId<Meta<TypeMap<Value, AllocatorImpl>>::Hash()>();
   }
 
 private:

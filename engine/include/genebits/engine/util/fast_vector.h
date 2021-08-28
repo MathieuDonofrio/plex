@@ -1,12 +1,12 @@
-#ifndef GENEBITS_ENGINE_UTIL_FASTVECTOR_H
-#define GENEBITS_ENGINE_UTIL_FASTVECTOR_H
+#ifndef GENEBITS_ENGINE_UTIL_FAST_VECTOR_H
+#define GENEBITS_ENGINE_UTIL_FAST_VECTOR_H
 
 #include <iterator>
 #include <memory>
 #include <type_traits>
 #include <utility>
 
-#include "genebits/engine/config/assertion.h"
+#include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/util/allocator.h"
 
 namespace genebits::engine

@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "genebits/engine/debug/logging.h"
 #include "genebits/engine/events/listener.h"
 #include "genebits/engine/graphics/window.h"
 
@@ -18,33 +19,33 @@ struct TestWindowListener : public Listener<TestWindowListener,
                               WindowMouseScrollEvent,
                               WindowFramebufferResizeEvent>
 {
-  void listen(const WindowCloseEvent&)
+  void Listen(const WindowCloseEvent&)
   {
     std::cout << "window close event" << std::endl;
   }
 
-  void listen(const WindowFocusEvent& event)
+  void Listen(const WindowFocusEvent& event)
   {
     std::cout << "window focus event: " << ((event.state == WindowFocusEvent::FocusState::Gained) ? "Gained" : "Lost")
               << std::endl;
   }
 
-  void listen(const WindowMaximizeEvent& event)
+  void Listen(const WindowMaximizeEvent& event)
   {
     std::cout << "window maximise event: " << event.maximized << std::endl;
   }
 
-  void listen(const WindowIconifyEvent& event)
+  void Listen(const WindowIconifyEvent& event)
   {
     std::cout << "window iconify event: " << event.iconified << std::endl;
   }
 
-  void listen(const WindowResizeEvent& event)
+  void Listen(const WindowResizeEvent& event)
   {
     std::cout << "window resize event: " << event.width << ", " << event.height << std::endl;
   }
 
-  void listen(const WindowKeyboardEvent& event)
+  void Listen(const WindowKeyboardEvent& event)
   {
     std::cout << "keyboard event: " << KeyCodeToString(event.keycode) << ", " << static_cast<uint32_t>(event.modifiers)
               << ", " << static_cast<uint32_t>(event.action) << std::endl;
@@ -56,29 +57,29 @@ struct TestWindowListener : public Listener<TestWindowListener,
     }
   }
 
-  void listen(const WindowCursorMoveEvent& event)
+  void Listen(const WindowCursorMoveEvent& event)
   {
     std::cout << "Cursor move event: x=" << event.pos_x << " y=" << event.pos_y << std::endl;
   }
 
-  void listen(const WindowCursorEnterEvent& event)
+  void Listen(const WindowCursorEnterEvent& event)
   {
     std::cout << "Cursor enter/leave event: " << static_cast<uint32_t>(event.cursor_hover_state) << std::endl;
   }
 
-  void listen(const WindowMouseButtonEvent& event)
+  void Listen(const WindowMouseButtonEvent& event)
   {
     std::cout << "Mouse button event: " << static_cast<uint32_t>(event.action) << ", "
               << static_cast<uint32_t>(event.button) << ", Mods: " << static_cast<uint32_t>(event.modifiers)
               << std::endl;
   }
 
-  void listen(const WindowMouseScrollEvent& event)
+  void Listen(const WindowMouseScrollEvent& event)
   {
     std::cout << "Mouse scroll event: offset: " << event.vertical_offset << std::endl;
   }
 
-  void listen(const WindowFramebufferResizeEvent& event)
+  void Listen(const WindowFramebufferResizeEvent& event)
   {
     std::cout << "Window framebuffer resize event: " << event.width << "x" << event.height << std::endl;
   }

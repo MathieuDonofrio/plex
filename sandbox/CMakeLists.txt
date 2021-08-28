@@ -25,3 +25,4 @@ endfunction()
 #
 
 add_sandbox_project(basic_window)
+add_sandbox_project(logging)

@@ -2,8 +2,8 @@
 
 #include <atomic>
 
-#include "genebits/engine/config/assertion.h"
 #include "genebits/engine/core/environment.h"
+#include "genebits/engine/debug/logging.h"
 
 #define GLFW_INCLUDE_NONE // Removes OpenGL
 #include "GLFW/glfw3.h"
@@ -18,11 +18,11 @@ inline void AssertLastGlfwCall()
   const char* error_description;
   const int error_code = glfwGetError(&error_description);
 
-  if (error_description) {}
+  if (error_description) LOG_ERROR("GLFW Error: Code={} Description={}", error_code, error_description);
 
   ASSERT(error_code == GLFW_NO_ERROR, "GLFW error occurred");
 
-  (void)(error_code); // Suppress warnings
+  (void)(error_code); // Suppress warnings for non debug builds
 }
 
 ///

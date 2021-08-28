@@ -1,7 +1,6 @@
 #ifndef GENEBITS_ENGINE_UTIL_META_H
 #define GENEBITS_ENGINE_UTIL_META_H
 
-#include <atomic>
 #include <string_view>
 #include <type_traits>
 
@@ -28,79 +27,33 @@ namespace
 #endif
   }
 
+  // Probing technique:
+  // Get the templated function name of void type and use that to find the start and offset of the type.
+
   namespace probing
   {
-    // Probing technique:
-    // Get the templated function name of void type and use that to find the start and offset of the type.
-
     constexpr std::string_view cProbe = TemplatedFunctionName<void>();
 
     constexpr size_t cStart = cProbe.find("void");
     constexpr size_t cOffset = cProbe.length() - 4;
   } // namespace probing
 
-  ///
-  /// Returns the next index for the list of sequences. Used to be able to have more than once
-  /// sequence to optimize memory usage in certain cases.
-  ///
-  /// An internal counter is incremented every time this method is called.
-  ///
-  /// @note
-  ///     The static variable in the function is a header-only solution for extern. This is
-  ///     guaranteed as long as ODR is not violated (No templates).
-  ///
-  /// @return size_t next index in the sequence
-  ///
-  inline size_t NextSequenceIndex()
-  {
-    static std::atomic_size_t sequence {};
-
-    return sequence.fetch_add(1, std::memory_order_relaxed);
-  }
-
-  ///
-  /// Returns the sequence index for the tag type.
-  ///
-  /// @tparam Tag A type tag used to identify the sequence to use.
-  ///
-  /// @return size_t The sequence index for the tag.
-  ///
-  template<typename Tag>
-  static size_t SequenceIndex()
-  {
-    static const size_t value = NextSequenceIndex();
-
-    return value;
-  }
-
-  ///
-  /// Returns a unique integer identifier at runtime.
-  ///
-  /// The internal counter for the specified sequence is incremented every time
-  /// this method is called.
-  ///
-  /// @note
-  ///     There is a max amount of sequences (256). If there are more than 256 sequences
-  ///     they will be reused. Using multiple sequences allows for more packed arrays
-  ///     when the ids are used for lookup. This means better cache locality and potential
-  ///     for less memory usage.
-  ///
-  /// @param[in] sequence_index Index of the sequence to get the next unique id from.
-  ///
-  /// @return size_t next index in the specified sequence
-  ///
-  inline size_t NextUniqueId(size_t sequence_index)
-  {
-    constexpr size_t cMaxSequences = 1 << 8; // 256
-
-    static std::atomic_uint32_t sequences[cMaxSequences]; // 32 bit is enough (4294967296 unique ids per sequence)
-
-    const size_t actual_index = sequence_index & (cMaxSequences - 1);
-
-    return sequences[actual_index].fetch_add(1, std::memory_order_relaxed);
-  }
-
 } // namespace
+
+///
+/// Returns a unique id for the type name and sequence at runtime.
+///
+/// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
+/// distributed in a first come first serve fashion.
+///
+/// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
+///
+/// @param[in] full_name The name of the type.
+/// @param[in] sequence_index An index used as an identifier to a sequence.
+///
+/// @return size_t The unique id for the type name and sequence.
+///
+size_t UniqueId(std::string_view full_name, size_t sequence_index);
 
 ///
 /// Templated structure that contains meta information about the templated type.
@@ -176,14 +129,16 @@ public:
   /// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
   /// distributed in a first come first serve fashion.
   ///
-  /// @tparam Tag A type tag used to identify the sequence to use.
+  /// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
+  ///
+  /// @param[in] sequence_index An index used as an identifier to a sequence.
   ///
   /// @return size_t The unique id for the type and sequence.
   ///
-  template<typename Tag = void>
-  static size_t UniqueId() noexcept
+  template<size_t SequenceIndex = 0>
+  static size_t UniqueId()
   {
-    static const size_t value = NextUniqueId(SequenceIndex<Tag>());
+    static const size_t value = engine::UniqueId(FullName(), SequenceIndex);
 
     return value;
   }

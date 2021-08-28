@@ -20,7 +20,7 @@ namespace genebits::engine
 template<typename Listener, typename Event>
 concept EventListen = requires(Listener listener, const Event& event)
 {
-  listener.listen(event);
+  listener.Listen(event);
 };
 
 ///
@@ -77,7 +77,7 @@ public:
     static_assert(std::is_base_of_v<Listener<Impl, Events...>, Impl>, "Listener must be base of implementation");
 
     EventHandler<Event> handler;
-    handler.template Bind<Impl, &Impl::listen>(static_cast<Impl*>(this));
+    handler.template Bind<Impl, &Impl::Listen>(static_cast<Impl*>(this));
 
     return handler;
   }
