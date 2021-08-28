@@ -1,8 +1,11 @@
 #ifndef GENEBITS_ENGINE_ECS_ARCHETYPE_H
 #define GENEBITS_ENGINE_ECS_ARCHETYPE_H
 
+#include <memory>
 #include <type_traits>
 
+#include "genebits/engine/util/allocator.h"
+#include "genebits/engine/util/fast_vector.h"
 #include "genebits/engine/util/meta.h"
 
 namespace genebits::engine
@@ -95,6 +98,8 @@ namespace
       std::conditional_t<Compare<T2, T1>::value, Sorted<SortedTypes..., T2, T1>, Sorted<SortedTypes..., T1, T2>>;
   };
 
+  // Could be possible to add more specializations for optimal solution sorting. This may reduce compile-time.
+
   template<typename... SortedTypes,
     template<typename...>
     class Sorted,
@@ -122,16 +127,59 @@ namespace
   };
 } // namespace
 
-///
-/// Archetype alias.
-///
-/// Makes sure that all components are sorted by name. This means that the alias will return the
-/// same type even if the components are given in a different order.
-///
-/// @tparam Components The variadic template of all the component types in the archetype.
-///
+using ComponentId = size_t;
+using ViewId = size_t;
+using ArchetypeId = size_t;
+
+template<typename Component>
+ComponentId GetComponentId()
+{
+  return Meta<Component>::UniqueId(Meta<struct ComponentIdTag>::Hash());
+}
+
 template<typename... Components>
-using Archetype = typename Combined<Components...>::Sorted;
+ArchetypeId GetArchetypeId()
+{
+  return Meta<Combined<Components...>::Sorted>::UniqueId(Meta<struct ArchetypeIdTag>::Hash());
+}
+
+template<typename... Components>
+ViewId GetViewId()
+{
+  return Meta<Combined<Components...>::Sorted>::UniqueId(Meta<struct ViewIdTag>::Hash());
+}
+
+namespace
+{
+  template<typename ComponentList>
+  struct ComponentSequence;
+
+  template<typename... Components, template<typename...> class ComponentList>
+  struct ComponentSequence<ComponentList<Components...>>
+  {
+    static FastVector<ComponentId> Runtime()
+    {
+      FastVector<ComponentId> components;
+      components.Reserve(sizeof...(Components));
+
+      (components.PushBack(GetComponentId<Components>()), ...);
+
+      return components;
+    }
+  };
+} // namespace
+
+template<typename... Components>
+const FastVector<ComponentId>& GetComponentIds()
+{
+  static const auto components = ComponentSequence<Combined<Components...>::Sorted>::Runtime();
+
+  return components;
+}
+
+void AddView(ViewId id, const FastVector<ComponentId>& components);
+
+void AddArchetype(ArchetypeId id, const FastVector<ComponentId>& components);
 
 } // namespace genebits::engine
 
