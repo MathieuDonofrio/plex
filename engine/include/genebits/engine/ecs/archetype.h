@@ -1,7 +1,9 @@
 #ifndef GENEBITS_ENGINE_ECS_ARCHETYPE_H
 #define GENEBITS_ENGINE_ECS_ARCHETYPE_H
 
+#include <algorithm>
 #include <memory>
+#include <mutex>
 #include <type_traits>
 
 #include "genebits/engine/util/allocator.h"
@@ -127,6 +129,9 @@ namespace
   };
 } // namespace
 
+template<typename... Components>
+using ComponentList = typename Combined<Components...>::Sorted;
+
 using ComponentId = size_t;
 using ViewId = size_t;
 using ArchetypeId = size_t;
@@ -134,19 +139,19 @@ using ArchetypeId = size_t;
 template<typename Component>
 ComponentId GetComponentId()
 {
-  return Meta<Component>::UniqueId(Meta<struct ComponentIdTag>::Hash());
+  return Meta<Component>::template UniqueId<Meta<struct ComponentIdTag>::Hash()>();
 }
 
 template<typename... Components>
 ArchetypeId GetArchetypeId()
 {
-  return Meta<Combined<Components...>::Sorted>::UniqueId(Meta<struct ArchetypeIdTag>::Hash());
+  return Meta<ComponentList<Components...>>::template UniqueId<Meta<struct ArchetypeIdTag>::Hash()>();
 }
 
 template<typename... Components>
 ViewId GetViewId()
 {
-  return Meta<Combined<Components...>::Sorted>::UniqueId(Meta<struct ViewIdTag>::Hash());
+  return Meta<ComponentList<Components...>>::template UniqueId<Meta<struct ViewIdTag>::Hash()>();
 }
 
 namespace
@@ -157,12 +162,14 @@ namespace
   template<typename... Components, template<typename...> class ComponentList>
   struct ComponentSequence<ComponentList<Components...>>
   {
-    static FastVector<ComponentId> Runtime()
+    static FastVector<ComponentId> Value()
     {
       FastVector<ComponentId> components;
       components.Reserve(sizeof...(Components));
 
       (components.PushBack(GetComponentId<Components>()), ...);
+
+      std::ranges::sort(components);
 
       return components;
     }
@@ -172,14 +179,10 @@ namespace
 template<typename... Components>
 const FastVector<ComponentId>& GetComponentIds()
 {
-  static const auto components = ComponentSequence<Combined<Components...>::Sorted>::Runtime();
+  static const auto components = ComponentSequence<ComponentList<Components...>>::Value();
 
   return components;
 }
-
-void AddView(ViewId id, const FastVector<ComponentId>& components);
-
-void AddArchetype(ArchetypeId id, const FastVector<ComponentId>& components);
 
 } // namespace genebits::engine
 
