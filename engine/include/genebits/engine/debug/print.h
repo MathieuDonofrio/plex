@@ -9,6 +9,8 @@ namespace genebits::engine
 ///
 /// Enumerator for terminal colors.
 ///
+/// Order of TColor enumerators try to match the order of colors for MSVC.
+///
 enum class TColor
 {
   Black,

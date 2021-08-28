@@ -79,7 +79,7 @@ struct TestWindowListener : public Listener<TestWindowListener,
     std::cout << "Mouse scroll event: offset: " << event.vertical_offset << std::endl;
   }
 
-  void listen(const WindowFramebufferResizeEvent& event)
+  void Listen(const WindowFramebufferResizeEvent& event)
   {
     std::cout << "Window framebuffer resize event: " << event.width << "x" << event.height << std::endl;
   }
