@@ -1,7 +1,9 @@
+
 #include <iostream>
 
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/events/listener.h"
+#include "genebits/engine/graphics/vulkan_dummy.h"
 #include "genebits/engine/graphics/window.h"
 
 using namespace genebits::engine;
@@ -98,6 +100,8 @@ int main(int, char**)
   Window* window = CreateWindow("Hello world", 256, 256, hints);
 
   // Window loop
+  auto vulkan_dummy = new VulkanDummy(window, "Genebits", true, VulkanDummy::DebugMessageSeverityThreshold::Info);
+  vulkan_dummy->DummyFunction(*vulkan_dummy);
 
   while (!window->IsClosing())
   {
