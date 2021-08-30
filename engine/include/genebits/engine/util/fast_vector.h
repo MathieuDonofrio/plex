@@ -49,8 +49,6 @@ public:
   // Style Exception: STL
   // clang-format off
 
-  using iterator_category = std::random_access_iterator_tag;
-
   using size_type = size_t;
   using difference_type = ptrdiff_t;
   using value_type = Type;
@@ -195,7 +193,7 @@ public:
 
     if (size_ == 1) [[unlikely]]
     {
-      it->~Type();
+      if constexpr (!std::is_trivially_destructible_v<Type>) it->~Type();
       size_ = 0;
     }
     else [[likely]]

@@ -10,7 +10,7 @@ static void ArchetypeGraph_AssureArchetype(benchmark::State& state)
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(graph.AssureArchetype<int, double, float>());
+    benchmark::DoNotOptimize(graph.AssureArchetype<int, double, float, bool, long>());
   }
 
   benchmark::DoNotOptimize(graph);
@@ -24,7 +24,7 @@ static void ArchetypeGraph_AssureView(benchmark::State& state)
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(graph.AssureView<int, double, float>());
+    benchmark::DoNotOptimize(graph.AssureView<int, double, float, bool, long>());
   }
 
   benchmark::DoNotOptimize(graph);

@@ -159,7 +159,7 @@ private:
 
     if (!pool) [[unlikely]] { pool.Reset(new EventHandlerPool<Event, HandlersAllocator>()); }
 
-    return pool.Cast<EventHandlerPool<Event, HandlersAllocator>>();
+    return pool.template Cast<EventHandlerPool<Event, HandlersAllocator>>();
   }
 
 private:
