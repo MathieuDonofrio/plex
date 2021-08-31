@@ -7,6 +7,7 @@
 #include "genebits/engine/util/concepts.h"
 #include "genebits/engine/util/erased_ptr.h"
 #include "genebits/engine/util/fast_vector.h"
+#include "genebits/engine/util/meta.h"
 #include "genebits/engine/util/type_map.h"
 
 namespace genebits::engine
@@ -115,38 +116,83 @@ public:
   [[nodiscard]] const_reference back() const { return end()[-1]; }
 
   // clang-format on
+
+  [[nodiscard]] constexpr const Entity& operator[](const size_type index) const noexcept
+  {
+    return dense_[index];
+  }
+
+  [[nodiscard]] constexpr Entity& operator[](const size_type index) noexcept
+  {
+    return dense_[index];
+  }
+
 public:
+  Storage()
+  {
+    sparse_ = new SharedSparseArray<Entity>();
+  }
+
+  Storage(SharedSparseArray<Entity>* sparse)
+  {
+    ASSERT(sparse != nullptr, "Sparse array cannot be nullptr");
+
+    sparse_ = sparse;
+  }
+
+  ~Storage()
+  {
+    delete sparse_;
+  }
+
+  Storage(const Storage&) = delete;
+  Storage(Storage&&) = delete;
+  Storage& operator=(const Storage&) = delete;
+  Storage& operator=(Storage&&) = delete;
+
   template<typename... Components>
   void Initialize() noexcept
   {
+    ASSERT(!initialized_, "Already initialized");
+
     ((pools_.template Assure<Components>().Reset(new FastVector<Components, DenseAllocator>())), ...);
 
     erase_function_ = []([[maybe_unused]] auto storage, [[maybe_unused]] const size_t index)
-    { ((storage->template Get<Components>().EraseAt(index)), ...); };
-    clear_function_ = []([[maybe_unused]] auto storage) { ((storage->template Get<Components>().Clear()), ...); };
+    { ((storage->template Access<Components>().EraseAt(index)), ...); };
+    clear_function_ = []([[maybe_unused]] auto storage) { ((storage->template Access<Components>().Clear()), ...); };
+
+#ifndef NDEBUG
+    ((components_.PushBack(Meta<Components>::Hash())), ...);
+    initialized_ = true;
+#endif
   }
 
   template<typename... Components>
   void Insert(const Entity entity, const Components&... components) noexcept
   {
-    // TODO assert components
+    ASSERT(initialized_, "Not initialized");
     ASSERT(!Contains(entity), "Entity already exists");
+    ASSERT(sizeof...(Components) == components_.Size(), "Invalid amount of components");
+#ifndef NDEBUG
+    ((ASSERT(HasComponent<Components>(), "Component type not valid")), ...);
+#endif
 
-    sparse_.Assure(entity);
-    sparse_[entity] = static_cast<Entity>(dense_.Size());
+    sparse_->Assure(entity);
+    (*sparse_)[entity] = static_cast<Entity>(dense_.Size());
 
     dense_.PushBack(entity);
-    ((Get<Components>().PushBack(components)), ...);
+    ((Access<Components>().PushBack(components)), ...);
   }
 
   void Erase(const Entity entity) noexcept
   {
+    ASSERT(initialized_, "Not initialized");
     ASSERT(Contains(entity), "Entity does not exist");
 
-    const auto index = sparse_[entity];
+    const auto index = (*sparse_)[entity];
     const auto back_entity = dense_.back();
 
-    sparse_[back_entity] = index;
+    (*sparse_)[back_entity] = index;
     dense_[index] = back_entity;
 
     dense_.PopBack();
@@ -156,6 +202,8 @@ public:
 
   void Clear()
   {
+    ASSERT(initialized_, "Not initialized");
+
     dense_.Clear();
 
     clear_function_(this);
@@ -163,24 +211,11 @@ public:
 
   [[nodiscard]] constexpr bool Contains(const Entity entity) const noexcept
   {
+    ASSERT(initialized_, "Not initialized");
+
     size_t index;
 
-    return entity < sparse_.Capacity() && (index = sparse_[entity]) < dense_.Size() && dense_[index] == entity;
-  }
-
-  template<typename Component>
-  [[nodiscard]] const Component& UnpackIndex(const size_t index) const noexcept
-  {
-    // TODO assert component
-    ASSERT(index < Size(), "Index to big");
-
-    return Get<Component>()[index];
-  }
-
-  template<typename Component>
-  [[nodiscard]] Component& UnpackIndex(const size_t index) noexcept
-  {
-    return const_cast<Component&>(const_cast<const Storage*>(this)->UnpackIndex<Component>(index));
+    return entity < sparse_->Capacity() && (index = (*sparse_)[entity]) < dense_.Size() && dense_[index] == entity;
   }
 
   template<typename Component>
@@ -188,13 +223,28 @@ public:
   {
     ASSERT(Contains(entity), "Entity does not exist");
 
-    return UnpackIndex<Component>(sparse_[entity]);
+    return Access<Component>()[sparse_->operator[](entity)];
   }
 
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity) noexcept
   {
     return const_cast<Component&>(const_cast<const Storage*>(this)->Unpack<Component>(entity));
+  }
+
+  template<typename Component>
+  [[nodiscard]] const FastVector<Component, DenseAllocator>& Access() const noexcept
+  {
+    ASSERT(initialized_, "Not initialized");
+    ASSERT(HasComponent<Component>(), "Component type not valid");
+
+    return *pools_.Get<Component>().template Cast<FastVector<Component, DenseAllocator>>();
+  }
+
+  template<typename Component>
+  [[nodiscard]] FastVector<Component, DenseAllocator>& Access() noexcept
+  {
+    return const_cast<FastVector<Component, DenseAllocator>&>(const_cast<const Storage*>(this)->Access<Component>());
   }
 
   [[nodiscard]] bool Empty() const noexcept
@@ -208,29 +258,29 @@ public:
   }
 
 private:
-  template<typename Component>
-  [[nodiscard]] const FastVector<Component, DenseAllocator>& Get() const noexcept
-  {
-    return *pools_.Get<Component>().template Cast<FastVector<Component, DenseAllocator>>();
-  }
-
-  template<typename Component>
-  [[nodiscard]] FastVector<Component, DenseAllocator>& Get() noexcept
-  {
-    return const_cast<FastVector<Component, DenseAllocator>&>(const_cast<const Storage*>(this)->Get<Component>());
-  }
-
-private:
   using EraseFunction = void (*)(Storage* storage, const size_t);
   using ClearFunction = void (*)(Storage* storage);
 
+  SharedSparseArray<Entity, SparseAllocator>* sparse_;
+
   FastVector<Entity, DenseAllocator> dense_;
-  SharedSparseArray<Entity, SparseAllocator> sparse_;
   TypeMap<ErasedPtr<void>> pools_;
 
   // Functions
   EraseFunction erase_function_;
   ClearFunction clear_function_;
+
+  // Used for debugging purposes
+#ifndef NDEBUG
+  bool initialized_ = false;
+  FastVector<size_t> components_;
+
+  template<typename Component>
+  [[nodiscard]] bool HasComponent() const noexcept
+  {
+    return std::ranges::find(components_, Meta<Component>::Hash()) != components_.end();
+  }
+#endif
 };
 
 } // namespace genebits::engine
