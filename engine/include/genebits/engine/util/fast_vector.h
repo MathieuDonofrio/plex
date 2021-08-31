@@ -52,9 +52,9 @@ public:
   using size_type = size_t;
   using difference_type = ptrdiff_t;
   using value_type = Type;
+
   using iterator = Type*;
   using const_iterator = const Type*;
-
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
   using reverse_iterator = std::reverse_iterator<iterator>;
 
@@ -64,28 +64,28 @@ public:
   using const_pointer = const Type*;
 
   // Forward iterator creation methods.
-  iterator begin() { return array_; }
-  const_iterator begin() const { return array_; }
-  iterator end() { return array_ + size_; }
-  const_iterator end() const { return array_ + size_; }
+  [[nodiscard]] iterator begin() { return array_; }
+  [[nodiscard]] const_iterator begin() const { return array_; }
+  [[nodiscard]] iterator end() { return array_ + size_; }
+  [[nodiscard]] const_iterator end() const { return array_ + size_; }
 
   // Explicit const forward iterator creation methods.
-  const_iterator cbegin() const { return array_; }
-  const_iterator cend() const { return array_ + size_; }
+  [[nodiscard]] const_iterator cbegin() const { return array_; }
+  [[nodiscard]] const_iterator cend() const { return array_ + size_; }
 
   // Reverse iterator creation methods.
-  reverse_iterator rbegin() { return reverse_iterator(end()); }
-  const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-  reverse_iterator rend() { return reverse_iterator(begin()); }
-  const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+  [[nodiscard]] reverse_iterator rbegin() { return reverse_iterator(end()); }
+  [[nodiscard]] const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+  [[nodiscard]] reverse_iterator rend() { return reverse_iterator(begin()); }
+  [[nodiscard]] const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 
   // Internal array accessors
-  pointer data() { return pointer(begin()); }
-  const_pointer data() const { return const_pointer(begin()); }
-  reference front() { return begin()[0]; }
-  const_reference front() const { return begin()[0]; }
-  reference back() { return end()[-1]; }
-  const_reference back() const { return end()[-1]; }
+  [[nodiscard]] pointer data() { return pointer(begin()); }
+  [[nodiscard]] const_pointer data() const { return const_pointer(begin()); }
+  [[nodiscard]] reference front() { return begin()[0]; }
+  [[nodiscard]] const_reference front() const { return begin()[0]; }
+  [[nodiscard]] reference back() { return end()[-1]; }
+  [[nodiscard]] const_reference back() const { return end()[-1]; }
 
   // clang-format on
 
@@ -173,7 +173,7 @@ public:
     ASSERT(size_ > 0, "Vector is empty");
 
     --size_;
-    array_[size_].~Type();
+    if constexpr (!std::is_trivially_destructible_v<Type>) array_[size_].~Type();
   }
 
   ///

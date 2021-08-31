@@ -268,36 +268,23 @@ TEST(Storage_Tests, Erase_MultipleEraseAfterMultipleInsert_CorrectState)
   Storage<size_t> storage;
   storage.Initialize<int>();
 
-  for (size_t i = 0; i < 1000; i++)
-  {
-    storage.Insert<int>(i, static_cast<int>(i * 10));
-  }
+  storage.Insert<int>(0, 0);
+  storage.Insert<int>(1, 10);
+  storage.Insert<int>(2, 20);
 
-  ASSERT_EQ(storage.Size(), 1000);
-
-  for (size_t i = 0; i < 1000; i++)
-  {
-    ASSERT_TRUE(storage.Contains(i));
-    ASSERT_EQ(storage.Unpack<int>(i), i * 10);
-  }
-
+  ASSERT_EQ(storage.Size(), 3);
   ASSERT_FALSE(storage.Contains(1000));
 
-  for (size_t i = 0; i < 500; i++)
-  {
-    storage.Erase(i);
-  }
+  storage.Erase(0);
+  storage.Erase(1);
 
-  ASSERT_EQ(storage.Size(), 500);
+  ASSERT_EQ(storage.Size(), 1);
 
-  ASSERT_TRUE(storage.Contains(499));
-  ASSERT_EQ(storage.Unpack<int>(499), 499 * 10);
+  EXPECT_TRUE(storage.Contains(2));
+  EXPECT_EQ(storage.Unpack<int>(2), 20);
 
-  for (size_t i = 500; i < 1000; i++)
-  {
-    ASSERT_TRUE(storage.Contains(i));
-    ASSERT_EQ(storage.Unpack<int>(i), i * 10);
-  }
+  EXPECT_FALSE(storage.Contains(0));
+  EXPECT_FALSE(storage.Contains(1));
 }
 
 } // namespace genebits::engine::tests

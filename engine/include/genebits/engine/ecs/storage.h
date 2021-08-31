@@ -73,6 +73,49 @@ template<std::unsigned_integral Entity, Allocator DenseAllocator = Mallocator, A
 class Storage : private DenseAllocator
 {
 public:
+  // Style Exception: STL
+  // clang-format off
+
+  using size_type = size_t;
+  using difference_type = ptrdiff_t;
+  using value_type = Entity;
+
+  using iterator = Entity*;
+  using const_iterator = const Entity*;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+
+  using reference = Entity&;
+  using const_reference = const Entity&;
+  using pointer = Entity*;
+  using const_pointer = const Entity*;
+
+  // Forward iterator creation methods.
+  [[nodiscard]] iterator begin() { return dense_.begin(); }
+  [[nodiscard]] const_iterator begin() const { return dense_.begin(); }
+  [[nodiscard]] iterator end() { return dense_.end(); }
+  [[nodiscard]] const_iterator end() const { return dense_.end(); }
+
+  // Explicit const forward iterator creation methods.
+  [[nodiscard]] const_iterator cbegin() const { return dense_.cbegin(); }
+  [[nodiscard]] const_iterator cend() const { return dense_.cend(); }
+
+  // Reverse iterator creation methods.
+  [[nodiscard]] reverse_iterator rbegin() { return reverse_iterator(end()); }
+  [[nodiscard]] const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+  [[nodiscard]] reverse_iterator rend() { return reverse_iterator(begin()); }
+  [[nodiscard]] const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+
+  // Internal array accessors
+  [[nodiscard]] pointer data() { return pointer(begin()); }
+  [[nodiscard]] const_pointer data() const { return const_pointer(begin()); }
+  [[nodiscard]] reference front() { return begin()[0]; }
+  [[nodiscard]] const_reference front() const { return begin()[0]; }
+  [[nodiscard]] reference back() { return end()[-1]; }
+  [[nodiscard]] const_reference back() const { return end()[-1]; }
+
+  // clang-format on
+public:
   template<typename... Components>
   void Initialize() noexcept
   {
@@ -101,8 +144,13 @@ public:
     ASSERT(Contains(entity), "Entity does not exist");
 
     const auto index = sparse_[entity];
+    const auto back_entity = dense_.back();
 
-    dense_.EraseAt(index);
+    sparse_[back_entity] = index;
+    dense_[index] = back_entity;
+
+    dense_.PopBack();
+
     erase_function_(this, index);
   }
 
@@ -121,12 +169,26 @@ public:
   }
 
   template<typename Component>
-  [[nodiscard]] const Component& Unpack(const Entity entity) const noexcept
+  [[nodiscard]] const Component& UnpackIndex(const size_t index) const noexcept
   {
     // TODO assert component
+    ASSERT(index < Size(), "Index to big");
+
+    return Get<Component>()[index];
+  }
+
+  template<typename Component>
+  [[nodiscard]] Component& UnpackIndex(const size_t index) noexcept
+  {
+    return const_cast<Component&>(const_cast<const Storage*>(this)->UnpackIndex<Component>(index));
+  }
+
+  template<typename Component>
+  [[nodiscard]] const Component& Unpack(const Entity entity) const noexcept
+  {
     ASSERT(Contains(entity), "Entity does not exist");
 
-    return Get<Component>()[sparse_[entity]];
+    return UnpackIndex<Component>(sparse_[entity]);
   }
 
   template<typename Component>
@@ -145,103 +207,15 @@ public:
     return dense_.Size();
   }
 
-public:
-  class iterator final
-  {
-  public:
-    using iterator_category = std::random_access_iterator_tag;
-
-    using size_type = size_t;
-
-    iterator(Storage* const ptr, const size_type index) : ptr_ { ptr }, index_ { index } {}
-
-    // Style Exception: STL
-    // clang-format off
-
-    iterator& operator+=(const size_type value) { index_ += value; return *this; }
-    iterator& operator-=(const size_type value) { index_ -= value; return *this; }
-
-    iterator& operator++() { return ++index_, *this; }
-    iterator& operator--() { return --index_, *this; }
-
-    iterator operator+(const size_type value) const { return { ptr_, index_ + value }; }
-    iterator operator-(const size_type value) const { return { ptr_, index_ - value }; }
-
-    bool operator==(const iterator other) const { return other._pos == index_; }
-    bool operator!=(const iterator other) const { return other._pos != index_; }
-
-    bool operator<(const iterator other) const { return other._pos < index_; }
-    bool operator>(const iterator other) const { return other._pos > index_; }
-
-    bool operator<=(const iterator other) const { return other._pos <= index_; }
-    bool operator>=(const iterator other) const { return other._pos >= index_; }
-
-    [[nodiscard]] Entity operator*() const { return ptr_->dense_[index_]; }
-
-    template<typename Component>
-    [[nodiscard]] const Component& Unpack() const
-    {
-      ASSERT(ptr_->Contains(index_), "Entity does not exist");
-
-      return ptr_->Get<Component>()[index_];
-    }
-
-    template<typename Component>
-    [[nodiscard]] Component& Unpack()
-    {
-      return const_cast<Component&>(const_cast<const iterator*>(this)->Unpack<Component>());
-    }
-
-    // clang-format on
-
-  private:
-    Storage* const ptr_;
-    size_type index_;
-  };
-
-  // Style Exception: STL
-  // clang-format off
-
-  using const_iterator = const iterator;
-  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-  using reverse_iterator = std::reverse_iterator<iterator>;
-
-  using size_type = size_t;
-  using difference_type = ptrdiff_t;
-  using value_type = Entity;
-
-  using reference = Entity&;
-  using const_reference = const Entity&;
-  using pointer = Entity*;
-  using const_pointer = const Entity*;
-
-  // Forward iterator creation methods.
-  iterator begin() { return iterator(this, 0); }
-  const_iterator begin() const { return iterator(this, 0); }
-  iterator end() { return iterator(this, Size()); }
-  const_iterator end() const { return iterator(this, Size()); }
-
-  // Explicit const forward iterator creation methods.
-  const_iterator cbegin() const { return iterator(this, 0); }
-  const_iterator cend() const { return iterator(this, Size()); }
-
-  // Reverse iterator creation methods.
-  reverse_iterator rbegin() { return reverse_iterator(end()); }
-  const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-  reverse_iterator rend() { return reverse_iterator(begin()); }
-  const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
-
-  // clang-format on
-
 private:
   template<typename Component>
-  const FastVector<Component, DenseAllocator>& Get() const noexcept
+  [[nodiscard]] const FastVector<Component, DenseAllocator>& Get() const noexcept
   {
     return *pools_.Get<Component>().template Cast<FastVector<Component, DenseAllocator>>();
   }
 
   template<typename Component>
-  FastVector<Component, DenseAllocator>& Get() noexcept
+  [[nodiscard]] FastVector<Component, DenseAllocator>& Get() noexcept
   {
     return const_cast<FastVector<Component, DenseAllocator>&>(const_cast<const Storage*>(this)->Get<Component>());
   }
