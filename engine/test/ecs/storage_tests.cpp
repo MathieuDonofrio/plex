@@ -8,7 +8,8 @@ namespace genebits::engine::tests
 {
 TEST(Storage_Tests, Empty_AfterInitialization_True)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
 
   ASSERT_TRUE(storage.Empty());
   ASSERT_EQ(storage.Size(), 0);
@@ -16,7 +17,8 @@ TEST(Storage_Tests, Empty_AfterInitialization_True)
 
 TEST(Storage_Tests, Insert_Single_SizeIncrease)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -27,7 +29,8 @@ TEST(Storage_Tests, Insert_Single_SizeIncrease)
 
 TEST(Storage_Tests, Contains_WithoutValue_False)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   ASSERT_FALSE(storage.Contains(0));
@@ -35,7 +38,8 @@ TEST(Storage_Tests, Contains_WithoutValue_False)
 
 TEST(Storage_Tests, Contains_WithValue_False)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -46,7 +50,8 @@ TEST(Storage_Tests, Contains_WithValue_False)
 
 TEST(Storage_Tests, Contains_LargeNonExistant_False)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   ASSERT_FALSE(storage.Contains(1000000));
@@ -54,7 +59,8 @@ TEST(Storage_Tests, Contains_LargeNonExistant_False)
 
 TEST(Storage_Tests, Erase_Single_SizeDecrease)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -65,7 +71,8 @@ TEST(Storage_Tests, Erase_Single_SizeDecrease)
 
 TEST(Storage_Tests, Clear_Empty_Empty)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Clear();
@@ -76,7 +83,8 @@ TEST(Storage_Tests, Clear_Empty_Empty)
 
 TEST(Storage_Tests, Clear_NotEmpty_Empty)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -88,7 +96,8 @@ TEST(Storage_Tests, Clear_NotEmpty_Empty)
 
 TEST(Storage_Tests, Insert_Double_IncreaseSize)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -100,7 +109,8 @@ TEST(Storage_Tests, Insert_Double_IncreaseSize)
 
 TEST(Storage_Tests, Erase_Double_DecreaseSize)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -119,7 +129,8 @@ TEST(Storage_Tests, Erase_Double_DecreaseSize)
 
 TEST(Storage_Tests, Insert_ReinsertionAfterClear_RestoredState)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -132,7 +143,8 @@ TEST(Storage_Tests, Insert_ReinsertionAfterClear_RestoredState)
 
 TEST(Storage_Tests, Insert_TriggerSparseGrowth_CorrectState)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   const size_t big_value = 10000;
@@ -147,7 +159,8 @@ TEST(Storage_Tests, Insert_TriggerSparseGrowth_CorrectState)
 
 TEST(Storage_Tests, Insert_TriggerDenseGrowth_CorrectState)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   const size_t amount = 10000;
@@ -170,7 +183,8 @@ TEST(Storage_Tests, Insert_TriggerDenseGrowth_CorrectState)
 
 TEST(Storage_Tests, Insert_WithComponent_SizeIncrease)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   ASSERT_TRUE(storage.Empty());
@@ -184,7 +198,8 @@ TEST(Storage_Tests, Insert_WithComponent_SizeIncrease)
 
 TEST(Storage_Tests, Insert_WithComponentNonTrivial_SizeIncrease)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<std::string>();
 
   ASSERT_TRUE(storage.Empty());
@@ -198,7 +213,8 @@ TEST(Storage_Tests, Insert_WithComponentNonTrivial_SizeIncrease)
 
 TEST(Storage_Tests, Insert_WithComponent_CorrectValue)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   storage.Insert(0, 10);
@@ -208,7 +224,8 @@ TEST(Storage_Tests, Insert_WithComponent_CorrectValue)
 
 TEST(Storage_Tests, Insert_WithComponentNonTrivial_CorrectValue)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<std::string>();
 
   storage.Insert(0, std::string { "10" });
@@ -218,7 +235,8 @@ TEST(Storage_Tests, Insert_WithComponentNonTrivial_CorrectValue)
 
 TEST(Storage_Tests, Insert_WithMultipleComponents_CorrectValue)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<int, std::string>();
 
   storage.Insert(0, 10, std::string { "11" });
@@ -229,7 +247,8 @@ TEST(Storage_Tests, Insert_WithMultipleComponents_CorrectValue)
 
 TEST(Storage_Tests, Erase_WithComponent_SizeDecrease)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   storage.Insert(0, 10);
@@ -241,7 +260,8 @@ TEST(Storage_Tests, Erase_WithComponent_SizeDecrease)
 
 TEST(Storage_Tests, Erase_WithComponentNonTrivial_SizeDecrease)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<std::string>();
 
   storage.Insert(0, std::string { "10" });
@@ -253,7 +273,8 @@ TEST(Storage_Tests, Erase_WithComponentNonTrivial_SizeDecrease)
 
 TEST(Storage_Tests, Insert_WithMultipleComponents_SizeDecrease)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<int, std::string>();
 
   storage.Insert(0, 10, std::string { "11" });
@@ -265,7 +286,8 @@ TEST(Storage_Tests, Insert_WithMultipleComponents_SizeDecrease)
 
 TEST(Storage_Tests, Erase_MultipleEraseAfterMultipleInsert_CorrectState)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   storage.Insert<int>(0, 0);

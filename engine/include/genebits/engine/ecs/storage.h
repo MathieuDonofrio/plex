@@ -17,16 +17,11 @@ template<std::unsigned_integral Entity, Allocator AllocatorImpl = Mallocator>
 class SharedSparseArray : private AllocatorImpl
 {
 public:
-  constexpr SharedSparseArray() noexcept : array_(nullptr), capacity_(0), references_(0) {}
+  constexpr SharedSparseArray() noexcept : array_(nullptr), capacity_(0) {}
 
   ~SharedSparseArray()
   {
-    if (!references_ && array_)
-    {
-      AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), sizeof(Entity) * capacity_ });
-    }
-
-    references_--;
+    AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), sizeof(Entity) * capacity_ });
   }
 
   SharedSparseArray(const SharedSparseArray&) = delete;
@@ -66,8 +61,7 @@ public:
 
 private:
   Entity* array_;
-  uint32_t capacity_;
-  uint32_t references_;
+  size_t capacity_;
 };
 
 template<std::unsigned_integral Entity, Allocator DenseAllocator = Mallocator, Allocator SparseAllocator = Mallocator>
@@ -128,21 +122,11 @@ public:
   }
 
 public:
-  Storage()
-  {
-    sparse_ = new SharedSparseArray<Entity>();
-  }
-
-  Storage(SharedSparseArray<Entity>* sparse)
+  Storage(SharedSparseArray<Entity>* sparse) noexcept
   {
     ASSERT(sparse != nullptr, "Sparse array cannot be nullptr");
 
     sparse_ = sparse;
-  }
-
-  ~Storage()
-  {
-    delete sparse_;
   }
 
   Storage(const Storage&) = delete;
@@ -172,8 +156,9 @@ public:
   {
     ASSERT(initialized_, "Not initialized");
     ASSERT(!Contains(entity), "Entity already exists");
-    ASSERT(sizeof...(Components) == components_.Size(), "Invalid amount of components");
+
 #ifndef NDEBUG
+    ASSERT(sizeof...(Components) == components_.Size(), "Invalid amount of components");
     ((ASSERT(HasComponent<Components>(), "Component type not valid")), ...);
 #endif
 

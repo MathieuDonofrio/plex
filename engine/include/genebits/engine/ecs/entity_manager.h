@@ -32,6 +32,8 @@ public:
 
   void Release(const Entity entity) noexcept
   {
+    ASSERT(entity <= current_, "Entity not from this manager");
+
     recycled_.PushBack(entity);
   }
 
@@ -40,6 +42,11 @@ public:
     recycled_.Clear();
 
     current_ = 0;
+  }
+
+  [[nodiscard]] size_t CirculatingCount() const noexcept
+  {
+    return current_ - recycled_.Size();
   }
 
   [[nodiscard]] size_t RecycledCount() const noexcept

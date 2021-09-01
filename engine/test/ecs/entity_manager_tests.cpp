@@ -8,6 +8,7 @@ TEST(EntityManager_Tests, Generate_AfterInitialization_UniqueId)
 {
   EntityManager<size_t> manager;
 
+  ASSERT_EQ(manager.CirculatingCount(), 0);
   ASSERT_EQ(manager.RecycledCount(), 0);
 
   ASSERT_EQ(manager.Generate(), 0);
@@ -15,6 +16,7 @@ TEST(EntityManager_Tests, Generate_AfterInitialization_UniqueId)
   ASSERT_EQ(manager.Generate(), 2);
 
   ASSERT_EQ(manager.RecycledCount(), 0);
+  ASSERT_EQ(manager.CirculatingCount(), 3);
 }
 
 TEST(EntityManager_Tests, Release_AfterInitialization_IncreaseRecycledCount)
@@ -26,6 +28,7 @@ TEST(EntityManager_Tests, Release_AfterInitialization_IncreaseRecycledCount)
   manager.Release(manager.Generate());
 
   ASSERT_EQ(manager.RecycledCount(), 1);
+  ASSERT_EQ(manager.CirculatingCount(), 0);
 }
 
 TEST(EntityManager_Tests, Generate_AfterRelease_DecreaseRecycleCount)
@@ -37,6 +40,7 @@ TEST(EntityManager_Tests, Generate_AfterRelease_DecreaseRecycleCount)
   (void)(manager.Generate());
 
   ASSERT_EQ(manager.RecycledCount(), 0);
+  ASSERT_EQ(manager.CirculatingCount(), 1);
 }
 
 TEST(EntityManager_Tests, Generate_AfterRelease_CorrectlyRecycled)
@@ -45,7 +49,9 @@ TEST(EntityManager_Tests, Generate_AfterRelease_CorrectlyRecycled)
 
   manager.Release(manager.Generate());
 
+  ASSERT_EQ(manager.CirculatingCount(), 0);
   ASSERT_EQ(manager.Generate(), 0);
+  ASSERT_EQ(manager.CirculatingCount(), 1);
 }
 
 TEST(EntityManager_Tests, Generate_ReleaseAll_DecreaseRecycleCount)
@@ -58,11 +64,14 @@ TEST(EntityManager_Tests, Generate_ReleaseAll_DecreaseRecycleCount)
   manager.Release(manager.Generate());
 
   ASSERT_EQ(manager.RecycledCount(), 1);
+  ASSERT_EQ(manager.CirculatingCount(), 2);
 
   manager.ReleaseAll();
 
   ASSERT_EQ(manager.RecycledCount(), 0);
+  ASSERT_EQ(manager.CirculatingCount(), 0);
   ASSERT_EQ(manager.Generate(), 0);
+  ASSERT_EQ(manager.CirculatingCount(), 1);
 }
 
 TEST(EntityManager_Tests, Generate_ReleaseAll_ResetGenerator)
@@ -74,7 +83,9 @@ TEST(EntityManager_Tests, Generate_ReleaseAll_ResetGenerator)
 
   manager.ReleaseAll();
 
+  ASSERT_EQ(manager.CirculatingCount(), 0);
   ASSERT_EQ(manager.Generate(), 0);
+  ASSERT_EQ(manager.CirculatingCount(), 1);
 }
 
 } // namespace genebits::engine::tests
