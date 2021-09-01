@@ -222,6 +222,19 @@ TEST(Storage_Tests, Insert_WithComponent_CorrectValue)
   ASSERT_EQ(storage.Unpack<int>(0), 10);
 }
 
+TEST(Storage_Tests, Insert_WithComponentRef_CorrectValue)
+{
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
+  storage.Initialize<int>();
+
+  int data = 10;
+
+  storage.Insert(0, data);
+
+  ASSERT_EQ(storage.Unpack<int>(0), 10);
+}
+
 TEST(Storage_Tests, Insert_WithComponentNonTrivial_CorrectValue)
 {
   SharedSparseArray<size_t> sparse;

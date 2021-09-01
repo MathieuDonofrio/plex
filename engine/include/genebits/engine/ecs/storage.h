@@ -159,14 +159,14 @@ public:
 
 #ifndef NDEBUG
     ASSERT(sizeof...(Components) == components_.Size(), "Invalid amount of components");
-    ((ASSERT(HasComponent<Components>(), "Component type not valid")), ...);
+    ((ASSERT(HasComponent<std::remove_cvref_t<Components>>(), "Component type not valid")), ...);
 #endif
 
     sparse_->Assure(entity);
     (*sparse_)[entity] = static_cast<Entity>(dense_.Size());
 
     dense_.PushBack(entity);
-    ((Access<Components>().PushBack(components)), ...);
+    ((Access<std::remove_cvref_t<Components>>().PushBack(std::forward<Components>(components))), ...);
   }
 
   void Erase(const Entity entity) noexcept

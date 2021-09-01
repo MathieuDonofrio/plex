@@ -144,6 +144,10 @@ public:
   }
 };
 
+// TODO Add meta specialization for variadic templates
+// Move sorting from archetype.h
+// Also add check for unique list
+
 } // namespace genebits::engine
 
 #endif

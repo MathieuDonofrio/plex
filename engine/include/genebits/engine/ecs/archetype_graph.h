@@ -11,13 +11,13 @@ public:
   template<typename... Components>
   ViewId AssureView()
   {
-    const ViewId id = GetViewId<Components...>();
+    const ViewId id = GetViewId<std::remove_cvref_t<Components>...>();
 
     if (id >= views.Size() || !views[id].initialized)
     {
       std::scoped_lock<std::mutex> lock(mutex);
 
-      Initialize<Components...>(views, id);
+      Initialize<std::remove_cvref_t<Components>...>(views, id);
       AddView(id);
     }
 
@@ -27,13 +27,13 @@ public:
   template<typename... Components>
   ArchetypeId AssureArchetype()
   {
-    const ArchetypeId id = GetArchetypeId<Components...>();
+    const ArchetypeId id = GetArchetypeId<std::remove_cvref_t<Components>...>();
 
     if (id >= archetypes.Size() || !archetypes[id].initialized)
     {
       std::scoped_lock<std::mutex> lock(mutex);
 
-      Initialize<Components...>(archetypes, id);
+      Initialize<std::remove_cvref_t<Components>...>(archetypes, id);
       AddArchetype(id);
     }
 
@@ -59,7 +59,7 @@ private:
 
     auto& entry = entries[id];
 
-    entry.components = GetComponentIds<Components...>();
+    entry.components = GetComponentIds<std::remove_cvref_t<Components>...>();
 
     entry.initialized = true;
   }

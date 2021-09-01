@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <concepts>
 #include <tuple>
+#include <type_traits>
 
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/archetype_graph.h"
@@ -12,6 +13,28 @@
 
 namespace genebits::engine
 {
+
+template<typename T, typename... Ts>
+struct Index;
+
+template<typename T, typename... Ts>
+struct Index<T, T, Ts...> : std::integral_constant<std::size_t, 0>
+{};
+
+template<typename T, typename U, typename... Ts>
+struct Index<T, U, Ts...> : std::integral_constant<std::size_t, 1 + Index<T, Ts...>::value>
+{};
+
+template<typename Entity, typename Invocable, typename... Components>
+concept RegistryExtendedIterationFunc = std::is_invocable_v<Invocable, Entity, Components...>;
+
+template<typename Invocable, typename... Components>
+concept RegistryReducedIterationFunc = std::is_invocable_v<Invocable, Components...>;
+
+template<typename Entity, typename Invocable, typename... Components>
+concept RegistryIterationFunc = RegistryReducedIterationFunc<Invocable,
+  Components...> || RegistryExtendedIterationFunc<Entity, Invocable, Components...>;
+
 template<std::unsigned_integral Entity>
 class Registry
 {
@@ -36,12 +59,12 @@ public:
     if (!storage)
     {
       storage = new Storage<Entity>(&mappings_);
-      storage->template Initialize<Components...>();
+      storage->template Initialize<std::remove_cvref_t<Components>...>();
     }
 
     const Entity entity = manager_.Generate();
 
-    storage->template Insert<Components...>(entity, std::forward<Components...>(components)...);
+    storage->template Insert<Components...>(entity, std::forward<Components>(components)...);
 
     return entity;
   }
@@ -80,46 +103,64 @@ public:
     manager_.Release(entity);
   }
 
+  template<typename... Components>
   void DestroyAll()
   {
-    const ViewId view = graph_.template AssureView<>();
+    static constexpr bool cDestroyEverything = sizeof...(Components) == 0;
 
-    const auto& archetypes = graph_.ViewArchetypes(view);
-
-    for (const auto archetype : archetypes)
-    {
-      auto storage = storages_[archetype];
-
-      ASSERT(storage, "Storage not initialized");
-
-      storage->Clear();
-    }
-
-    manager_.ReleaseAll();
-  }
-
-  template<typename... Components, typename Invokable> // TODO Invokable concept
-  void ForEach(const Invokable& invokable)
-  {
     const ViewId view = graph_.template AssureView<Components...>();
 
     const auto& archetypes = graph_.ViewArchetypes(view);
 
     for (const auto archetype : archetypes)
     {
-      auto storage_ptr = storages_[archetype];
+      ASSERT(storages_[archetype], "Storage not initialized");
 
-      ASSERT(storage_ptr, "Storage not initialized");
+      auto& storage = *storages_[archetype];
 
-      auto& storage = *storage_ptr;
+      if constexpr (!cDestroyEverything)
+      {
+        const auto end = storage.Size();
 
-      auto data = std::make_tuple(storage.template Access<Components>()...);
+        for (auto entity : storage)
+        {
+          manager_.Release(entity);
+        }
+      }
+
+      storage.Clear();
+    }
+
+    if constexpr (cDestroyEverything) manager_.ReleaseAll();
+    else if (Size() == 0)
+      manager_.ReleaseAll(); // Good because it clears the queue and resets the generator.
+  }
+
+  template<typename... Components, typename UnaryFunction>
+  requires RegistryIterationFunc<Entity, UnaryFunction, Components...>
+  void ForEach(UnaryFunction function)
+  {
+    static constexpr bool cExtended = RegistryExtendedIterationFunc<Entity, UnaryFunction, Components...>;
+
+    const ViewId view = graph_.template AssureView<Components...>();
+
+    const auto& archetypes = graph_.ViewArchetypes(view);
+
+    for (const auto archetype : archetypes)
+    {
+      ASSERT(storages_[archetype], "Storage not initialized");
+
+      auto& storage = *storages_[archetype];
+
+      auto data = std::make_tuple(storage.template Access<std::remove_cvref_t<Components>>()...);
 
       const auto end = storage.Size();
 
       for (size_t i = 0; i != end; ++i)
       {
-        invokable(storage[i], std::get<FastVector<Components>&>(data)[i]...);
+        if constexpr (cExtended) function(storage[i], std::get<Index<Components, Components...>::value>(data)[i]...);
+        else
+          function(std::forward<Components>(std::get<Index<Components, Components...>::value>(data)[i])...);
       }
     }
   }
@@ -150,8 +191,9 @@ public:
     return manager_.CirculatingCount();
   }
 
-  // TODO archetype switching
+  // TODO Expensive unpacking
 
+  // TODO archetype switching
 private:
   SharedSparseArray<Entity> mappings_;
   EntityManager<Entity> manager_;
