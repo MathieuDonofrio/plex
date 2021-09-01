@@ -25,7 +25,7 @@ public:
   }
 
   template<typename... Components>
-  Entity Create(const Components&... components)
+  Entity Create(Components&&... components)
   {
     const ArchetypeId archetype = graph_.template AssureArchetype<Components...>();
 
@@ -41,7 +41,7 @@ public:
 
     const Entity entity = manager_.Generate();
 
-    storage->template Insert<Components...>(entity, components...);
+    storage->template Insert<Components...>(entity, std::forward<Components...>(components)...);
 
     return entity;
   }

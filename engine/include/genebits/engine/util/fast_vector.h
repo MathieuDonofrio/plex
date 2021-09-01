@@ -159,7 +159,7 @@ public:
   void PushBack(Type&& value) noexcept
   {
     PrepareInsertion();
-    new (array_ + size_) Type(std::move(value));
+    new (array_ + size_) Type(std::forward<Type>(value));
     ++size_;
   }
 

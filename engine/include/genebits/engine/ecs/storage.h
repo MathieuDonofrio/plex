@@ -152,7 +152,7 @@ public:
   }
 
   template<typename... Components>
-  void Insert(const Entity entity, const Components&... components) noexcept
+  void Insert(const Entity entity, Components&&... components) noexcept
   {
     ASSERT(initialized_, "Not initialized");
     ASSERT(!Contains(entity), "Entity already exists");
@@ -243,6 +243,15 @@ public:
   }
 
 private:
+#ifndef NDEBUG
+  template<typename Component>
+  [[nodiscard]] bool HasComponent() const noexcept
+  {
+    return std::ranges::find(components_, Meta<Component>::Hash()) != components_.end();
+  }
+#endif
+
+private:
   using EraseFunction = void (*)(Storage* storage, const size_t);
   using ClearFunction = void (*)(Storage* storage);
 
@@ -259,12 +268,6 @@ private:
 #ifndef NDEBUG
   bool initialized_ = false;
   FastVector<size_t> components_;
-
-  template<typename Component>
-  [[nodiscard]] bool HasComponent() const noexcept
-  {
-    return std::ranges::find(components_, Meta<Component>::Hash()) != components_.end();
-  }
 #endif
 };
 
