@@ -16,7 +16,8 @@ namespace
 
 static void Storage_Unpack(benchmark::State& state)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<Component<0>>();
 
   storage.Insert(999, Component<0> { 999, 999 });
@@ -31,7 +32,8 @@ BENCHMARK(Storage_Unpack);
 
 static void Storage_Contains(benchmark::State& state)
 {
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<Component<0>>();
 
   storage.Insert(999, Component<0> { 999, 999 });
@@ -48,7 +50,8 @@ static void Storage_Iterate_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   for (size_t i = 0; i < amount; i++)
@@ -73,7 +76,8 @@ static void Storage_Iterate_Unpack1_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<Component<0>>();
 
   for (size_t i = 0; i < amount; i++)
@@ -101,7 +105,8 @@ static void Storage_Iterate_Unpack2_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
-  Storage<size_t> storage;
+  SharedSparseArray<size_t> sparse;
+  Storage<size_t> storage(&sparse);
   storage.Initialize<Component<0>, Component<1>>();
 
   for (size_t i = 0; i < amount; i++)
@@ -131,9 +136,11 @@ static void Storage_Insert_NoComponents_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
+  SharedSparseArray<size_t> sparse;
+
   for (auto _ : state)
   {
-    Storage<size_t> storage;
+    Storage<size_t> storage(&sparse);
     storage.Initialize<>();
 
     for (size_t i = 0; i < amount; i++)
@@ -151,9 +158,11 @@ static void Storage_InsertErase_NoComponents_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
+  SharedSparseArray<size_t> sparse;
+
   for (auto _ : state)
   {
-    Storage<size_t> storage;
+    Storage<size_t> storage(&sparse);
     storage.Initialize<>();
 
     for (size_t i = 0; i < amount; i++)
@@ -176,9 +185,11 @@ static void Storage_Insert_OneComponent_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
+  SharedSparseArray<size_t> sparse;
+
   for (auto _ : state)
   {
-    Storage<size_t> storage;
+    Storage<size_t> storage(&sparse);
     storage.Initialize<Component<0>>();
 
     for (size_t i = 0; i < amount; i++)
@@ -196,9 +207,11 @@ static void Storage_InsertErase_OneComponent_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
+  SharedSparseArray<size_t> sparse;
+
   for (auto _ : state)
   {
-    Storage<size_t> storage;
+    Storage<size_t> storage(&sparse);
     storage.Initialize<Component<0>>();
 
     for (size_t i = 0; i < amount; i++)
@@ -221,9 +234,11 @@ static void Storage_Insert_OneComponentNonTrivial_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
+  SharedSparseArray<size_t> sparse;
+
   for (auto _ : state)
   {
-    Storage<size_t> storage;
+    Storage<size_t> storage(&sparse);
     storage.Initialize<std::string>();
 
     for (size_t i = 0; i < amount; i++)
@@ -241,9 +256,11 @@ static void Storage_InsertErase_OneComponentNonTrivial_100(benchmark::State& sta
 {
   constexpr size_t amount = 100;
 
+  SharedSparseArray<size_t> sparse;
+
   for (auto _ : state)
   {
-    Storage<size_t> storage;
+    Storage<size_t> storage(&sparse);
     storage.Initialize<std::string>();
 
     for (size_t i = 0; i < amount; i++)
@@ -266,9 +283,11 @@ static void Storage_Insert_TwoComponents_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
+  SharedSparseArray<size_t> sparse;
+
   for (auto _ : state)
   {
-    Storage<size_t> storage;
+    Storage<size_t> storage(&sparse);
     storage.Initialize<Component<0>, Component<1>>();
 
     for (size_t i = 0; i < amount; i++)
@@ -286,9 +305,11 @@ static void Storage_InsertErase_TwoComponents_100(benchmark::State& state)
 {
   constexpr size_t amount = 100;
 
+  SharedSparseArray<size_t> sparse;
+
   for (auto _ : state)
   {
-    Storage<size_t> storage;
+    Storage<size_t> storage(&sparse);
     storage.Initialize<Component<0>, Component<1>>();
 
     for (size_t i = 0; i < amount; i++)
