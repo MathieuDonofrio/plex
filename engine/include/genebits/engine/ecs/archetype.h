@@ -21,7 +21,7 @@ namespace
   template<typename T1, typename T2>
   struct Compare
   {
-    static constexpr bool value = Meta<T1>::FullName().compare(Meta<T2>::FullName()) < 0;
+    static constexpr bool value = Meta<T1>::Name().compare(Meta<T2>::Name()) < 0;
 
     using type = std::conditional_t<value, T1, T2>;
   };

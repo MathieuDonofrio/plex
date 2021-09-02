@@ -128,7 +128,7 @@ TEST(Archetype_Tests, GetViewId_Single_AlwaysSame)
 
 TEST(Archetype_Tests, GetViewId_Double_Different)
 {
-  ASSERT_EQ(GetViewId<TestType<0>>(), GetViewId<TestType<1>>());
+  ASSERT_NE(GetViewId<TestType<0>>(), GetViewId<TestType<1>>());
 }
 
 TEST(Archetype_Tests, GetArchetypeId_Single_AlwaysSame)
@@ -138,7 +138,7 @@ TEST(Archetype_Tests, GetArchetypeId_Single_AlwaysSame)
 
 TEST(Archetype_Tests, GetArchetypeId_Double_Different)
 {
-  ASSERT_EQ(GetArchetypeId<TestType<0>>(), GetArchetypeId<TestType<1>>());
+  ASSERT_NE(GetArchetypeId<TestType<0>>(), GetArchetypeId<TestType<1>>());
 }
 
 TEST(Archetype_Tests, GetComponentIds_Single_Same)
