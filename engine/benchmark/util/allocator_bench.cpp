@@ -25,7 +25,6 @@ static void Allocator_STD_Allocator_Allocate(benchmark::State& state)
     state.ResumeTiming();
   }
 
-  state.SetBytesProcessed(amount);
   state.SetComplexityN(amount);
 }
 
@@ -50,7 +49,6 @@ static void Allocator_STD_Allocator_Deallocate(benchmark::State& state)
     allocator.deallocate(ptr, amount);
   }
 
-  state.SetBytesProcessed(amount);
   state.SetComplexityN(amount);
 }
 
@@ -75,7 +73,6 @@ static void Allocator_Mallocator_Allocate(benchmark::State& state)
     state.ResumeTiming();
   }
 
-  state.SetBytesProcessed(amount);
   state.SetComplexityN(amount);
 }
 
@@ -100,7 +97,6 @@ static void Allocator_Mallocator_Deallocate(benchmark::State& state)
     allocator.Deallocate(block);
   }
 
-  state.SetBytesProcessed(amount);
   state.SetComplexityN(amount);
 }
 
