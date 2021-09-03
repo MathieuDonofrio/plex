@@ -114,21 +114,21 @@ public:
 
     for (const auto archetype : archetypes)
     {
-      ASSERT(storages_[archetype], "Storage not initialized");
+      auto storage = storages_[archetype];
 
-      auto& storage = *storages_[archetype];
+      ASSERT(storage, "Storage not initialized");
 
       if constexpr (!cDestroyEverything)
       {
-        const auto end = storage.Size();
+        const auto end = storage->Size();
 
-        for (auto entity : storage)
+        for (auto entity : *storage)
         {
           manager_.Release(entity);
         }
       }
 
-      storage.Clear();
+      storage->Clear();
     }
 
     if constexpr (cDestroyEverything) manager_.ReleaseAll();
@@ -148,17 +148,17 @@ public:
 
     for (const auto archetype : archetypes)
     {
-      ASSERT(storages_[archetype], "Storage not initialized");
+      auto storage = storages_[archetype];
 
-      auto& storage = *storages_[archetype];
+      ASSERT(storage, "Storage not initialized");
 
-      auto data = std::make_tuple(storage.template Access<std::remove_cvref_t<Components>>()...);
+      auto data = std::make_tuple(storage->template Access<std::remove_cvref_t<Components>>()...);
 
-      const auto end = storage.Size();
+      const auto end = storage->Size();
 
       for (size_t i = 0; i != end; ++i)
       {
-        if constexpr (cExtended) function(storage[i], std::get<Index<Components, Components...>::value>(data)[i]...);
+        if constexpr (cExtended) function((*storage)[i], std::get<Index<Components, Components...>::value>(data)[i]...);
         else
           function(std::forward<Components>(std::get<Index<Components, Components...>::value>(data)[i])...);
       }
