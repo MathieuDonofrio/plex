@@ -1,8 +1,6 @@
 #ifndef GENEBITS_ENGINE_STORAGE_H
 #define GENEBITS_ENGINE_STORAGE_H
 
-#include <concepts>
-
 #include "genebits/engine/util/allocator.h"
 #include "genebits/engine/util/concepts.h"
 #include "genebits/engine/util/erased_ptr.h"
@@ -135,6 +133,7 @@ public:
   Storage& operator=(Storage&&) = delete;
 
   template<typename... Components>
+  requires UniqueTypes<Components...>
   void Initialize() noexcept
   {
     ASSERT(!initialized_, "Already initialized");
@@ -152,6 +151,7 @@ public:
   }
 
   template<typename... Components>
+  requires UniqueTypes<Components...>
   void Insert(const Entity entity, Components&&... components) noexcept
   {
     ASSERT(initialized_, "Not initialized");
