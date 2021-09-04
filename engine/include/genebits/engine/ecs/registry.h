@@ -13,15 +13,8 @@
 
 namespace genebits::engine
 {
-template<typename Entity, typename Invocable, typename... Components>
-concept RegistryExtendedIterationFunc = std::is_invocable_v<Invocable, Entity, Components...>;
-
-template<typename Invocable, typename... Components>
-concept RegistryReducedIterationFunc = std::is_invocable_v<Invocable, Components...>;
-
-template<typename Entity, typename Invocable, typename... Components>
-concept RegistryIterationFunc = RegistryReducedIterationFunc<Invocable,
-  Components...> || RegistryExtendedIterationFunc<Entity, Invocable, Components...>;
+template<std::unsigned_integral Entity, typename... Components>
+class BasicView;
 
 template<std::unsigned_integral Entity>
 class Registry
@@ -38,21 +31,9 @@ public:
   template<typename... Components>
   Entity Create(Components&&... components)
   {
-    const ArchetypeId archetype = graph_.template AssureArchetype<Components...>();
-
-    if (storages_.Size() <= archetype) storages_.Resize(archetype + 1, nullptr);
-
-    auto& storage = storages_[archetype];
-
-    if (!storage)
-    {
-      storage = new Storage<Entity>(&mappings_);
-      storage->template Initialize<std::remove_cvref_t<Components>...>();
-    }
-
     const Entity entity = manager_.Generate();
 
-    storage->template Insert<Components...>(entity, std::forward<Components>(components)...);
+    Access<Components...>().template Insert<Components...>(entity, std::forward<Components>(components)...);
 
     return entity;
   }
@@ -60,17 +41,102 @@ public:
   template<typename... Components>
   void Destroy(const Entity entity)
   {
-    const ViewId view = graph_.template AssureView<Components...>();
+    View<Components...>().Destroy(entity);
+  }
 
-    const auto& archetypes = graph_.ViewArchetypes(view);
+  template<typename... Components>
+  void DestroyAll()
+  {
+    View<Components...>().DestroyAll();
+  }
 
+  template<typename... Components, typename UnaryFunction>
+  void Each(UnaryFunction function)
+  {
+    return View<Components...>().Each(function);
+  }
+
+  template<typename Component>
+  [[nodiscard]] Component& Unpack(const Entity entity) noexcept
+  {
+    return View<Component>().template Unpack<Component>(entity);
+  }
+
+  template<typename Component, typename... Components>
+  [[nodiscard]] size_t Size() noexcept
+  {
+    return View<Component, Components...>().Size();
+  }
+
+  [[nodiscard]] size_t Size() const noexcept
+  {
+    return manager_.CirculatingCount();
+  }
+
+  template<typename... Components>
+  [[nodiscard]] BasicView<Entity, Components...> View() noexcept
+  {
+    return BasicView<Entity, Components...>(*this);
+  }
+
+private:
+  template<std::unsigned_integral Entity, typename... Components>
+  friend class BasicView;
+
+  template<typename... Components>
+  Storage<Entity>& Access()
+  {
+    const ArchetypeId archetype = graph_.template AssureArchetype<Components...>();
+
+    if (storages_.Size() <= archetype) storages_.Resize(archetype + 1, nullptr);
+
+    auto storage = storages_[archetype];
+
+    if (!storage)
+    {
+      storages_[archetype] = storage = new Storage<Entity>(&mappings_);
+      storage->template Initialize<std::remove_cvref_t<Components>...>();
+    }
+
+    return *storage;
+  }
+
+private:
+  SharedSparseArray<Entity> mappings_;
+  EntityManager<Entity> manager_;
+  ArchetypeGraph graph_;
+
+  FastVector<Storage<Entity>*> storages_;
+};
+
+template<typename Entity, typename Invocable, typename... Components>
+concept RegistryExtendedIterationFunc = std::is_invocable_v<Invocable, Entity, Components...>;
+
+template<typename Invocable, typename... Components>
+concept RegistryReducedIterationFunc = std::is_invocable_v<Invocable, Components...>;
+
+template<typename Entity, typename Invocable, typename... Components>
+concept RegistryIterationFunc = RegistryReducedIterationFunc<Invocable,
+  Components...> || RegistryExtendedIterationFunc<Entity, Invocable, Components...>;
+
+template<std::unsigned_integral Entity, typename... Components>
+class BasicView
+{
+public:
+  constexpr explicit BasicView(Registry<Entity>& registry) noexcept
+    : registry_(registry),
+      archetypes_(registry.graph_.ViewArchetypes(registry.graph_.template AssureView<Components...>()))
+  {}
+
+  void Destroy(const Entity entity)
+  {
 #ifndef NDEBUG
     bool found = false;
 #endif
 
-    for (const auto archetype : archetypes)
+    for (const auto archetype : archetypes_)
     {
-      auto storage = storages_[archetype];
+      auto storage = registry_.storages_[archetype];
 
       ASSERT(storage, "Storage not initialized");
 
@@ -88,21 +154,16 @@ public:
 
     ASSERT(found, "Entity does not exist in view");
 
-    manager_.Release(entity);
+    registry_.manager_.Release(entity);
   }
 
-  template<typename... Components>
   void DestroyAll()
   {
     static constexpr bool cDestroyEverything = sizeof...(Components) == 0;
 
-    const ViewId view = graph_.template AssureView<Components...>();
-
-    const auto& archetypes = graph_.ViewArchetypes(view);
-
-    for (const auto archetype : archetypes)
+    for (const auto archetype : archetypes_)
     {
-      auto storage = storages_[archetype];
+      auto storage = registry_.storages_[archetype];
 
       ASSERT(storage, "Storage not initialized");
 
@@ -112,31 +173,29 @@ public:
 
         for (auto entity : *storage)
         {
-          manager_.Release(entity);
+          registry_.manager_.Release(entity);
         }
       }
 
       storage->Clear();
     }
 
-    if constexpr (cDestroyEverything) manager_.ReleaseAll();
-    else if (Size() == 0)
-      manager_.ReleaseAll(); // Good because it clears the queue and resets the generator.
+    if constexpr (cDestroyEverything) registry_.manager_.ReleaseAll();
+    else if (registry_.Size() == 0)
+    {
+      registry_.manager_.ReleaseAll(); // Good because it clears the queue and resets the generator.
+    }
   }
 
-  template<typename... Components, typename UnaryFunction>
+  template<typename UnaryFunction>
   requires RegistryIterationFunc<Entity, UnaryFunction, Components...>
-  void ForEach(UnaryFunction function)
+  void Each(UnaryFunction function)
   {
     static constexpr bool cExtended = RegistryExtendedIterationFunc<Entity, UnaryFunction, Components...>;
 
-    const ViewId view = graph_.template AssureView<Components...>();
-
-    const auto& archetypes = graph_.ViewArchetypes(view);
-
-    for (const auto archetype : archetypes)
+    for (const auto archetype : archetypes_)
     {
-      auto storage = storages_[archetype];
+      auto storage = registry_.storages_[archetype];
 
       ASSERT(storage, "Storage not initialized");
 
@@ -153,18 +212,13 @@ public:
     }
   }
 
-  template<typename Component, typename... Components>
-  [[nodiscard]] size_t Size() noexcept
+  [[nodiscard]] size_t Size() const noexcept
   {
-    const ViewId view = graph_.template AssureView<Component, Components...>();
-
-    const auto& archetypes = graph_.ViewArchetypes(view);
-
     size_t sum = 0;
 
-    for (auto archetype : archetypes)
+    for (auto archetype : archetypes_)
     {
-      const auto storage = storages_[archetype];
+      const auto storage = registry_.storages_[archetype];
 
       ASSERT(storage, "Storage not initialized");
 
@@ -174,14 +228,30 @@ public:
     return sum;
   }
 
-  [[nodiscard]] size_t Size() const noexcept
+  template<typename Component>
+  [[nodiscard]] const Component& Unpack(const Entity entity) const noexcept
   {
-    return manager_.CirculatingCount();
+    auto end = archetypes_.end() - 1;
+
+    for (auto it = archetypes_.begin(); it != end; ++it)
+    {
+      const auto storage = registry_.storages_[*it];
+
+      ASSERT(storage, "Storage not initialized");
+
+      if (storage->Contains(entity)) return storage->template Unpack<Component>(entity);
+    }
+
+    ASSERT(registry_.storages_[*end], "Storage not initialized");
+
+    return registry_.storages_[*end]->template Unpack<Component>(entity);
   }
 
-  // TODO Expensive unpacking
-
-  // TODO archetype switching
+  template<typename Component>
+  [[nodiscard]] Component& Unpack(const Entity entity) noexcept
+  {
+    return const_cast<Component&>(const_cast<const BasicView*>(this)->Unpack<Component>(entity));
+  }
 
 private:
   template<typename T, typename... Ts>
@@ -196,11 +266,8 @@ private:
   {};
 
 private:
-  SharedSparseArray<Entity> mappings_;
-  EntityManager<Entity> manager_;
-  ArchetypeGraph graph_;
-
-  FastVector<Storage<Entity>*> storages_;
+  Registry<Entity>& registry_;
+  const FastVector<ArchetypeId>& archetypes_;
 };
 
 } // namespace genebits::engine

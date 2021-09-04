@@ -27,7 +27,7 @@ static void Registry_Iterate_OneArchetype(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ForEach([](size_t entity) { benchmark::DoNotOptimize(entity); });
+    registry.Each([](size_t entity) { benchmark::DoNotOptimize(entity); });
   }
 
   benchmark::DoNotOptimize(registry);
@@ -50,7 +50,7 @@ static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ForEach<Component<0>>(
+    registry.Each<Component<0>>(
       [](size_t entity, Component<0> c1)
       {
         benchmark::DoNotOptimize(entity);
@@ -78,7 +78,7 @@ static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ForEach<Component<0>, Component<1>>(
+    registry.Each<Component<0>, Component<1>>(
       [](size_t entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
@@ -112,7 +112,7 @@ static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ForEach<Component<0>, Component<1>>(
+    registry.Each<Component<0>, Component<1>>(
       [](size_t entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
@@ -186,7 +186,7 @@ static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ForEach<Component<0>, Component<1>>(
+    registry.Each<Component<0>, Component<1>>(
       [](size_t entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);

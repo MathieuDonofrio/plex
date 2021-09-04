@@ -4,6 +4,15 @@
 
 namespace genebits::engine::tests
 {
+TEST(Registry_Tests, Size_AfterInitialization_Zero)
+{
+  Registry<size_t> registry;
+
+  ASSERT_EQ(registry.Size(), 0);
+  ASSERT_EQ(registry.Size<int>(), 0);
+  ASSERT_EQ(registry.Size<double>(), 0);
+}
+
 TEST(Registry_Tests, Create_AfterInitialization_IncreaseSize)
 {
   Registry<size_t> registry;
@@ -200,7 +209,7 @@ TEST(Registry_Tests, ForEach_EntireRegistrySingleEntity_CorrectEntity)
 
   size_t iterations = 0;
 
-  registry.ForEach(
+  registry.Each(
     [&](const size_t entity)
     {
       ASSERT_EQ(entity, created_entity);
@@ -223,7 +232,7 @@ TEST(Registry_Tests, ForEach_EntireRegistryMultipleEntities_CorrectAmountEntitie
 
   size_t iterations = 0;
 
-  registry.ForEach([&](const size_t) { iterations++; });
+  registry.Each([&](const size_t) { iterations++; });
 
   ASSERT_EQ(registry.Size(), iterations);
   ASSERT_EQ(registry.Size(), amount);
@@ -237,7 +246,7 @@ TEST(Registry_Tests, ForEach_UnpackNothing_CorrectIterations)
 
   size_t iterations = 0;
 
-  registry.ForEach([&]() { iterations++; });
+  registry.Each([&]() { iterations++; });
 
   ASSERT_EQ(registry.Size(), iterations);
 }
@@ -250,7 +259,7 @@ TEST(Registry_Tests, ForEach_UnpackOneComponent_Correct)
 
   size_t iterations = 0;
 
-  registry.ForEach<int>(
+  registry.Each<int>(
     [&](const size_t entity, int component)
     {
       EXPECT_EQ(entity, created_entity);
@@ -269,7 +278,7 @@ TEST(Registry_Tests, ForEach_UnpackTwoComponents_Correct)
 
   size_t iterations = 0;
 
-  registry.ForEach<int, double>(
+  registry.Each<int, double>(
     [&](const size_t entity, int c1, double c2)
     {
       EXPECT_EQ(entity, created_entity);
@@ -289,7 +298,7 @@ TEST(Registry_Tests, ForEach_UnpackTwoComponentsConst_Correct)
 
   size_t iterations = 0;
 
-  registry.ForEach<int, const double>(
+  registry.Each<int, const double>(
     [&](const size_t entity, int c1, const double& c2)
     {
       EXPECT_EQ(entity, created_entity);
@@ -301,6 +310,16 @@ TEST(Registry_Tests, ForEach_UnpackTwoComponentsConst_Correct)
   ASSERT_EQ(registry.Size(), iterations);
 }
 
+TEST(Registry_Tests, Unpack_Single_Correct)
+{
+  Registry<size_t> registry;
+
+  auto created_entity = registry.Create<int, double>(10, 0.5);
+
+  ASSERT_EQ(10, registry.Unpack<int>(created_entity));
+  ASSERT_EQ(0.5, registry.Unpack<double>(created_entity));
+}
+
 TEST(Registry_Tests, ForEach_UnpackThreeComponents_Correct)
 {
   Registry<size_t> registry;
@@ -309,7 +328,7 @@ TEST(Registry_Tests, ForEach_UnpackThreeComponents_Correct)
 
   size_t iterations = 0;
 
-  registry.ForEach<int, double, float>(
+  registry.Each<int, double, float>(
     [&](const size_t entity, int c1, double c2, float c3)
     {
       EXPECT_EQ(entity, created_entity);
@@ -333,43 +352,43 @@ TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectAmountIterations)
 
   size_t iterations = 0;
 
-  registry.ForEach<int>([&](int) { iterations++; });
+  registry.Each<int>([&](int) { iterations++; });
 
   ASSERT_EQ(iterations, 3);
 
   iterations = 0;
 
-  registry.ForEach<int, double>([&](int, double) { iterations++; });
+  registry.Each<int, double>([&](int, double) { iterations++; });
 
   ASSERT_EQ(iterations, 2);
 
   iterations = 0;
 
-  registry.ForEach<int, float>([&](int, float) { iterations++; });
+  registry.Each<int, float>([&](int, float) { iterations++; });
 
   ASSERT_EQ(iterations, 1);
 
   iterations = 0;
 
-  registry.ForEach<float>([&](float) { iterations++; });
+  registry.Each<float>([&](float) { iterations++; });
 
   ASSERT_EQ(iterations, 2);
 
   iterations = 0;
 
-  registry.ForEach<float>([&](float) { iterations++; });
+  registry.Each<float>([&](float) { iterations++; });
 
   ASSERT_EQ(iterations, 2);
 
   iterations = 0;
 
-  registry.ForEach<double>([&](double) { iterations++; });
+  registry.Each<double>([&](double) { iterations++; });
 
   ASSERT_EQ(iterations, 3);
 
   iterations = 0;
 
-  registry.ForEach<double, float>([&](double, float) { iterations++; });
+  registry.Each<double, float>([&](double, float) { iterations++; });
 
   ASSERT_EQ(iterations, 2);
 }
@@ -389,7 +408,7 @@ TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectUnpackedValues)
 
   size_t iterations = 0;
 
-  registry.ForEach<double>(
+  registry.Each<double>(
     [&](const size_t entity, double c1)
     {
       EXPECT_EQ(c1, mappings[entity]);

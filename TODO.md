@@ -26,6 +26,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Add LOD icons for the window (small, med, big)
 - [ ] Add nested namespace for benchmarks (like tests)
 - [ ] Add pretty name in meta.h (Same across boundaries)
+- [ ] Archetype swapping
 
 ## Major
 
