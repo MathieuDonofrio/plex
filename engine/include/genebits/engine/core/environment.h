@@ -1,6 +1,7 @@
 #ifndef GENEBITS_ENGINE_CORE_ENVIRONMENT_H
 #define GENEBITS_ENGINE_CORE_ENVIRONMENT_H
 
+#include "genebits/engine/ecs/registry.h"
 #include "genebits/engine/events/event_bus.h"
 
 namespace genebits::engine
@@ -23,6 +24,11 @@ public:
   ///
   ~Environment();
 
+  Environment(const Environment&) = delete;
+  Environment(Environment&&) = delete;
+  Environment& operator=(const Environment&) = delete;
+  Environment& operator=(Environment&&) = delete;
+
   ///
   /// Returns the event bus for the environment. The event bus is used to
   /// subscribe event handlers to and publish events.
@@ -34,8 +40,20 @@ public:
     return event_bus_;
   }
 
+  ///
+  /// Returns the event bus for the environment. The event bus is used to
+  /// subscribe event handlers to and publish events.
+  ///
+  /// @return Environment event bus.
+  ///
+  [[nodiscard]] Registry<uint32_t>& GetRegistry() noexcept
+  {
+    return registry_;
+  }
+
 private:
   EventBus event_bus_;
+  Registry<uint32_t> registry_;
 
   // Pimpl for hidden dependencies
   struct Pimpl;

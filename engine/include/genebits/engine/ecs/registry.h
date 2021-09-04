@@ -20,6 +20,8 @@ template<std::unsigned_integral Entity>
 class Registry
 {
 public:
+  Registry() = default;
+
   ~Registry()
   {
     for (auto storage : storages_)
@@ -27,6 +29,11 @@ public:
       if (storage) delete storage;
     }
   }
+
+  Registry(const Registry&) = delete;
+  Registry(Registry&&) = delete;
+  Registry& operator=(const Registry&) = delete;
+  Registry& operator=(Registry&&) = delete;
 
   template<typename... Components>
   Entity Create(Components&&... components)
