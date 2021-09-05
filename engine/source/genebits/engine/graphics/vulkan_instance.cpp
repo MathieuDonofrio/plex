@@ -18,8 +18,8 @@ VulkanInstance::VulkanInstance(VulkanCapableWindow* vulkan_capable_window,
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.pApplicationName = application_name;
   app_info.applicationVersion = VK_MAKE_VERSION(GENEBITS_VERSION_MAJOR, GENEBITS_VERSION_MINOR, GENEBITS_VERSION_PATCH);
-  app_info.pEngineName = "Genebits graphic engine";
-  app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  app_info.pEngineName = "Genebits engine";
+  app_info.engineVersion = VK_MAKE_VERSION(GENEBITS_VERSION_MAJOR, GENEBITS_VERSION_MINOR, GENEBITS_VERSION_PATCH);
   app_info.apiVersion = VK_API_VERSION_1_0;
 
   VkInstanceCreateInfo create_info {};
