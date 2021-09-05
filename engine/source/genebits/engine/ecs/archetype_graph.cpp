@@ -5,25 +5,25 @@ namespace genebits::engine
 {
 void ArchetypeGraph::AddView(ViewId id)
 {
-  if (id >= view_to_archetypes.Size()) view_to_archetypes.Resize(id + 1);
+  if (id >= view_archetypes_.Size()) view_archetypes_.Resize(id + 1);
 
-  auto& view_components = views[id].components;
+  auto& view_components = view_components_[id];
 
-  for (ArchetypeId i = 0; i < archetypes.Size(); i++)
+  for (ArchetypeId i = 0; i < archetype_states_.Size(); i++)
   {
-    if (archetypes[i].initialized)
+    if (archetype_states_[i])
     {
-      auto& archetype_components = archetypes[i].components;
+      auto& archetype_components = archetype_components_[i];
 
       if (std::includes(
             archetype_components.begin(), archetype_components.end(), view_components.begin(), view_components.end()))
       {
-        view_to_archetypes[id].PushBack(i);
+        view_archetypes_[id].PushBack(i);
 
         if (view_components.Size() == archetype_components.Size())
         {
           // Always put exact match first in the list. This can make some operations faster.
-          std::swap(view_to_archetypes[id].front(), view_to_archetypes[id].back());
+          std::swap(view_archetypes_[id].front(), view_archetypes_[id].back());
         }
       }
     }
@@ -32,23 +32,23 @@ void ArchetypeGraph::AddView(ViewId id)
 
 void ArchetypeGraph::AddArchetype(ArchetypeId id)
 {
-  auto& archetype_components = archetypes[id].components;
+  auto& archetype_components = archetype_components_[id];
 
-  for (ViewId i = 0; i < views.Size(); i++)
+  for (ViewId i = 0; i < view_states_.Size(); i++)
   {
-    if (views[i].initialized)
+    if (view_states_[i])
     {
-      auto& view_components = views[i].components;
+      auto& view_components = view_components_[i];
 
       if (std::includes(
             archetype_components.begin(), archetype_components.end(), view_components.begin(), view_components.end()))
       {
-        view_to_archetypes[i].PushBack(id);
+        view_archetypes_[i].PushBack(id);
 
         if (view_components.Size() == archetype_components.Size())
         {
           // Always put exact match first in the list. This can make some operations faster.
-          std::swap(view_to_archetypes[i].front(), view_to_archetypes[i].back());
+          std::swap(view_archetypes_[i].front(), view_archetypes_[i].back());
         }
       }
     }

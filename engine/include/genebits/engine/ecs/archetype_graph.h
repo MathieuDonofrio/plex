@@ -5,76 +5,135 @@
 
 namespace genebits::engine
 {
+/**
+ * Archetype graph for keeping track of what archetypes are associated with what view.
+ *
+ * The graph is flattened for performance.
+ */
 class ArchetypeGraph
 {
 public:
+  /**
+   * If the view never existed it will be baked into the flattened graph for quick access.
+   *
+   * @tparam Components Unordered list of component types.
+   *
+   * @return The view id that was assured.
+   */
   template<typename... Components>
   ViewId AssureView()
   {
     const ViewId id = GetViewId<std::remove_cvref_t<Components>...>();
 
-    if (id >= views.Size() || !views[id].initialized)
+    if (id >= view_states_.Size() || !view_states_[id])
     {
-      std::scoped_lock<std::mutex> lock(mutex);
+      mutex_.lock();
 
-      Initialize<std::remove_cvref_t<Components>...>(views, id);
+      Initialize<ViewId, Components...>(view_components_, view_states_, id);
       AddView(id);
+
+      mutex_.unlock();
     }
 
     return id;
   }
 
+  /**
+   * If the archetype never existed it will be baked into the flattened graph for quick access.
+   *
+   * @tparam Components Unordered list of component types.
+   *
+   * @return The archetype id that was assured.
+   */
   template<typename... Components>
   ArchetypeId AssureArchetype()
   {
     const ArchetypeId id = GetArchetypeId<std::remove_cvref_t<Components>...>();
 
-    if (id >= archetypes.Size() || !archetypes[id].initialized)
+    if (id >= archetype_states_.Size() || !archetype_states_[id])
     {
-      std::scoped_lock<std::mutex> lock(mutex);
+      mutex_.lock();
 
-      Initialize<std::remove_cvref_t<Components>...>(archetypes, id);
+      Initialize<ArchetypeId, Components...>(archetype_components_, archetype_states_, id);
       AddArchetype(id);
+
+      mutex_.unlock();
     }
 
     return id;
   }
 
-  [[nodiscard]] constexpr const FastVector<ArchetypeId>& ViewArchetypes(ViewId id) noexcept
+  /**
+   * Returns the list of the ids of all archetypes that the view can see.
+   *
+   * Very fast, simply a single lookup.
+   *
+   * @param[in] id View identifier.
+   *
+   * @return List of archetypes for the view.
+   */
+  [[nodiscard]] constexpr const FastVector<ArchetypeId>& ViewArchetypes(ViewId id) const noexcept
   {
-    return view_to_archetypes[id];
+    ASSERT(id < view_states_.Size() && view_states_[id], "View not initialized");
+
+    return view_archetypes_[id];
   }
 
 private:
-  struct ComponentCombinationEntry
+  /**
+   * Initializes an unordered list of components and states for a given id.
+   *
+   * Components and states are seperated for SoA access performance.
+   *
+   * @tparam IdType Type of identifier.
+   * @tparam Components List of component types.
+   *
+   * @param[in] components The components list.
+   * @param[in] states The states list.
+   * @param[in] id The id to initialize for.
+   */
+  template<std::unsigned_integral IdType, typename... Components>
+  static void Initialize(FastVector<FastVector<ComponentId>>& components, FastVector<bool>& states, const IdType id)
   {
-    FastVector<ComponentId> components;
-    bool initialized = false;
-  };
+    if (id >= states.Size())
+    {
+      components.Resize(id + 1);
+      states.Resize(id + 1);
+    }
 
-  template<typename... Components>
-  static void Initialize(FastVector<ComponentCombinationEntry>& entries, const size_t id)
-  {
-    if (id >= entries.Size()) entries.Resize(id + 1);
-
-    auto& entry = entries[id];
-
-    entry.components = GetComponentIds<std::remove_cvref_t<Components>...>();
-
-    entry.initialized = true;
+    components[id] = GetComponentIds<std::remove_cvref_t<Components>...>();
+    states[id] = true;
   }
 
+  /**
+   * Bakes the view into the graph.
+   *
+   * @warning
+   *    Only call once after initialization.
+   *
+   * @param[in] id Identifier of the view to add.
+   */
   void AddView(ViewId id);
 
+  /**
+   * Bakes the archetype into the graph.
+   *
+   * @warning
+   *    Only call once after initialization.
+   *
+   * @param[in] id Identifier of the archetype to add.
+   */
   void AddArchetype(ArchetypeId id);
 
 private:
-  FastVector<ComponentCombinationEntry> views;
-  FastVector<ComponentCombinationEntry> archetypes;
+  FastVector<FastVector<ComponentId>> archetype_components_;
+  FastVector<bool> archetype_states_;
 
-  FastVector<FastVector<ArchetypeId>> view_to_archetypes;
+  FastVector<FastVector<ComponentId>> view_components_;
+  FastVector<FastVector<ArchetypeId>> view_archetypes_;
+  FastVector<bool> view_states_;
 
-  std::mutex mutex;
+  std::mutex mutex_;
 };
 } // namespace genebits::engine
 
