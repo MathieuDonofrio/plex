@@ -38,7 +38,7 @@ public:
   template<typename... Components>
   Entity Create(Components&&... components)
   {
-    const Entity entity = manager_.Generate();
+    const Entity entity = manager_.Obtain();
 
     Access<Components...>().template Insert<Components...>(entity, std::forward<Components>(components)...);
 
