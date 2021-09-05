@@ -10,13 +10,33 @@
 
 namespace genebits::engine
 {
-
+/**
+ * Sparse array used to lookup entity indexes.
+ *
+ * Very quick entity to index mappings used for the storage to create a sparse set.
+ *
+ * The sparse array can be shared between storages that use the same entity generator sequence as long as
+ * no entity can be in more than one storage. Since there is one storage per archetype this is guaranteed.
+ * Sharing the sparse array reduces overall memory use by a substantial amount. For example, if there are
+ * 10 archetypes, sharing the sparse array could save up to 9 times the memory of one sparse array.
+ *
+ * @warning Uses a lot of memory.
+ *
+ * @tparam Entity The type of entity to use.
+ * @tparam AllocatorImpl Allocator to allocate memory with.
+ */
 template<std::unsigned_integral Entity, Allocator AllocatorImpl = Mallocator>
 class SharedSparseArray : private AllocatorImpl
 {
 public:
+  /**
+   * Constructor.
+   */
   constexpr SharedSparseArray() noexcept : array_(nullptr), capacity_(0) {}
 
+  /**
+   * Destructor.
+   */
   ~SharedSparseArray()
   {
     AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), sizeof(Entity) * capacity_ });
@@ -27,6 +47,11 @@ public:
   SharedSparseArray& operator=(const SharedSparseArray&) = delete;
   SharedSparseArray& operator=(SharedSparseArray&&) = delete;
 
+  /**
+   * Assures that the entity can be mapped in the sparse array.
+   *
+   * @param[in] entity Entity to verify.
+   */
   void Assure(const Entity entity) noexcept
   {
     if (entity >= capacity_)
@@ -42,16 +67,35 @@ public:
     }
   }
 
+  /**
+   * Const array access operator.
+   *
+   * @param[in] entity Entity to access index for.
+   *
+   * @return Entity index.
+   */
   [[nodiscard]] constexpr Entity operator[](const Entity entity) const noexcept
   {
     return array_[entity];
   }
 
+  /**
+   * Array access operator.
+   *
+   * @param[in] entity Entity to access index for.
+   *
+   * @return Entity index.
+   */
   [[nodiscard]] constexpr Entity& operator[](const Entity entity) noexcept
   {
     return array_[entity];
   }
 
+  /**
+   * Returns the capacity of the sparse array.
+   *
+   * @return Sparse array capacity.
+   */
   [[nodiscard]] constexpr size_t Capacity() const noexcept
   {
     return capacity_;
@@ -62,6 +106,24 @@ private:
   size_t capacity_;
 };
 
+/**
+ * Storage container for a single archetype.
+ *
+ * Basically a sparse set, but optimized for storing extra data, in this case component data.
+ *
+ * Component data is contiguously stored in memory and can achieve near vector iteration speeds.
+ * Insertion and erasing is constant time.
+ *
+ * @warning
+ *  The order is never guaranteed.
+ *
+ * @warning
+ *  Storage data is type erased using an unsafe initialization design. This allows for more performance
+ *  but is undefined behaviour if the storage is not initialized.
+ *
+ * @tparam DenseAllocator Allocator to use for dense arrays.
+ * @tparam SparseAllocator Allocator to use for sparse array.
+ */
 template<std::unsigned_integral Entity, Allocator DenseAllocator = Mallocator, Allocator SparseAllocator = Mallocator>
 class Storage : private DenseAllocator
 {
@@ -109,18 +171,37 @@ public:
 
   // clang-format on
 
+  /**
+   * Const array access operator.
+   *
+   * @param[in] index Index to access.
+   *
+   * @return Entity at index.
+   */
   [[nodiscard]] constexpr const Entity& operator[](const size_type index) const noexcept
   {
     return dense_[index];
   }
 
+  /**
+   * Array access operator.
+   *
+   * @param[in] index Index to access.
+   *
+   * @return Entity at index.
+   */
   [[nodiscard]] constexpr Entity& operator[](const size_type index) noexcept
   {
     return dense_[index];
   }
 
 public:
-  Storage(SharedSparseArray<Entity>* sparse) noexcept
+  /**
+   * Constructor.
+   *
+   * @param[in] sparse Shared sparse array.
+   */
+  explicit Storage(SharedSparseArray<Entity, SparseAllocator>* sparse) noexcept
   {
     ASSERT(sparse != nullptr, "Sparse array cannot be nullptr");
 
@@ -132,24 +213,54 @@ public:
   Storage& operator=(const Storage&) = delete;
   Storage& operator=(Storage&&) = delete;
 
+  /**
+   * Initializes the storage for the component types.
+   *
+   * The components must correspond to the archetype being stored.
+   *
+   * @warning
+   *    Must be correctly called before doing anything with the registry, or else behaviour
+   *    of the storage is undefined.
+   *
+   * @tparam Components List of component types.
+   */
   template<typename... Components>
   requires UniqueTypes<Components...>
   void Initialize() noexcept
   {
     ASSERT(!initialized_, "Already initialized");
 
+    // Set up all the pools with type erased vectors.
     ((pools_.template Assure<Components>().Reset(new FastVector<Components, DenseAllocator>())), ...);
 
+    // Store functors for the operations that need type information and don't have it.
     erase_function_ = []([[maybe_unused]] auto storage, [[maybe_unused]] const size_t index)
     { ((storage->template Access<Components>().EraseAt(index)), ...); };
     clear_function_ = []([[maybe_unused]] auto storage) { ((storage->template Access<Components>().Clear()), ...); };
 
 #ifndef NDEBUG
+    // When debugging it is useful to have the list of components used at initialization.
     ((components_.PushBack(Meta<Components>::Hash())), ...);
     initialized_ = true;
 #endif
   }
 
+  /**
+   * Inserts the entity with its component data into the storage.
+   *
+   * This operation O(1) and is very fast.
+   *
+   * @note
+   *    Order of the components does not matter.
+   *
+   * @warning
+   *    The component types must be exactly the same as the
+   *
+   * @tparam Components List of component types to add.
+   *
+   * @param[in] entity Entity to insert into the storage.
+   * @param[in] components Component data to move into the storage.
+   */
   template<typename... Components>
   requires UniqueTypes<Components...>
   void Insert(const Entity entity, Components&&... components) noexcept
@@ -169,6 +280,13 @@ public:
     ((Access<std::remove_cvref_t<Components>>().PushBack(std::forward<Components>(components))), ...);
   }
 
+  /**
+   * Erases the entity from the storage.
+   *
+   * This operation O(1) and is very fast.
+   *
+   * @param[in] entity Entity to erase.
+   */
   void Erase(const Entity entity) noexcept
   {
     ASSERT(initialized_, "Not initialized");
@@ -185,6 +303,11 @@ public:
     erase_function_(this, index);
   }
 
+  /**
+   * Clears the entire storage.
+   *
+   * This operation is O(1) if all component types are trivial. Otherwise the complexity is O(n).
+   */
   void Clear()
   {
     ASSERT(initialized_, "Not initialized");
@@ -194,6 +317,15 @@ public:
     clear_function_(this);
   }
 
+  /**
+   * Checks if the entity is in the storage.
+   *
+   * This operation is O(1) and is very fast.
+   *
+   * @param[in] entity The entity to check.
+   *
+   * @return True if the entity is in the storage, false otherwise.
+   */
   [[nodiscard]] constexpr bool Contains(const Entity entity) const noexcept
   {
     ASSERT(initialized_, "Not initialized");
@@ -203,6 +335,20 @@ public:
     return entity < sparse_->Capacity() && (index = (*sparse_)[entity]) < dense_.Size() && dense_[index] == entity;
   }
 
+  /**
+   * Returns a reference to the component data for the entity.
+   *
+   * This operation is O(1) and is very fast.
+   *
+   * @note
+   *    This method of unpacking is slightly slower than the unpacking during iteration.
+   *
+   * @tparam Component The component to obtain reference of.
+   *
+   * @param[in] entity Entity to unpack data for.
+   *
+   * @return The unpacked component data.
+   */
   template<typename Component>
   [[nodiscard]] const Component& Unpack(const Entity entity) const noexcept
   {
@@ -211,12 +357,35 @@ public:
     return Access<Component>()[sparse_->operator[](entity)];
   }
 
+  /**
+   * Returns a reference to the component data for the entity.
+   *
+   * This operation is O(1) and is very fast.
+   *
+   * @note
+   *    This method of unpacking is slightly slower than the unpacking during iteration.
+   *
+   * @tparam Component The component to obtain reference of.
+   *
+   * @param[in] entity Entity to unpack data for.
+   *
+   * @return The unpacked component data.
+   */
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity) noexcept
   {
     return const_cast<Component&>(const_cast<const Storage*>(this)->Unpack<Component>(entity));
   }
 
+  /**
+   * Directly accesses the internal array of the dense storage of the component.
+   *
+   * This method is O(1) and is very fast.
+   *
+   * @tparam Component The component type to access array for.
+   *
+   * @return Reference to dense array for the component type.
+   */
   template<typename Component>
   [[nodiscard]] const FastVector<Component, DenseAllocator>& Access() const noexcept
   {
@@ -226,17 +395,36 @@ public:
     return *pools_.Get<Component>().template Cast<FastVector<Component, DenseAllocator>>();
   }
 
+  /**
+   * Directly accesses the internal array of the dense storage of the component.
+   *
+   * This method is O(1) and is very fast.
+   *
+   * @tparam Component The component type to access array for.
+   *
+   * @return Reference to dense array for the component type.
+   */
   template<typename Component>
   [[nodiscard]] FastVector<Component, DenseAllocator>& Access() noexcept
   {
     return const_cast<FastVector<Component, DenseAllocator>&>(const_cast<const Storage*>(this)->Access<Component>());
   }
 
+  /**
+   * Returns whether or not the storage contains any entities.
+   *
+   * @return True if the storage is empty, false otherwise.
+   */
   [[nodiscard]] bool Empty() const noexcept
   {
     return dense_.Empty();
   }
 
+  /**
+   * Returns the amount of entities in the storage.
+   *
+   * @return Size of storage.
+   */
   [[nodiscard]] size_t Size() const noexcept
   {
     return dense_.Size();
@@ -244,6 +432,13 @@ public:
 
 private:
 #ifndef NDEBUG
+  /**
+   * Debug utility for checking if the storage was initialized with a component type.
+   *
+   * @tparam Component Component type to check.
+   *
+   * @return True if the storage was initialized with component, false otherwise.
+   */
   template<typename Component>
   [[nodiscard]] bool HasComponent() const noexcept
   {
