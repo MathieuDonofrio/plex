@@ -100,7 +100,7 @@ int main(int, char**)
   Window* window = CreateWindow("Hello world", 256, 256, hints);
 
   // Window loop
-  auto vulkan_dummy = new VulkanDummy(window, "Genebits", true, VulkanDummy::DebugMessageSeverityThreshold::Info);
+  auto vulkan_dummy = new VulkanDummy(window, "Genebits", true, VulkanDummy::DebugMessageSeverityThreshold::Warn);
   vulkan_dummy->DummyFunction(*vulkan_dummy);
 
   while (!window->IsClosing())
