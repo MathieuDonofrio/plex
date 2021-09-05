@@ -31,7 +31,7 @@ public:
   /// extensions for the multimedia library in use.
   /// @param[in] use_debug_messenger Whether the debug messenger should be set up and used
   ///
-  VulkanInstance(VulkanCapableWindow& vulkan_capable_window,
+  VulkanInstance(VulkanCapableWindow* vulkan_capable_window,
     const char* application_name,
     bool use_debug_messenger = false,
     DebugMessageSeverityThreshold debugMessageSeverityThreshold = DebugMessageSeverityThreshold::Warn);

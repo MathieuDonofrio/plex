@@ -8,7 +8,7 @@
 namespace genebits::engine
 {
 
-VulkanInstance::VulkanInstance(VulkanCapableWindow& vulkan_capable_window,
+VulkanInstance::VulkanInstance(VulkanCapableWindow* vulkan_capable_window,
   const char* application_name,
   bool use_debug_messenger,
   DebugMessageSeverityThreshold debug_message_severity_threshold)
@@ -44,7 +44,7 @@ VulkanInstance::VulkanInstance(VulkanCapableWindow& vulkan_capable_window,
     create_info.pNext = nullptr;
   }
 
-  std::vector<const char*> required_extensions = vulkan_capable_window.GetRequiredInstanceExtensions();
+  std::vector<const char*> required_extensions = vulkan_capable_window->GetRequiredInstanceExtensions();
 
   if (use_debug_messenger) { required_extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME); }
 
