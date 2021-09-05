@@ -27,6 +27,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Add nested namespace for benchmarks (like tests)
 - [ ] Add pretty name in meta.h (Same across boundaries)
 - [ ] Archetype swapping
+- [ ] Verify if registry should have built-in thread safety
 
 ## Major
 
