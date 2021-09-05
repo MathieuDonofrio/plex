@@ -164,6 +164,21 @@ public:
   }
 
   /**
+   * Returns whether or not the entity has all of the specified components.
+   *
+   * @tparam Components Required component types.
+   *
+   * @param[in] entity Entity to check.
+   *
+   * @return True if the entity has all the components.
+   */
+  template<typename... Components>
+  bool HasComponents(Entity entity) noexcept
+  {
+    return View<Components...>().Contains(entity);
+  }
+
+  /**
    * Returns the total amount of entities in the registry.
    *
    * This is the sum of the sizes of every storage (every archetype) in the registry.
@@ -386,9 +401,7 @@ public:
    */
   void Destroy(const Entity entity)
   {
-#ifndef NDEBUG
-    bool found = false;
-#endif
+    ASSERT(Contains(entity), "Entity does not exist in view");
 
     for (const auto archetype : archetypes_)
     {
@@ -400,15 +413,9 @@ public:
       {
         storage->Erase(entity);
 
-#ifndef NDEBUG
-        found = true;
-#endif
-
         break;
       }
     }
-
-    ASSERT(found, "Entity does not exist in view");
 
     registry_.manager_.Release(entity);
   }
@@ -450,6 +457,27 @@ public:
   }
 
   /**
+   * Checks if the entity is in the view.
+   *
+   * @param[in] entity Entity to find.
+   *
+   * @returns True if the entity exists in the view, false otherwise.
+   */
+  bool Contains(const Entity entity) const noexcept
+  {
+    for (const auto archetype : archetypes_)
+    {
+      const auto storage = registry_.storages_[archetype];
+
+      ASSERT(storage, "Storage not initialized");
+
+      if (storage->Contains(entity)) return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Returns the amount of entities in the view.
    *
    * @return Amount of entities in the view.
@@ -488,6 +516,8 @@ public:
   template<typename Component>
   [[nodiscard]] const Component& Unpack(const Entity entity) const noexcept
   {
+    ASSERT(Contains(entity), "Entity does not exist in the view");
+
     auto end = archetypes_.end() - 1;
 
     for (auto it = archetypes_.begin(); it != end; ++it)

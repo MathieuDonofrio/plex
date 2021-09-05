@@ -320,6 +320,45 @@ TEST(Registry_Tests, Unpack_Single_Correct)
   ASSERT_EQ(0.5, registry.Unpack<double>(created_entity));
 }
 
+TEST(Registry_Tests, HasComponents_Zero_False)
+{
+  Registry<size_t> registry;
+
+  auto created_entity = registry.Create<int>(10);
+
+  ASSERT_FALSE(registry.HasComponents<double>(created_entity));
+}
+
+TEST(Registry_Tests, HasComponents_One_False)
+{
+  Registry<size_t> registry;
+
+  auto created_entity = registry.Create<int>(10);
+
+  ASSERT_TRUE(registry.HasComponents<int>(created_entity));
+}
+
+TEST(Registry_Tests, HasComponents_Multiple_False)
+{
+  Registry<size_t> registry;
+
+  auto created_entity = registry.Create<int, double, float>(10, 0.5, 0.2f);
+
+  ASSERT_TRUE(registry.HasComponents<int>(created_entity));
+  ASSERT_TRUE(registry.HasComponents<double>(created_entity));
+  ASSERT_TRUE(registry.HasComponents<float>(created_entity));
+  ASSERT_FALSE(registry.HasComponents<bool>(created_entity));
+
+  ASSERT_TRUE((registry.HasComponents<int, double>(created_entity)));
+  ASSERT_TRUE((registry.HasComponents<double, int>(created_entity)));
+  ASSERT_TRUE((registry.HasComponents<float, int>(created_entity)));
+  ASSERT_TRUE((registry.HasComponents<double, float>(created_entity)));
+  ASSERT_FALSE((registry.HasComponents<double, bool>(created_entity)));
+  ASSERT_FALSE((registry.HasComponents<int, bool>(created_entity)));
+
+  ASSERT_TRUE((registry.HasComponents<int, double, float>(created_entity)));
+}
+
 TEST(Registry_Tests, ForEach_UnpackThreeComponents_Correct)
 {
   Registry<size_t> registry;
