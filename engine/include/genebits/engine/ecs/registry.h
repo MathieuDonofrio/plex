@@ -135,6 +135,62 @@ public:
       archetypes_(registry.graph_.ViewArchetypes(registry.graph_.template AssureView<Components...>()))
   {}
 
+  template<typename UnaryFunction>
+  requires RegistryIterationFunc<Entity, UnaryFunction, Components...>
+  void Each(UnaryFunction function)
+  {
+    for (const auto archetype : archetypes_)
+    {
+      auto storage = registry_.storages_[archetype];
+
+      ASSERT(storage, "Storage not initialized");
+
+      if constexpr (RegistryExtendedIterationFunc<Entity, UnaryFunction, Components...>)
+      {
+        // Extended iteration (With entity identifier)
+
+        auto data =
+          std::make_tuple(storage->begin(), storage->template Access<std::remove_cvref_t<Components>>().begin()...);
+
+        const auto end = storage->end();
+
+        while (std::get<0>(data) != end)
+        {
+          function(*std::get<0>(data), *std::get<Index<Components, Components...>::value + 1>(data)...);
+
+          ++std::get<0>(data);
+          ((++std::get<Index<Components, Components...>::value + 1>(data)), ...);
+        }
+      }
+      else if constexpr (sizeof...(Components) > 0)
+      {
+        // Reduced iteration (Without entity identifier)
+
+        auto data = std::make_tuple(storage->template Access<std::remove_cvref_t<Components>>().begin()...);
+
+        const auto end = std::get<0>(data) + storage->Size();
+
+        while (std::get<0>(data) != end)
+        {
+          function(*std::get<Index<Components, Components...>::value>(data)...);
+
+          ((++std::get<Index<Components, Components...>::value>(data)), ...);
+        }
+      }
+      else
+      {
+        // Void iteration (No unpacking)
+
+        const auto end = storage->Size();
+
+        for (size_t i = 0; i != end; ++i)
+        {
+          function();
+        }
+      }
+    }
+  }
+
   void Destroy(const Entity entity)
   {
 #ifndef NDEBUG
@@ -191,31 +247,6 @@ public:
     else if (registry_.Size() == 0)
     {
       registry_.manager_.ReleaseAll(); // Good because it clears the queue and resets the generator.
-    }
-  }
-
-  template<typename UnaryFunction>
-  requires RegistryIterationFunc<Entity, UnaryFunction, Components...>
-  void Each(UnaryFunction function)
-  {
-    static constexpr bool cExtended = RegistryExtendedIterationFunc<Entity, UnaryFunction, Components...>;
-
-    for (const auto archetype : archetypes_)
-    {
-      auto storage = registry_.storages_[archetype];
-
-      ASSERT(storage, "Storage not initialized");
-
-      auto data = std::make_tuple(storage->template Access<std::remove_cvref_t<Components>>()...);
-
-      const auto end = storage->Size();
-
-      for (size_t i = 0; i != end; ++i)
-      {
-        if constexpr (cExtended) function((*storage)[i], std::get<Index<Components, Components...>::value>(data)[i]...);
-        else
-          function(std::forward<Components>(std::get<Index<Components, Components...>::value>(data)[i])...);
-      }
     }
   }
 
