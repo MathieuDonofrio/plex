@@ -19,7 +19,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Implement stack tracing for GCC
 - [ ] Implement stack tracing for Clang
 - [ ] Automatic ToString() generation for enums and enum flags
-- [ ] Simplify ring buffer (Or remove)
+- [x] Simplify ring buffer (Or remove)
 - [ ] Verify logging functionality for linux (gcc and clang)
 - [ ] Debate on macro prefixes (ex: GENEBITS_ASSERT vs ASSERT)
 - [ ] Find window closing protocol
