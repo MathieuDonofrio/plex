@@ -127,6 +127,19 @@ public:
   }
 
   ///
+  /// Invokes the stored function with the specified event.
+  ///
+  /// @warning
+  ///     Undefined behaviour if no function is bound to this delegate.
+  ///
+  /// @param[in] args The arguments to invoke with.
+  ///
+  constexpr void operator()(Args... args)
+  {
+    Invoke(std::forward<Args>(args)...);
+  }
+
+  ///
   /// Equality operator.
   ///
   /// Checks if the delegates have the same content (function & storage).

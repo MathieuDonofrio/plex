@@ -89,6 +89,22 @@ TEST(Delegate_Tests, Invoke_FreeFunction_DelegatesCall)
   ASSERT_EQ(sumValue1Global, 11u);
 }
 
+TEST(Delegate_Tests, InvokeOperator_FreeFunction_DelegatesCall)
+{
+  sumValue1Global = 0;
+
+  Delegate<const TestArg&> handler;
+  handler.Bind<&addValue1Global>();
+
+  handler.Invoke(TestArg { 1u });
+
+  ASSERT_EQ(sumValue1Global, 1u);
+
+  handler({ 10u });
+
+  ASSERT_EQ(sumValue1Global, 11u);
+}
+
 TEST(Delegate_Tests, Invoke_MemberFunction_DelegatesCall)
 {
   TestListener listener;
