@@ -74,11 +74,21 @@ public:
   ///
   /// @note Loop increase caps at some point.
   ///
-  void Wait()
+  void Wait() noexcept
   {
     this_thread::Pause(count_ & (cMaxWaitLoops - 1));
 
     count_ <<= 1;
+  }
+
+  ///
+  /// Returns whether or not the exponential backoff has reached the maximum wait time.
+  ///
+  /// @return True if reached max wait, false otherwise.
+  ///
+  [[nodiscard]] constexpr bool ReachedMaxWait() const noexcept
+  {
+    return count_ >= cMaxWaitLoops;
   }
 
 private:

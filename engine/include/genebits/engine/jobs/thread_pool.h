@@ -6,43 +6,40 @@
 #include <mutex>
 #include <queue>
 
+#include "genebits/engine/jobs/concurrent_ring_buffer.h"
 #include "genebits/engine/util/concurrency.h"
 #include "genebits/engine/util/delegate.h"
 
 namespace genebits::engine
 {
+class ThreadPool;
+
 class Task : public Delegate<>
 {
 public:
-  Task() noexcept : Delegate<>(), state_(std::make_shared<TaskState>()) {}
+  Task() noexcept : Delegate<>(), state_(false) {}
 
-  void Wait() const
+  void Wait() const noexcept
   {
-    ExponentialBackoff backoff;
-
-    while (!Finished())
-    {
-      backoff.Wait();
-    }
+    if (!Finished()) state_.wait(false, std::memory_order_relaxed);
   }
 
-  void Notify()
+  bool Finished() const noexcept
   {
-    state_->value.store(true, std::memory_order_relaxed);
-  }
-
-  bool Finished() const
-  {
-    return state_->value.load(std::memory_order_relaxed);
+    return state_.load(std::memory_order_relaxed);
   }
 
 private:
-  struct TaskState
-  {
-    std::atomic_bool value;
-  };
+  friend class ThreadPool;
 
-  std::shared_ptr<TaskState> state_;
+  void Notify() noexcept
+  {
+    state_.store(true, std::memory_order_relaxed);
+    state_.notify_all();
+  }
+
+private:
+  std::atomic_bool state_;
 };
 
 class ThreadPool
@@ -59,19 +56,20 @@ public:
     DestroyWorkers();
   }
 
-  void Execute(Task task)
+  void Execute(Task* task)
   {
     // Maybe use exchange here and notify workers
 
-    tasks_mutex_.lock();
+    mutex_.lock();
 
-    tasks_.push(std::move(task));
+    tasks_.push(task);
 
     task_count_.fetch_add(1, std::memory_order_relaxed);
 
-    tasks_mutex_.unlock();
+    mutex_.unlock();
 
-    condition_variable_.notify_one();
+    flag_.store(true, std::memory_order_relaxed);
+    flag_.notify_one();
   }
 
   [[nodiscard]] constexpr size_t ThreadCount() const noexcept
@@ -101,7 +99,8 @@ private:
   {
     running_.store(false, std::memory_order_relaxed);
 
-    condition_variable_.notify_all();
+    flag_.store(true, std::memory_order_relaxed);
+    flag_.notify_all();
 
     for (size_t i = 0; i < thread_count_; i++)
     {
@@ -113,62 +112,79 @@ private:
 
   void Worker()
   {
-    while (running_)
+    while (running_.load(std::memory_order_relaxed))
     {
       if (task_count_.load(std::memory_order_relaxed))
       {
-        // TODO better queue
-
-        // Maybe implement lock-free queue
-
-        tasks_mutex_.lock();
-
-        if (task_count_.load(std::memory_order_relaxed))
+        if (mutex_.try_lock())
         {
-          Task task = std::move(tasks_.front());
+          if (task_count_.load(std::memory_order_relaxed))
+          {
+            Task* task = tasks_.front();
 
-          tasks_.pop();
+            tasks_.pop();
 
-          task_count_.fetch_sub(1, std::memory_order_relaxed);
+            task_count_.fetch_sub(1, std::memory_order_relaxed);
 
-          tasks_mutex_.unlock();
+            mutex_.unlock();
 
-          task.Invoke();
+            task->Invoke();
 
-          task.Notify();
+            task->Notify();
+          }
+          else
+          {
+            mutex_.unlock();
+          }
         }
         else
         {
-          tasks_mutex_.unlock();
+          this_thread::Pause();
         }
       }
       else
       {
-        std::unique_lock<std::mutex> lock(notifier_mutex_);
+        // There is no work left for any worker. Make this worker wait until a new task is executed.
 
-        condition_variable_.wait(lock);
+        flag_.store(false, std::memory_order_relaxed);
+        flag_.wait(false, std::memory_order_relaxed);
       }
     }
   }
 
   void WaitForTasks()
   {
-    while (task_count_.load(std::memory_order_relaxed))
+    uint_fast32_t task_count;
+
+    while ((task_count = task_count_.load(std::memory_order_relaxed)) > thread_count_)
     {
-      std::this_thread::sleep_for(std::chrono::microseconds(1000));
+      // If there are a lot of tasks, sleep.
+
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+
+    if (task_count)
+    {
+      // If there are just a few tasks, spin with exponential backoff.
+      // This can consume a good amount of CPU, so we don't want to spin all the time.
+
+      ExponentialBackoff backoff;
+
+      while (task_count_.load(std::memory_order_relaxed))
+      {
+        backoff.Wait();
+      }
     }
   }
 
 private:
-  std::mutex tasks_mutex_;
-
-  std::mutex notifier_mutex_;
-
-  std::condition_variable condition_variable_;
+  std::mutex mutex_;
 
   std::atomic_bool running_;
 
-  std::queue<Task> tasks_;
+  std::atomic_bool flag_;
+
+  std::queue<Task*> tasks_;
 
   std::atomic_uint_fast32_t task_count_;
 
