@@ -36,7 +36,7 @@ namespace this_thread
   ///
   /// Faster than std::this_thread::yield().
   ///
-  inline void pause() noexcept
+  inline void Pause() noexcept
   {
     _mm_pause();
   }
@@ -46,11 +46,11 @@ namespace this_thread
   ///
   /// @param[in] loops amount of loops to perform.
   ///
-  inline void pause(size_t loops) noexcept
+  inline void Pause(size_t loops) noexcept
   {
     for (; loops != 0; loops--)
     {
-      pause();
+      Pause();
     }
   }
 } // namespace this_thread
@@ -74,9 +74,9 @@ public:
   ///
   /// @note Loop increase caps at some point.
   ///
-  void wait()
+  void Wait()
   {
-    this_thread::pause(count_ & (cMaxWaitLoops - 1));
+    this_thread::Pause(count_ & (cMaxWaitLoops - 1));
 
     count_ <<= 1;
   }
@@ -111,7 +111,7 @@ public:
     // Wait for lock to be released without generating cache misses
     while (lock_.load(std::memory_order_relaxed))
     {
-      backoff.wait();
+      backoff.Wait();
     };
   }
 

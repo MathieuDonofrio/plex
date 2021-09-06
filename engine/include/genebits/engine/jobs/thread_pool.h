@@ -14,32 +14,35 @@ namespace genebits::engine
 class Task : public Delegate<>
 {
 public:
-  Task() noexcept : Delegate<>(), value_(new std::atomic_bool(false)) {}
+  Task() noexcept : Delegate<>(), state_(std::make_shared<TaskState>()) {}
 
   void Wait() const
   {
-    while (!GetValue())
+    ExponentialBackoff backoff;
+
+    while (!Finished())
     {
-      // TODO Smarter sleeping
-
-      // Probably use an exponential backoff with a cap here
-
-      std::this_thread::sleep_for(std::chrono::microseconds(1000));
+      backoff.Wait();
     }
   }
 
-  void SetValue(bool value)
+  void Notify()
   {
-    value_->store(value, std::memory_order_relaxed);
+    state_->value.store(true, std::memory_order_relaxed);
   }
 
-  bool GetValue() const
+  bool Finished() const
   {
-    return value_->load(std::memory_order_relaxed);
+    return state_->value.load(std::memory_order_relaxed);
   }
 
 private:
-  std::shared_ptr<std::atomic_bool> value_;
+  struct TaskState
+  {
+    std::atomic_bool value;
+  };
+
+  std::shared_ptr<TaskState> state_;
 };
 
 class ThreadPool
@@ -60,13 +63,25 @@ public:
   {
     // Maybe use exchange here and notify workers
 
-    task_count_.fetch_add(1, std::memory_order_relaxed);
-
-    mutex_.lock();
+    tasks_mutex_.lock();
 
     tasks_.push(std::move(task));
 
-    mutex_.unlock();
+    task_count_.fetch_add(1, std::memory_order_relaxed);
+
+    tasks_mutex_.unlock();
+
+    condition_variable_.notify_one();
+  }
+
+  [[nodiscard]] constexpr size_t ThreadCount() const noexcept
+  {
+    return thread_count_;
+  }
+
+  [[nodiscard]] size_t TasksCount() const noexcept
+  {
+    return task_count_.load(std::memory_order_relaxed);
   }
 
 private:
@@ -86,6 +101,8 @@ private:
   {
     running_.store(false, std::memory_order_relaxed);
 
+    condition_variable_.notify_all();
+
     for (size_t i = 0; i < thread_count_; i++)
     {
       threads_[i].join();
@@ -104,28 +121,32 @@ private:
 
         // Maybe implement lock-free queue
 
-        mutex_.lock();
+        tasks_mutex_.lock();
 
-        Task task = std::move(tasks_.front());
+        if (task_count_.load(std::memory_order_relaxed))
+        {
+          Task task = std::move(tasks_.front());
 
-        tasks_.pop();
+          tasks_.pop();
 
-        mutex_.unlock();
+          task_count_.fetch_sub(1, std::memory_order_relaxed);
 
-        task_count_.fetch_sub(1, std::memory_order_relaxed);
+          tasks_mutex_.unlock();
 
-        task.Invoke();
+          task.Invoke();
 
-        task.SetValue(true);
+          task.Notify();
+        }
+        else
+        {
+          tasks_mutex_.unlock();
+        }
       }
       else
       {
-        // TODO smarter sleeping
+        std::unique_lock<std::mutex> lock(notifier_mutex_);
 
-        // Maybe use a notification based wake up
-        // conditional_variable
-
-        std::this_thread::sleep_for(std::chrono::microseconds(1000));
+        condition_variable_.wait(lock);
       }
     }
   }
@@ -139,7 +160,11 @@ private:
   }
 
 private:
-  mutable std::mutex mutex_;
+  std::mutex tasks_mutex_;
+
+  std::mutex notifier_mutex_;
+
+  std::condition_variable condition_variable_;
 
   std::atomic_bool running_;
 
