@@ -32,15 +32,25 @@ constexpr size_t cCacheLineSize = 2 * sizeof(std::max_align_t);
 namespace this_thread
 {
   ///
+  /// Yields to other threads.
+  ///
+  /// Faster than std::this_thread::yield().
+  ///
+  inline void pause() noexcept
+  {
+    _mm_pause();
+  }
+
+  ///
   /// Spins for the specified number of loops while yielding to other threads.
   ///
   /// @param[in] loops amount of loops to perform.
   ///
-  inline void pause(size_t loops)
+  inline void pause(size_t loops) noexcept
   {
     for (; loops != 0; loops--)
     {
-      _mm_pause();
+      pause();
     }
   }
 } // namespace this_thread

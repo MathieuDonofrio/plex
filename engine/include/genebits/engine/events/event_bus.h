@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 
-#include "genebits/engine/events/event_handler.h"
+#include "genebits/engine/util/delegate.h"
 #include "genebits/engine/util/erased_ptr.h"
 #include "genebits/engine/util/fast_vector.h"
 #include "genebits/engine/util/meta.h"
@@ -12,6 +12,16 @@
 
 namespace genebits::engine
 {
+///
+/// Delegate alias for handling events.
+///
+/// @see Delegate
+///
+/// @tparam Event Type of event for the delegate to handle.
+///
+template<typename Event>
+using EventHandler = Delegate<const Event&>;
+
 namespace details
 {
   ///
