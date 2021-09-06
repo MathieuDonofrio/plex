@@ -27,7 +27,7 @@ static void Registry_Iterate_OneArchetype(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.Each([](size_t entity) { benchmark::DoNotOptimize(entity); });
+    registry.ForEach([](size_t entity) { benchmark::DoNotOptimize(entity); });
   }
 
   benchmark::DoNotOptimize(registry);
@@ -50,7 +50,7 @@ static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.Each<Component<0>>(
+    registry.ForEach<Component<0>>(
       [](size_t entity, Component<0> c1)
       {
         benchmark::DoNotOptimize(entity);
@@ -78,7 +78,7 @@ static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.Each<Component<0>, Component<1>>(
+    registry.ForEach<Component<0>, Component<1>>(
       [](size_t entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
@@ -112,7 +112,7 @@ static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.Each<Component<0>, Component<1>>(
+    registry.ForEach<Component<0>, Component<1>>(
       [](size_t entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
@@ -186,7 +186,7 @@ static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.Each<Component<0>, Component<1>>(
+    registry.ForEach<Component<0>, Component<1>>(
       [](size_t entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
@@ -277,7 +277,7 @@ static void Registry_Create_TwoComponents(benchmark::State& state)
 
 BENCHMARK(Registry_Create_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-static void Registry_Erase_NoComponents(benchmark::State& state)
+static void Registry_Destroy_NoComponents(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -305,9 +305,9 @@ static void Registry_Erase_NoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Erase_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Destroy_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-static void Registry_Erase_OneComponent(benchmark::State& state)
+static void Registry_Destroy_OneComponent(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -335,9 +335,9 @@ static void Registry_Erase_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Erase_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Destroy_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-static void Registry_Erase_TwoComponents(benchmark::State& state)
+static void Registry_Destroy_TwoComponents(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -365,5 +365,5 @@ static void Registry_Erase_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Erase_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Destroy_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 } // namespace genebits::engine

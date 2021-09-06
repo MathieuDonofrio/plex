@@ -53,7 +53,7 @@ public:
 
 private:
   EventBus event_bus_;
-  Registry<uint32_t> registry_;
+  Registry<uint_fast32_t> registry_;
 
   // Pimpl for hidden dependencies
   struct Pimpl;

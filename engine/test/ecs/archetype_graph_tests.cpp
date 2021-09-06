@@ -153,7 +153,7 @@ TEST(ArchetypeGraph_Tests, ViewArchetypes_Multiple_CorrectArchetypes)
 
   graph.AssureArchetype<double, float>();
 
-  size_t view = graph.AssureView<int>();
+  ViewId view = graph.AssureView<int>();
 
   archetypes.PushBack(graph.AssureArchetype<float, double, int>());
   archetypes.PushBack(graph.AssureArchetype<bool, double, int>());

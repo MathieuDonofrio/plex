@@ -4,18 +4,6 @@
 #include <concepts>
 #include <type_traits>
 
-namespace
-{
-template<typename... Types>
-struct UniqueTypesImpl : std::true_type
-{};
-
-template<typename Type, typename... Types>
-struct UniqueTypesImpl<Type, Types...>
-  : std::conjunction<std::negation<std::disjunction<std::is_same<Type, Types>...>>, UniqueTypesImpl<Types...>>
-{};
-} // namespace
-
 namespace genebits::engine
 {
 ///
@@ -34,6 +22,18 @@ concept POT = Size != 0 && (Size & (Size - 1)) == 0;
 template<typename Type>
 concept POD = std::is_pod_v<Type>;
 
+namespace details
+{
+  template<typename... Types>
+  struct UniqueTypesImpl : std::true_type
+  {};
+
+  template<typename Type, typename... Types>
+  struct UniqueTypesImpl<Type, Types...>
+    : std::conjunction<std::negation<std::disjunction<std::is_same<Type, Types>...>>, UniqueTypesImpl<Types...>>
+  {};
+} // namespace details
+
 ///
 /// Checks if all types are unique
 ///
@@ -42,7 +42,7 @@ concept POD = std::is_pod_v<Type>;
 /// @tparam Types The types to check
 ///
 template<typename... Types>
-concept UniqueTypes = UniqueTypesImpl<Types...>::value;
+concept UniqueTypes = details::UniqueTypesImpl<Types...>::value;
 
 } // namespace genebits::engine
 

@@ -5,21 +5,27 @@
 
 namespace genebits::engine
 {
-/**
- * Archetype graph for keeping track of what archetypes are associated with what view.
- *
- * The graph is flattened for performance.
- */
-class ArchetypeGraph
+///
+/// Archetype graph for keeping track of what archetypes are associated with what view.
+///
+/// The graph is flattened for performance.
+///
+class ArchetypeGraph final
 {
 public:
-  /**
-   * If the view never existed it will be baked into the flattened graph for quick access.
-   *
-   * @tparam Components Unordered list of component types.
-   *
-   * @return The view id that was assured.
-   */
+  ArchetypeGraph()
+  {
+    // Assure the empty view. This guarantees that it will be first in the arrays.
+    AssureView();
+  }
+
+  ///
+  /// If the view never existed it will be baked into the flattened graph for quick access.
+  ///
+  /// @tparam Components Unordered list of component types.
+  ///
+  /// @return The view id that was assured.
+  ///
   template<typename... Components>
   ViewId AssureView()
   {
@@ -38,13 +44,13 @@ public:
     return id;
   }
 
-  /**
-   * If the archetype never existed it will be baked into the flattened graph for quick access.
-   *
-   * @tparam Components Unordered list of component types.
-   *
-   * @return The archetype id that was assured.
-   */
+  ///
+  /// If the archetype never existed it will be baked into the flattened graph for quick access.
+  ///
+  /// @tparam Components Unordered list of component types.
+  ///
+  /// @return The archetype id that was assured.
+  ///
   template<typename... Components>
   ArchetypeId AssureArchetype()
   {
@@ -63,16 +69,16 @@ public:
     return id;
   }
 
-  /**
-   * Returns the list of the ids of all archetypes that the view can see.
-   *
-   * Very fast, simply a single lookup.
-   *
-   * @param[in] id View identifier.
-   *
-   * @return List of archetypes for the view.
-   */
-  [[nodiscard]] constexpr const FastVector<ArchetypeId>& ViewArchetypes(ViewId id) const noexcept
+  ///
+  /// Returns the list of the ids of all archetypes that the view can see.
+  ///
+  /// Very fast, simply a single lookup.
+  ///
+  /// @param[in] id View identifier.
+  ///
+  /// @return List of archetypes for the view.
+  ///
+  [[nodiscard]] constexpr const FastVector<ArchetypeId>& ViewArchetypes(const ViewId id) const noexcept
   {
     ASSERT(id < view_states_.Size() && view_states_[id], "View not initialized");
 
@@ -80,18 +86,18 @@ public:
   }
 
 private:
-  /**
-   * Initializes an unordered list of components and states for a given id.
-   *
-   * Components and states are seperated for SoA access performance.
-   *
-   * @tparam IdType Type of identifier.
-   * @tparam Components List of component types.
-   *
-   * @param[in] components The components list.
-   * @param[in] states The states list.
-   * @param[in] id The id to initialize for.
-   */
+  ///
+  /// Initializes an unordered list of components and states for a given id.
+  ///
+  /// Components and states are seperated for SoA access performance.
+  ///
+  /// @tparam IdType Type of identifier.
+  /// @tparam Components List of component types.
+  ///
+  /// @param[in] components The components list.
+  /// @param[in] states The states list.
+  /// @param[in] id The id to initialize for.
+  ///
   template<std::unsigned_integral IdType, typename... Components>
   static void Initialize(FastVector<FastVector<ComponentId>>& components, FastVector<bool>& states, const IdType id)
   {
@@ -105,24 +111,24 @@ private:
     states[id] = true;
   }
 
-  /**
-   * Bakes the view into the graph.
-   *
-   * @warning
-   *    Only call once after initialization.
-   *
-   * @param[in] id Identifier of the view to add.
-   */
+  ///
+  /// Bakes the view into the graph.
+  ///
+  /// @warning
+  ///    Only call once after initialization.
+  ///
+  /// @param[in] id Identifier of the view to add.
+  ///
   void AddView(ViewId id);
 
-  /**
-   * Bakes the archetype into the graph.
-   *
-   * @warning
-   *    Only call once after initialization.
-   *
-   * @param[in] id Identifier of the archetype to add.
-   */
+  ///
+  /// Bakes the archetype into the graph.
+  ///
+  /// @warning
+  ///    Only call once after initialization.
+  ///
+  /// @param[in] id Identifier of the archetype to add.
+  ///
   void AddArchetype(ArchetypeId id);
 
 private:

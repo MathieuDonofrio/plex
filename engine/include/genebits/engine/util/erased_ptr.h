@@ -3,23 +3,6 @@
 
 namespace genebits::engine
 {
-namespace
-{
-  ///
-  /// Template for default deleter for erased pointers.
-  ///
-  /// @tparam Base Base used to erase type with.
-  /// @tparam Type Exact type of the instance to delete.
-  ///
-  /// @param[in] instance Instance to delete.
-  ///
-  template<typename Base, typename Type>
-  void DefaultDeleter(Base* instance)
-  {
-    delete static_cast<Type*>(instance);
-  }
-} // namespace
-
 ///
 /// Type erasure pointer.
 ///
@@ -50,7 +33,7 @@ public:
   /// @param[in] instance Instance to handle.
   ///
   template<typename Type>
-  constexpr ErasedPtr(Type* instance) noexcept : ErasedPtr(instance, DefaultDeleter<Base, Type>)
+  constexpr ErasedPtr(Type* instance) noexcept : ErasedPtr(instance, DefaultDeleter<Type>)
   {}
 
   ///
@@ -115,7 +98,7 @@ public:
   template<typename Type>
   constexpr void Reset(Type* instance) noexcept
   {
-    Reset(instance, DefaultDeleter<Base, Type>);
+    Reset(instance, DefaultDeleter<Type>);
   }
 
   ///
@@ -196,6 +179,21 @@ public:
   [[nodiscard]] constexpr operator bool() const noexcept
   {
     return instance_;
+  }
+
+private:
+  ///
+  /// Template for default deleter for erased pointers.
+  ///
+  /// @tparam Base Base used to erase type with.
+  /// @tparam Type Exact type of the instance to delete.
+  ///
+  /// @param[in] instance Instance to delete.
+  ///
+  template<typename Type>
+  static void DefaultDeleter(Base* instance)
+  {
+    delete static_cast<Type*>(instance);
   }
 
 private:
