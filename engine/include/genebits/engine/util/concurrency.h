@@ -8,30 +8,6 @@
 
 namespace genebits::engine
 {
-///
-/// Enum of the different concurrency models that can be used to specify a specialized
-/// container for maximum performance.
-///
-/// @note The handling of concurrency is implementation defined (Could just always lock).
-///
-enum class ConcurrencyGuarantee
-{
-  // Not thread-safe
-  None,
-
-  // Thread-safe for a single producer thread and a single consumer thread
-  OneToOne,
-
-  // Thread-safe for multiple producer threads and a single consumer thread
-  ManyToOne,
-
-  // Thread-safe for a single producer and multiple consumer threads
-  OneToMany,
-
-  // Always thread-safe
-  ManyToMany
-};
-
 #ifdef __cpp_lib_hardware_interference_size
 ///
 /// Defines size of a cacheline. Can be used to fit variables on different
