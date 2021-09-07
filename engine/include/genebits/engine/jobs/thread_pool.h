@@ -6,7 +6,6 @@
 #include <mutex>
 #include <queue>
 
-#include "genebits/engine/jobs/concurrent_ring_buffer.h"
 #include "genebits/engine/util/concurrency.h"
 #include "genebits/engine/util/delegate.h"
 
@@ -68,8 +67,7 @@ public:
 
     mutex_.unlock();
 
-    flag_.store(true, std::memory_order_relaxed);
-    flag_.notify_one();
+    NotifyWorker();
   }
 
   [[nodiscard]] constexpr size_t ThreadCount() const noexcept
@@ -99,8 +97,7 @@ private:
   {
     running_.store(false, std::memory_order_relaxed);
 
-    flag_.store(true, std::memory_order_relaxed);
-    flag_.notify_all();
+    NotifyAllWorkers();
 
     for (size_t i = 0; i < thread_count_; i++)
     {
@@ -114,6 +111,7 @@ private:
   {
     while (running_.load(std::memory_order_relaxed))
     {
+Work:
       if (task_count_.load(std::memory_order_relaxed))
       {
         if (mutex_.try_lock())
@@ -128,53 +126,51 @@ private:
 
             mutex_.unlock();
 
-            task->Invoke();
+            DoTask(task);
 
-            task->Notify();
+            goto Work;
           }
-          else
-          {
-            mutex_.unlock();
-          }
-        }
-        else
-        {
-          this_thread::Pause();
-        }
-      }
-      else
-      {
-        // There is no work left for any worker. Make this worker wait until a new task is executed.
 
-        flag_.store(false, std::memory_order_relaxed);
-        flag_.wait(false, std::memory_order_relaxed);
+          mutex_.unlock();
+        }
+
+        goto Work;
       }
+
+      WorkerWait();
     }
   }
 
-  void WaitForTasks()
+  void WaitForTasks() const
   {
-    uint_fast32_t task_count;
-
-    while ((task_count = task_count_.load(std::memory_order_relaxed)) > thread_count_)
+    while (task_count_.load(std::memory_order_relaxed))
     {
-      // If there are a lot of tasks, sleep.
-
       std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
+  }
 
-    if (task_count)
-    {
-      // If there are just a few tasks, spin with exponential backoff.
-      // This can consume a good amount of CPU, so we don't want to spin all the time.
+  void DoTask(Task* task) const noexcept
+  {
+    task->Invoke();
+    task->Notify();
+  }
 
-      ExponentialBackoff backoff;
+  void WorkerWait() noexcept
+  {
+    flag_.store(false, std::memory_order_relaxed);
+    flag_.wait(false, std::memory_order_relaxed);
+  }
 
-      while (task_count_.load(std::memory_order_relaxed))
-      {
-        backoff.Wait();
-      }
-    }
+  void NotifyAllWorkers()
+  {
+    flag_.store(true, std::memory_order_relaxed);
+    flag_.notify_all();
+  }
+
+  void NotifyWorker()
+  {
+    flag_.store(true, std::memory_order_relaxed);
+    flag_.notify_one();
   }
 
 private:
