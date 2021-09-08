@@ -8,8 +8,7 @@
 
 namespace genebits::engine
 {
-
-void Work()
+void Work(const int amount)
 {
   uint64_t seed = static_cast<uint64_t>(time(nullptr));
 
@@ -19,7 +18,7 @@ void Work()
 
   uint64_t state = seed;
 
-  for (size_t i = 0; i < 1000; i++)
+  for (size_t i = 0; i < amount; i++)
   {
     auto old = state;
 
@@ -35,24 +34,45 @@ void Work()
   benchmark::ClobberMemory();
 }
 
-static void ThreadPool_SingleThread_Execute(benchmark::State& state)
+static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state)
 {
+  // This is to be used as a reference of single thread performance with no schedule overhead
+  // Conclusion: For small loads it is better to no use the thread pool because scheduling is expensive.
+
   const size_t amount = state.range(0);
 
   for (auto _ : state)
   {
     for (size_t i = 0; i < amount; i++)
     {
-      Work();
+      Work(100);
     }
   }
 
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_SingleThread_Execute)->Arg(100)->Arg(1000)->Arg(10000)->Arg(100000)->Complexity();
+BENCHMARK(ThreadPool_NoSchedule_SingleThread_Reference)->Arg(100)->Arg(1000)->Arg(10000)->Arg(100000)->Complexity();
 
-static void ThreadPool_4Threads_Execute(benchmark::State& state)
+static void ThreadPool_Schedule_NoWorkOverhead(benchmark::State& state)
+{
+  ThreadPool pool;
+
+  for (auto _ : state)
+  {
+    Task task;
+    task.Executor().Bind([]() { benchmark::ClobberMemory(); });
+    pool.Schedule(&task);
+
+    task.Wait();
+
+    benchmark::DoNotOptimize(task);
+  }
+}
+
+BENCHMARK(ThreadPool_Schedule_NoWorkOverhead);
+
+static void ThreadPool_Schedule_4Threads_Contention(benchmark::State& state)
 {
   constexpr size_t threads = 4;
 
@@ -66,24 +86,24 @@ static void ThreadPool_4Threads_Execute(benchmark::State& state)
   {
     for (size_t i = 0; i < work_per_thread; i++)
     {
-      Work();
+      Work(100);
     }
   };
 
   for (auto _ : state)
   {
     Task task1;
-    task1.Bind(executor);
-    pool.Execute(&task1);
+    task1.Executor().Bind(executor);
+    pool.Schedule(&task1);
     Task task2;
-    task2.Bind(executor);
-    pool.Execute(&task2);
+    task2.Executor().Bind(executor);
+    pool.Schedule(&task2);
     Task task3;
-    task3.Bind(executor);
-    pool.Execute(&task3);
+    task3.Executor().Bind(executor);
+    pool.Schedule(&task3);
     Task task4;
-    task4.Bind(executor);
-    pool.Execute(&task4);
+    task4.Executor().Bind(executor);
+    pool.Schedule(&task4);
 
     task1.Wait();
     task2.Wait();
@@ -96,12 +116,47 @@ static void ThreadPool_4Threads_Execute(benchmark::State& state)
     benchmark::DoNotOptimize(task4);
   }
 
+  benchmark::DoNotOptimize(executor);
+
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_4Threads_Execute)->Arg(100)->Arg(1000)->Arg(10000)->Arg(100000)->Complexity();
+BENCHMARK(ThreadPool_Schedule_4Threads_Contention)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Arg(100000)
+  ->Complexity(benchmark::oN);
 
-static void ThreadPool_STD_Async4_Execute(benchmark::State& state)
+static void ThreadPool_STD_ThreadCreation(benchmark::State& state)
+{
+  for (auto _ : state)
+  {
+    std::thread thread { []() { benchmark::ClobberMemory(); } };
+
+    thread.join();
+
+    benchmark::DoNotOptimize(thread);
+  }
+}
+
+BENCHMARK(ThreadPool_STD_ThreadCreation);
+
+static void ThreadPool_STD_Async_NoWorkOverhead(benchmark::State& state)
+{
+  for (auto _ : state)
+  {
+    auto future = std::async(std::launch::async, []() { benchmark::ClobberMemory(); });
+
+    future.wait();
+
+    benchmark::DoNotOptimize(future);
+  }
+}
+
+BENCHMARK(ThreadPool_STD_Async_NoWorkOverhead);
+
+static void ThreadPool_STD_Async_4Threads_Contention(benchmark::State& state)
 {
   // STD Async can use a thread pool under the hood.
   // MSVC does this but not GCC and CLANG
@@ -118,7 +173,7 @@ static void ThreadPool_STD_Async4_Execute(benchmark::State& state)
   {
     for (size_t i = 0; i < work_per_thread; i++)
     {
-      Work();
+      Work(100);
     }
   };
 
@@ -140,9 +195,15 @@ static void ThreadPool_STD_Async4_Execute(benchmark::State& state)
     benchmark::DoNotOptimize(future4);
   }
 
+  benchmark::DoNotOptimize(executor);
+
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_STD_Async4_Execute)->Arg(100)->Arg(1000)->Arg(10000)->Arg(100000)->Complexity();
-
+BENCHMARK(ThreadPool_STD_Async_4Threads_Contention)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Arg(100000)
+  ->Complexity(benchmark::oN);
 } // namespace genebits::engine

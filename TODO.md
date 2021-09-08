@@ -28,6 +28,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Add pretty name in meta.h (Same across boundaries)
 - [ ] Archetype swapping
 - [ ] Verify if registry should have built-in thread safety
+- [ ] Build sandboxes/examples cmake option
 
 ## Major
 

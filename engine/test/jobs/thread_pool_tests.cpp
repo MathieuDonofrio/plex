@@ -4,38 +4,57 @@
 
 namespace genebits::engine::tests
 {
-TEST(ThreadPool_Tests, EnqueueTask_NoTasks_Invoked)
+TEST(ThreadPool_Tests, Shedule_OneThreadOnTask_CorrectExecution)
 {
-  ThreadPool pool;
+  ThreadPool pool(1);
 
   Task task;
 
-  int count = 0;
+  std::atomic_int count = 0;
 
-  task.Bind([&count]() { count++; });
+  task.Executor().Bind([&count]() { count++; });
 
-  pool.Execute(&task);
+  pool.Schedule(&task);
 
   task.Wait();
 
   ASSERT_EQ(count, 1);
 }
 
-TEST(ThreadPool_Tests, EnqueueTask_MultipleTasks_Invoked)
+TEST(ThreadPool_Tests, Shedule_16ThreadsOneTask_CorrectExecution)
 {
-  ThreadPool pool;
+  ThreadPool pool(16);
 
-  constexpr size_t amount = 100;
+  Task task;
 
+  std::atomic_int count = 0;
+
+  task.Executor().Bind([&count]() { count++; });
+
+  pool.Schedule(&task);
+
+  task.Wait();
+
+  ASSERT_EQ(count, 1);
+}
+
+TEST(ThreadPool_Tests, Shedule_16ThreadsMultipleTasks_CorrectExecution)
+{
+  ThreadPool pool(16);
+
+  constexpr size_t amount = 2000;
+
+  // With 10000 the test crashes for some reason.
+  // Maybe because of standard bug or OS?
   Task tasks[amount];
 
-  int count = 0;
+  std::atomic_int count = 0;
 
   for (size_t i = 0; i < amount; i++)
   {
-    tasks[i].Bind([&count]() { count++; });
+    tasks[i].Executor().Bind([&count]() { count++; });
 
-    pool.Execute(&tasks[i]);
+    pool.Schedule(&tasks[i]);
   }
 
   for (size_t i = 0; i < amount; i++)
@@ -45,4 +64,5 @@ TEST(ThreadPool_Tests, EnqueueTask_MultipleTasks_Invoked)
 
   ASSERT_EQ(count, amount);
 }
+
 } // namespace genebits::engine::tests
