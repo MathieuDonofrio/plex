@@ -2,9 +2,7 @@
 #define GENEBITS_ENGINE_JOBS_THREAD_POOL_H
 
 #include <atomic>
-#include <functional>
 #include <mutex>
-#include <queue>
 
 #include "genebits/engine/util/concurrency.h"
 #include "genebits/engine/util/delegate.h"
@@ -16,26 +14,35 @@ using TaskExecutor = Delegate<>;
 class Task
 {
 public:
-  Task() : next_(nullptr), state_(false) {}
+  constexpr Task() noexcept : next_(nullptr), flag_(false) {}
 
-  void Wait() const
+  Task(const Task& other)
+    : executor_(other.executor_), next_(other.next_), flag_(other.flag_.load(std::memory_order_relaxed))
+  {}
+
+  Task& operator=(const Task& other)
   {
-    std::unique_lock<std::mutex> lock(mutex_);
+    executor_ = other.executor_;
+    next_ = other.next_;
+    flag_ = other.flag_.load(std::memory_order_relaxed);
 
-    while (!state_)
+    return *this;
+  }
+
+  void Complete() const noexcept
+  {
+    while (!Finished())
     {
-      condition_.wait(lock);
+      flag_.wait(false, std::memory_order_relaxed);
     }
   }
 
   void Finish()
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    ASSERT(!flag_.load(std::memory_order_relaxed), "Task already finished");
 
-    ASSERT(!state_, "Task already finished");
-
-    state_ = true;
-    condition_.notify_all();
+    flag_.store(true, std::memory_order_relaxed);
+    flag_.notify_all();
   }
 
   [[nodiscard]] TaskExecutor& Executor() noexcept
@@ -43,16 +50,17 @@ public:
     return executor_;
   }
 
+  [[nodiscard]] bool Finished() const noexcept
+  {
+    return flag_.load(std::memory_order_relaxed);
+  }
+
 private:
   friend class TaskQueue;
-  friend class ThreadPool;
 
-  Task* next_;
   Delegate<> executor_;
-
-  mutable std::mutex mutex_;
-  mutable std::condition_variable condition_;
-  bool state_;
+  Task* next_;
+  std::atomic_bool flag_;
 };
 
 class TaskQueue
@@ -155,7 +163,7 @@ private:
       }
       else
       {
-        // Unlocks, sleeps then locks again when finished waiting.
+        // Unlocks, sleeps then locks again when woke.
 
         // It is possible that we are sleeping and there are tasks in the queue. This is because
         // the scheduler is not required to wake up more threads than it needs to execute the tasks.

@@ -1,10 +1,11 @@
 #include "genebits/engine/jobs/thread_pool.h"
 
-#include <array>
 #include <cmath>
 #include <future>
 
 #include <benchmark/benchmark.h>
+
+#include "genebits/engine/util/fast_vector.h"
 
 namespace genebits::engine
 {
@@ -52,7 +53,7 @@ static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_NoSchedule_SingleThread_Reference)->Arg(100)->Arg(1000)->Arg(10000)->Arg(100000)->Complexity();
+BENCHMARK(ThreadPool_NoSchedule_SingleThread_Reference)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void ThreadPool_Schedule_NoWorkOverhead(benchmark::State& state)
 {
@@ -64,7 +65,7 @@ static void ThreadPool_Schedule_NoWorkOverhead(benchmark::State& state)
     task.Executor().Bind([]() { benchmark::ClobberMemory(); });
     pool.Schedule(&task);
 
-    task.Wait();
+    task.Complete();
 
     benchmark::DoNotOptimize(task);
   }
@@ -72,7 +73,7 @@ static void ThreadPool_Schedule_NoWorkOverhead(benchmark::State& state)
 
 BENCHMARK(ThreadPool_Schedule_NoWorkOverhead);
 
-static void ThreadPool_Schedule_4Threads_Contention(benchmark::State& state)
+static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
 {
   constexpr size_t threads = 4;
 
@@ -105,10 +106,10 @@ static void ThreadPool_Schedule_4Threads_Contention(benchmark::State& state)
     task4.Executor().Bind(executor);
     pool.Schedule(&task4);
 
-    task1.Wait();
-    task2.Wait();
-    task3.Wait();
-    task4.Wait();
+    task1.Complete();
+    task2.Complete();
+    task3.Complete();
+    task4.Complete();
 
     benchmark::DoNotOptimize(task1);
     benchmark::DoNotOptimize(task2);
@@ -121,12 +122,47 @@ static void ThreadPool_Schedule_4Threads_Contention(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_Schedule_4Threads_Contention)
-  ->Arg(100)
-  ->Arg(1000)
-  ->Arg(10000)
-  ->Arg(100000)
-  ->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_Schedule_4Threads_TaskSize)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+
+static void ThreadPool_Schedule_4Threads_TaskQuantity(benchmark::State& state)
+{
+  constexpr size_t threads = 4;
+
+  ThreadPool pool(threads);
+
+  const size_t amount = state.range(0);
+
+  auto executor = []() { Work(100); };
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    FastVector<Task> tasks;
+    tasks.Resize(amount);
+
+    benchmark::DoNotOptimize(tasks);
+
+    state.ResumeTiming();
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      tasks[i].Executor().Bind(executor);
+      pool.Schedule(&tasks[i]);
+    }
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      tasks[i].Complete();
+    }
+  }
+
+  benchmark::DoNotOptimize(executor);
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(ThreadPool_Schedule_4Threads_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void ThreadPool_STD_ThreadCreation(benchmark::State& state)
 {
@@ -156,7 +192,7 @@ static void ThreadPool_STD_Async_NoWorkOverhead(benchmark::State& state)
 
 BENCHMARK(ThreadPool_STD_Async_NoWorkOverhead);
 
-static void ThreadPool_STD_Async_4Threads_Contention(benchmark::State& state)
+static void ThreadPool_STD_Async_4Threads_TaskSize(benchmark::State& state)
 {
   // STD Async can use a thread pool under the hood.
   // MSVC does this but not GCC and CLANG
@@ -200,10 +236,45 @@ static void ThreadPool_STD_Async_4Threads_Contention(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_STD_Async_4Threads_Contention)
-  ->Arg(100)
-  ->Arg(1000)
-  ->Arg(10000)
-  ->Arg(100000)
-  ->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_STD_Async_4Threads_TaskSize)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+
+static void ThreadPool_STD_Async_4Threads_TaskQuantity(benchmark::State& state)
+{
+  constexpr size_t threads = 4;
+
+  ThreadPool pool(threads);
+
+  const size_t amount = state.range(0);
+
+  auto executor = []() { Work(100); };
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    FastVector<std::future<void>> tasks;
+    tasks.Resize(amount);
+
+    benchmark::DoNotOptimize(tasks);
+
+    state.ResumeTiming();
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      tasks[i] = std::async(std::launch::async, executor);
+    }
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      tasks[i].get();
+    }
+  }
+
+  benchmark::DoNotOptimize(executor);
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(ThreadPool_STD_Async_4Threads_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+
 } // namespace genebits::engine

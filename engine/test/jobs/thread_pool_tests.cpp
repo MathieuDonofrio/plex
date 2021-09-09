@@ -16,7 +16,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOnTask_CorrectExecution)
 
   pool.Schedule(&task);
 
-  task.Wait();
+  task.Complete();
 
   ASSERT_EQ(count, 1);
 }
@@ -33,7 +33,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsOneTask_CorrectExecution)
 
   pool.Schedule(&task);
 
-  task.Wait();
+  task.Complete();
 
   ASSERT_EQ(count, 1);
 }
@@ -59,7 +59,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsMultipleTasks_CorrectExecution)
 
   for (size_t i = 0; i < amount; i++)
   {
-    tasks[i].Wait();
+    tasks[i].Complete();
   }
 
   ASSERT_EQ(count, amount);
