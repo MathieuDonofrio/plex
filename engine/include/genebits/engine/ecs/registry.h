@@ -289,7 +289,7 @@ concept ViewIterationFunc =
 ///
 /// View of a registry.
 ///
-/// Views are a reduces space of entities. They reduce the space by giving it component requirements. In other words,
+/// Views are a reduced space of entities. They reduce the space by giving it component requirements. In other words,
 /// for an entity to be part of a view it must contain all the component types in the view.
 ///
 /// The registry operates on views to reduce the search space for many operations. Sometimes the registry does not
@@ -393,7 +393,7 @@ public:
   ///
   /// Destroys the entity and all its associated component data.
   ///
-  /// his operation is O(n) where n is the amount of archetypes in the view. A reordering optimization
+  /// This operation is O(n) where n is the amount of archetypes in the view. A reordering optimization
   /// ensures that the operation is O(1) if the view has the exact components of the entity to destroy.
   ///
   /// @warning

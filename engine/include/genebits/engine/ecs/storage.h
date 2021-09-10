@@ -70,7 +70,7 @@ public:
   ///
   /// Const array access operator.
   ///
-  /// @param[in] entity Entity to access index for.
+  /// @param[in] entity Entity to access the index for.
   ///
   /// @return Entity index.
   ///
@@ -82,7 +82,7 @@ public:
   ///
   /// Array access operator.
   ///
-  /// @param[in] entity Entity to access index for.
+  /// @param[in] entity Entity to access the index for.
   ///
   /// @return Entity index.
   ///

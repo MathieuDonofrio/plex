@@ -8,9 +8,9 @@
 namespace genebits::engine
 {
 ///
-/// Responsible for providing and recycling of entity identifiers.
+/// Responsible for providing and recycling entity identifiers.
 ///
-/// @tparam Entity Entity integral type to generate.
+/// @tparam Entity Entity of integral type to generate.
 /// @tparam AllocatorImpl Allocator to use.
 ///
 template<std::unsigned_integral Entity, Allocator AllocatorImpl = Mallocator>
@@ -82,9 +82,10 @@ public:
   ///
   /// Releases all the entity identifiers and resets the generator sequence to 0.
   ///
-  /// This method should be preferred to releasing every entity one by one.
-  ///
   /// This operation is O(1).
+  ///
+  /// @note This method should be preferred to releasing every entity one by one.
+  ///
   ///
   void ReleaseAll() noexcept
   {
