@@ -55,7 +55,7 @@ static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state
 
 BENCHMARK(ThreadPool_NoSchedule_SingleThread_Reference)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-static void ThreadPool_Schedule_NoWorkOverhead(benchmark::State& state)
+static void ThreadPool_Schedule_Wait_NoWorkOverhead(benchmark::State& state)
 {
   ThreadPool pool;
 
@@ -65,13 +65,31 @@ static void ThreadPool_Schedule_NoWorkOverhead(benchmark::State& state)
     task.Executor().Bind([]() { benchmark::ClobberMemory(); });
     pool.Schedule(&task);
 
-    task.Complete();
+    task.Wait();
 
     benchmark::DoNotOptimize(task);
   }
 }
 
-BENCHMARK(ThreadPool_Schedule_NoWorkOverhead);
+BENCHMARK(ThreadPool_Schedule_Wait_NoWorkOverhead);
+
+static void ThreadPool_Schedule_Poll_NoWorkOverhead(benchmark::State& state)
+{
+  ThreadPool pool;
+
+  for (auto _ : state)
+  {
+    Task task;
+    task.Executor().Bind([]() { benchmark::ClobberMemory(); });
+    pool.Schedule(&task);
+
+    task.Poll();
+
+    benchmark::DoNotOptimize(task);
+  }
+}
+
+BENCHMARK(ThreadPool_Schedule_Poll_NoWorkOverhead);
 
 static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
 {
@@ -106,10 +124,10 @@ static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
     task4.Executor().Bind(executor);
     pool.Schedule(&task4);
 
-    task1.Complete();
-    task2.Complete();
-    task3.Complete();
-    task4.Complete();
+    task1.Wait();
+    task2.Wait();
+    task3.Wait();
+    task4.Wait();
 
     benchmark::DoNotOptimize(task1);
     benchmark::DoNotOptimize(task2);
@@ -123,6 +141,63 @@ static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
 }
 
 BENCHMARK(ThreadPool_Schedule_4Threads_TaskSize)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+
+static void ThreadPool_Schedule_4Threads_TaskSize_Optimized(benchmark::State& state)
+{
+  constexpr size_t threads = 4;
+
+  ThreadPool pool(threads);
+
+  const size_t amount = state.range(0);
+
+  auto work_per_thread = static_cast<unsigned int>(amount / threads);
+
+  auto executor = [work_per_thread]()
+  {
+    for (size_t i = 0; i < work_per_thread; i++)
+    {
+      Work(100);
+    }
+  };
+
+  for (auto _ : state)
+  {
+    Task task1;
+    task1.Executor().Bind(executor);
+    pool.Schedule(&task1);
+    Task task2;
+    task2.Executor().Bind(executor);
+    pool.Schedule(&task2);
+    Task task3;
+    task3.Executor().Bind(executor);
+    pool.Schedule(&task3);
+    Task task4;
+    task4.Executor().Bind(executor);
+    pool.Schedule(&task4);
+
+    task1.Wait();
+
+    // Optimization here is to use polling after the first task is finished waiting.
+    // This works because we know that the amount of work being done is about the same,
+    // so we can assume that once the first task is done, the other tasks will finish soon, so
+    // we can just spin. With this method you get the best of both worlds, less CPU usage and more
+    // responsiveness.
+    task2.Poll();
+    task3.Poll();
+    task4.Poll();
+
+    benchmark::DoNotOptimize(task1);
+    benchmark::DoNotOptimize(task2);
+    benchmark::DoNotOptimize(task3);
+    benchmark::DoNotOptimize(task4);
+  }
+
+  benchmark::DoNotOptimize(executor);
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(ThreadPool_Schedule_4Threads_TaskSize_Optimized)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void ThreadPool_Schedule_4Threads_TaskQuantity(benchmark::State& state)
 {
@@ -153,7 +228,7 @@ static void ThreadPool_Schedule_4Threads_TaskQuantity(benchmark::State& state)
 
     for (size_t i = 0; i < amount; i++)
     {
-      tasks[i].Complete();
+      tasks[i].Wait();
     }
   }
 
@@ -163,6 +238,52 @@ static void ThreadPool_Schedule_4Threads_TaskQuantity(benchmark::State& state)
 }
 
 BENCHMARK(ThreadPool_Schedule_4Threads_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+
+static void ThreadPool_Schedule_4Threads_TaskQuantity_Optimized(benchmark::State& state)
+{
+  constexpr size_t threads = 4;
+
+  ThreadPool pool(threads);
+
+  const size_t amount = state.range(0);
+
+  auto executor = []() { Work(100); };
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    FastVector<Task> tasks;
+    tasks.Resize(amount);
+
+    benchmark::DoNotOptimize(tasks);
+
+    state.ResumeTiming();
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      tasks[i].Executor().Bind(executor);
+      pool.Schedule(&tasks[i]);
+    }
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      // Optimization here is to spin a little while before waiting. This works because
+      // The tasks are small and sometimes spinning is all you need.
+      if (!tasks[i].TryPoll()) tasks[i].Wait();
+    }
+  }
+
+  benchmark::DoNotOptimize(executor);
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(ThreadPool_Schedule_4Threads_TaskQuantity_Optimized)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Complexity(benchmark::oN);
 
 static void ThreadPool_STD_ThreadCreation(benchmark::State& state)
 {
