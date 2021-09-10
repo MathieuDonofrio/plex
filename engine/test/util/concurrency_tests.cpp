@@ -6,8 +6,6 @@
 
 namespace genebits::engine::tests
 {
-static_assert(cCacheLineSize > 0, "Cache line size must be bigger than 0");
-
 TEST(Concurrency_Tests, SpinLock_Lock_LocksAfterDefaultState)
 {
   SpinMutex mutex;

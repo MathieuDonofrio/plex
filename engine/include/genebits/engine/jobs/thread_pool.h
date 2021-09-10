@@ -11,7 +11,8 @@ namespace genebits::engine
 {
 using TaskExecutor = Delegate<>;
 
-class Task
+// Aligned on a cache line to avoid cache synchronization
+class alignas(std::hardware_destructive_interference_size) Task
 {
 public:
   constexpr Task() noexcept : next_(nullptr), flag_(false) {}
@@ -29,7 +30,32 @@ public:
     return *this;
   }
 
-  void Complete() const noexcept
+  bool TryPoll(size_t spins = 512) const noexcept
+  {
+    for (;;)
+    {
+      if (Finished()) return true;
+
+      if (spins-- == 0) return false;
+
+      this_thread::Pause();
+    }
+  }
+
+  void Poll() const noexcept
+  {
+    if (!Finished())
+    {
+      ExponentialBackoff backoff;
+
+      while (!Finished())
+      {
+        backoff.Wait();
+      }
+    }
+  }
+
+  void Wait() const noexcept
   {
     while (!Finished())
     {
@@ -89,7 +115,7 @@ public:
     }
   }
 
-  constexpr Task* Front() noexcept
+  [[nodiscard]] constexpr Task* Front() noexcept
   {
     return front_;
   }
@@ -185,7 +211,7 @@ private:
 
       if (!empty)
       {
-        // Sleep a little to free CPU
+        // Sleep a little in between spins to free the CPU
         std::this_thread::sleep_for(std::chrono::microseconds(100));
       }
       else
