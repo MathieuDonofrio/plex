@@ -89,7 +89,7 @@ private:
   ///
   /// Initializes an unordered list of components and states for a given id.
   ///
-  /// Components and states are seperated for SoA access performance.
+  /// Components and states are seperated for SoA access cache performance benefits.
   ///
   /// @tparam IdType Type of identifier.
   /// @tparam Components List of component types.
