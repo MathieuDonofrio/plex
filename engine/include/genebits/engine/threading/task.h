@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_THREADING_TASK_H
 #define GENEBITS_ENGINE_THREADING_TASK_H
 
-#include "genebits/engine/threading/thread_support.h"
+#include "genebits/engine/threading/thread.h"
 #include "genebits/engine/util/delegate.h"
 
 namespace genebits::engine

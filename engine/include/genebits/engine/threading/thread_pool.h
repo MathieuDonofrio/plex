@@ -4,6 +4,7 @@
 #include <atomic>
 #include <mutex>
 
+#include "genebits/engine/threading/exponential_backoff.h"
 #include "genebits/engine/threading/task.h"
 
 namespace genebits::engine
