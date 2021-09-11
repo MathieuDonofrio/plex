@@ -16,7 +16,7 @@ static void Concurrency_STD_Mutex_LockUnlock(benchmark::State& state)
   {
     mutex.lock();
 
-    sum = sum * 2 + sum + 4;
+    sum = sum * 2 + sum + 4; // Do some work
 
     mutex.unlock();
   }
@@ -36,7 +36,7 @@ static void Concurrency_SpinMutex_LockUnlock(benchmark::State& state)
   {
     mutex.lock();
 
-    sum = sum * 2 + sum + 4;
+    sum = sum * 2 + sum + 4; // Do some work
 
     mutex.unlock();
   }

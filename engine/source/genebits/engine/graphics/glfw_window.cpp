@@ -15,14 +15,12 @@ namespace
 ///
 inline void AssertLastGlfwCall()
 {
-  const char* error_description;
-  const int error_code = glfwGetError(&error_description);
+  [[maybe_unused]] const char* error_description;
+  [[maybe_unused]] const int error_code = glfwGetError(&error_description);
 
   if (error_description) LOG_ERROR("GLFW Error: Code={} Description={}", error_code, error_description);
 
   ASSERT(error_code == GLFW_NO_ERROR, "GLFW error occurred");
-
-  (void)(error_code); // Suppress warnings for non debug builds
 }
 
 ///

@@ -77,6 +77,25 @@ public:
     return values_[Key<Type>()];
   }
 
+  ///
+  /// Returns the value reference for the type key.
+  ///
+  /// Always O(1) with extremely low overhead. Essentially an array lookup.
+  ///
+  /// @warning
+  ///     Make sure Assure was called at least once for this type. Or else
+  ///     this method is undefined behaviour.
+  ///
+  /// @tparam Type The type to use as key.
+  ///
+  /// @return Reference to the value mapped by the type.
+  ///
+  template<typename Type>
+  [[nodiscard]] Value& Get() noexcept
+  {
+    return const_cast<Value&>(const_cast<const TypeMap*>(this)->template Get<Type>());
+  }
+
 private:
   ///
   /// Obtains the key for a type.
