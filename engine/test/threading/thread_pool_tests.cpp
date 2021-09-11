@@ -1,4 +1,4 @@
-#include "genebits/engine/jobs/thread_pool.h"
+#include "genebits/engine/threading/thread_pool.h"
 
 #include <gtest/gtest.h>
 
@@ -21,7 +21,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_Wait_CorrectExecution)
 
   task.Executor().Bind([&count]() { count++; });
 
-  pool.Schedule(&task);
+  pool.Enqueue(&task);
 
   task.Wait();
 
@@ -38,7 +38,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_Poll_CorrectExecution)
 
   task.Executor().Bind([&count]() { count++; });
 
-  pool.Schedule(&task);
+  pool.Enqueue(&task);
 
   task.Wait();
 
@@ -55,7 +55,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_TryPollWait_CorrectExecution)
 
   task.Executor().Bind([&count]() { count++; });
 
-  pool.Schedule(&task);
+  pool.Enqueue(&task);
 
   if (!task.TryPoll()) task.Wait();
 
@@ -72,7 +72,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_DoubleWait_CorrectExecution)
 
   task.Executor().Bind([&count]() { count++; });
 
-  pool.Schedule(&task);
+  pool.Enqueue(&task);
 
   task.Wait();
   task.Wait();
@@ -90,7 +90,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsOneTask_Wait_CorrectExecution)
 
   task.Executor().Bind([&count]() { count++; });
 
-  pool.Schedule(&task);
+  pool.Enqueue(&task);
 
   task.Wait();
 
@@ -107,7 +107,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsOneTask_Poll_CorrectExecution)
 
   task.Executor().Bind([&count]() { count++; });
 
-  pool.Schedule(&task);
+  pool.Enqueue(&task);
 
   task.Wait();
 
@@ -130,7 +130,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsMultipleTasks_Wait_CorrectExecution)
   {
     tasks[i].Executor().Bind([&count]() { count++; });
 
-    pool.Schedule(&tasks[i]);
+    pool.Enqueue(&tasks[i]);
   }
 
   for (size_t i = 0; i < amount; i++)
@@ -157,7 +157,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsMultipleTasks_Poll_CorrectExecution)
   {
     tasks[i].Executor().Bind([&count]() { count++; });
 
-    pool.Schedule(&tasks[i]);
+    pool.Enqueue(&tasks[i]);
   }
 
   for (size_t i = 0; i < amount; i++)

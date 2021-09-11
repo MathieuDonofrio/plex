@@ -1,4 +1,4 @@
-#include "genebits/engine/jobs/thread_pool.h"
+#include "genebits/engine/threading/thread_pool.h"
 
 #include <cmath>
 #include <future>
@@ -63,7 +63,7 @@ static void ThreadPool_Schedule_Wait_NoWorkOverhead(benchmark::State& state)
   {
     Task task;
     task.Executor().Bind([]() { benchmark::ClobberMemory(); });
-    pool.Schedule(&task);
+    pool.Enqueue(&task);
 
     task.Wait();
 
@@ -81,7 +81,7 @@ static void ThreadPool_Schedule_Poll_NoWorkOverhead(benchmark::State& state)
   {
     Task task;
     task.Executor().Bind([]() { benchmark::ClobberMemory(); });
-    pool.Schedule(&task);
+    pool.Enqueue(&task);
 
     task.Poll();
 
@@ -113,16 +113,16 @@ static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
   {
     Task task1;
     task1.Executor().Bind(executor);
-    pool.Schedule(&task1);
+    pool.Enqueue(&task1);
     Task task2;
     task2.Executor().Bind(executor);
-    pool.Schedule(&task2);
+    pool.Enqueue(&task2);
     Task task3;
     task3.Executor().Bind(executor);
-    pool.Schedule(&task3);
+    pool.Enqueue(&task3);
     Task task4;
     task4.Executor().Bind(executor);
-    pool.Schedule(&task4);
+    pool.Enqueue(&task4);
 
     task1.Wait();
     task2.Wait();
@@ -164,16 +164,16 @@ static void ThreadPool_Schedule_4Threads_TaskSize_Optimized(benchmark::State& st
   {
     Task task1;
     task1.Executor().Bind(executor);
-    pool.Schedule(&task1);
+    pool.Enqueue(&task1);
     Task task2;
     task2.Executor().Bind(executor);
-    pool.Schedule(&task2);
+    pool.Enqueue(&task2);
     Task task3;
     task3.Executor().Bind(executor);
-    pool.Schedule(&task3);
+    pool.Enqueue(&task3);
     Task task4;
     task4.Executor().Bind(executor);
-    pool.Schedule(&task4);
+    pool.Enqueue(&task4);
 
     task1.Wait();
 
@@ -223,7 +223,7 @@ static void ThreadPool_Schedule_4Threads_TaskQuantity(benchmark::State& state)
     for (size_t i = 0; i < amount; i++)
     {
       tasks[i].Executor().Bind(executor);
-      pool.Schedule(&tasks[i]);
+      pool.Enqueue(&tasks[i]);
     }
 
     for (size_t i = 0; i < amount; i++)
@@ -263,7 +263,7 @@ static void ThreadPool_Schedule_4Threads_TaskQuantity_Optimized(benchmark::State
     for (size_t i = 0; i < amount; i++)
     {
       tasks[i].Executor().Bind(executor);
-      pool.Schedule(&tasks[i]);
+      pool.Enqueue(&tasks[i]);
     }
 
     for (size_t i = 0; i < amount; i++)
