@@ -1,11 +1,11 @@
-#ifndef GENEBITS_ENGINE_THREADING_THREAD_POOL_H
-#define GENEBITS_ENGINE_THREADING_THREAD_POOL_H
+#ifndef GENEBITS_ENGINE_PARALLEL_THREAD_POOL_H
+#define GENEBITS_ENGINE_PARALLEL_THREAD_POOL_H
 
 #include <atomic>
 #include <mutex>
 
-#include "genebits/engine/threading/exponential_backoff.h"
-#include "genebits/engine/threading/task.h"
+#include "genebits/engine/parallel/exponential_backoff.h"
+#include "genebits/engine/parallel/task.h"
 
 namespace genebits::engine
 {

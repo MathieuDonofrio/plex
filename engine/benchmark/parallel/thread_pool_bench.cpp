@@ -1,4 +1,4 @@
-#include "genebits/engine/threading/thread_pool.h"
+#include "genebits/engine/parallel/thread_pool.h"
 
 #include <cmath>
 #include <future>

@@ -1,5 +1,5 @@
 
-#include "genebits/engine/threading/thread.h"
+#include "genebits/engine/parallel/thread.h"
 
 #include <gtest/gtest.h>
 

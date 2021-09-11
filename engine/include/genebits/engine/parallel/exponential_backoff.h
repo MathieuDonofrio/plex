@@ -1,7 +1,7 @@
-#ifndef GENEBITS_ENGINE_EXPONENTIAL_BACKOFF_H
-#define GENEBITS_ENGINE_EXPONENTIAL_BACKOFF_H
+#ifndef GENEBITS_ENGINE_PARALLEL_EXPONENTIAL_BACKOFF_H
+#define GENEBITS_ENGINE_PARALLEL_EXPONENTIAL_BACKOFF_H
 
-#include "genebits/engine/threading/thread.h"
+#include "genebits/engine/parallel/thread.h"
 
 namespace genebits::engine
 {
