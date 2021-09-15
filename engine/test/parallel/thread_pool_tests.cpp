@@ -11,7 +11,7 @@ TEST(ThreadPool_Tests, Constructor_CustomAmountThreads_CorrectCount)
   ASSERT_EQ(pool.ThreadCount(), 4);
 }
 
-TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_Wait_CorrectExecution)
+TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Wait_CorrectExecution)
 {
   ThreadPool pool(1);
 
@@ -28,7 +28,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_Wait_CorrectExecution)
   ASSERT_EQ(count, 1);
 }
 
-TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_Poll_CorrectExecution)
+TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Poll_CorrectExecution)
 {
   ThreadPool pool(1);
 
@@ -45,7 +45,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_Poll_CorrectExecution)
   ASSERT_EQ(count, 1);
 }
 
-TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_TryPollWait_CorrectExecution)
+TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_TryPollWait_CorrectExecution)
 {
   ThreadPool pool(1);
 
@@ -62,7 +62,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_TryPollWait_CorrectExecution)
   ASSERT_EQ(count, 1);
 }
 
-TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_DoubleWait_CorrectExecution)
+TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_DoubleWait_CorrectExecution)
 {
   ThreadPool pool(1);
 
@@ -80,7 +80,7 @@ TEST(ThreadPool_Tests, Shedule_OneThreadOneTask_DoubleWait_CorrectExecution)
   ASSERT_EQ(count, 1);
 }
 
-TEST(ThreadPool_Tests, Shedule_16ThreadsOneTask_Wait_CorrectExecution)
+TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Wait_CorrectExecution)
 {
   ThreadPool pool(16);
 
@@ -97,7 +97,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsOneTask_Wait_CorrectExecution)
   ASSERT_EQ(count, 1);
 }
 
-TEST(ThreadPool_Tests, Shedule_16ThreadsOneTask_Poll_CorrectExecution)
+TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Poll_CorrectExecution)
 {
   ThreadPool pool(16);
 
@@ -114,7 +114,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsOneTask_Poll_CorrectExecution)
   ASSERT_EQ(count, 1);
 }
 
-TEST(ThreadPool_Tests, Shedule_16ThreadsMultipleTasks_Wait_CorrectExecution)
+TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Wait_CorrectExecution)
 {
   ThreadPool pool(16);
 
@@ -141,7 +141,7 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsMultipleTasks_Wait_CorrectExecution)
   ASSERT_EQ(count, amount);
 }
 
-TEST(ThreadPool_Tests, Shedule_16ThreadsMultipleTasks_Poll_CorrectExecution)
+TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Poll_CorrectExecution)
 {
   ThreadPool pool(16);
 
@@ -163,6 +163,73 @@ TEST(ThreadPool_Tests, Shedule_16ThreadsMultipleTasks_Poll_CorrectExecution)
   for (size_t i = 0; i < amount; i++)
   {
     tasks[i].Poll();
+  }
+
+  ASSERT_EQ(count, amount);
+}
+
+TEST(ThreadPool_Tests, EnqueueAll_OneThreadOneTask_CorrectExecution)
+{
+  ThreadPool pool(1);
+
+  Task task;
+
+  std::atomic_int count = 0;
+
+  task.Executor().Bind([&count]() { count++; });
+
+  pool.EnqueueAll(&task, &task + 1);
+
+  task.Wait();
+
+  ASSERT_EQ(count, 1);
+}
+
+TEST(ThreadPool_Tests, EnqueueAll_OneThreadMultipleTasks_CorrectExecution)
+{
+  ThreadPool pool(1);
+
+  constexpr size_t amount = 10;
+
+  Task tasks[amount];
+
+  std::atomic_int count = 0;
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    tasks[i].Executor().Bind([&count]() { count++; });
+  }
+
+  pool.EnqueueAll(&tasks[0], &tasks[amount]);
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    tasks[i].Wait();
+  }
+
+  ASSERT_EQ(count, amount);
+}
+
+TEST(ThreadPool_Tests, EnqueueAll_16ThreadsMultipleTasks_CorrectExecution)
+{
+  ThreadPool pool(16);
+
+  constexpr size_t amount = 100;
+
+  Task tasks[amount];
+
+  std::atomic_int count = 0;
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    tasks[i].Executor().Bind([&count]() { count++; });
+  }
+
+  pool.EnqueueAll(&tasks[0], &tasks[amount]);
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    tasks[i].Wait();
   }
 
   ASSERT_EQ(count, amount);
