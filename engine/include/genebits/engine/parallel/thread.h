@@ -31,7 +31,20 @@ namespace this_thread
       Pause();
     }
   }
+
+  void SetName(const char* name);
+
 } // namespace this_thread
+
+using NativeThreadHandle = void*;
+
+NativeThreadHandle GetCurrentNativeThread();
+
+void SetThreadProcessor(NativeThreadHandle handle, size_t cpu);
+
+size_t GetAmountPhysicalProcessors();
+
+size_t GetAmountLogicalProcessors();
 
 } // namespace genebits::engine
 

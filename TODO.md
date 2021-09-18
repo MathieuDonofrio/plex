@@ -29,6 +29,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Archetype swapping
 - [ ] Verify if registry should have built-in thread safety
 - [ ] Build sandboxes/examples cmake option
+- [ ] Verify thread functionality on linux
 
 ## Major
 

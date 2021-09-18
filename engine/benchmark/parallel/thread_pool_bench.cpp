@@ -142,68 +142,9 @@ static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
 
 BENCHMARK(ThreadPool_Schedule_4Threads_TaskSize)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void ThreadPool_Schedule_4Threads_TaskSize_Optimized(benchmark::State& state)
+static void ThreadPool_Schedule_TaskQuantity(benchmark::State& state)
 {
-  constexpr size_t threads = 4;
-
-  ThreadPool pool(threads);
-
-  const size_t amount = state.range(0);
-
-  auto work_per_thread = static_cast<unsigned int>(amount / threads);
-
-  auto executor = [work_per_thread]()
-  {
-    for (size_t i = 0; i < work_per_thread; i++)
-    {
-      Work(100);
-    }
-  };
-
-  for (auto _ : state)
-  {
-    Task task1;
-    task1.Executor().Bind(executor);
-    pool.Enqueue(&task1);
-    Task task2;
-    task2.Executor().Bind(executor);
-    pool.Enqueue(&task2);
-    Task task3;
-    task3.Executor().Bind(executor);
-    pool.Enqueue(&task3);
-    Task task4;
-    task4.Executor().Bind(executor);
-    pool.Enqueue(&task4);
-
-    task1.Wait();
-
-    // Optimization here is to use polling after the first task is finished waiting.
-    // This works because we know that the amount of work being done is about the same,
-    // so we can assume that once the first task is done, the other tasks will finish soon, so
-    // we can just spin. With this method you get the best of both worlds, less CPU usage and more
-    // responsiveness.
-    task2.Poll();
-    task3.Poll();
-    task4.Poll();
-
-    benchmark::DoNotOptimize(task1);
-    benchmark::DoNotOptimize(task2);
-    benchmark::DoNotOptimize(task3);
-    benchmark::DoNotOptimize(task4);
-  }
-
-  benchmark::DoNotOptimize(executor);
-
-  state.SetComplexityN(amount);
-}
-
-BENCHMARK(ThreadPool_Schedule_4Threads_TaskSize_Optimized)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
-
-static void ThreadPool_Schedule_4Threads_TaskQuantity(benchmark::State& state)
-{
-  constexpr size_t threads = 4;
-
-  ThreadPool pool(threads);
+  ThreadPool pool;
 
   const size_t amount = state.range(0);
 
@@ -237,53 +178,7 @@ static void ThreadPool_Schedule_4Threads_TaskQuantity(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_Schedule_4Threads_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
-
-static void ThreadPool_Schedule_4Threads_TaskQuantity_Optimized(benchmark::State& state)
-{
-  constexpr size_t threads = 4;
-
-  ThreadPool pool(threads);
-
-  const size_t amount = state.range(0);
-
-  auto executor = []() { Work(100); };
-
-  for (auto _ : state)
-  {
-    state.PauseTiming();
-
-    FastVector<Task> tasks;
-    tasks.Resize(amount);
-
-    benchmark::DoNotOptimize(tasks);
-
-    state.ResumeTiming();
-
-    for (size_t i = 0; i < amount; i++)
-    {
-      tasks[i].Executor().Bind(executor);
-      pool.Enqueue(&tasks[i]);
-    }
-
-    for (size_t i = 0; i < amount; i++)
-    {
-      // Optimization here is to spin a little while before waiting. This works because
-      // The tasks are small and sometimes spinning is all you need.
-      if (!tasks[i].TryPoll()) tasks[i].Wait();
-    }
-  }
-
-  benchmark::DoNotOptimize(executor);
-
-  state.SetComplexityN(amount);
-}
-
-BENCHMARK(ThreadPool_Schedule_4Threads_TaskQuantity_Optimized)
-  ->Arg(100)
-  ->Arg(1000)
-  ->Arg(10000)
-  ->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_Schedule_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void ThreadPool_STD_ThreadCreation(benchmark::State& state)
 {
@@ -359,11 +254,9 @@ static void ThreadPool_STD_Async_4Threads_TaskSize(benchmark::State& state)
 
 BENCHMARK(ThreadPool_STD_Async_4Threads_TaskSize)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void ThreadPool_STD_Async_4Threads_TaskQuantity(benchmark::State& state)
+static void ThreadPool_STD_Async_TaskQuantity(benchmark::State& state)
 {
-  constexpr size_t threads = 4;
-
-  ThreadPool pool(threads);
+  ThreadPool pool;
 
   const size_t amount = state.range(0);
 
@@ -396,6 +289,6 @@ static void ThreadPool_STD_Async_4Threads_TaskQuantity(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_STD_Async_4Threads_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_STD_Async_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 } // namespace genebits::engine

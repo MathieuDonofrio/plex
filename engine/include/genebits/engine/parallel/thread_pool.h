@@ -19,11 +19,7 @@ public:
     CreateWorkers();
   }
 
-  ThreadPool() : ThreadPool(std::thread::hardware_concurrency())
-  {
-    // TODO Currently uses logical processors, try to get better performance by reducing amount of threads to
-    // physical processors. This should be used in combination with setting thread affinity for every worker.
-  }
+  ThreadPool() : ThreadPool(GetAmountPhysicalProcessors()) {}
 
   ~ThreadPool()
   {
@@ -70,9 +66,7 @@ public:
 private:
   void Run()
   {
-    // TODO set thread name
-
-    // TODO check if setting thread affinity helps
+    this_thread::SetName("Worker");
 
     // RAII lock on construction & unlock on destruction
     std::unique_lock<std::mutex> lock(mutex_);
