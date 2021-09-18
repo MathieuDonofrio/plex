@@ -8,7 +8,7 @@ namespace genebits::engine
 ///
 /// Exponentially increases the polling time went waiting.
 ///
-/// Using this can significantly decrease CPU usage in spin-wait loops.
+/// Using this can decrease CPU usage and contention in spin-wait loops.
 ///
 class ExponentialBackoff
 {

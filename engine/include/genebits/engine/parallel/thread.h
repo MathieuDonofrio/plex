@@ -32,18 +32,55 @@ namespace this_thread
     }
   }
 
+  ///
+  /// Sets the name of the thread for debugging purposes.
+  ///
+  /// @param[in] name Name to set.
+  ///
   void SetName(const char* name);
 
 } // namespace this_thread
 
+///
+/// Pointer to a native thread (platform-specific).
+///
 using NativeThreadHandle = void*;
 
+///
+/// Obtains the native thread handle for platform specific threads.
+///
+/// @note If the platform is not supported, nullptr is returned.
+///
+/// @return Native thread handle.
+///
 NativeThreadHandle GetCurrentNativeThread();
 
-void SetThreadProcessor(NativeThreadHandle handle, size_t cpu);
+///
+/// Binds the thread to a logical processor index starting from 0. Returns true if the processor
+/// was set.
+///
+/// @param[in] handle Native thread handle.
+/// @param[in] index Processor index.
+///
+/// @return True if the processor was set, false otherwise.
+///
+bool SetThreadProcessor(NativeThreadHandle handle, size_t index);
 
+///
+/// Tries to return the amount of physical processors. Not always accurate and will
+/// sometimes return the amount of logical processors or a hint of amount of logical
+/// processors.
+///
+/// @return Hint to amount of physical processors.
+///
 size_t GetAmountPhysicalProcessors();
 
+///
+/// Tries to return the amount of logical processors. Not always accurate and will return
+/// a hint of amount of logical processors.
+///
+/// @return Hint to amount of logical processors.
+///
 size_t GetAmountLogicalProcessors();
 
 } // namespace genebits::engine

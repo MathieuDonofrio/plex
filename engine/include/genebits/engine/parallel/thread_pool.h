@@ -4,14 +4,23 @@
 #include <atomic>
 #include <mutex>
 
-#include "genebits/engine/parallel/exponential_backoff.h"
 #include "genebits/engine/parallel/task.h"
 
 namespace genebits::engine
 {
+///
+/// Pool of threads to execute tasks on.
+///
+/// @note Idle threads contained by a thread pool do no use up CPU.
+///
 class ThreadPool
 {
 public:
+  ///
+  /// Parametric constructor.
+  ///
+  /// @param[in] thread_count Amount of worker threads to create pool with.
+  ///
   explicit ThreadPool(const size_t thread_count) : running_(false), threads_(nullptr), thread_count_(thread_count)
   {
     ASSERT(thread_count > 0, "Thread pool cannot have 0 threads");
@@ -19,14 +28,31 @@ public:
     CreateWorkers();
   }
 
+  ///
+  /// Default constructor.
+  ///
+  /// Tries to create threads equal to amount of physical processors, sometimes this is not
+  /// accurate.
+  ///
   ThreadPool() : ThreadPool(GetAmountPhysicalProcessors()) {}
 
+  ///
+  /// Destructor.
+  ///
   ~ThreadPool()
   {
     WaitForTasks();
     DestroyWorkers();
   }
 
+  ///
+  /// Enqueues a range of tasks to be executed on worker threads of this pool.
+  ///
+  /// @tparam Iterator Type of iterator.
+  ///
+  /// @param[in] first Iterator start.
+  /// @param[in] last Iterator end.
+  ///
   template<typename Iterator>
   void EnqueueAll(Iterator first, Iterator last)
   {
@@ -45,6 +71,11 @@ public:
     condition_.notify_all();
   }
 
+  ///
+  /// Enqueues the task to be executed on a worker thread from this pool.
+  ///
+  /// @param[in] task Task to enqueue.
+  ///
   void Enqueue(Task* task)
   {
     mutex_.lock();
@@ -58,12 +89,22 @@ public:
     condition_.notify_one();
   }
 
+  ///
+  /// Returns amount of worker threads contained by this thread pool.
+  ///
+  /// @return Amount of worker threads in the pool.
+  ///
   [[nodiscard]] constexpr size_t ThreadCount() const noexcept
   {
     return thread_count_;
   }
 
 private:
+  ///
+  /// Runnable function executed by every worker thread.
+  ///
+  /// Loops and waits for tasks to execute until flagged to finish.
+  ///
   void Run()
   {
     this_thread::SetName("Worker");
@@ -73,16 +114,6 @@ private:
 
     while (running_) // Always locked when doing an iteration
     {
-      // TODO Experiment with more complex system.
-      //
-      // Lock free queue:
-      // - No more locking when adding tasks
-      // - Worker keeps shared lock for less time
-      // - Better scaling with more threads?
-      // - Improves performance when there are multiple tasks in queue?
-      // - May allow for spinning a little on an atomic before locking.
-      // - May allow for using atomic_bool instead of condition variable to remove locking completely.
-
       if (Task* task = tasks_.Front()) // Not empty
       {
         tasks_.Pop();
@@ -108,6 +139,13 @@ private:
     }
   }
 
+  ///
+  /// Non-intrusively waits until all tasks are finished.
+  ///
+  /// Spins and sleeps in between iterations.
+  ///
+  /// @warning Not efficient, should only be used for destruction of the pool.
+  ///
   void WaitForTasks()
   {
     while (true)
@@ -128,6 +166,11 @@ private:
     }
   }
 
+  ///
+  /// Creates and initializes all the worker threads.
+  ///
+  /// @warning Undefined behaviour if the thread pool already created workers.
+  ///
   void CreateWorkers()
   {
     ASSERT(!running_, "Thread pool already running");
@@ -142,6 +185,11 @@ private:
     }
   }
 
+  ///
+  /// Destroys all the worker threads.
+  ///
+  /// @warning All tasks must be finished before and while destroying workers.
+  ///
   void DestroyWorkers()
   {
     mutex_.lock();
@@ -159,22 +207,24 @@ private:
       threads_[i].join();
     }
 
+    mutex_.lock();
+
     ASSERT(tasks_.Empty(), "Tasks where added during destruction of workers");
 
     delete[] threads_;
+
+    mutex_.unlock();
   }
 
 private:
   std::mutex mutex_;
 
   bool running_;
-
   std::condition_variable condition_;
 
   TaskQueue tasks_;
 
   std::thread* threads_;
-
   size_t thread_count_;
 };
 } // namespace genebits::engine

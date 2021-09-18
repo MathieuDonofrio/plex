@@ -57,22 +57,18 @@ NativeThreadHandle GetCurrentNativeThread()
 #endif
 }
 
-void SetThreadProcessor([[maybe_unused]] NativeThreadHandle handle, [[maybe_unused]] size_t cpu)
+bool SetThreadProcessor([[maybe_unused]] NativeThreadHandle handle, [[maybe_unused]] size_t index)
 {
 #if PLATFORM_WINDOWS
-  uint64_t affinity = static_cast<uint64_t>(1) << cpu;
+  uint64_t affinity = static_cast<uint64_t>(1) << index;
 
-  auto result = SetThreadAffinityMask(handle, affinity);
-
-  ASSERT(result != 0, "Error setting windows thread affinity");
+  return SetThreadAffinityMask(handle, affinity) != 0;
 #elif PLATFORM_LINUX
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
-  CPU_SET(cpu, &cpuset)
+  CPU_SET(index, &cpuset)
 
-  auto result = pthread_setaffinity_np(handle, sizeof(cpu_set_t), &cpuset);
-
-  ASSERT(result == 0, "Error setting pthread affinity");
+  return !pthread_setaffinity_np(handle, sizeof(cpu_set_t), &cpuset);
 #endif
 }
 size_t GetAmountPhysicalProcessors()
