@@ -56,12 +56,24 @@ struct ProcessorInfo
 };
 
 ///
+/// Enum about the cache type
+///
+enum class CacheType : uint32_t
+{
+  Unified,
+  Instruction,
+  Data,
+  Trace
+};
+
+///
 /// Holds information about a cache
 ///
 struct CacheInfo
 {
+  CacheType type;
+  uint32_t level;
   uint32_t size;
-  uint32_t count;
   uint32_t line_size;
 };
 
@@ -72,7 +84,7 @@ struct CPUInfo
 {
   std::vector<ProcessorInfo> processors;
 
-  std::array<CacheInfo, 3> cache {};
+  std::vector<CacheInfo> caches;
 
   bool supported;
 };

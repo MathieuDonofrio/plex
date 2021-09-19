@@ -102,16 +102,21 @@ CPUInfo GetCPUInfo()
     {
     case RelationCache:
     {
-      auto cache = &current->Cache;
+      CacheInfo cache;
 
-      if (cache->Level <= 3 && cache->Type != CacheInstruction)
+      switch (current->Cache.Type)
       {
-        auto index = cache->Level - 1;
-
-        cpu_info.cache[index].count++;
-        cpu_info.cache[index].size = cache->CacheSize;
-        cpu_info.cache[index].line_size = cache->LineSize;
+      case CacheUnified: cache.type = CacheType::Unified; break;
+      case CacheInstruction: cache.type = CacheType::Instruction; break;
+      case CacheData: cache.type = CacheType::Data; break;
+      case CacheTrace: cache.type = CacheType::Trace; break;
       }
+
+      cache.level = current->Cache.Level;
+      cache.size = current->Cache.CacheSize;
+      cache.line_size = current->Cache.LineSize;
+
+      cpu_info.caches.push_back(cache);
 
       break;
     }

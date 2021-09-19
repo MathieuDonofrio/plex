@@ -1,5 +1,6 @@
 
 #include "genebits/engine/debug/logging.h"
+#include "genebits/engine/parallel/thread.h"
 
 using namespace genebits::engine;
 
@@ -32,6 +33,16 @@ void func1()
 
 int main()
 {
+  LOG_INFO("Physical Processors: {}", GetAmountPhysicalProcessors());
+  LOG_INFO("Logical Processors: {}", GetAmountLogicalProcessors());
+
+  CPUInfo info = GetCPUInfo();
+
+  for (auto& cache : info.caches)
+  {
+    LOG_INFO("Cache: level={}, size={}, line_size={}", cache.level, cache.size, cache.line_size);
+  }
+
   my_namespace::func1();
 
   return 0;
