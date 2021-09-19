@@ -204,12 +204,9 @@ private:
   {
     CPUInfo info = GetCPUInfo();
 
-    if (info.supported)
+    for (size_t i = 0; i < thread_count_ && i < info.processors.size(); i++)
     {
-      for (size_t i = 0; i < thread_count_ && i < info.processors.size(); i++)
-      {
-        SetThreadAffinity(threads_[i].native_handle(), info.processors[i].mask);
-      }
+      SetThreadAffinity(threads_[i].native_handle(), info.processors[i].mask);
     }
   }
 

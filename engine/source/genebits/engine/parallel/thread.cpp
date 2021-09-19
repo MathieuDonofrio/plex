@@ -134,10 +134,6 @@ CPUInfo GetCPUInfo()
     offset += current->Size;
   }
   while (offset < length);
-
-  cpu_info.supported = true;
-#else
-  cpu_info.supported = false;
 #endif
 
   return cpu_info;
@@ -147,7 +143,7 @@ size_t GetAmountPhysicalProcessors()
 {
   auto cpu_info = GetCPUInfo();
 
-  if (cpu_info.supported && !cpu_info.processors.empty()) return cpu_info.processors.size();
+  if (!cpu_info.processors.empty()) return cpu_info.processors.size();
 
   return GetAmountLogicalProcessors(); // Fallback to logical processors
 }

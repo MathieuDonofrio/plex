@@ -85,8 +85,6 @@ struct CPUInfo
   std::vector<ProcessorInfo> processors;
 
   std::vector<CacheInfo> caches;
-
-  bool supported;
 };
 
 ///
@@ -113,7 +111,10 @@ NativeThreadHandle GetCurrentNativeThread();
 bool SetThreadAffinity(NativeThreadHandle handle, uint64_t mask);
 
 ///
-/// Returns information about the CPU.
+/// Tries to return information about the CPU.
+///
+/// @warning Not required to return valid information. This should only be used
+/// as a hint. If the CPU info is not supported the data will be empty.
 ///
 /// @return CPU information.
 ///
