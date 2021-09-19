@@ -4,6 +4,7 @@
 #include <atomic>
 #include <immintrin.h>
 #include <thread>
+#include <vector>
 
 namespace genebits::engine
 {
@@ -47,6 +48,36 @@ namespace this_thread
 using NativeThreadHandle = void*;
 
 ///
+/// Holds information about a physical processor.
+///
+struct ProcessorInfo
+{
+  uint64_t mask;
+};
+
+///
+/// Holds information about a cache
+///
+struct CacheInfo
+{
+  uint32_t size;
+  uint32_t count;
+  uint32_t line_size;
+};
+
+///
+/// Holds information about a physical processor.
+///
+struct CPUInfo
+{
+  std::vector<ProcessorInfo> processors;
+
+  std::array<CacheInfo, 3> cache {};
+
+  bool supported;
+};
+
+///
 /// Obtains the native thread handle for platform specific threads.
 ///
 /// @note If the platform is not supported, nullptr is returned.
@@ -56,15 +87,25 @@ using NativeThreadHandle = void*;
 NativeThreadHandle GetCurrentNativeThread();
 
 ///
-/// Binds the thread to a logical processor index starting from 0. Returns true if the processor
-/// was set.
+/// Sets the thread affinity. Allows operating system to only use cores that are in the mask.
+///
+/// Every bit in the mask represents a processor.
+///
+/// @example 0b1 is processor 1 only.
 ///
 /// @param[in] handle Native thread handle.
-/// @param[in] index Processor index.
+/// @param[in] mask Processor Mask.
 ///
 /// @return True if the processor was set, false otherwise.
 ///
-bool SetThreadProcessor(NativeThreadHandle handle, size_t index);
+bool SetThreadAffinity(NativeThreadHandle handle, uint64_t mask);
+
+///
+/// Returns information about the CPU.
+///
+/// @return CPU information.
+///
+CPUInfo GetCPUInfo();
 
 ///
 /// Tries to return the amount of physical processors. Not always accurate and will

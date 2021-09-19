@@ -57,52 +57,94 @@ NativeThreadHandle GetCurrentNativeThread()
 #endif
 }
 
-bool SetThreadProcessor([[maybe_unused]] NativeThreadHandle handle, [[maybe_unused]] size_t index)
+bool SetThreadAffinity([[maybe_unused]] NativeThreadHandle handle, [[maybe_unused]] uint64_t mask)
 {
 #if PLATFORM_WINDOWS
-  uint64_t affinity = static_cast<uint64_t>(1) << index;
-
-  return SetThreadAffinityMask(handle, affinity) != 0;
+  return SetThreadAffinityMask(handle, mask) != 0;
 #elif PLATFORM_LINUX
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
-  CPU_SET(index, &cpuset)
+
+  for (size_t i = 0; i < 64; i++)
+  {
+    if (mask & (1 << i)) CPU_SET(i, &cpuset)
+  }
 
   return !pthread_setaffinity_np(handle, sizeof(cpu_set_t), &cpuset);
 #endif
 }
-size_t GetAmountPhysicalProcessors()
-{
-#if PLATFORM_WINDOWS
 
+CPUInfo GetCPUInfo()
+{
+  CPUInfo cpu_info;
+
+#if PLATFORM_WINDOWS
   DWORD length = 0;
 
-  [[maybe_unused]] auto result1 = GetLogicalProcessorInformationEx(RelationProcessorCore, nullptr, &length);
+  [[maybe_unused]] auto result1 = GetLogicalProcessorInformationEx(RelationAll, nullptr, &length);
 
-  ASSERT(!result1 && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Error while obtaining logical processor info");
+  ASSERT(!result1 && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Error while obtaining processor info");
 
   std::unique_ptr<uint8_t[]> buffer(new uint8_t[length]);
   const auto info = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(buffer.get());
 
-  [[maybe_unused]] auto result2 = GetLogicalProcessorInformationEx(RelationProcessorCore, info, &length);
+  [[maybe_unused]] auto result2 = GetLogicalProcessorInformationEx(RelationAll, info, &length);
 
-  ASSERT(result2 != FALSE, "Failed to get logical processor information");
-
-  size_t physical_processors = 0;
+  ASSERT(result2 != FALSE, "Failed to get processor information");
 
   size_t offset = 0;
 
   do
   {
-    offset += reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(buffer.get() + offset)->Size;
-    ++physical_processors;
+    auto current = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(buffer.get() + offset);
+
+    switch (current->Relationship)
+    {
+    case RelationCache:
+    {
+      auto cache = &current->Cache;
+
+      if (cache->Level <= 3 && cache->Type != CacheInstruction)
+      {
+        auto index = cache->Level - 1;
+
+        cpu_info.cache[index].count++;
+        cpu_info.cache[index].size = cache->CacheSize;
+        cpu_info.cache[index].line_size = cache->LineSize;
+      }
+
+      break;
+    }
+    case RelationProcessorCore:
+    {
+      ProcessorInfo processor;
+
+      processor.mask = current->Processor.GroupMask->Mask;
+
+      cpu_info.processors.push_back(processor);
+
+      break;
+    }
+    }
+    offset += current->Size;
   }
   while (offset < length);
 
-  return physical_processors;
+  cpu_info.supported = true;
 #else
-  return GetAmountLogicalProcessors(); // Fallback to logical processors
+  cpu_info.supported = false;
 #endif
+
+  return cpu_info;
+}
+
+size_t GetAmountPhysicalProcessors()
+{
+  auto cpu_info = GetCPUInfo();
+
+  if (cpu_info.supported && !cpu_info.processors.empty()) return cpu_info.processors.size();
+
+  return GetAmountLogicalProcessors(); // Fallback to logical processors
 }
 
 size_t GetAmountLogicalProcessors()

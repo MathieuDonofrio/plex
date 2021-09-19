@@ -34,7 +34,13 @@ public:
   /// Tries to create threads equal to amount of physical processors, sometimes this is not
   /// accurate.
   ///
-  ThreadPool() : ThreadPool(GetAmountPhysicalProcessors()) {}
+  /// @note Will also attempt to set the threads affinity so that every thread only runs on one
+  /// physical core.
+  ///
+  ThreadPool() : ThreadPool(GetAmountPhysicalProcessors())
+  {
+    SetWorkerThreadAffinity();
+  }
 
   ///
   /// Destructor.
@@ -182,6 +188,28 @@ private:
     for (size_t i = 0; i < thread_count_; i++)
     {
       threads_[i] = std::thread(&ThreadPool::Run, this);
+    }
+  }
+
+  ///
+  /// Tries to set the worker thread affinity so that every worker can only run on
+  /// one physical processor.
+  ///
+  /// If the amount of worker threads is greater than the amount of physical processors
+  /// excess worker threads will we free to run on any processor.
+  ///
+  /// @warning This does nothing if cpu info is not supported.
+  ///
+  void SetWorkerThreadAffinity()
+  {
+    CPUInfo info = GetCPUInfo();
+
+    if (info.supported)
+    {
+      for (size_t i = 0; i < thread_count_ && i < info.processors.size(); i++)
+      {
+        SetThreadAffinity(threads_[i].native_handle(), info.processors[i].mask);
+      }
     }
   }
 
