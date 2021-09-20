@@ -21,6 +21,8 @@ using TaskExecutor = Delegate<>;
 class alignas(std::hardware_destructive_interference_size) Task
 {
 public:
+  static constexpr size_t cHotSpins = 32;
+
   ///
   /// Default constructor.
   ///
@@ -57,20 +59,31 @@ public:
   /// It may be an optimization to spin a little before waiting in certain cases such
   /// as small tasks.
   ///
-  /// @param[in] spins Maximum amount of spins.
+  /// @tparam Spins Maximum amount of spins.
   ///
   /// @return True if the attempt to poll worked, false otherwise.
   ///
-  bool TryPoll(size_t spins = 512) const noexcept
+  template<size_t Spins = 512>
+  bool TryPoll() const noexcept
   {
-    for (;;)
+    for (size_t i = 0; i != cHotSpins; i++)
     {
       if (Finished()) return true;
 
-      if (spins-- == 0) return false;
-
       this_thread::Pause();
     }
+
+    if constexpr (Spins > cHotSpins)
+    {
+      for (size_t i = 0; i < Spins - cHotSpins; i++)
+      {
+        if (Finished()) return true;
+
+        std::this_thread::yield();
+      }
+    }
+
+    return Finished();
   }
 
   ///
@@ -84,7 +97,7 @@ public:
   void Poll() const noexcept
   {
     // Start with faster spinning
-    for (size_t i = 0; i < 32; i++)
+    for (size_t i = 0; i != cHotSpins; i++)
     {
       if (Finished()) return;
 
