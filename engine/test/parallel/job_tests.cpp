@@ -21,9 +21,7 @@ public:
 };
 
 static_assert(Job<MockMonoJob>, "MockMonoJob must meet Job requirements");
-static_assert(!BatchedJob<MockMonoJob>, "MockMonoJob must not meed BatchedJob requirements");
 static_assert(Job<MockForJob>, "MockForJob must meet Job requirements");
-static_assert(BatchedJob<MockForJob>, "MockForJob must meet BatchedJob requirements");
 
 TEST(MonoJob_Tests, Schedule_AfterInitialization_CallsUpdate)
 {
@@ -34,7 +32,7 @@ TEST(MonoJob_Tests, Schedule_AfterInitialization_CallsUpdate)
   EXPECT_CALL(job, Update()).Times(1);
 
   job.Schedule(pool);
-  job.Compleate();
+  job.Complete();
 }
 
 TEST(ForJob_Tests, Schedule_OneThreadOneBatch_CallsUpdateCorrectAmount)
@@ -49,7 +47,7 @@ TEST(ForJob_Tests, Schedule_OneThreadOneBatch_CallsUpdateCorrectAmount)
 
   job.Schedule(pool, 1);
 
-  job.Compleate();
+  job.Complete();
 }
 
 TEST(ForJob_Tests, Schedule_OneThreadTwoBatches_CallsUpdateCorrectAmount)
@@ -64,7 +62,7 @@ TEST(ForJob_Tests, Schedule_OneThreadTwoBatches_CallsUpdateCorrectAmount)
 
   job.Schedule(pool, 2);
 
-  job.Compleate();
+  job.Complete();
 }
 
 TEST(ForJob_Tests, Schedule_TwoThreadsTwoBatches_CallsUpdateCorrectAmount)
@@ -79,7 +77,7 @@ TEST(ForJob_Tests, Schedule_TwoThreadsTwoBatches_CallsUpdateCorrectAmount)
 
   job.Schedule(pool, 2);
 
-  job.Compleate();
+  job.Complete();
 }
 
 TEST(ForJob_Tests, Schedule_8Threads4Batches_CallsUpdateCorrectAmount)
@@ -94,6 +92,6 @@ TEST(ForJob_Tests, Schedule_8Threads4Batches_CallsUpdateCorrectAmount)
 
   job.Schedule(pool, 4);
 
-  job.Compleate();
+  job.Complete();
 }
 } // namespace genebits::engine::tests

@@ -8,17 +8,11 @@
 namespace genebits::engine
 {
 template<typename JobImpl>
-concept Job = requires(JobImpl job, ThreadPool& pool)
-{
-  job.Schedule(pool);
-
-  job.Compleate();
-};
-
-template<typename JobImpl>
-concept BatchedJob = Job<JobImpl> && requires(JobImpl job, ThreadPool& pool, size_t batches)
+concept Job = requires(JobImpl job, ThreadPool& pool, size_t batches)
 {
   job.Schedule(pool, batches);
+
+  job.Complete();
 };
 
 template<typename JobUpdate>
@@ -27,10 +21,10 @@ class MonoJob
 public:
   ~MonoJob() noexcept
   {
-    Compleate();
+    Complete();
   }
 
-  void Schedule(ThreadPool& pool) noexcept
+  void Schedule(ThreadPool& pool, size_t = 0) noexcept
   {
     ASSERT(!task_.Finished(), "Job already scheduled");
 
@@ -39,7 +33,7 @@ public:
     pool.Enqueue(&task_);
   }
 
-  void Compleate() noexcept
+  void Complete() noexcept
   {
     task_.Wait();
   }
@@ -52,19 +46,18 @@ template<typename JobUpdate, Allocator ChunkAllocator = Mallocator>
 class ForJob : private ChunkAllocator
 {
 public:
-  constexpr explicit ForJob(size_t amount) noexcept : amount_(static_cast<uint32_t>(amount)), compleate_(false) {}
+  constexpr explicit ForJob(size_t amount) noexcept : amount_(static_cast<uint32_t>(amount)), complete_(false) {}
 
   ~ForJob() noexcept
   {
-    Compleate();
+    Complete();
     Destroy();
   }
 
   void Schedule(ThreadPool& pool, size_t batches = 1) noexcept
   {
-    ASSERT(!compleate_, "Task already complete");
+    ASSERT(!complete_, "Task already complete");
     ASSERT(batches > 0, "Cannot have 0 batches");
-    ASSERT(batches <= 128, "Cannot have more than 128 batches");
 
     task_count_ = static_cast<uint32_t>(pool.ThreadCount() * batches);
 
@@ -76,9 +69,9 @@ public:
     pool.EnqueueAll(tasks_, tasks_ + task_count_);
   }
 
-  void Compleate() noexcept
+  void Complete() noexcept
   {
-    if (!compleate_)
+    if (!complete_)
     {
       // TODO Iterate in reverse to minimize amount of blocking wait calls.
       for (auto it = tasks_; it != tasks_ + task_count_; ++it)
@@ -86,7 +79,7 @@ public:
         it->Wait();
       }
 
-      compleate_ = true;
+      complete_ = true;
     }
   }
 
@@ -96,8 +89,8 @@ private:
     constexpr ForJobTask() : Task() {};
 
     JobUpdate* instance;
-    unsigned int start;
-    unsigned int end;
+    size_t start;
+    size_t end;
   };
 
   static_assert(sizeof(ForJobTask) == std::hardware_destructive_interference_size);
@@ -117,7 +110,7 @@ private:
     }
   }
 
-  void CreateTask(uint16_t index, size_t base_chunk_size, size_t remainder)
+  void CreateTask(size_t index, size_t base_chunk_size, size_t remainder)
   {
     ForJobTask* task = &tasks_[index];
 
@@ -127,13 +120,13 @@ private:
 
     if (index < remainder)
     {
-      task->start = static_cast<unsigned int>(index * base_chunk_size + index);
-      task->end = static_cast<unsigned int>(task->start + base_chunk_size + 1);
+      task->start = index * base_chunk_size + index;
+      task->end = task->start + base_chunk_size + 1;
     }
     else
     {
-      task->start = static_cast<unsigned int>(index * base_chunk_size + remainder);
-      task->end = static_cast<unsigned int>(task->start + base_chunk_size);
+      task->start = index * base_chunk_size + remainder;
+      task->end = task->start + base_chunk_size;
     }
 
     const auto executor = [task]()
@@ -158,7 +151,7 @@ private:
   ForJobTask* tasks_;
   uint32_t task_count_;
   uint32_t amount_;
-  bool compleate_;
+  bool complete_;
 };
 
 } // namespace genebits::engine
