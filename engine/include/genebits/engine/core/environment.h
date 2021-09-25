@@ -3,6 +3,7 @@
 
 #include "genebits/engine/ecs/registry.h"
 #include "genebits/engine/events/event_bus.h"
+#include "genebits/engine/parallel/thread_pool.h"
 
 namespace genebits::engine
 {
@@ -51,9 +52,23 @@ public:
     return registry_;
   }
 
+  ///
+  /// Returns the thread pool for the environment. This thread pool should be used
+  /// for all parallel computation.
+  ///
+  /// @warning Do not use this for async IO.
+  ///
+  /// @return Environment event bus.
+  ///
+  [[nodiscard]] ThreadPool& GetThreadPool() noexcept
+  {
+    return thread_pool_;
+  }
+
 private:
   EventBus event_bus_;
   Registry<uint_fast32_t> registry_;
+  ThreadPool thread_pool_;
 
   // Pimpl for hidden dependencies
   struct Pimpl;
