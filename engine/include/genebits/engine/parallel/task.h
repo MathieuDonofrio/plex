@@ -37,6 +37,16 @@ public:
     : executor_(other.executor_), next_(other.next_), flag_(other.flag_.load(std::memory_order_relaxed))
   {}
 
+#ifndef NDEBUG
+  ///
+  /// Destructor.
+  ///
+  ~Task()
+  {
+    ASSERT(Finished(), "Task was destroyed but not finished");
+  }
+#endif
+
   ///
   /// Copy assignment operator.
   ///
@@ -46,9 +56,12 @@ public:
   ///
   Task& operator=(const Task& other)
   {
-    executor_ = other.executor_;
-    next_ = other.next_;
-    flag_ = other.flag_.load(std::memory_order_relaxed);
+    if (&other != this)
+    {
+      executor_ = other.executor_;
+      next_ = other.next_;
+      flag_ = other.flag_.load(std::memory_order_relaxed);
+    }
 
     return *this;
   }
@@ -66,6 +79,7 @@ public:
   template<size_t Spins = 512>
   bool TryPoll() const noexcept
   {
+    // Start with faster spinning
     for (size_t i = 0; i != cHotSpins; i++)
     {
       if (Finished()) return true;
@@ -73,6 +87,7 @@ public:
       this_thread::Pause();
     }
 
+    // Fallback to yielding spins
     if constexpr (Spins > cHotSpins)
     {
       for (size_t i = 0; i < Spins - cHotSpins; i++)
@@ -104,7 +119,7 @@ public:
       this_thread::Pause();
     }
 
-    // Fallback to yielding spins.
+    // Fallback to yielding spins
     while (!Finished())
     {
       std::this_thread::yield();
