@@ -127,12 +127,9 @@ static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
     task1.Wait();
 
     // After first wait we might have a chance of avoiding other waiting by spinning a little
-    task2.TryPoll();
-    task2.Wait();
-    task3.TryPoll();
-    task3.Wait();
-    task4.TryPoll();
-    task4.Wait();
+    if (!task2.TryPoll()) task2.Wait();
+    if (!task3.TryPoll()) task3.Wait();
+    if (!task4.TryPoll()) task4.Wait();
 
     benchmark::DoNotOptimize(task1);
     benchmark::DoNotOptimize(task2);
@@ -174,8 +171,8 @@ static void ThreadPool_Schedule_TaskQuantity(benchmark::State& state)
 
     for (size_t i = 0; i < amount; i++)
     {
-      tasks[i].TryPoll(); // We might just need to poll a little for small tasks
-      tasks[i].Wait();
+      if (!tasks[i].TryPoll()) // We might just need to poll a little for small tasks
+        tasks[i].Wait();
     }
   }
 
