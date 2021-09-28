@@ -31,14 +31,11 @@ public:
   {
     const ViewId id = GetViewId<std::remove_cvref_t<Components>...>();
 
-    if (id >= view_states_.Size() || !view_states_[id])
+    if (id >= view_states_.Size() || !view_states_[id]) [[unlikely]]
     {
-      mutex_.lock();
+      std::scoped_lock<std::mutex> lock_(mutex_);
 
-      Initialize<ViewId, Components...>(view_components_, view_states_, id);
-      AddView(id);
-
-      mutex_.unlock();
+      if (Initialize<ViewId, Components...>(view_components_, view_states_, id)) AddView(id);
     }
 
     return id;
@@ -56,14 +53,11 @@ public:
   {
     const ArchetypeId id = GetArchetypeId<std::remove_cvref_t<Components>...>();
 
-    if (id >= archetype_states_.Size() || !archetype_states_[id])
+    if (id >= archetype_states_.Size() || !archetype_states_[id]) [[unlikely]]
     {
-      mutex_.lock();
+      std::scoped_lock<std::mutex> lock_(mutex_);
 
-      Initialize<ArchetypeId, Components...>(archetype_components_, archetype_states_, id);
-      AddArchetype(id);
-
-      mutex_.unlock();
+      if (Initialize<ArchetypeId, Components...>(archetype_components_, archetype_states_, id)) AddArchetype(id);
     }
 
     return id;
@@ -98,8 +92,10 @@ private:
   /// @param[in] states The states list.
   /// @param[in] id The id to initialize for.
   ///
+  /// @return True if already initialized, false otherwise.
+  ///
   template<std::unsigned_integral IdType, typename... Components>
-  static void Initialize(FastVector<FastVector<ComponentId>>& components, FastVector<bool>& states, const IdType id)
+  static bool Initialize(FastVector<FastVector<ComponentId>>& components, FastVector<bool>& states, const IdType id)
   {
     if (id >= states.Size())
     {
@@ -107,8 +103,13 @@ private:
       states.Resize(id + 1);
     }
 
+    if (states[id]) return false; // Already initialized
+
     components[id] = GetComponentIds<std::remove_cvref_t<Components>...>();
+
     states[id] = true;
+
+    return true;
   }
 
   ///

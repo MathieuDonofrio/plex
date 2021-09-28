@@ -93,7 +93,7 @@ public:
   template<typename Type>
   [[nodiscard]] Value& Get() noexcept
   {
-    return const_cast<Value&>(const_cast<const TypeMap*>(this)->template Get<Type>());
+    return const_cast<Value&>(static_cast<const TypeMap*>(this)->template Get<Type>());
   }
 
 private:
