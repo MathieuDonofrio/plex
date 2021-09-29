@@ -20,7 +20,7 @@ namespace genebits::engine
 /// @tparam Event Type of event for the delegate to handle.
 ///
 template<typename Event>
-using EventHandler = Delegate<const Event&>;
+using EventHandler = Delegate<void(const Event&)>;
 
 namespace details
 {

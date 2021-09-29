@@ -22,12 +22,22 @@ namespace genebits::engine
 /// @tparam Invokable Type of the invokable (usually a lambda).
 /// @tparam Args Argument types of the delegate.
 ///
-template<typename Invocable, typename... Args>
+template<typename Invocable, typename Return, typename... Args>
 concept DelegateInvocable = std::is_trivially_destructible_v<Invocable> && sizeof(Invocable) <= sizeof(void*)
                             && requires(Invocable invocable, Args... args)
 {
-  invocable(std::forward<Args>(args)...);
+  {
+    invocable(std::forward<Args>(args)...)
+    } -> std::convertible_to<Return>;
 };
+
+#define DELEGATE_INVOKE_AND_TRY_RETURN(expression)                        \
+  if constexpr (std::is_same_v<decltype(expression), void>) (expression); \
+  else                                                                    \
+    return (expression);
+
+template<typename>
+class Delegate;
 
 ///
 /// Highly optimized delegate. Supports binding free functions, member functions & some invocables.
@@ -37,8 +47,8 @@ concept DelegateInvocable = std::is_trivially_destructible_v<Invocable> && sizeo
 ///
 /// @tparam Args Argument types of the delegate.
 ///
-template<typename... Args>
-class Delegate
+template<typename Return, typename... Args>
+class Delegate<Return(Args...)>
 {
 public:
   ///
@@ -51,12 +61,16 @@ public:
   ///
   /// @tparam FreeFunction Compile-time free function pointer.
   ///
-  template<void (*FreeFunction)(Args...)>
+  template<Return (*FreeFunction)(Args...)>
   constexpr void Bind() noexcept
   {
     storage_ = nullptr;
 
-    function_ = [](void*, Args... args) { (*FreeFunction)(std::forward<Args>(args)...); };
+    function_ = [](void*, Args... args)
+    {
+      // Invoke free function
+      DELEGATE_INVOKE_AND_TRY_RETURN((*FreeFunction)(std::forward<Args>(args)...))
+    };
   }
 
   ///
@@ -67,13 +81,16 @@ public:
   ///
   /// @param[in] instance The instance to call the member function for.
   ///
-  template<typename Type, void (Type::*MemberFunction)(Args...)>
+  template<typename Type, Return (Type::*MemberFunction)(Args...)>
   constexpr void Bind(Type* instance) noexcept
   {
     storage_ = instance;
 
     function_ = [](void* storage, Args... args)
-    { (static_cast<Type*>(storage)->*MemberFunction)(std::forward<Args>(args)...); };
+    {
+      // Invoke member function
+      DELEGATE_INVOKE_AND_TRY_RETURN((static_cast<Type*>(storage)->*MemberFunction)(std::forward<Args>(args)...))
+    };
   }
 
   ///
@@ -84,13 +101,16 @@ public:
   ///
   /// @param[in] instance The instance to call the member function for.
   ///
-  template<typename Type, void (Type::*MemberFunction)(Args...) const>
+  template<typename Type, Return (Type::*MemberFunction)(Args...) const>
   constexpr void Bind(Type* instance) noexcept
   {
     storage_ = instance;
 
     function_ = [](void* storage, Args... args)
-    { (static_cast<const Type*>(storage)->*MemberFunction)(std::forward<Args>(args)...); };
+    {
+      // Invoke const member function
+      DELEGATE_INVOKE_AND_TRY_RETURN((static_cast<const Type*>(storage)->*MemberFunction)(std::forward<Args>(args)...))
+    };
   }
 
   ///
@@ -102,13 +122,16 @@ public:
   ///
   /// @param[in] invocable The instance of the invocable.
   ///
-  template<DelegateInvocable<Args...> Invocable>
+  template<DelegateInvocable<Return, Args...> Invocable>
   constexpr void Bind(Invocable invocable) noexcept
   {
     new (&storage_) Invocable(std::move(invocable));
 
     function_ = [](void* storage, Args... args)
-    { reinterpret_cast<Invocable*>(&storage)->operator()(std::forward<Args>(args)...); };
+    {
+      // Invoke invokable
+      DELEGATE_INVOKE_AND_TRY_RETURN(reinterpret_cast<Invocable*>(&storage)->operator()(std::forward<Args>(args)...))
+    };
   }
 
   ///
@@ -119,11 +142,11 @@ public:
   ///
   /// @param[in] args The arguments to invoke with.
   ///
-  constexpr void Invoke(Args... args)
+  constexpr Return Invoke(Args... args)
   {
     ASSERT(function_ != nullptr, "No bound function");
 
-    function_(storage_, std::forward<Args>(args)...);
+    DELEGATE_INVOKE_AND_TRY_RETURN(function_(storage_, std::forward<Args>(args)...))
   }
 
   ///
@@ -134,9 +157,9 @@ public:
   ///
   /// @param[in] args The arguments to invoke with.
   ///
-  constexpr void operator()(Args... args)
+  constexpr Return operator()(Args... args)
   {
-    Invoke(std::forward<Args>(args)...);
+    DELEGATE_INVOKE_AND_TRY_RETURN(Invoke(std::forward<Args>(args)...))
   }
 
   ///
@@ -148,7 +171,7 @@ public:
   ///
   /// @return True if the delegates are equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator==(const Delegate<Args...> other) const noexcept
+  [[nodiscard]] constexpr bool operator==(const Delegate<Return(Args...)> other) const noexcept
   {
     return function_ == other.function_ && storage_ == other.storage_;
   }
@@ -162,7 +185,7 @@ public:
   ///
   /// @return True if the delegates are unequal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator!=(const Delegate<Args...> other) const noexcept
+  [[nodiscard]] constexpr bool operator!=(const Delegate<Return(Args...)> other) const noexcept
   {
     return function_ != other.function_ || storage_ != other.storage_;
   }
@@ -178,9 +201,11 @@ public:
   }
 
 private:
-  void (*function_)(void*, Args...);
+  Return (*function_)(void*, Args...);
   void* storage_;
 };
+
+#undef DELEGATE_INVOKE_AND_TRY_RETURN
 
 } // namespace genebits::engine
 

@@ -1,6 +1,6 @@
 
 #include "genebits/engine/debug/logging.h"
-#include "genebits/engine/parallel/thread.h"
+#include "genebits/engine/parallel/threading.h"
 
 using namespace genebits::engine;
 

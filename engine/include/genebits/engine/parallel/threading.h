@@ -8,45 +8,6 @@
 
 namespace genebits::engine
 {
-namespace this_thread
-{
-  ///
-  /// Provides a hint to the processor that we are in a spin-wait loop.
-  ///
-  /// Can help improve performance and power consumption of spin-wait loops.
-  ///
-  inline void Pause() noexcept
-  {
-    _mm_pause();
-  }
-
-  ///
-  /// Pauses for a given amount of cpu time in terms of loops.
-  ///
-  /// @param[in] loops amount of loops to perform.
-  ///
-  inline void Pause(size_t loops) noexcept
-  {
-    while (loops-- != 0)
-    {
-      Pause();
-    }
-  }
-
-  ///
-  /// Sets the name of the thread for debugging purposes.
-  ///
-  /// @param[in] name Name to set.
-  ///
-  void SetName(const char* name);
-
-} // namespace this_thread
-
-///
-/// Pointer to a native thread (platform-specific).
-///
-using NativeThreadHandle = void*;
-
 ///
 /// Holds information about a physical processor.
 ///
@@ -88,13 +49,14 @@ struct CPUInfo
 };
 
 ///
-/// Obtains the native thread handle for platform specific threads.
+/// Tries to return information about the CPU.
 ///
-/// @note If the platform is not supported, nullptr is returned.
+/// @warning Not required to return valid information. This should only be used
+/// as a hint. If the CPU info is not supported the data will be empty.
 ///
-/// @return Native thread handle.
+/// @return CPU information.
 ///
-NativeThreadHandle GetCurrentNativeThread();
+CPUInfo GetCPUInfo();
 
 ///
 /// Sets the thread affinity. Allows operating system to only use cores that are in the mask.
@@ -108,17 +70,7 @@ NativeThreadHandle GetCurrentNativeThread();
 ///
 /// @return True if the processor was set, false otherwise.
 ///
-bool SetThreadAffinity(NativeThreadHandle handle, uint64_t mask);
-
-///
-/// Tries to return information about the CPU.
-///
-/// @warning Not required to return valid information. This should only be used
-/// as a hint. If the CPU info is not supported the data will be empty.
-///
-/// @return CPU information.
-///
-CPUInfo GetCPUInfo();
+bool SetThreadAffinity(std::thread::native_handle_type handle, uint64_t mask);
 
 ///
 /// Tries to return the amount of physical processors. Not always accurate and will
@@ -136,6 +88,35 @@ size_t GetAmountPhysicalProcessors();
 /// @return Hint to amount of logical processors.
 ///
 size_t GetAmountLogicalProcessors();
+
+namespace this_thread
+{
+  ///
+  /// Obtains the native thread handle for platform specific threads.
+  ///
+  /// @note If the platform is not supported, nullptr is returned.
+  ///
+  /// @return Native thread handle.
+  ///
+  std::thread::native_handle_type NativeHandle();
+
+  ///
+  /// Sets the name of the thread for debugging purposes.
+  ///
+  /// @param[in] name Name to set.
+  ///
+  void SetName(const char* name);
+
+  ///
+  /// Provides a hint to the processor that we are in a spin-wait loop.
+  ///
+  /// Can help improve performance and power consumption of spin-wait loops.
+  ///
+  inline void Pause() noexcept
+  {
+    _mm_pause();
+  }
+} // namespace this_thread
 
 } // namespace genebits::engine
 
