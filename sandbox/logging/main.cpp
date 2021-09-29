@@ -1,6 +1,6 @@
 
 #include "genebits/engine/debug/logging.h"
-#include "genebits/engine/parallel/thread.h"
+#include "genebits/engine/parallel/threading.h"
 
 using namespace genebits::engine;
 
@@ -38,7 +38,7 @@ int main()
 
   CPUInfo info = GetCPUInfo();
 
-  for (auto& cache : info.caches)
+  for ([[maybe_unused]] auto& cache : info.caches)
   {
     LOG_INFO("Cache: level={}, size={}, line_size={}", cache.level, cache.size, cache.line_size);
   }

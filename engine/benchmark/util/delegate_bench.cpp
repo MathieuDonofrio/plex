@@ -92,7 +92,7 @@ static void Delegate_Construct(benchmark::State& state)
 
   for (auto _ : state)
   {
-    Delegate<const TestEvent&> handler;
+    Delegate<void(const TestEvent&)> handler;
     handler.Bind<TestListener, &TestListener::listenOverhead>(&listener);
 
     benchmark::DoNotOptimize(handler);
@@ -107,7 +107,7 @@ static void Delegate_Invoke_Overhead(benchmark::State& state)
 {
   TestListener listener;
 
-  Delegate<const TestEvent&> handler;
+  Delegate<void(const TestEvent&)> handler;
   handler.Bind<TestListener, &TestListener::listenOverhead>(&listener);
 
   TestEvent event { static_cast<size_t>(std::rand()) };
@@ -127,7 +127,7 @@ static void Delegate_Invoke_ZeroOverhead(benchmark::State& state)
 {
   TestListener listener;
 
-  Delegate<const TestEvent&> handler;
+  Delegate<void(const TestEvent&)> handler;
   handler.Bind<TestListener, &TestListener::listenZeroOverhead>(&listener);
 
   TestEvent event { static_cast<size_t>(std::rand()) };

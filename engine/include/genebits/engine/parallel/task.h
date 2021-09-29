@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_PARALLEL_TASK_H
 #define GENEBITS_ENGINE_PARALLEL_TASK_H
 
-#include "genebits/engine/parallel/thread.h"
+#include "genebits/engine/parallel/threading.h"
 #include "genebits/engine/util/delegate.h"
 
 namespace genebits::engine
@@ -11,7 +11,7 @@ namespace genebits::engine
 ///
 /// @see Delegate
 ///
-using TaskExecutor = Delegate<>;
+using TaskExecutor = Delegate<void()>;
 
 ///
 /// Task to be executed by thread pool.
@@ -21,8 +21,6 @@ using TaskExecutor = Delegate<>;
 class alignas(std::hardware_destructive_interference_size) Task
 {
 public:
-  static constexpr size_t cHotSpins = 32;
-
   ///
   /// Default constructor.
   ///
@@ -154,7 +152,7 @@ public:
 private:
   friend class TaskQueue;
 
-  Delegate<> executor_;
+  TaskExecutor executor_;
   Task* next_;
   std::atomic_bool flag_;
 };
