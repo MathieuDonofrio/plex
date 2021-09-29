@@ -24,7 +24,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Debate on macro prefixes (ex: GENEBITS_ASSERT vs ASSERT)
 - [ ] Find window closing protocol
 - [ ] Add LOD icons for the window (small, med, big)
-- [ ] Add nested namespace for benchmarks (like tests)
+- [x] Add nested namespace for benchmarks (like tests)
 - [ ] Add pretty name in meta.h (Same across boundaries)
 - [ ] Archetype swapping
 - [ ] Verify if registry should have built-in thread safety

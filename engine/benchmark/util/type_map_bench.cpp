@@ -5,7 +5,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 namespace
 {
@@ -63,4 +63,4 @@ static void TypeMap_Assure(benchmark::State& state)
 
 BENCHMARK(TypeMap_Assure);
 
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

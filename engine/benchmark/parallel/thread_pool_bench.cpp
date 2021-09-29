@@ -7,7 +7,7 @@
 
 #include "genebits/engine/util/fast_vector.h"
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 void Work(const int amount)
 {
@@ -294,4 +294,4 @@ static void ThreadPool_STD_Async_TaskQuantity(benchmark::State& state)
 
 BENCHMARK(ThreadPool_STD_Async_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

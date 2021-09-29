@@ -10,7 +10,7 @@ TEST(Task_Tests, Finished_OnConstruction_False)
 {
   Task task;
 
-  ASSERT_FALSE(task.Finished());
+  EXPECT_FALSE(task.Finished());
 
   task.Finish();
 }
@@ -21,7 +21,7 @@ TEST(Task_Tests, Finish_AfterConstruction_Finished)
 
   task.Finish();
 
-  ASSERT_TRUE(task.Finished());
+  EXPECT_TRUE(task.Finished());
 }
 
 TEST(Task_Tests, Executor_AssignAndInvoke_CalledOnce)
@@ -34,7 +34,7 @@ TEST(Task_Tests, Executor_AssignAndInvoke_CalledOnce)
 
   task.Executor().Invoke();
 
-  ASSERT_EQ(amount, 1);
+  EXPECT_EQ(amount, 1);
 
   task.Finish();
 }
@@ -56,8 +56,8 @@ TEST(Task_Tests, TryPoll_WhenReturnsTrue_Finished)
 
   if (task.TryPoll<1 << 16>())
   {
-    ASSERT_EQ(amount, 1);
-    ASSERT_TRUE(task.Finished());
+    EXPECT_EQ(amount, 1);
+    EXPECT_TRUE(task.Finished());
   }
 
   thread.join();
@@ -82,8 +82,8 @@ TEST(Task_Tests, Poll_FewMilliseconds_BlockedCorrectly)
 
   task.Poll();
 
-  ASSERT_EQ(amount, 1);
-  ASSERT_TRUE(task.Finished());
+  EXPECT_EQ(amount, 1);
+  EXPECT_TRUE(task.Finished());
 
   thread.join();
 }
@@ -107,8 +107,8 @@ TEST(Task_Tests, Wait_FewMilliseconds_BlockedCorrectly)
 
   task.Wait();
 
-  ASSERT_EQ(amount, 1);
-  ASSERT_TRUE(task.Finished());
+  EXPECT_EQ(amount, 1);
+  EXPECT_TRUE(task.Finished());
 
   thread.join();
 }

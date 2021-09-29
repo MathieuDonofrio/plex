@@ -25,7 +25,7 @@ TEST(EventBus_Tests, Count_OnConstruction_Zero)
 {
   EventBus bus;
 
-  ASSERT_EQ(bus.Count<TestEvent1>(), 0u);
+  EXPECT_EQ(bus.Count<TestEvent1>(), 0u);
 }
 
 TEST(EventBus_Tests, Subscribe_SingleEventType_IncreaseCount)
@@ -37,14 +37,14 @@ TEST(EventBus_Tests, Subscribe_SingleEventType_IncreaseCount)
 
   bus.Subscribe<TestEvent1>(handler1_1);
 
-  ASSERT_EQ(bus.Count<TestEvent1>(), 1u);
+  EXPECT_EQ(bus.Count<TestEvent1>(), 1u);
 
   EventHandler<TestEvent1> handler1_2;
   handler1_2.Bind<&listen1_2>();
 
   bus.Subscribe<TestEvent1>(handler1_2);
 
-  ASSERT_EQ(bus.Count<TestEvent1>(), 2u);
+  EXPECT_EQ(bus.Count<TestEvent1>(), 2u);
 }
 
 TEST(EventBus_Tests, Unsubscribe_SingleEventType_DecreaseCount)
@@ -57,7 +57,7 @@ TEST(EventBus_Tests, Unsubscribe_SingleEventType_DecreaseCount)
   bus.Subscribe<TestEvent1>(handler1_1);
   bus.Unsubscribe<TestEvent1>(handler1_1);
 
-  ASSERT_EQ(bus.Count<TestEvent1>(), 0u);
+  EXPECT_EQ(bus.Count<TestEvent1>(), 0u);
 }
 
 TEST(EventBus_Tests, Publish_SingleSubscribe_CallsSubscribe)
@@ -73,7 +73,7 @@ TEST(EventBus_Tests, Publish_SingleSubscribe_CallsSubscribe)
 
   bus.Publish(TestEvent1 { 10u });
 
-  ASSERT_EQ(sum1_1, 10u);
+  EXPECT_EQ(sum1_1, 10u);
 }
 
 } // namespace genebits::engine::tests

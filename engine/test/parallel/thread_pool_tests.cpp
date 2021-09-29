@@ -8,7 +8,7 @@ TEST(ThreadPool_Tests, Constructor_CustomAmountThreads_CorrectCount)
 {
   ThreadPool pool(4);
 
-  ASSERT_EQ(pool.ThreadCount(), 4);
+  EXPECT_EQ(pool.ThreadCount(), 4);
 }
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Wait_CorrectExecution)
@@ -25,7 +25,7 @@ TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Wait_CorrectExecution)
 
   task.Wait();
 
-  ASSERT_EQ(count, 1);
+  EXPECT_EQ(count, 1);
 }
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Poll_CorrectExecution)
@@ -42,7 +42,7 @@ TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Poll_CorrectExecution)
 
   task.Wait();
 
-  ASSERT_EQ(count, 1);
+  EXPECT_EQ(count, 1);
 }
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_TryPollWait_CorrectExecution)
@@ -59,7 +59,7 @@ TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_TryPollWait_CorrectExecution)
 
   if (!task.TryPoll()) task.Wait();
 
-  ASSERT_EQ(count, 1);
+  EXPECT_EQ(count, 1);
 }
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_DoubleWait_CorrectExecution)
@@ -77,7 +77,7 @@ TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_DoubleWait_CorrectExecution)
   task.Wait();
   task.Wait();
 
-  ASSERT_EQ(count, 1);
+  EXPECT_EQ(count, 1);
 }
 
 TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Wait_CorrectExecution)
@@ -94,7 +94,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Wait_CorrectExecution)
 
   task.Wait();
 
-  ASSERT_EQ(count, 1);
+  EXPECT_EQ(count, 1);
 }
 
 TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Poll_CorrectExecution)
@@ -111,7 +111,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Poll_CorrectExecution)
 
   task.Wait();
 
-  ASSERT_EQ(count, 1);
+  EXPECT_EQ(count, 1);
 }
 
 TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Wait_CorrectExecution)
@@ -138,7 +138,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Wait_CorrectExecution)
     tasks[i].Wait();
   }
 
-  ASSERT_EQ(count, amount);
+  EXPECT_EQ(count, amount);
 }
 
 TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Poll_CorrectExecution)
@@ -165,7 +165,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Poll_CorrectExecution)
     tasks[i].Poll();
   }
 
-  ASSERT_EQ(count, amount);
+  EXPECT_EQ(count, amount);
 }
 
 TEST(ThreadPool_Tests, EnqueueAll_OneThreadOneTask_CorrectExecution)
@@ -182,7 +182,7 @@ TEST(ThreadPool_Tests, EnqueueAll_OneThreadOneTask_CorrectExecution)
 
   task.Wait();
 
-  ASSERT_EQ(count, 1);
+  EXPECT_EQ(count, 1);
 }
 
 TEST(ThreadPool_Tests, EnqueueAll_OneThreadMultipleTasks_CorrectExecution)
@@ -207,7 +207,7 @@ TEST(ThreadPool_Tests, EnqueueAll_OneThreadMultipleTasks_CorrectExecution)
     tasks[i].Wait();
   }
 
-  ASSERT_EQ(count, amount);
+  EXPECT_EQ(count, amount);
 }
 
 TEST(ThreadPool_Tests, EnqueueAll_16ThreadsMultipleTasks_CorrectExecution)
@@ -232,7 +232,7 @@ TEST(ThreadPool_Tests, EnqueueAll_16ThreadsMultipleTasks_CorrectExecution)
     tasks[i].Wait();
   }
 
-  ASSERT_EQ(count, amount);
+  EXPECT_EQ(count, amount);
 }
 
 } // namespace genebits::engine::tests

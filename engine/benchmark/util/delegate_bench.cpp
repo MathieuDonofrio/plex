@@ -4,7 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 namespace
 {
@@ -143,4 +143,4 @@ static void Delegate_Invoke_ZeroOverhead(benchmark::State& state)
 
 BENCHMARK(Delegate_Invoke_ZeroOverhead);
 
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

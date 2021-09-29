@@ -62,7 +62,7 @@ TEST(Delegate_Tests, Constructor_Default_Null)
 {
   Delegate<const TestArg&> handler;
 
-  ASSERT_FALSE(handler);
+  EXPECT_FALSE(handler);
 }
 
 TEST(Delegate_Tests, Bind_FreeFunction_NotNull)
@@ -70,7 +70,7 @@ TEST(Delegate_Tests, Bind_FreeFunction_NotNull)
   Delegate<const TestArg&> handler;
   handler.Bind<&addValue1Global>();
 
-  ASSERT_TRUE(handler);
+  EXPECT_TRUE(handler);
 }
 
 TEST(Delegate_Tests, Invoke_FreeFunction_DelegatesCall)
@@ -82,11 +82,11 @@ TEST(Delegate_Tests, Invoke_FreeFunction_DelegatesCall)
 
   handler.Invoke(TestArg { 1u });
 
-  ASSERT_EQ(sumValue1Global, 1u);
+  EXPECT_EQ(sumValue1Global, 1u);
 
   handler.Invoke({ 10u });
 
-  ASSERT_EQ(sumValue1Global, 11u);
+  EXPECT_EQ(sumValue1Global, 11u);
 }
 
 TEST(Delegate_Tests, InvokeOperator_FreeFunction_DelegatesCall)
@@ -98,11 +98,11 @@ TEST(Delegate_Tests, InvokeOperator_FreeFunction_DelegatesCall)
 
   handler.Invoke(TestArg { 1u });
 
-  ASSERT_EQ(sumValue1Global, 1u);
+  EXPECT_EQ(sumValue1Global, 1u);
 
   handler({ 10u });
 
-  ASSERT_EQ(sumValue1Global, 11u);
+  EXPECT_EQ(sumValue1Global, 11u);
 }
 
 TEST(Delegate_Tests, Invoke_MemberFunction_DelegatesCall)
@@ -114,11 +114,11 @@ TEST(Delegate_Tests, Invoke_MemberFunction_DelegatesCall)
 
   handler.Invoke({ 1u });
 
-  ASSERT_EQ(listener.sumValue1, 1u);
+  EXPECT_EQ(listener.sumValue1, 1u);
 
   handler.Invoke({ 10u });
 
-  ASSERT_EQ(listener.sumValue1, 11u);
+  EXPECT_EQ(listener.sumValue1, 11u);
 }
 
 TEST(Delegate_Tests, Invoke_ConstMemberFunction_DelegatesCall)
@@ -130,11 +130,11 @@ TEST(Delegate_Tests, Invoke_ConstMemberFunction_DelegatesCall)
 
   handler.Invoke({ 1u });
 
-  ASSERT_EQ(listener.sumValue1, 1u);
+  EXPECT_EQ(listener.sumValue1, 1u);
 
   handler.Invoke({ 10u });
 
-  ASSERT_EQ(listener.sumValue1, 11u);
+  EXPECT_EQ(listener.sumValue1, 11u);
 }
 
 TEST(Delegate_Tests, Invoke_Lambda_DelegatesCall)
@@ -146,11 +146,11 @@ TEST(Delegate_Tests, Invoke_Lambda_DelegatesCall)
 
   handler.Invoke({ 1u });
 
-  ASSERT_EQ(sum, 1u);
+  EXPECT_EQ(sum, 1u);
 
   handler.Invoke({ 10u });
 
-  ASSERT_EQ(sum, 11u);
+  EXPECT_EQ(sum, 11u);
 }
 
 TEST(Delegate_Tests, Equality_FreeFunction_Equal)
@@ -158,7 +158,7 @@ TEST(Delegate_Tests, Equality_FreeFunction_Equal)
   Delegate<const TestArg&> handler;
   handler.Bind<&addValue1Global>();
 
-  ASSERT_EQ(handler, handler);
+  EXPECT_EQ(handler, handler);
 }
 
 TEST(Delegate_Tests, Equality_FreeFunction_NotEqual)
@@ -169,7 +169,7 @@ TEST(Delegate_Tests, Equality_FreeFunction_NotEqual)
   Delegate<const TestArg&> handler2;
   handler2.Bind<&addValue2Global>();
 
-  ASSERT_NE(handler1, handler2);
+  EXPECT_NE(handler1, handler2);
 }
 
 TEST(Delegate_Tests, Equality_MemberFunction_Equal)
@@ -179,7 +179,7 @@ TEST(Delegate_Tests, Equality_MemberFunction_Equal)
   Delegate<const TestArg&> handler;
   handler.Bind<TestListener, &TestListener::addValue1>(&listener);
 
-  ASSERT_EQ(handler, handler);
+  EXPECT_EQ(handler, handler);
 }
 
 TEST(Delegate_Tests, Equality_MemberFunction_FunctionNotEqual)
@@ -192,7 +192,7 @@ TEST(Delegate_Tests, Equality_MemberFunction_FunctionNotEqual)
   Delegate<const TestArg&> handler2;
   handler2.Bind<TestListener, &TestListener::addValue2>(&listener);
 
-  ASSERT_NE(handler1, handler2);
+  EXPECT_NE(handler1, handler2);
 }
 
 TEST(Delegate_Tests, Equality_MemberFunction_InstanceNotEqual)
@@ -206,7 +206,7 @@ TEST(Delegate_Tests, Equality_MemberFunction_InstanceNotEqual)
   Delegate<const TestArg&> handler2;
   handler2.Bind<TestListener, &TestListener::addValue1>(&listener2);
 
-  ASSERT_NE(handler1, handler2);
+  EXPECT_NE(handler1, handler2);
 }
 
 TEST(Delegate_Tests, Equality_MemberFunction_NotEqual)
@@ -220,7 +220,7 @@ TEST(Delegate_Tests, Equality_MemberFunction_NotEqual)
   Delegate<const TestArg&> handler2;
   handler2.Bind<TestListener, &TestListener::addValue2>(&listener2);
 
-  ASSERT_NE(handler1, handler2);
+  EXPECT_NE(handler1, handler2);
 }
 
 TEST(Delegate_Tests, Equality_ConstMemberFunction_Equal)
@@ -230,7 +230,7 @@ TEST(Delegate_Tests, Equality_ConstMemberFunction_Equal)
   Delegate<const TestArg&> handler;
   handler.Bind<TestListener, &TestListener::addValueConst1>(&listener);
 
-  ASSERT_EQ(handler, handler);
+  EXPECT_EQ(handler, handler);
 }
 
 TEST(Delegate_Tests, Equality_ConstMemberFunction_FunctionNotEqual)
@@ -243,7 +243,7 @@ TEST(Delegate_Tests, Equality_ConstMemberFunction_FunctionNotEqual)
   Delegate<const TestArg&> handler2;
   handler2.Bind<TestListener, &TestListener::addValueConst2>(&listener);
 
-  ASSERT_NE(handler1, handler2);
+  EXPECT_NE(handler1, handler2);
 }
 
 TEST(Delegate_Tests, Equality_ConstMemberFunction_InstanceNotEqual)
@@ -257,7 +257,7 @@ TEST(Delegate_Tests, Equality_ConstMemberFunction_InstanceNotEqual)
   Delegate<const TestArg&> handler2;
   handler2.Bind<TestListener, &TestListener::addValueConst1>(&listener2);
 
-  ASSERT_NE(handler1, handler2);
+  EXPECT_NE(handler1, handler2);
 }
 
 TEST(Delegate_Tests, Equality_ConstMemberFunction_NotEqual)
@@ -271,7 +271,7 @@ TEST(Delegate_Tests, Equality_ConstMemberFunction_NotEqual)
   Delegate<const TestArg&> handler2;
   handler2.Bind<TestListener, &TestListener::addValueConst2>(&listener2);
 
-  ASSERT_NE(handler1, handler2);
+  EXPECT_NE(handler1, handler2);
 }
 
 TEST(Delegate_Tests, Equality_Lambda_NotEqual)
@@ -292,7 +292,7 @@ TEST(Delegate_Tests, Equality_Lambda_NotEqual)
       sum += arg.value;
     });
 
-  ASSERT_NE(handler1, handler2);
+  EXPECT_NE(handler1, handler2);
 }
 
 TEST(Delegate_Tests, CopyAssignment_FreeFunction_Equal)
@@ -302,7 +302,7 @@ TEST(Delegate_Tests, CopyAssignment_FreeFunction_Equal)
 
   Delegate<const TestArg&> handler2 = handler1;
 
-  ASSERT_EQ(handler1, handler2);
+  EXPECT_EQ(handler1, handler2);
 }
 
 TEST(Delegate_Tests, CopyAssignment_MemberFunction_Equal)
@@ -314,7 +314,7 @@ TEST(Delegate_Tests, CopyAssignment_MemberFunction_Equal)
 
   Delegate<const TestArg&> handler2 = handler1;
 
-  ASSERT_EQ(handler1, handler2);
+  EXPECT_EQ(handler1, handler2);
 }
 
 TEST(Delegate_Tests, CopyAssignment_ConstMemberFunction_Equal)
@@ -326,7 +326,7 @@ TEST(Delegate_Tests, CopyAssignment_ConstMemberFunction_Equal)
 
   Delegate<const TestArg&> handler2 = handler1;
 
-  ASSERT_EQ(handler1, handler2);
+  EXPECT_EQ(handler1, handler2);
 }
 
 TEST(Delegate_Tests, CopyAssignment_Lambda_Equal)
@@ -341,7 +341,7 @@ TEST(Delegate_Tests, CopyAssignment_Lambda_Equal)
 
   Delegate<const TestArg&> handler2 = handler1;
 
-  ASSERT_EQ(handler1, handler2);
+  EXPECT_EQ(handler1, handler2);
 }
 
 TEST(Delegate_Tests, Invoke_MultipleArgs_CorrectValues)
@@ -351,9 +351,9 @@ TEST(Delegate_Tests, Invoke_MultipleArgs_CorrectValues)
   handler.Bind(
     [](int arg1, int arg2, int arg3)
     {
-      ASSERT_EQ(arg1, 1);
-      ASSERT_EQ(arg2, 2);
-      ASSERT_EQ(arg3, 3);
+      EXPECT_EQ(arg1, 1);
+      EXPECT_EQ(arg2, 2);
+      EXPECT_EQ(arg3, 3);
     });
 
   handler.Invoke(1, 2, 3);
@@ -366,10 +366,10 @@ TEST(Delegate_Tests, Invoke_MultipleArgs_CorrectForwarding)
   handler.Bind(
     [](int&& arg1, const int& arg2, int& arg3, int arg4)
     {
-      ASSERT_EQ(arg1, 1);
-      ASSERT_EQ(arg2, 2);
-      ASSERT_EQ(arg3, 3);
-      ASSERT_EQ(arg4, 4);
+      EXPECT_EQ(arg1, 1);
+      EXPECT_EQ(arg2, 2);
+      EXPECT_EQ(arg3, 3);
+      EXPECT_EQ(arg4, 4);
 
       arg3 = 30;
     });
@@ -378,6 +378,6 @@ TEST(Delegate_Tests, Invoke_MultipleArgs_CorrectForwarding)
 
   handler.Invoke(1, 2, arg3, 4);
 
-  ASSERT_EQ(arg3, 30);
+  EXPECT_EQ(arg3, 30);
 }
 } // namespace genebits::engine::tests

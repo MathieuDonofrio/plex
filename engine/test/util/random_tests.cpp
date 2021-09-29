@@ -19,7 +19,7 @@ TEST(Random_Tests, NextUInt_Nothing_Changes)
   uint32_t value1 = random.NextUInt();
   uint32_t value2 = random.NextUInt();
 
-  ASSERT_NE(value1, value2);
+  EXPECT_NE(value1, value2);
 }
 
 TEST(Random_Tests, NextUInt_UpperBound_InRange)
@@ -34,8 +34,8 @@ TEST(Random_Tests, NextUInt_UpperBound_InRange)
 
       uint32_t value = random.NextUInt(upper_bound);
 
-      ASSERT_GE(value, 0u);
-      ASSERT_LE(value, upper_bound);
+      EXPECT_GE(value, 0u);
+      EXPECT_LE(value, upper_bound);
     }
   }
 }
@@ -53,8 +53,8 @@ TEST(Random_Tests, NextUInt_LowerBoundAndUpperBound_InRange)
 
       uint32_t value = random.NextUInt(lower_bound, upper_bound);
 
-      ASSERT_GE(value, lower_bound);
-      ASSERT_LE(value, upper_bound);
+      EXPECT_GE(value, lower_bound);
+      EXPECT_LE(value, upper_bound);
     }
   }
 }
@@ -69,8 +69,8 @@ TEST(Random_Tests, NextFloat_01_InRange)
     {
       float value = random.NextFloat();
 
-      ASSERT_GE(value, 0);
-      ASSERT_LE(value, 1);
+      EXPECT_GE(value, 0);
+      EXPECT_LE(value, 1);
     }
   }
 }
@@ -87,8 +87,8 @@ TEST(Random_Tests, NextFloat_UpperBound_InRange)
 
       float value = random.NextFloat(upper_bound);
 
-      ASSERT_GE(value, 0);
-      ASSERT_LE(value, upper_bound);
+      EXPECT_GE(value, 0);
+      EXPECT_LE(value, upper_bound);
     }
   }
 }
@@ -106,8 +106,8 @@ TEST(Random_Tests, NextFloat_LowerBoundAndUpperBound_InRange)
 
       float value = random.NextFloat(lower_bound, upper_bound);
 
-      ASSERT_GE(value, lower_bound);
-      ASSERT_LE(value, upper_bound);
+      EXPECT_GE(value, lower_bound);
+      EXPECT_LE(value, upper_bound);
     }
   }
 }
@@ -117,21 +117,21 @@ TEST(Random_Tests, CompileTimeSeed_DifferentLine_DifferentSeed)
   uint64_t seed1 = CompileTimeSeed();
   uint64_t seed2 = CompileTimeSeed();
 
-  ASSERT_NE(seed1, seed2);
+  EXPECT_NE(seed1, seed2);
 }
 
 TEST(Random_Tests, CompileTimeSeed_DifferentColumn_DifferentSeed)
 {
   uint64_t seed1 = CompileTimeSeed(), seed2 = CompileTimeSeed();
 
-  ASSERT_NE(seed1, seed2);
+  EXPECT_NE(seed1, seed2);
 }
 
 TEST(Random_Tests, Seed_DoubleCreation_DifferentSeed)
 {
   uint64_t seed1 = Seed(), seed2 = Seed();
 
-  ASSERT_NE(seed1, seed2);
+  EXPECT_NE(seed1, seed2);
 }
 
 TEST(Random_Tests, TLRandom_DifferentThreads_DifferentRandomGenerator)
@@ -144,6 +144,6 @@ TEST(Random_Tests, TLRandom_DifferentThreads_DifferentRandomGenerator)
 
   t1.join();
 
-  ASSERT_NE(random1.State(), random2.State());
+  EXPECT_NE(random1.State(), random2.State());
 }
 } // namespace genebits::engine::tests

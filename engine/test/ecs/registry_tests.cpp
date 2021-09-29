@@ -8,9 +8,9 @@ TEST(Registry_Tests, Size_AfterInitialization_Zero)
 {
   Registry<size_t> registry;
 
-  ASSERT_EQ(registry.Size(), 0);
-  ASSERT_EQ(registry.Size<int>(), 0);
-  ASSERT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ(registry.Size(), 0);
+  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size<double>(), 0);
 }
 
 TEST(Registry_Tests, Create_AfterInitialization_IncreaseSize)
@@ -19,10 +19,10 @@ TEST(Registry_Tests, Create_AfterInitialization_IncreaseSize)
 
   auto entity = registry.Create<int>(10);
 
-  ASSERT_EQ(registry.Size(), 1);
-  ASSERT_EQ(registry.Size<int>(), 1);
-  ASSERT_EQ(registry.Size<double>(), 0);
-  ASSERT_EQ(entity, 0);
+  EXPECT_EQ(registry.Size(), 1);
+  EXPECT_EQ(registry.Size<int>(), 1);
+  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ(entity, 0);
 }
 
 TEST(Registry_Tests, Create_Multiple_IncreaseSize)
@@ -31,12 +31,12 @@ TEST(Registry_Tests, Create_Multiple_IncreaseSize)
 
   for (size_t i = 0; i < 10; i++)
   {
-    ASSERT_EQ(registry.Create<size_t>(size_t(i)), i);
+    EXPECT_EQ(registry.Create<size_t>(size_t(i)), i);
   }
 
-  ASSERT_EQ(registry.Size(), 10);
-  ASSERT_EQ(registry.Size<size_t>(), 10);
-  ASSERT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ(registry.Size(), 10);
+  EXPECT_EQ(registry.Size<size_t>(), 10);
+  EXPECT_EQ(registry.Size<double>(), 0);
 }
 
 TEST(Registry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseSize)
@@ -46,16 +46,16 @@ TEST(Registry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseSize)
   auto entity1 = registry.Create<int, double, float>(10, 0.5, 0.2f);
   auto entity2 = registry.Create<int, float>(11, 0.8f);
 
-  ASSERT_EQ(registry.Size(), 2);
-  ASSERT_EQ(registry.Size<int>(), 2);
-  ASSERT_EQ(registry.Size<double>(), 1);
-  ASSERT_EQ(registry.Size<float>(), 2);
-  ASSERT_EQ((registry.Size<int, float>()), 2);
-  ASSERT_EQ((registry.Size<int, double>()), 1);
-  ASSERT_EQ((registry.Size<int, double, float>()), 1);
-  ASSERT_EQ((registry.Size<bool>()), 0);
-  ASSERT_EQ(entity1, 0);
-  ASSERT_EQ(entity2, 1);
+  EXPECT_EQ(registry.Size(), 2);
+  EXPECT_EQ(registry.Size<int>(), 2);
+  EXPECT_EQ(registry.Size<double>(), 1);
+  EXPECT_EQ(registry.Size<float>(), 2);
+  EXPECT_EQ((registry.Size<int, float>()), 2);
+  EXPECT_EQ((registry.Size<int, double>()), 1);
+  EXPECT_EQ((registry.Size<int, double, float>()), 1);
+  EXPECT_EQ((registry.Size<bool>()), 0);
+  EXPECT_EQ(entity1, 0);
+  EXPECT_EQ(entity2, 1);
 }
 
 TEST(Registry_Tests, Destroy_Single_DecreaseSize)
@@ -66,8 +66,8 @@ TEST(Registry_Tests, Destroy_Single_DecreaseSize)
 
   registry.Destroy(entity);
 
-  ASSERT_EQ(registry.Size(), 0);
-  ASSERT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size(), 0);
+  EXPECT_EQ(registry.Size<int>(), 0);
 }
 
 TEST(Registry_Tests, Destroy_WithView_DecreaseSize)
@@ -78,8 +78,8 @@ TEST(Registry_Tests, Destroy_WithView_DecreaseSize)
 
   registry.Destroy<int>(entity);
 
-  ASSERT_EQ(registry.Size(), 0);
-  ASSERT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size(), 0);
+  EXPECT_EQ(registry.Size<int>(), 0);
 }
 
 TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseSize)
@@ -90,10 +90,10 @@ TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseSize)
 
   registry.Destroy(entity);
 
-  ASSERT_EQ(registry.Size(), 0);
-  ASSERT_EQ(registry.Size<int>(), 0);
-  ASSERT_EQ(registry.Size<double>(), 0);
-  ASSERT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.Size(), 0);
+  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ((registry.Size<double, int>()), 0);
 }
 
 TEST(Registry_Tests, Destroy_WithPartialView_DecreaseSize)
@@ -104,10 +104,10 @@ TEST(Registry_Tests, Destroy_WithPartialView_DecreaseSize)
 
   registry.Destroy<double>(entity);
 
-  ASSERT_EQ(registry.Size(), 0);
-  ASSERT_EQ(registry.Size<int>(), 0);
-  ASSERT_EQ(registry.Size<double>(), 0);
-  ASSERT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.Size(), 0);
+  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ((registry.Size<double, int>()), 0);
 }
 
 TEST(Registry_Tests, Destroy_WithExactView_DecreaseSize)
@@ -118,10 +118,10 @@ TEST(Registry_Tests, Destroy_WithExactView_DecreaseSize)
 
   registry.Destroy<int, double>(entity);
 
-  ASSERT_EQ(registry.Size(), 0);
-  ASSERT_EQ(registry.Size<int>(), 0);
-  ASSERT_EQ(registry.Size<double>(), 0);
-  ASSERT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.Size(), 0);
+  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ((registry.Size<double, int>()), 0);
 }
 
 TEST(Registry_Tests, Create_AfterDestroy_Restore)
@@ -134,13 +134,13 @@ TEST(Registry_Tests, Create_AfterDestroy_Restore)
 
   auto entity2 = registry.Create<int, double>(10, 0.5);
 
-  ASSERT_EQ(registry.Size(), 1);
-  ASSERT_EQ(registry.Size<int>(), 1);
-  ASSERT_EQ(registry.Size<double>(), 1);
-  ASSERT_EQ((registry.Size<double, int>()), 1);
-  ASSERT_EQ(registry.Size<float>(), 0);
+  EXPECT_EQ(registry.Size(), 1);
+  EXPECT_EQ(registry.Size<int>(), 1);
+  EXPECT_EQ(registry.Size<double>(), 1);
+  EXPECT_EQ((registry.Size<double, int>()), 1);
+  EXPECT_EQ(registry.Size<float>(), 0);
 
-  ASSERT_EQ(entity1, entity2);
+  EXPECT_EQ(entity1, entity2);
 }
 
 TEST(Registry_Tests, DestroyAll_MultipleEntities_DecreaseSize)
@@ -152,19 +152,19 @@ TEST(Registry_Tests, DestroyAll_MultipleEntities_DecreaseSize)
   registry.Create<double>(0.5);
   registry.Create<float>(0.5);
 
-  ASSERT_EQ(registry.Size(), 4);
-  ASSERT_EQ(registry.Size<int>(), 2);
-  ASSERT_EQ((registry.Size<double, int>()), 1);
-  ASSERT_EQ((registry.Size<double>()), 2);
-  ASSERT_EQ((registry.Size<float>()), 1);
+  EXPECT_EQ(registry.Size(), 4);
+  EXPECT_EQ(registry.Size<int>(), 2);
+  EXPECT_EQ((registry.Size<double, int>()), 1);
+  EXPECT_EQ((registry.Size<double>()), 2);
+  EXPECT_EQ((registry.Size<float>()), 1);
 
   registry.DestroyAll();
 
-  ASSERT_EQ(registry.Size(), 0);
-  ASSERT_EQ(registry.Size<int>(), 0);
-  ASSERT_EQ((registry.Size<double, int>()), 0);
-  ASSERT_EQ((registry.Size<double>()), 0);
-  ASSERT_EQ((registry.Size<float>()), 0);
+  EXPECT_EQ(registry.Size(), 0);
+  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ((registry.Size<float>()), 0);
 }
 
 TEST(Registry_Tests, DestroyAll_WithView_DecreaseSizeCorrectly)
@@ -178,27 +178,27 @@ TEST(Registry_Tests, DestroyAll_WithView_DecreaseSizeCorrectly)
 
   registry.DestroyAll<double>();
 
-  ASSERT_EQ(registry.Size(), 2);
-  ASSERT_EQ(registry.Size<int>(), 1);
-  ASSERT_EQ(registry.Size<float>(), 1);
-  ASSERT_EQ((registry.Size<double, int>()), 0);
-  ASSERT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ(registry.Size(), 2);
+  EXPECT_EQ(registry.Size<int>(), 1);
+  EXPECT_EQ(registry.Size<float>(), 1);
+  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ((registry.Size<double>()), 0);
 
   registry.DestroyAll<int>();
 
-  ASSERT_EQ(registry.Size(), 1);
-  ASSERT_EQ(registry.Size<int>(), 0);
-  ASSERT_EQ(registry.Size<float>(), 1);
-  ASSERT_EQ((registry.Size<double, int>()), 0);
-  ASSERT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ(registry.Size(), 1);
+  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size<float>(), 1);
+  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ((registry.Size<double>()), 0);
 
   registry.DestroyAll<float>();
 
-  ASSERT_EQ(registry.Size(), 0);
-  ASSERT_EQ(registry.Size<int>(), 0);
-  ASSERT_EQ(registry.Size<float>(), 0);
-  ASSERT_EQ((registry.Size<double, int>()), 0);
-  ASSERT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ(registry.Size(), 0);
+  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size<float>(), 0);
+  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ((registry.Size<double>()), 0);
 }
 
 TEST(Registry_Tests, ForEach_EntireRegistrySingleEntity_CorrectEntity)
@@ -212,11 +212,11 @@ TEST(Registry_Tests, ForEach_EntireRegistrySingleEntity_CorrectEntity)
   registry.ForEach(
     [&](const size_t entity)
     {
-      ASSERT_EQ(entity, created_entity);
+      EXPECT_EQ(entity, created_entity);
       iterations++;
     });
 
-  ASSERT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.Size(), iterations);
 }
 
 TEST(Registry_Tests, ForEach_EntireRegistryMultipleEntities_CorrectAmountEntities)
@@ -234,8 +234,8 @@ TEST(Registry_Tests, ForEach_EntireRegistryMultipleEntities_CorrectAmountEntitie
 
   registry.ForEach([&](const size_t) { iterations++; });
 
-  ASSERT_EQ(registry.Size(), iterations);
-  ASSERT_EQ(registry.Size(), amount);
+  EXPECT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.Size(), amount);
 }
 
 TEST(Registry_Tests, ForEach_UnpackNothing_CorrectIterations)
@@ -248,7 +248,7 @@ TEST(Registry_Tests, ForEach_UnpackNothing_CorrectIterations)
 
   registry.ForEach([&]() { iterations++; });
 
-  ASSERT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.Size(), iterations);
 }
 
 TEST(Registry_Tests, ForEach_UnpackOneComponent_Correct)
@@ -267,7 +267,7 @@ TEST(Registry_Tests, ForEach_UnpackOneComponent_Correct)
       iterations++;
     });
 
-  ASSERT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.Size(), iterations);
 }
 
 TEST(Registry_Tests, ForEach_UnpackTwoComponents_Correct)
@@ -287,7 +287,7 @@ TEST(Registry_Tests, ForEach_UnpackTwoComponents_Correct)
       iterations++;
     });
 
-  ASSERT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.Size(), iterations);
 }
 
 TEST(Registry_Tests, ForEach_UnpackTwoComponentsConst_Correct)
@@ -307,7 +307,7 @@ TEST(Registry_Tests, ForEach_UnpackTwoComponentsConst_Correct)
       iterations++;
     });
 
-  ASSERT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.Size(), iterations);
 }
 
 TEST(Registry_Tests, Unpack_Single_Correct)
@@ -316,8 +316,8 @@ TEST(Registry_Tests, Unpack_Single_Correct)
 
   auto created_entity = registry.Create<int, double>(10, 0.5);
 
-  ASSERT_EQ(10, registry.Unpack<int>(created_entity));
-  ASSERT_EQ(0.5, registry.Unpack<double>(created_entity));
+  EXPECT_EQ(10, registry.Unpack<int>(created_entity));
+  EXPECT_EQ(0.5, registry.Unpack<double>(created_entity));
 }
 
 TEST(Registry_Tests, Unpack_Modify_ModifiedValue)
@@ -328,13 +328,13 @@ TEST(Registry_Tests, Unpack_Modify_ModifiedValue)
 
   registry.Unpack<int>(created_entity) = 11;
 
-  ASSERT_EQ(11, registry.Unpack<int>(created_entity));
-  ASSERT_EQ(0.5, registry.Unpack<double>(created_entity));
+  EXPECT_EQ(11, registry.Unpack<int>(created_entity));
+  EXPECT_EQ(0.5, registry.Unpack<double>(created_entity));
 
   registry.Unpack<double>(created_entity) = 1.5;
 
-  ASSERT_EQ(11, registry.Unpack<int>(created_entity));
-  ASSERT_EQ(1.5, registry.Unpack<double>(created_entity));
+  EXPECT_EQ(11, registry.Unpack<int>(created_entity));
+  EXPECT_EQ(1.5, registry.Unpack<double>(created_entity));
 }
 
 TEST(Registry_Tests, HasComponents_Zero_False)
@@ -343,7 +343,7 @@ TEST(Registry_Tests, HasComponents_Zero_False)
 
   auto created_entity = registry.Create<int>(10);
 
-  ASSERT_FALSE(registry.HasComponents<double>(created_entity));
+  EXPECT_FALSE(registry.HasComponents<double>(created_entity));
 }
 
 TEST(Registry_Tests, HasComponents_One_False)
@@ -352,7 +352,7 @@ TEST(Registry_Tests, HasComponents_One_False)
 
   auto created_entity = registry.Create<int>(10);
 
-  ASSERT_TRUE(registry.HasComponents<int>(created_entity));
+  EXPECT_TRUE(registry.HasComponents<int>(created_entity));
 }
 
 TEST(Registry_Tests, HasComponents_Multiple_False)
@@ -361,19 +361,19 @@ TEST(Registry_Tests, HasComponents_Multiple_False)
 
   auto created_entity = registry.Create<int, double, float>(10, 0.5, 0.2f);
 
-  ASSERT_TRUE(registry.HasComponents<int>(created_entity));
-  ASSERT_TRUE(registry.HasComponents<double>(created_entity));
-  ASSERT_TRUE(registry.HasComponents<float>(created_entity));
-  ASSERT_FALSE(registry.HasComponents<bool>(created_entity));
+  EXPECT_TRUE(registry.HasComponents<int>(created_entity));
+  EXPECT_TRUE(registry.HasComponents<double>(created_entity));
+  EXPECT_TRUE(registry.HasComponents<float>(created_entity));
+  EXPECT_FALSE(registry.HasComponents<bool>(created_entity));
 
-  ASSERT_TRUE((registry.HasComponents<int, double>(created_entity)));
-  ASSERT_TRUE((registry.HasComponents<double, int>(created_entity)));
-  ASSERT_TRUE((registry.HasComponents<float, int>(created_entity)));
-  ASSERT_TRUE((registry.HasComponents<double, float>(created_entity)));
-  ASSERT_FALSE((registry.HasComponents<double, bool>(created_entity)));
-  ASSERT_FALSE((registry.HasComponents<int, bool>(created_entity)));
+  EXPECT_TRUE((registry.HasComponents<int, double>(created_entity)));
+  EXPECT_TRUE((registry.HasComponents<double, int>(created_entity)));
+  EXPECT_TRUE((registry.HasComponents<float, int>(created_entity)));
+  EXPECT_TRUE((registry.HasComponents<double, float>(created_entity)));
+  EXPECT_FALSE((registry.HasComponents<double, bool>(created_entity)));
+  EXPECT_FALSE((registry.HasComponents<int, bool>(created_entity)));
 
-  ASSERT_TRUE((registry.HasComponents<int, double, float>(created_entity)));
+  EXPECT_TRUE((registry.HasComponents<int, double, float>(created_entity)));
 }
 
 TEST(Registry_Tests, ForEach_UnpackThreeComponents_Correct)
@@ -394,7 +394,7 @@ TEST(Registry_Tests, ForEach_UnpackThreeComponents_Correct)
       iterations++;
     });
 
-  ASSERT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.Size(), iterations);
 }
 
 TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectAmountIterations)
@@ -410,43 +410,43 @@ TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectAmountIterations)
 
   registry.ForEach<int>([&](int) { iterations++; });
 
-  ASSERT_EQ(iterations, 3);
+  EXPECT_EQ(iterations, 3);
 
   iterations = 0;
 
   registry.ForEach<int, double>([&](int, double) { iterations++; });
 
-  ASSERT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2);
 
   iterations = 0;
 
   registry.ForEach<int, float>([&](int, float) { iterations++; });
 
-  ASSERT_EQ(iterations, 1);
+  EXPECT_EQ(iterations, 1);
 
   iterations = 0;
 
   registry.ForEach<float>([&](float) { iterations++; });
 
-  ASSERT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2);
 
   iterations = 0;
 
   registry.ForEach<float>([&](float) { iterations++; });
 
-  ASSERT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2);
 
   iterations = 0;
 
   registry.ForEach<double>([&](double) { iterations++; });
 
-  ASSERT_EQ(iterations, 3);
+  EXPECT_EQ(iterations, 3);
 
   iterations = 0;
 
   registry.ForEach<double, float>([&](double, float) { iterations++; });
 
-  ASSERT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2);
 }
 
 TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectUnpackedValues)
@@ -471,7 +471,7 @@ TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectUnpackedValues)
       iterations++;
     });
 
-  ASSERT_EQ(iterations, 3);
+  EXPECT_EQ(iterations, 3);
 }
 
 } // namespace genebits::engine::tests

@@ -4,7 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 static void Allocator_STD_Allocator_Allocate(benchmark::State& state)
 {
@@ -102,4 +102,4 @@ static void Allocator_Mallocator_Deallocate(benchmark::State& state)
 
 BENCHMARK(Allocator_Mallocator_Deallocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-} // namespace genebits::engine
+} // namespace genebits::engine::bench
