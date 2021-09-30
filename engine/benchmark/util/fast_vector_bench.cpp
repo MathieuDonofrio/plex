@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 static void FastVector_STD_Vector_Iterate(benchmark::State& state)
 {
@@ -208,4 +208,4 @@ static void FastVector_NonTrivial_PushBack(benchmark::State& state)
 
 BENCHMARK(FastVector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 static void ArchetypeGraph_AssureArchetype(benchmark::State& state)
 {
@@ -31,4 +31,4 @@ static void ArchetypeGraph_AssureView(benchmark::State& state)
 }
 
 BENCHMARK(ArchetypeGraph_AssureView);
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

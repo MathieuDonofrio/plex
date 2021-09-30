@@ -377,7 +377,7 @@ public:
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity) noexcept
   {
-    return const_cast<Component&>(const_cast<const Storage*>(this)->Unpack<Component>(entity));
+    return const_cast<Component&>(static_cast<const Storage*>(this)->Unpack<Component>(entity));
   }
 
   ///
@@ -410,7 +410,7 @@ public:
   template<typename Component>
   [[nodiscard]] FastVector<Component, DenseAllocator>& Access() noexcept
   {
-    return const_cast<FastVector<Component, DenseAllocator>&>(const_cast<const Storage*>(this)->Access<Component>());
+    return const_cast<FastVector<Component, DenseAllocator>&>(static_cast<const Storage*>(this)->Access<Component>());
   }
 
   ///

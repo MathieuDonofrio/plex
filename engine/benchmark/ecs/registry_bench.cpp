@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 namespace
 {
@@ -366,4 +366,4 @@ static void Registry_Destroy_TwoComponents(benchmark::State& state)
 }
 
 BENCHMARK(Registry_Destroy_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

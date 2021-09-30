@@ -4,7 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 static void ErasedPtr_STD_SharedPtr_Cast(benchmark::State& state)
 {
@@ -34,4 +34,4 @@ static void ErasedPtr_Cast(benchmark::State& state)
 
 BENCHMARK(ErasedPtr_Cast);
 
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

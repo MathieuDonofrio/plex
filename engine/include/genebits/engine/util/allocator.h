@@ -311,7 +311,7 @@ public:
   {
     Block block = Primary::Allocate(size);
 
-    if (!block.ptr) { block = Fallback::Allocate(size); }
+    if (!block.ptr) block = Fallback::Allocate(size);
 
     return block;
   }
@@ -325,7 +325,7 @@ public:
   ///
   void Deallocate(const Block block)
   {
-    if (Primary::Owns(block)) { Primary::Deallocate(block); }
+    if (Primary::Owns(block)) Primary::Deallocate(block);
     else
     {
       Fallback::Deallocate(block);
@@ -406,7 +406,7 @@ public:
   ///
   [[nodiscard]] Block Allocate(const size_t size)
   {
-    if (size <= Threshold) { return SmallAllocator::Allocate(size); }
+    if (size <= Threshold) return SmallAllocator::Allocate(size);
 
     return LargeAllocator::Allocate(size);
   }
@@ -421,7 +421,7 @@ public:
   ///
   void Deallocate(const Block block)
   {
-    if (block.size <= Threshold) { return SmallAllocator::Deallocate(block); }
+    if (block.size <= Threshold) return SmallAllocator::Deallocate(block);
 
     return LargeAllocator::Deallocate(block);
   }
@@ -444,7 +444,7 @@ public:
   {
     if (block.size <= Threshold)
     {
-      if (size <= Threshold) { return SmallAllocator::Reallocate(block, size); }
+      if (size <= Threshold) return SmallAllocator::Reallocate(block, size);
 
       Block large_block = LargeAllocator::Allocate(size);
 
@@ -473,7 +473,6 @@ public:
     return SmallAllocator::Owns(block) || LargeAllocator::Owns(block);
   }
 };
-
 } // namespace genebits::engine
 
 #endif
