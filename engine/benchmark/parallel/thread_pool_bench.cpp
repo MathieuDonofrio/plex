@@ -259,8 +259,6 @@ BENCHMARK(ThreadPool_STD_Async_4Threads_TaskSize)->Arg(100)->Arg(1000)->Arg(1000
 
 static void ThreadPool_STD_Async_TaskQuantity(benchmark::State& state)
 {
-  ThreadPool pool;
-
   const size_t amount = state.range(0);
 
   auto executor = []() { Work(100); };

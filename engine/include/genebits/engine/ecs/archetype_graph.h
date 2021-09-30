@@ -22,6 +22,8 @@ public:
   ///
   /// If the view never existed it will be baked into the flattened graph for quick access.
   ///
+  /// @note Thread-safe
+  ///
   /// @tparam Components Unordered list of component types.
   ///
   /// @return The view id that was assured.
@@ -33,7 +35,7 @@ public:
 
     if (id >= view_states_.Size() || !view_states_[id]) [[unlikely]]
     {
-      std::scoped_lock<std::mutex> lock_(mutex_);
+      std::scoped_lock lock_(mutex_);
 
       if (Initialize<ViewId, Components...>(view_components_, view_states_, id)) AddView(id);
     }
@@ -43,6 +45,8 @@ public:
 
   ///
   /// If the archetype never existed it will be baked into the flattened graph for quick access.
+  ///
+  /// @note Thread-safe
   ///
   /// @tparam Components Unordered list of component types.
   ///
@@ -55,7 +59,7 @@ public:
 
     if (id >= archetype_states_.Size() || !archetype_states_[id]) [[unlikely]]
     {
-      std::scoped_lock<std::mutex> lock_(mutex_);
+      std::scoped_lock lock_(mutex_);
 
       if (Initialize<ArchetypeId, Components...>(archetype_components_, archetype_states_, id)) AddArchetype(id);
     }

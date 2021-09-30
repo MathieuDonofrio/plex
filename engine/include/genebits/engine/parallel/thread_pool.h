@@ -115,8 +115,7 @@ private:
   {
     this_thread::SetName("Worker");
 
-    // RAII lock on construction & unlock on destruction
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock lock(mutex_);
 
     while (running_) // Always locked when doing an iteration
     {
@@ -198,7 +197,7 @@ private:
   /// If the amount of worker threads is greater than the amount of physical processors
   /// excess worker threads will we free to run on any processor.
   ///
-  /// @warning This does nothing if cpu info is not supported.
+  /// @note This does nothing if cpu info is not supported.
   ///
   void SetWorkerThreadAffinity()
   {

@@ -120,8 +120,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Wait_CorrectExecution)
 
   constexpr size_t amount = 2000;
 
-  // With 10000 the test crashes for some reason.
-  // Maybe because of standard bug or OS?
+  // If the amount is to big the stack array will be too big.
   Task tasks[amount];
 
   std::atomic_int count = 0;
@@ -145,10 +144,9 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Poll_CorrectExecution)
 {
   ThreadPool pool(16);
 
+  // If the amount is to big the stack array will be too big.
   constexpr size_t amount = 2000;
 
-  // With 10000 the test crashes for some reason.
-  // Maybe because of standard bug or OS?
   Task tasks[amount];
 
   std::atomic_int count = 0;
