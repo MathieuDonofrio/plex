@@ -3,7 +3,6 @@
 
 #include <format>
 
-#include "genebits/engine/core/environment.h"
 #include "genebits/engine/debug/stacktrace.h"
 #include "genebits/engine/events/event_bus.h"
 
@@ -51,6 +50,13 @@ struct LogEvent
 };
 
 ///
+/// Singleton event bus used for logging.
+///
+/// @return Event bus used for logging.
+///
+EventBus& GetLoggingEventBus();
+
+///
 /// Returns the amount of stack frames to get when logging.
 ///
 /// Usually only errors obtain a stacktrace when debugging.
@@ -73,7 +79,7 @@ struct LogEvent
 /// @param[in] metadata The log metadata.
 /// @param[in] bus The event bus to publish on.
 ///
-inline void PublishLog(std::string&& message, LogMetadata&& metadata, EventBus& bus = GetEnvironment().GetEventBus())
+inline void PublishLog(std::string&& message, LogMetadata&& metadata, EventBus& bus = GetLoggingEventBus())
 {
   LogEvent event;
 

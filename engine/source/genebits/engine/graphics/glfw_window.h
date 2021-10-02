@@ -19,23 +19,26 @@ namespace genebits::engine
 ///
 /// Vulkan capable GLFW window.
 ///
-/// @see https://www.glfw.org/docs/3.3/group__window.html
-/// @see https://www.glfw.org/docs/3.3.1/vulkan_guide.html
-///
 class GLFWWindow : public Window, public VulkanCapableWindow
 {
 public:
+  // Useful resources:
+  // - https://www.glfw.org/docs/3.3/group__window.html
+  // - https://www.glfw.org/docs/3.3.1/vulkan_guide.html
+
   ///
   /// Parametric constructor.
   ///
   /// @param[in] title Title of the window.
   /// @param[in] width The width in pixels of the drawable area .
   /// @param[in] height The height in pixels of the drawable area.
+  /// @param[in] bus The bus to publish events about the window to.
   /// @param[in] hints Hints used to create the window.
   ///
   GLFWWindow(const std::string& title,
     uint32_t width,
     uint32_t height,
+    EventBus* bus,
     WindowCreationHints hints = WindowCreationHints::Defaults);
 
   ///
@@ -347,6 +350,8 @@ private:
   GLFWWindowHandle handle_;
 
   std::string title_;
+
+  EventBus* bus_;
 };
 
 } // namespace genebits::engine

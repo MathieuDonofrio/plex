@@ -2,7 +2,6 @@
 
 #include <atomic>
 
-#include "genebits/engine/core/environment.h"
 #include "genebits/engine/debug/logging.h"
 
 #define GLFW_INCLUDE_NONE // Removes OpenGL
@@ -80,8 +79,9 @@ inline void UnreferenceGlfw()
 
 namespace genebits::engine
 {
-GLFWWindow::GLFWWindow(const std::string& title, uint32_t width, uint32_t height, WindowCreationHints hints)
-  : title_(title)
+GLFWWindow::GLFWWindow(
+  const std::string& title, uint32_t width, uint32_t height, EventBus* bus, WindowCreationHints hints)
+  : title_(title), bus_(bus)
 {
   if (!ReferenceGlfw()) return;
 
@@ -228,10 +228,16 @@ void GLFWWindow::RequestAttention()
 void GLFWWindow::Close()
 {
   glfwSetWindowShouldClose(handle_, 1);
-
   GLFW_ASSERT_DEBUG_ONLY;
 
-  GetEnvironment().GetEventBus().Publish(WindowCloseEvent {});
+  if (bus_)
+  {
+    WindowCloseEvent event;
+
+    event.window = this;
+
+    bus_->Publish(event);
+  }
 }
 
 bool GLFWWindow::IsClosing() const
@@ -305,33 +311,32 @@ GLFWmonitor* GetWindowMonitor(GLFWwindow* handle)
   }
 
   Rectangle window_rectangle;
+
   glfwGetWindowPos(handle, &window_rectangle.x, &window_rectangle.y);
   GLFW_ASSERT_DEBUG_ONLY;
   glfwGetWindowSize(handle, &window_rectangle.width, &window_rectangle.height);
   GLFW_ASSERT_DEBUG_ONLY;
 
-  // This function does not measure how much the window is overlapping the monitor but if the center of the window is
-  // inside the monitor. This is much simpler and can be done because of the symmetric nature of the window.
-  // In other words: If the center of the window is inside the monitor then that monitor is the one that contains the
-  // most window area of all the monitors and can be deemed as the window's monitor
-  auto IsWindowInsideMonitor = [window_rectangle](const MonitorRectangle monitor_rectangle) -> bool
+  for (const MonitorRectangle& monitor_rectangle : monitor_rectangles)
   {
-    int32_t window_center_pos_x = window_rectangle.x + window_rectangle.width / 2;
-    int32_t window_center_pos_y = window_rectangle.y + window_rectangle.height / 2;
+    // Does not measure how much the window is overlapping the monitor but if the center of the window is
+    // inside the monitor. This is much simpler and can be done because of the symmetric nature of the window.
+    // In other words: If the center of the window is inside the monitor then that monitor is the one that contains the
+    // most window area of all the monitors and can be deemed as the window's monitor
+
+    const int32_t window_center_pos_x = window_rectangle.x + window_rectangle.width / 2;
+    const int32_t window_center_pos_y = window_rectangle.y + window_rectangle.height / 2;
 
     bool is_inside_x =
       window_center_pos_x >= monitor_rectangle.x && window_center_pos_x < monitor_rectangle.x + monitor_rectangle.width;
     bool is_inside_y = window_center_pos_y >= monitor_rectangle.y
                        && window_center_pos_y < monitor_rectangle.y + monitor_rectangle.height;
-    return is_inside_x && is_inside_y;
-  };
 
-  for (const MonitorRectangle& monitor_rectangle : monitor_rectangles)
-  {
-    if (IsWindowInsideMonitor(monitor_rectangle)) { return monitor_rectangle.monitor_ptr; }
+    if (is_inside_x && is_inside_y) return monitor_rectangle.monitor_ptr;
   }
 
   ASSERT(false, "The window should be inside one of the monitor, but it is not");
+
   return nullptr;
 }
 
@@ -460,132 +465,185 @@ void GLFWWindow::ApplyWindowCreationHints(const WindowCreationHints& hints)
 
 void GLFWWindow::GLFWCloseEventCallback(GLFWWindowHandle handle)
 {
-  WindowCloseEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowCloseEvent event;
+
+    event.window = window;
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWMaximizeEventCallback(GLFWWindowHandle handle, int32_t current_state)
 {
-  WindowMaximizeEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.maximized = current_state == GLFW_TRUE;
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowMaximizeEvent event;
+
+    event.window = window;
+    event.maximized = current_state == GLFW_TRUE;
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWIconifyEventCallback(GLFWWindowHandle handle, int32_t current_state)
 {
-  WindowIconifyEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.iconified = current_state == GLFW_TRUE;
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowIconifyEvent event;
+
+    event.window = window;
+    event.iconified = current_state == GLFW_TRUE;
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWResizeEventCallback(GLFWWindowHandle handle, int32_t new_width, int32_t new_height)
 {
-  WindowResizeEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.width = static_cast<uint32_t>(new_width);
-  event.height = static_cast<uint32_t>(new_height);
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowResizeEvent event;
+
+    event.window = window;
+    event.width = static_cast<uint32_t>(new_width);
+    event.height = static_cast<uint32_t>(new_height);
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWFocusEventCallback(GLFWWindowHandle handle, int32_t current_state)
 {
-  WindowFocusEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.state = static_cast<WindowFocusEvent::FocusState>(current_state);
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowFocusEvent event;
+
+    event.window = window;
+    event.state = static_cast<WindowFocusEvent::FocusState>(current_state);
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t scancode, int32_t action, int32_t mods)
 {
-  WindowKeyboardEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.keycode = static_cast<KeyCode>(key);
-  event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
-  event.scancode = scancode;
-  event.action = static_cast<ButtonEvent::Action>(action);
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowKeyboardEvent event;
+
+    event.window = window;
+    event.keycode = static_cast<KeyCode>(key);
+    event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
+    event.scancode = scancode;
+    event.action = static_cast<ButtonEvent::Action>(action);
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, double y_pos)
 {
-  WindowCursorMoveEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.pos_x = static_cast<int32_t>(x_pos);
-  event.pos_y = static_cast<int32_t>(y_pos);
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowCursorMoveEvent event;
+
+    event.window = window;
+    event.pos_x = static_cast<int32_t>(x_pos);
+    event.pos_y = static_cast<int32_t>(y_pos);
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entered)
 {
-  WindowCursorEnterEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.cursor_hover_state = static_cast<WindowCursorEnterEvent::CursorHoverState>(entered);
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowCursorEnterEvent event;
+
+    event.window = window;
+    event.cursor_hover_state = static_cast<WindowCursorEnterEvent::CursorHoverState>(entered);
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button, int32_t action, int32_t mods)
 {
-  WindowMouseButtonEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
-  event.button = static_cast<WindowMouseButtonEvent::CursorButton>(button);
-  event.action = static_cast<ButtonEvent::Action>(action);
-  event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
 
-  GetEnvironment().GetEventBus().Publish(event);
+  if (window && window->bus_)
+  {
+    WindowMouseButtonEvent event;
+
+    event.window = window;
+    event.button = static_cast<WindowMouseButtonEvent::CursorButton>(button);
+    event.action = static_cast<ButtonEvent::Action>(action);
+    event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWMouseScrollCallback(GLFWWindow::GLFWWindowHandle handle, double, double y_offset)
 {
-  WindowMouseScrollEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
 
-  event.vertical_offset = static_cast<uint32_t>(y_offset);
+  if (window && window->bus_)
+  {
+    WindowMouseScrollEvent event;
 
-  GetEnvironment().GetEventBus().Publish(event);
+    event.window = window;
+    event.vertical_offset = static_cast<uint32_t>(y_offset);
+
+    window->bus_->Publish(event);
+  }
 }
 
 void GLFWWindow::GLFWFramebufferResizeCallback(GLFWWindowHandle handle, int32_t new_width, int32_t new_height)
 {
-  WindowFramebufferResizeEvent event;
-
-  event.window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
+  auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
   GLFW_ASSERT_DEBUG_ONLY;
 
-  event.width = static_cast<uint32_t>(new_width);
-  event.height = static_cast<uint32_t>(new_height);
+  if (window && window->bus_)
+  {
+    WindowFramebufferResizeEvent event;
 
-  GetEnvironment().GetEventBus().Publish(event);
+    event.window = window;
+    event.width = static_cast<uint32_t>(new_width);
+    event.height = static_cast<uint32_t>(new_height);
+
+    window->bus_->Publish(event);
+  }
 }
 
 } // namespace genebits::engine

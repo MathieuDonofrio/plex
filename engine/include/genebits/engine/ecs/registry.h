@@ -13,6 +13,11 @@
 
 namespace genebits::engine
 {
+///
+/// Recommended entity type.
+///
+using Entity = uint_fast32_t;
+
 template<std::unsigned_integral Entity, typename... Components>
 class BasicView;
 
@@ -27,7 +32,7 @@ class BasicView;
 ///
 /// @tparam Entity Entity integral type.
 ///
-template<std::unsigned_integral Entity>
+template<std::unsigned_integral Entity = Entity>
 class Registry final
 {
 public:

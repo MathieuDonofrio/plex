@@ -3,12 +3,12 @@
 
 #include <string>
 
+#include "genebits/engine/events/event_bus.h"
 #include "genebits/engine/graphics/key_codes.h"
 #include "genebits/engine/util/enumerator.h"
 
 namespace genebits::engine
 {
-
 ///
 /// Enum flags used to specify features to be enabled or disabled during the creation of the window
 ///
@@ -431,12 +431,16 @@ struct WindowFramebufferResizeEvent : public WindowEvent
 /// @param[in] title Title of the window.
 /// @param[in] width Width of the window.
 /// @param[in] height Height of the window.
+/// @param[in] bus Event bus for window to use if any.
 /// @param[in] hints Window creation hints.
 ///
 /// @return Window instance pointer.
 ///
-Window* CreateWindow(
-  const std::string& title, uint32_t width, uint32_t height, WindowCreationHints hints = WindowCreationHints::Defaults);
+Window* CreateWindow(const std::string& title,
+  uint32_t width,
+  uint32_t height,
+  EventBus* bus,
+  WindowCreationHints hints = WindowCreationHints::Defaults);
 
 } // namespace genebits::engine
 #endif
