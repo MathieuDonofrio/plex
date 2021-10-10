@@ -13,7 +13,7 @@ namespace genebits::engine
 /// @tparam Type The type to check
 ///
 template<typename Type>
-concept TypeMapValueType = std::is_default_constructible_v<Type> && FastVectorType<Type>;
+concept TypeMapValueType = FastVectorType<Type>;
 
 ///
 /// Map used to map types to values where the type is the key.
@@ -38,11 +38,12 @@ public:
   /// mapping (only happens once per key) and internal resize must be called.
   ///
   /// @tparam Type The type to use as key.
+  /// @tparam Args The arguments used to initialize new values.
   ///
   /// @return Reference to the value mapped by the type.
   ///
-  template<typename Type>
-  Value& Assure() noexcept
+  template<typename Type, typename... Args>
+  requires std::is_constructible_v<Value, Args...> Value& Assure(Args&&... args) noexcept
   {
     const size_t index = Key<Type>();
 
@@ -50,7 +51,7 @@ public:
     {
       ASSERT(index < 10000, "To many types"); // Highly unlikely the map exceeds 10k types, probably a bug.
 
-      values_.Resize(index + 1);
+      values_.Resize(index + 1, std::forward<Args>(args)...);
     }
 
     return values_[index];
