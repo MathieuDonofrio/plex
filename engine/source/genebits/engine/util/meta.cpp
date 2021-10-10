@@ -6,28 +6,33 @@
 
 namespace genebits::engine
 {
-size_t UniqueId(std::string_view full_name, size_t sequence_index)
+size_t UniqueId(std::string_view full_name, std::string_view sequence_key)
 {
-  // Not performance critical. Should only get called once per <type,sequence index>.
+  using MapKeyType = std::pair<std::string_view, std::string_view>;
 
-  static std::map<size_t, size_t> sequences;
-  static std::map<std::pair<std::string_view, size_t>, size_t> mappings;
+  static std::map<std::string_view, size_t> sequences;
+  static std::map<MapKeyType, size_t> mappings;
+
   static std::mutex mutex;
 
-  const std::pair<std::string_view, size_t> key { full_name, sequence_index };
+  // Not performance critical. Only gets called once per unique (type,sequence) entry.
+
+  const MapKeyType mappings_key { full_name, sequence_key };
 
   const std::scoped_lock<std::mutex> lock(mutex);
 
-  const auto it = mappings.find(key);
+  const auto it = mappings.find(mappings_key);
 
   if (it == mappings.end())
   {
-    size_t& sequence = sequences[sequence_index];
+    // If this is a new mapping, we must assign a new unique index from the sequence.
+
+    size_t& sequence = sequences[sequence_key];
 
     const size_t id = sequence;
     sequence++;
 
-    mappings[key] = id;
+    mappings[mappings_key] = id;
 
     return id;
   }

@@ -111,7 +111,7 @@ private:
   template<typename Type>
   [[nodiscard]] static size_t Key() noexcept
   {
-    return Meta<Type>::template UniqueId<Meta<TypeMap<Value, AllocatorImpl>>::Hash()>();
+    return Meta<Type>::template UniqueId<Meta<TypeMap<Value, AllocatorImpl>>>();
   }
 
 private:
