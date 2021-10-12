@@ -450,13 +450,15 @@ private:
 #endif
 
 private:
-  using EraseFunction = void (*)(Storage* storage, const size_t);
-  using ClearFunction = void (*)(Storage* storage);
+  using StorageType = Storage<Entity, DenseAllocator, SparseAllocator>;
+
+  using EraseFunction = void (*)(StorageType* storage, const size_t);
+  using ClearFunction = void (*)(StorageType* storage);
 
   SharedSparseArray<Entity, SparseAllocator>* sparse_;
 
   FastVector<Entity, DenseAllocator> dense_;
-  TypeMap<ErasedPtr<void>> pools_;
+  TypeMap<ErasedPtr<void>, StorageType> pools_;
 
   // Functions
   EraseFunction erase_function_;
