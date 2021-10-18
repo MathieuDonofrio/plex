@@ -205,7 +205,7 @@ struct ViewIdTag
 template<typename Component>
 ComponentId GetComponentId()
 {
-  return static_cast<ComponentId>(Meta<Component>::template UniqueId<Meta<ComponentIdTag>>());
+  return static_cast<ComponentId>(Meta<Component>::template UniqueId<ComponentIdTag>());
 }
 
 ///
@@ -222,7 +222,7 @@ ComponentId GetComponentId()
 template<typename... Components>
 ArchetypeId GetArchetypeId()
 {
-  return static_cast<ArchetypeId>(Meta<ComponentList<Components...>>::template UniqueId<Meta<ArchetypeIdTag>>());
+  return static_cast<ArchetypeId>(Meta<ComponentList<Components...>>::template UniqueId<ArchetypeIdTag>());
 }
 
 ///
@@ -239,7 +239,7 @@ ArchetypeId GetArchetypeId()
 template<typename... Components>
 ViewId GetViewId()
 {
-  return static_cast<ViewId>(Meta<ComponentList<Components...>>::template UniqueId<Meta<ViewIdTag>>());
+  return static_cast<ViewId>(Meta<ComponentList<Components...>>::template UniqueId<ViewIdTag>());
 }
 
 namespace details

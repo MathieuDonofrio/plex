@@ -35,8 +35,8 @@ public:
   ///
   /// If the mapping never existed, this method will make sure that it is created.
   ///
-  /// Usually O(1) with very little overhead, but sometimes during creating of the
-  /// mapping (only happens once per key) and internal resize must be called.
+  /// Usually O(1). If a value was never initialized for the type this method is expensive
+  /// but this happens at most only once per type.
   ///
   /// @tparam Type The type to use as key.
   /// @tparam Args The arguments used to initialize new values.
@@ -112,7 +112,7 @@ private:
   template<typename Type>
   [[nodiscard]] static size_t Key() noexcept
   {
-    return Meta<Type>::template UniqueId<Meta<TypeMap<Value, Tag, AllocatorImpl>>>();
+    return Meta<Type>::template UniqueId<TypeMap<Value, Tag, AllocatorImpl>>();
   }
 
 private:

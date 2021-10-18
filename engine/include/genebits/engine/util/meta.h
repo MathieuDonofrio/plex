@@ -112,6 +112,8 @@ public:
   ///
   /// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
   ///
+  /// @note Implies one branch of overhead that will correctly be branch predicted.
+  ///
   /// @tparam Sequence Type to use name as identifier for the sequence to use.
   ///
   /// @return size_t The unique id for the type and sequence.
