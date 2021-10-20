@@ -123,12 +123,12 @@ public:
   /// component data.
   ///
   /// @tparam Components Component types to unpack.
-  /// @tparam UnaryFunction Function to invoke.
+  /// @tparam Function Function to invoke.
   ///
   /// @param[in] function Function to invoke for every iteration.
   ///
-  template<typename... Components, typename UnaryFunction>
-  void ForEach(UnaryFunction function)
+  template<typename... Components, typename Function>
+  void ForEach(Function function)
   {
     return View<Components...>().ForEach(function);
   }
@@ -259,7 +259,7 @@ private:
 /// @tparam Components Component types of the view.
 ///
 template<typename Entity, typename Invocable, typename... Components>
-concept ViewExtendedIterationFunc = requires(Invocable invocable, Entity entity, Components... components)
+concept ExtendedUnpackFunction = requires(Invocable invocable, Entity entity, Components... components)
 {
   invocable(entity, components...);
 };
@@ -273,7 +273,7 @@ concept ViewExtendedIterationFunc = requires(Invocable invocable, Entity entity,
 /// @tparam Components Component types of the view.
 ///
 template<typename Invocable, typename... Components>
-concept ViewReducedIterationFunc = requires(Invocable invocable, Components... components)
+concept ReducedUnpackFunction = requires(Invocable invocable, Components... components)
 {
   invocable(components...);
 };
@@ -288,8 +288,161 @@ concept ViewReducedIterationFunc = requires(Invocable invocable, Components... c
 /// @tparam Components Component types of the view.
 ///
 template<typename Entity, typename Invocable, typename... Components>
-concept ViewIterationFunc =
-  ViewReducedIterationFunc<Invocable, Components...> || ViewExtendedIterationFunc<Entity, Invocable, Components...>;
+concept UnpackFunction =
+  ReducedUnpackFunction<Invocable, Components...> || ExtendedUnpackFunction<Entity, Invocable, Components...>;
+
+///
+/// Iterator for entities and unpacking of components.
+///
+/// @tparam Entity Entity type.
+/// @tparam Components Component types to unpack.
+///
+template<typename Entity, typename... Components>
+requires UniqueTypes<Components...>
+class EntityIterator
+{
+public:
+  using Data = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
+
+  ///
+  /// Constructs an entity iterator using a storage and an offset.
+  ///
+  /// @param[in] storage Storage to iterate on.
+  /// @param[in] offset Offset of the iteration in the entity array of the storage.
+  ///
+  constexpr EntityIterator(Storage<Entity>& storage, size_t offset) noexcept
+    : data_(storage.data() + offset, (storage.template Access<std::remove_cvref_t<Components>>().data() + offset)...)
+  {}
+
+  ///
+  /// Copy constructor.
+  ///
+  /// @param[in] other Iterator to copy.
+  ///
+  constexpr EntityIterator(const EntityIterator& other) noexcept : data_(other.data_) {}
+
+  ///
+  /// Move constructor.
+  ///
+  /// @param[in] other Iterator to move.
+  ///
+  constexpr EntityIterator(EntityIterator&& other) noexcept : data_(std::move(other.data_)) {}
+
+  ///
+  /// Increments iterator.
+  ///
+  /// @return Reference to iterator.
+  ///
+  EntityIterator& operator++()
+  {
+    ++std::get<0>(data_);
+    (++std::get<std::remove_cvref_t<Components>*>(data_), ...);
+    return *this;
+  }
+
+  ///
+  /// Decrements iterator.
+  ///
+  /// @return Reference to iterator.
+  ///
+  EntityIterator& operator--()
+  {
+    --std::get<0>(data_);
+    (--std::get<std::remove_cvref_t<Components>*>(data_), ...);
+    return *this;
+  }
+
+  ///
+  /// Returns reference to entity data.
+  ///
+  /// @return Reference to data.
+  ///
+  constexpr const Data& operator*() const
+  {
+    return data_;
+  }
+
+  ///
+  /// Returns reference to entity data.
+  ///
+  /// @return Reference to data.
+  ///
+  constexpr Data& operator*()
+  {
+    return data_;
+  }
+
+  ///
+  /// Returns pointer to entity data.
+  ///
+  /// @return Pointer to data.
+  ///
+  constexpr const Data* operator->() const
+  {
+    return *data_;
+  }
+
+  ///
+  /// Returns pointer to entity data.
+  ///
+  /// @return Pointer to data.
+  ///
+  constexpr Data* operator->()
+  {
+    return *data_;
+  }
+
+  ///
+  /// Compares the iterator to and entity iterator.
+  ///
+  /// @param other Entity iterator.
+  ///
+  /// @return True if iterator is equal to entity iterator, false otherwise.
+  ///
+  constexpr bool operator==(const Entity* other) const noexcept
+  {
+    return std::get<0>(data_) == other;
+  }
+
+  ///
+  /// Compares the iterator to and entity iterator.
+  ///
+  /// @param other Entity iterator.
+  ///
+  /// @return True if iterator is not equal to entity iterator, false otherwise..
+  ///
+  constexpr bool operator!=(const Entity* other) const noexcept
+  {
+    return !(*this == other);
+  }
+
+  ///
+  /// Compares the iterator to and entity iterator.
+  ///
+  /// @param other Entity iterator.
+  ///
+  /// @return True if iterator is equal to entity iterator, false otherwise.
+  ///
+  constexpr bool operator==(const EntityIterator& other) const noexcept
+  {
+    return std::get<0>(data_) == std::get<0>(other.data_);
+  }
+
+  ///
+  /// Compares the iterator to and entity iterator.
+  ///
+  /// @param other Entity iterator.
+  ///
+  /// @return True if iterator is not equal to entity iterator, false otherwise..
+  ///
+  constexpr bool operator!=(const EntityIterator& other) const noexcept
+  {
+    return !(*this == other);
+  }
+
+private:
+  Data data_;
+};
 
 ///
 /// View of a registry.
@@ -335,61 +488,29 @@ public:
   /// There is some overhead due to having multiple storages to iterate on. This causes "gaps" between contiguous blocks
   /// of memory and may cause cache misses in views with a high archetype to entity ratio.
   ///
-  /// @tparam UnaryFunction Function type to invoke for each entity.
+  /// @tparam Function Function type to invoke for each entity.
   ///
   /// @param[in] function Function to invoke for each entity.
   ///
-  template<typename UnaryFunction>
-  requires ViewIterationFunc<Entity, UnaryFunction, Components...>
-  void ForEach(UnaryFunction function)
+  template<typename Function>
+  requires UnpackFunction<Entity, Function, Components...>
+  void ForEach(Function function)
   {
-    for (const auto archetype : archetypes_)
+    for (auto& storage : *this)
     {
-      auto storage = registry_.storages_[archetype];
+      const auto end = storage.end();
 
-      ASSERT(storage, "Storage not initialized");
-
-      if constexpr (ViewExtendedIterationFunc<Entity, UnaryFunction, Components...>)
+      for (EntityIterator<Entity, Components...> it(storage, 0); it != end; ++it)
       {
-        // Extended iteration (With entity identifier)
+        [[maybe_unused]] auto& data = *it;
 
-        auto data =
-          std::make_tuple(storage->begin(), storage->template Access<std::remove_cvref_t<Components>>().begin()...);
-
-        const auto end = storage->end();
-
-        while (std::get<0>(data) != end)
+        if constexpr (ExtendedUnpackFunction<Entity, Function, Components...>)
         {
-          function(*std::get<0>(data), *std::get<Index<Components, Components...>::value + 1>(data)...);
-
-          ++std::get<0>(data);
-          ((++std::get<Index<Components, Components...>::value + 1>(data)), ...);
+          function(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
         }
-      }
-      else if constexpr (!cNoComponents)
-      {
-        // Reduced iteration (Without entity identifier)
-
-        auto data = std::make_tuple(storage->template Access<std::remove_cvref_t<Components>>().begin()...);
-
-        const auto end = std::get<0>(data) + storage->Size();
-
-        while (std::get<0>(data) != end)
+        else
         {
-          function(*std::get<Index<Components, Components...>::value>(data)...);
-
-          ((++std::get<Index<Components, Components...>::value>(data)), ...);
-        }
-      }
-      else
-      {
-        // Void iteration (No unpacking)
-
-        const auto end = storage->Size();
-
-        for (size_t i = 0; i != end; ++i)
-        {
-          function();
+          function(*std::get<std::remove_cvref_t<Components>*>(data)...);
         }
       }
     }
@@ -567,21 +688,118 @@ public:
 
 private:
   ///
-  /// Utility used for obtaining the index of the type in a variadic template.
+  /// View iterator. Iterates on all storages in the view.
   ///
-  /// @tparam Type Type to obtain index for.
-  /// @tparam List List of types to search for index.
-  ///
-  template<typename Type, typename... List>
-  struct Index;
+  class Iterator
+  {
+  public:
+    ///
+    /// Constructs an interator with the archetype array and a registry reference.
+    ///
+    /// @param[in] archetype Archetype
+    ///
+    /// @param[in] registry Registry to obtain storages from.
+    ///
+    constexpr Iterator(const ArchetypeId* archetype, Registry<Entity>& registry) noexcept
+      : archetype_(archetype), registry_(registry)
+    {}
 
-  template<typename Type, typename... List>
-  struct Index<Type, Type, List...> : std::integral_constant<std::size_t, 0>
-  {};
+    ///
+    /// Increments iterator.
+    ///
+    /// return Reference to iterator.
+    ///
+    constexpr Iterator& operator++() noexcept
+    {
+      return ++archetype_, *this;
+    }
 
-  template<typename Type1, typename Type2, typename... List>
-  struct Index<Type1, Type2, List...> : std::integral_constant<std::size_t, 1 + Index<Type1, List...>::value>
-  {};
+    ///
+    /// Decrements iterator.
+    ///
+    /// return Reference to iterator.
+    ///
+    constexpr Iterator& operator--() noexcept
+    {
+      return ++archetype_, *this;
+    }
+
+    ///
+    /// Returns the reference to the storage.
+    ///
+    /// @return Storage reference.
+    ///
+    const Storage<Entity>& operator*() const
+    {
+      return *registry_.storages_[*archetype_];
+    }
+
+    ///
+    /// Returns the reference to the storage.
+    ///
+    /// @return Storage reference.
+    ///
+    Storage<Entity>& operator*()
+    {
+      return *registry_.storages_[*archetype_];
+    }
+
+    ///
+    /// Returns the pointer to the storage.
+    ///
+    /// @return Storage pointer.
+    ///
+    const Storage<Entity>* operator->() const
+    {
+      return registry_.storages_[*archetype_];
+    }
+
+    ///
+    /// Returns the pointer to the storage.
+    ///
+    /// @return Storage pointer.
+    ///
+    Storage<Entity>* operator->()
+    {
+      return registry_.storages_[*archetype_];
+    }
+
+    ///
+    /// Returns whether or not iterators are equal.
+    ///
+    /// @param[in] other Iterator to compare.
+    ///
+    /// @return True if both iterators are equal, false otherwise.
+    ///
+    constexpr bool operator==(const Iterator& other) noexcept
+    {
+      return archetype_ == other.archetype_ && &registry_ == &other.registry_;
+    }
+
+    ///
+    /// Returns whether or not iterators are equal.
+    ///
+    /// @param[in] other Iterator to compare.
+    ///
+    /// @return True if both iterators are not equal, false otherwise.
+    ///
+    constexpr bool operator!=(const Iterator& other) noexcept
+    {
+      return !(*this == other);
+    }
+
+  private:
+    const ArchetypeId* archetype_;
+    Registry<Entity>& registry_;
+  };
+
+  // Style Exception: STL
+  // clang-format off
+
+  [[nodiscard]] Iterator begin() { return Iterator(archetypes_.begin(), registry_); }
+  [[nodiscard]] Iterator end() { return Iterator(archetypes_.end(), registry_); }
+
+  // clang-format on
 
 private:
   Registry<Entity>& registry_;
