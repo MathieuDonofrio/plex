@@ -474,4 +474,308 @@ TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectUnpackedValues)
   EXPECT_EQ(iterations, 3);
 }
 
+TEST(PolyView_Tests, Iterator_Empty_NoIterations)
+{
+  Registry<size_t> registry;
+
+  PolyView view = registry.View();
+
+  size_t iterations = 0;
+
+  for (auto it = view.begin(); it != view.end(); ++it)
+  {
+    iterations++;
+  }
+
+  EXPECT_EQ(iterations, 0);
+}
+
+TEST(PolyView_Tests, Iterator_Single_OneIteration)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(0);
+
+  PolyView view = registry.View();
+
+  size_t iterations = 0;
+
+  for (auto it = view.begin(); it != view.end(); ++it)
+  {
+    iterations++;
+  }
+
+  EXPECT_EQ(iterations, 1);
+}
+
+TEST(PolyView_Tests, Iterator_Double_CorrectIterations)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(0);
+  registry.Create<double>(0);
+
+  PolyView view = registry.View();
+
+  size_t iterations = 0;
+
+  for (auto it = view.begin(); it != view.end(); ++it)
+  {
+    iterations++;
+  }
+
+  EXPECT_EQ(iterations, 2);
+}
+
+TEST(PolyView_Tests, Iterator_Multiple_CorrectIterations)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(0);
+  registry.Create<float>(0);
+  registry.Create<double>(0);
+  registry.Create<long>(0);
+
+  PolyView view = registry.View();
+
+  size_t iterations = 0;
+
+  for (auto it = view.begin(); it != view.end(); ++it)
+  {
+    iterations++;
+  }
+
+  EXPECT_EQ(iterations, 4);
+}
+
+TEST(PolyView_Tests, Iterator_WithMultipleEntities_CorrectIterations)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+  registry.Create<double>(0);
+  registry.Create<double>(0);
+
+  PolyView view = registry.View();
+
+  size_t iterations = 0;
+
+  for (auto it = view.begin(); it != view.end(); ++it)
+  {
+    iterations++;
+  }
+
+  EXPECT_EQ(iterations, 2);
+}
+
+TEST(MonoView_Tests, Contains_SingleExact_True)
+{
+  Registry<size_t> registry;
+
+  auto entity = registry.Create<int>(0);
+
+  MonoView mono_view = *registry.View<int>().begin();
+
+  EXPECT_TRUE(mono_view.Contains(entity));
+}
+
+TEST(MonoView_Tests, Contains_SingleDestroyed_False)
+{
+  Registry<size_t> registry;
+
+  auto entity = registry.Create<int>(0);
+  registry.Destroy(entity);
+
+  MonoView mono_view = *registry.View<int>().begin();
+
+  EXPECT_FALSE(mono_view.Contains(entity));
+}
+
+TEST(MonoView_Tests, Size_Multiple_CorrectSize)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+
+  MonoView mono_view = *registry.View<int>().begin();
+
+  EXPECT_EQ(mono_view.Size(), 3);
+}
+
+TEST(MonoView_Tests, Unpack_Single_CorrectValue)
+{
+  Registry<size_t> registry;
+
+  auto entity = registry.Create<int>(10);
+
+  MonoView mono_view = *registry.View<int>().begin();
+
+  EXPECT_EQ(mono_view.Unpack<int>(entity), 10);
+}
+
+TEST(MonoView_Tests, ForEach_None_NoIteration)
+{
+  Registry<size_t> registry;
+
+  registry.Destroy(registry.Create<int>(0));
+
+  PolyView poly_view = registry.View<int>();
+
+  MonoView mono_view = *poly_view.begin();
+
+  size_t iterations = 0;
+
+  mono_view.ForEach([&iterations](int) { iterations++; });
+
+  EXPECT_EQ(iterations, 0);
+}
+
+TEST(MonoView_Tests, ForEach_Single_OneIteration)
+{
+  Registry<size_t> registry;
+
+  auto entity = registry.Create<int>(0);
+
+  PolyView poly_view = registry.View<int>();
+
+  MonoView mono_view = *poly_view.begin();
+
+  size_t iterations = 0;
+
+  mono_view.ForEach(
+    [&](int e)
+    {
+      EXPECT_EQ(entity, e);
+      iterations++;
+    });
+
+  EXPECT_EQ(iterations, 1);
+}
+
+TEST(MonoView_Tests, ForEach_Double_TwoIterations)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+
+  PolyView poly_view = registry.View<int>();
+
+  MonoView mono_view = *poly_view.begin();
+
+  size_t iterations = 0;
+
+  mono_view.ForEach([&](int) { iterations++; });
+
+  EXPECT_EQ(iterations, 2);
+}
+
+TEST(MonoView_Tests, ForEach_Multiple_CorrectIterations)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+  registry.Create<int>(0);
+
+  registry.Create<double>(0);
+  registry.Create<double>(0);
+
+  MonoView mono_view1 = *registry.View<int>().begin();
+  MonoView mono_view2 = *(registry.View<double>().begin());
+
+  size_t iterations = 0;
+
+  mono_view1.ForEach([&](int) { iterations++; });
+
+  EXPECT_EQ(iterations, 6);
+
+  iterations = 0;
+
+  mono_view2.ForEach([&](double) { iterations++; });
+
+  EXPECT_EQ(iterations, 2);
+}
+
+TEST(MonoViewIterator_Tests, Dereference_Single_CorrectEntity)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(99);
+
+  MonoView mono_view = *registry.View<int>().begin();
+
+  int value = *std::get<int*>(*mono_view.begin());
+
+  EXPECT_EQ(value, 99);
+}
+
+TEST(MonoViewIterator_Tests, PreIncrement_Double_CorrectEntities)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(1);
+  registry.Create<int>(2);
+
+  MonoView mono_view = *registry.View<int>().begin();
+
+  int value1 = *std::get<int*>(*mono_view.begin());
+  int value2 = *std::get<int*>(*(++mono_view.begin()));
+
+  EXPECT_EQ(value1 + value2, 3);
+}
+
+TEST(MonoViewIterator_Tests, PreDecrement_Double_CorrectEntities)
+{
+  Registry<size_t> registry;
+
+  registry.Create<int>(1);
+  registry.Create<int>(2);
+
+  MonoView mono_view = *registry.View<int>().begin();
+
+  auto incremented = ++mono_view.begin();
+
+  int value1 = *std::get<int*>(*incremented);
+  int value2 = *std::get<int*>(*(--incremented));
+
+  EXPECT_EQ(value1 + value2, 3);
+}
+
+TEST(MonoViewEntityIterator_Tests, Increment_Double_CorrectEntities)
+{
+  Registry<size_t> registry;
+
+  auto entity1 = registry.Create<int>(1);
+  auto entity2 = registry.Create<int>(2);
+
+  MonoView mono_view = *registry.View<int>().begin();
+
+  int iterations = 0;
+
+  size_t last = 9999999;
+
+  for (auto it = mono_view.ebegin(); it != mono_view.eend(); ++it)
+  {
+    auto entity = *it;
+
+    EXPECT_NE(entity, last);
+
+    EXPECT_TRUE(entity == entity1 || entity == entity2);
+
+    last = entity;
+
+    iterations++;
+  }
+
+  EXPECT_EQ(iterations, 2);
+}
+
 } // namespace genebits::engine::tests

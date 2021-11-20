@@ -327,16 +327,9 @@ constexpr void UnpackAndApply(
 /// @tparam Components Components to unpack.
 ///
 template<std::unsigned_integral Entity, typename... Components>
-class SingleView
+class MonoView
 {
 public:
-  ///
-  /// Constructs a view from a storage.
-  ///
-  /// @param[in] storage Storage to construct view with.
-  ///
-  constexpr SingleView(Storage<Entity>* storage) : storage_(storage) {}
-
   ///
   /// Iterates all entities in the view, unpacks the component data efficiently and invokes the function.
   ///
@@ -419,7 +412,7 @@ public:
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity) noexcept
   {
-    return const_cast<Component&>(static_cast<const SingleView*>(this)->Unpack<Component>(entity));
+    return const_cast<Component&>(static_cast<const MonoView*>(this)->Unpack<Component>(entity));
   }
 
 public:
@@ -431,17 +424,6 @@ public:
   {
   public:
     using Data = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
-
-    ///
-    /// Constructs an entity iterator using a storage and an offset.
-    ///
-    /// @param[in] storage Storage to iterate on.
-    /// @param[in] offset Offset of the iteration in the entity array of the storage.
-    ///
-    constexpr Iterator(Storage<Entity>* storage, size_t offset) noexcept
-      : data_(
-        storage->data() + offset, (storage->template Access<std::remove_cvref_t<Components>>().data() + offset)...)
-    {}
 
     ///
     /// Copy constructor.
@@ -570,6 +552,21 @@ public:
     }
 
   private:
+    template<std::unsigned_integral, typename...>
+    friend class MonoView;
+
+    ///
+    /// Constructs an entity iterator using a storage and an offset.
+    ///
+    /// @param[in] storage Storage to iterate on.
+    /// @param[in] offset Offset of the iteration in the entity array of the storage.
+    ///
+    constexpr Iterator(Storage<Entity>* storage, size_t offset) noexcept
+      : data_(
+        storage->data() + offset, (storage->template Access<std::remove_cvref_t<Components>>().data() + offset)...)
+    {}
+
+  private:
     Data data_;
   };
 
@@ -583,6 +580,17 @@ public:
   Entity* eend() noexcept { return storage_->end(); }
 
   // clang-format on
+
+private:
+  template<std::unsigned_integral, typename...>
+  friend class PolyView;
+
+  ///
+  /// Constructs a view from a storage.
+  ///
+  /// @param[in] storage Storage to construct view with.
+  ///
+  constexpr MonoView(Storage<Entity>* storage) : storage_(storage) {}
 
 private:
   Storage<Entity>* storage_;
@@ -640,9 +648,9 @@ public:
   requires UnpackFunction<Entity, Function, Components...>
   void ForEach(Function function)
   {
-    for (auto single_view : *this)
+    for (auto mono_view : *this)
     {
-      for (auto& data : single_view)
+      for (auto& data : mono_view)
       {
         UnpackAndApply<Entity, Function, Components...>(function, data);
       }
@@ -819,24 +827,13 @@ public:
     return const_cast<Component&>(static_cast<const PolyView*>(this)->Unpack<Component>(entity));
   }
 
-private:
+public:
   ///
   /// Poly view iterator. Iterates on single views in the view.
   ///
   class Iterator
   {
   public:
-    ///
-    /// Constructs an iterator with the archetype array and a registry reference.
-    ///
-    /// @param[in] archetype Archetype
-    ///
-    /// @param[in] registry Registry to obtain storages from.
-    ///
-    constexpr Iterator(const ArchetypeId* archetype, Registry<Entity>& registry) noexcept
-      : archetype_(archetype), registry_(registry)
-    {}
-
     ///
     /// Increments iterator.
     ///
@@ -862,9 +859,9 @@ private:
     ///
     /// @return Storage reference.
     ///
-    SingleView<Entity, Components...> operator*()
+    MonoView<Entity, Components...> operator*()
     {
-      return { registry_.storages_[*archetype_] };
+      return MonoView<Entity, Components...> { registry_.storages_[*archetype_] };
     }
 
     ///
@@ -876,7 +873,7 @@ private:
     ///
     constexpr bool operator==(const Iterator& other) noexcept
     {
-      return archetype_ == other.archetype_ && &registry_ == &other.registry_;
+      return archetype_ == other.archetype_;
     }
 
     ///
@@ -888,8 +885,23 @@ private:
     ///
     constexpr bool operator!=(const Iterator& other) noexcept
     {
-      return !(*this == other);
+      return archetype_ != other.archetype_;
     }
+
+  private:
+    template<std::unsigned_integral, typename...>
+    friend class PolyView;
+
+    ///
+    /// Constructs an iterator with the archetype array and a registry reference.
+    ///
+    /// @param[in] archetype Archetype
+    ///
+    /// @param[in] registry Registry to obtain storages from.
+    ///
+    constexpr Iterator(const ArchetypeId* archetype, Registry<Entity>& registry) noexcept
+      : archetype_(archetype), registry_(registry)
+    {}
 
   private:
     const ArchetypeId* archetype_;
