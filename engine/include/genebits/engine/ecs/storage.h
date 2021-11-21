@@ -395,7 +395,7 @@ public:
     ASSERT(initialized_, "Not initialized");
     ASSERT(HasComponent<Component>(), "Component type not valid");
 
-    return *pools_.Get<Component>().template Cast<FastVector<Component, DenseAllocator>>();
+    return *pools_.template Get<Component>().template Cast<FastVector<Component, DenseAllocator>>();
   }
 
   ///

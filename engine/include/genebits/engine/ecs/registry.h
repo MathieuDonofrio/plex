@@ -426,6 +426,13 @@ public:
     using Data = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
 
     ///
+    /// Constructs an entity iterator using data.
+    ///
+    /// @param[in] data Data for iterator.
+    ///
+    constexpr Iterator(Data data) noexcept : data_(data) {}
+
+    ///
     /// Copy constructor.
     ///
     /// @param[in] other Iterator to copy.
@@ -433,18 +440,48 @@ public:
     constexpr Iterator(const Iterator& other) noexcept : data_(other.data_) {}
 
     ///
-    /// Move constructor.
+    /// Copy assignment operator.
     ///
-    /// @param[in] other Iterator to move.
+    /// @param[in] other Iterator to assign.
     ///
-    constexpr Iterator(Iterator&& other) noexcept : data_(std::move(other.data_)) {}
+    /// @return Reference to assigned iterator.
+    ///
+    constexpr Iterator& operator=(const Iterator& other) noexcept
+    {
+      data_ = other.data_;
+      return *this;
+    }
 
     ///
-    /// Increments iterator.
+    /// Add-assign operator.
     ///
-    /// @return Reference to iterator.
+    /// @return Reference to iterator after add.
     ///
-    Iterator& operator++()
+    constexpr Iterator& operator+=(size_t amount) noexcept
+    {
+      std::get<0>(data_) += amount;
+      ((std::get<std::remove_cvref_t<Components>*>(data_) += amount), ...);
+      return *this;
+    }
+
+    ///
+    /// Subtract-assign operator.
+    ///
+    /// @return Reference to iterator after add.
+    ///
+    constexpr Iterator& operator-=(size_t amount) noexcept
+    {
+      std::get<0>(data_) -= amount;
+      ((std::get<std::remove_cvref_t<Components>*>(data_) -= amount), ...);
+      return *this;
+    }
+
+    ///
+    /// Pre-increment operator.
+    ///
+    /// @return Reference to iterator after increment.
+    ///
+    constexpr Iterator& operator++() noexcept
     {
       ++std::get<0>(data_);
       (++std::get<std::remove_cvref_t<Components>*>(data_), ...);
@@ -452,11 +489,11 @@ public:
     }
 
     ///
-    /// Decrements iterator.
+    /// Pre-decrement operator.
     ///
-    /// @return Reference to iterator.
+    /// @return Reference to iterator before decrement.
     ///
-    Iterator& operator--()
+    constexpr Iterator& operator--() noexcept
     {
       --std::get<0>(data_);
       (--std::get<std::remove_cvref_t<Components>*>(data_), ...);
@@ -464,11 +501,57 @@ public:
     }
 
     ///
+    /// Post-increment operator.
+    ///
+    /// @return Copy of iterator before increment.
+    ///
+    constexpr const Iterator operator++(int) noexcept
+    {
+      Iterator copy(*this);
+      operator++();
+      return copy;
+    }
+
+    ///
+    /// Post-decrement operator.
+    ///
+    /// @return Copy of iterator before decrement.
+    ///
+    constexpr const Iterator operator--(int) noexcept
+    {
+      Iterator copy(*this);
+      operator--();
+      return copy;
+    }
+
+    ///
+    /// Add operator.
+    ///
+    /// @return Result.
+    ///
+    constexpr Iterator operator+(size_t amount) const noexcept
+    {
+      return Iterator(std::make_tuple<Entity*, std::remove_cvref_t<Components>*...>(
+        std::get<0>(data_) + amount, (std::get<std::remove_cvref_t<Components>*>(data_) + amount)...));
+    }
+
+    ///
+    /// Subtract operator.
+    ///
+    /// @return Result.
+    ///
+    constexpr Iterator operator-(size_t amount) const noexcept
+    {
+      return Iterator(std::make_tuple<Entity*, std::remove_cvref_t<Components>*...>(
+        std::get<0>(data_) - amount, (std::get<std::remove_cvref_t<Components>*>(data_) - amount)...));
+    }
+
+    ///
     /// Returns reference to entity data.
     ///
     /// @return Reference to data.
     ///
-    constexpr const Data& operator*() const
+    constexpr const Data& operator*() const noexcept
     {
       return data_;
     }
@@ -478,7 +561,7 @@ public:
     ///
     /// @return Reference to data.
     ///
-    constexpr Data& operator*()
+    constexpr Data& operator*() noexcept
     {
       return data_;
     }
@@ -488,7 +571,7 @@ public:
     ///
     /// @return Pointer to data.
     ///
-    constexpr const Data* operator->() const
+    constexpr const Data* operator->() const noexcept
     {
       return *data_;
     }
@@ -498,7 +581,7 @@ public:
     ///
     /// @return Pointer to data.
     ///
-    constexpr Data* operator->()
+    constexpr Data* operator->() noexcept
     {
       return *data_;
     }
@@ -835,9 +918,31 @@ public:
   {
   public:
     ///
-    /// Increments iterator.
+    /// Add-assign operator.
     ///
-    /// return Reference to iterator.
+    /// @return Reference to iterator after add.
+    ///
+    constexpr Iterator& operator+=(size_t amount) noexcept
+    {
+      archetype_ += amount;
+      return *this;
+    }
+
+    ///
+    /// Subtract-assign operator.
+    ///
+    /// @return Reference to iterator after add.
+    ///
+    constexpr Iterator& operator-=(size_t amount) noexcept
+    {
+      archetype_ -= amount;
+      return *this;
+    }
+
+    ///
+    /// Pre-increment operator.
+    ///
+    /// @return Reference to iterator before increment.
     ///
     constexpr Iterator& operator++() noexcept
     {
@@ -845,13 +950,57 @@ public:
     }
 
     ///
-    /// Decrements iterator.
+    /// Pre-decrement operator.
     ///
-    /// return Reference to iterator.
+    /// @return Reference to iterator before decrement.
     ///
     constexpr Iterator& operator--() noexcept
     {
-      return ++archetype_, *this;
+      return --archetype_, *this;
+    }
+
+    ///
+    /// Post-increment operator.
+    ///
+    /// @return Copy of iterator before increment.
+    ///
+    constexpr const Iterator operator++(int) noexcept
+    {
+      Iterator copy(*this);
+      operator++();
+      return copy;
+    }
+
+    ///
+    /// Post-decrement operator.
+    ///
+    /// @return Copy of iterator before decrement.
+    ///
+    constexpr const Iterator operator--(int) noexcept
+    {
+      Iterator copy(*this);
+      operator--();
+      return copy;
+    }
+
+    ///
+    /// Add operator.
+    ///
+    /// @return Result.
+    ///
+    constexpr Iterator operator+(size_t amount) const noexcept
+    {
+      return Iterator(archetype_ + amount, registry_);
+    }
+
+    ///
+    /// Subtract operator.
+    ///
+    /// @return Result.
+    ///
+    constexpr Iterator operator-(size_t amount) const noexcept
+    {
+      return Iterator(archetype_ - amount, registry_);
     }
 
     ///
@@ -859,7 +1008,7 @@ public:
     ///
     /// @return Storage reference.
     ///
-    MonoView<Entity, Components...> operator*()
+    constexpr MonoView<Entity, Components...> operator*() const noexcept
     {
       return MonoView<Entity, Components...> { registry_.storages_[*archetype_] };
     }
@@ -871,7 +1020,7 @@ public:
     ///
     /// @return True if both iterators are equal, false otherwise.
     ///
-    constexpr bool operator==(const Iterator& other) noexcept
+    constexpr bool operator==(const Iterator& other) const noexcept
     {
       return archetype_ == other.archetype_;
     }
@@ -883,7 +1032,7 @@ public:
     ///
     /// @return True if both iterators are not equal, false otherwise.
     ///
-    constexpr bool operator!=(const Iterator& other) noexcept
+    constexpr bool operator!=(const Iterator& other) const noexcept
     {
       return archetype_ != other.archetype_;
     }
