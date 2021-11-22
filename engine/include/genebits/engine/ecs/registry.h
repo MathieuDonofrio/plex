@@ -587,35 +587,11 @@ public:
     }
 
     ///
-    /// Compares the iterator to and entity iterator.
+    /// Compares the iterator to another iterator.
     ///
     /// @param other Entity iterator.
     ///
-    /// @return True if iterator is equal to entity iterator, false otherwise.
-    ///
-    constexpr bool operator==(const Entity* other) const noexcept
-    {
-      return std::get<0>(data_) == other;
-    }
-
-    ///
-    /// Compares the iterator to and entity iterator.
-    ///
-    /// @param other Entity iterator.
-    ///
-    /// @return True if iterator is not equal to entity iterator, false otherwise..
-    ///
-    constexpr bool operator!=(const Entity* other) const noexcept
-    {
-      return !(*this == other);
-    }
-
-    ///
-    /// Compares the iterator to and entity iterator.
-    ///
-    /// @param other Entity iterator.
-    ///
-    /// @return True if iterator is equal to entity iterator, false otherwise.
+    /// @return True if iterator is equal to other iterator, false otherwise.
     ///
     constexpr bool operator==(const Iterator& other) const noexcept
     {
@@ -623,11 +599,11 @@ public:
     }
 
     ///
-    /// Compares the iterator to and entity iterator.
+    /// Compares the iterator to an entity iterator.
     ///
     /// @param other Entity iterator.
     ///
-    /// @return True if iterator is not equal to entity iterator, false otherwise..
+    /// @return True if iterator is not equal to other iterator, false otherwise..
     ///
     constexpr bool operator!=(const Iterator& other) const noexcept
     {
