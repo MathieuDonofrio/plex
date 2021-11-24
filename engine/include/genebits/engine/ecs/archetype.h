@@ -176,6 +176,24 @@ using ViewId = uint_fast32_t;
 using ArchetypeId = uint_fast32_t;
 
 ///
+/// Tag used for the unique id sequence of component types.
+///
+struct ComponentIdTag
+{};
+
+///
+/// Tag used for the unique id sequence of archetype types.
+///
+struct ArchetypeIdTag
+{};
+
+///
+/// Tag used for the unique id sequence of view types.
+///
+struct ViewIdTag
+{};
+
+///
 /// Returns the component id for the component type.
 ///
 /// Ids come from a packed sequence starting at 0.
@@ -187,7 +205,7 @@ using ArchetypeId = uint_fast32_t;
 template<typename Component>
 ComponentId GetComponentId()
 {
-  return static_cast<ComponentId>(Meta<Component>::template UniqueId<Meta<struct ComponentIdTag>::Hash()>());
+  return static_cast<ComponentId>(Meta<Component>::template UniqueId<ComponentIdTag>());
 }
 
 ///
@@ -204,8 +222,7 @@ ComponentId GetComponentId()
 template<typename... Components>
 ArchetypeId GetArchetypeId()
 {
-  return static_cast<ArchetypeId>(
-    Meta<ComponentList<Components...>>::template UniqueId<Meta<struct ArchetypeIdTag>::Hash()>());
+  return static_cast<ArchetypeId>(Meta<ComponentList<Components...>>::template UniqueId<ArchetypeIdTag>());
 }
 
 ///
@@ -222,7 +239,7 @@ ArchetypeId GetArchetypeId()
 template<typename... Components>
 ViewId GetViewId()
 {
-  return static_cast<ViewId>(Meta<ComponentList<Components...>>::template UniqueId<Meta<struct ViewIdTag>::Hash()>());
+  return static_cast<ViewId>(Meta<ComponentList<Components...>>::template UniqueId<ViewIdTag>());
 }
 
 namespace details

@@ -240,9 +240,9 @@ public:
   requires std::is_constructible_v<Type, Args...>
   void Resize(const size_t new_size, Args&&... args) noexcept
   {
-    if (static_cast<uint32_t>(new_size) > capacity_) { Grow(static_cast<uint32_t>(new_size)); }
+    if (static_cast<uint32_t>(new_size) > capacity_) Grow(static_cast<uint32_t>(new_size));
 
-    if (static_cast<uint32_t>(new_size) < size_) { std::destroy(array_ + new_size, array_ + size_); }
+    if (static_cast<uint32_t>(new_size) < size_) std::destroy(array_ + new_size, array_ + size_);
     else
     {
       for (size_t i = size_; i != new_size; i++)

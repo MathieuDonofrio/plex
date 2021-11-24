@@ -10,72 +10,107 @@
 namespace
 {
 ///
-/// Asserts the last glfw call.
+/// Error callback for GLFW.
 ///
-inline void AssertLastGlfwCall()
+/// Called each time a glfw error occurs.
+///
+/// @param[in] error_code
+/// @param[in] error_description
+///
+void GlfwErrorCallback(int error_code, const char* error_description)
 {
-  [[maybe_unused]] const char* error_description;
-  [[maybe_unused]] const int error_code = glfwGetError(&error_description);
-
-  if (error_description) LOG_ERROR("GLFW Error: Code={} Description={}", error_code, error_description);
-
-  ASSERT(error_code == GLFW_NO_ERROR, "GLFW error occurred");
+  LOG_ERROR("GLFW Error {}: {}", error_code, error_description);
 }
 
 ///
-/// Keeps a count of all references to GLFW.
+/// Manages safe GLFW initialization and termination.
 ///
-/// This is important to properly terminate GLFW when it is no longer required.
+/// There should only be one glfw instance.
 ///
-std::atomic_uint glfw_ref_count = 0;
-
-///
-/// Attempts to initialize GLFW and increase the reference count.
-///
-/// @return True if initialized is succesful, false otherwise
-///
-inline bool ReferenceGlfw()
+class GLFWInstance
 {
-  int glfw_init_result = glfwInit();
-
-  if (glfw_init_result == GLFW_TRUE) { glfw_ref_count.fetch_add(1, std::memory_order_relaxed); }
-
-  ASSERT(glfw_init_result == GLFW_TRUE, "GLFW initialization failed");
-
-  return glfw_init_result == GLFW_TRUE;
-}
-
-///
-/// Decreases the reference count to GLFW.
-///
-/// If there are no more references to GLFW, GLFW will be terminated.
-///
-/// Terminating GLFW is important because sometimes GLFW changes global system settings
-/// and these may not be restored without termination.
-///
-inline void UnreferenceGlfw()
-{
-  if (glfw_ref_count.load(std::memory_order_relaxed) <= 1) glfwTerminate();
-  else
+public:
+  ///
+  /// Attempts to initialize GLFW and increase the reference count.
+  ///
+  /// @return True if initialized is successful, false otherwise
+  ///
+  [[nodiscard]] bool Ref()
   {
-    glfw_ref_count.fetch_sub(1, std::memory_order_relaxed);
+    std::scoped_lock lock { glfw_mutex };
+
+    bool success = true;
+
+    if (glfw_ref_count.load(std::memory_order_relaxed) == 0)
+    {
+#ifndef NDEBUG
+      // Error callback can be set before initialization.
+      // This is useful because errors in initialization can also be caught.
+      glfwSetErrorCallback(GlfwErrorCallback);
+#endif
+
+      success = glfwInit() == GLFW_TRUE;
+
+      if (success) LOG_INFO("GLFW initialized");
+      else
+      {
+        LOG_ERROR("GLFW failed to be initialized");
+      }
+    }
+
+    glfw_ref_count.fetch_add(1, std::memory_order_relaxed);
+
+    return success;
   }
+
+  ///
+  /// Decreases the reference count to GLFW.
+  ///
+  /// If there are no more references to GLFW, GLFW will be terminated.
+  ///
+  /// Terminating GLFW is important because sometimes GLFW changes global system settings
+  /// and these may not be restored without termination.
+  ///
+  void Unref()
+  {
+    ASSERT(glfw_ref_count.load(std::memory_order_relaxed) > 0, "There are no references");
+
+    std::scoped_lock lock { glfw_mutex };
+
+    if (glfw_ref_count.load(std::memory_order_relaxed) == 1)
+    {
+      glfwTerminate();
+
+      glfwSetErrorCallback(nullptr);
+
+      glfw_ref_count.store(0, std::memory_order_relaxed);
+
+      LOG_INFO("GLFW terminated");
+    }
+    else
+    {
+      glfw_ref_count.fetch_sub(1, std::memory_order_relaxed);
+    }
+  }
+
+private:
+  std::mutex glfw_mutex;
+  std::atomic_uint glfw_ref_count = 0;
+};
+
+///
+/// Returns the glfw singleton instance.
+///
+/// @return GLFW instance.
+///
+GLFWInstance& GetGLFW()
+{
+  static GLFWInstance instance;
+
+  return instance;
 }
 
 } // namespace
-
-// GLFW assertion is useful for obtaining descriptive error handling. Obtaining the last error does incur some
-// overhead so two macros are provided:
-// - GLFW_ASSERT: For non-performance critical, handles errors even for release builds.
-// - GLFW_ASSERT_DEBUG_ONLY: For performance critical, handles errors only for debug builds.
-
-#define GLFW_ASSERT AssertLastGlfwCall()
-
-#ifdef NDEBUG
-#define GLFW_ASSERT_DEBUG_ONLY (void)(0)
-#else
-#define GLFW_ASSERT_DEBUG_ONLY GLFW_ASSERT
-#endif
 
 namespace genebits::engine
 {
@@ -83,77 +118,64 @@ GLFWWindow::GLFWWindow(
   const std::string& title, uint32_t width, uint32_t height, EventBus* bus, WindowCreationHints hints)
   : title_(title), bus_(bus)
 {
-  if (!ReferenceGlfw()) return;
+  // Make sure glfw is initialized
+
+  bool initialized = GetGLFW().Ref();
+  ASSERT(initialized, "GLFW failed to initialize");
+
+  if (!initialized) return; // Don't continue if glfw is not initialized for more readable errors.
+
+  // Create window handle
 
   ApplyWindowCreationHints(hints);
-  GLFW_ASSERT;
-
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  GLFW_ASSERT;
-
   handle_ = glfwCreateWindow(static_cast<int>(width), static_cast<int>(height), title.c_str(), nullptr, nullptr);
-  GLFW_ASSERT;
   ASSERT(handle_, "GLFW window creation failed");
 
-  glfwSetWindowSizeLimits(handle_, GLFW_DONT_CARE, GLFW_DONT_CARE, GLFW_DONT_CARE, GLFW_DONT_CARE);
-  GLFW_ASSERT;
+  // Setup window
 
   glfwSetWindowUserPointer(handle_, this);
-  GLFW_ASSERT;
 
-  glfwSetInputMode(
-    handle_, GLFW_LOCK_KEY_MODS, GLFW_TRUE); // Tell glfw that we want the state of "caps lock" and "num lock"
-  // when receiving keyboard events
-  GLFW_ASSERT;
+  glfwSetWindowSizeLimits(handle_, GLFW_DONT_CARE, GLFW_DONT_CARE, GLFW_DONT_CARE, GLFW_DONT_CARE);
+  glfwSetInputMode(handle_, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
 
   glfwSetWindowSizeCallback(handle_, GLFWResizeEventCallback);
-  GLFW_ASSERT;
   glfwSetWindowCloseCallback(handle_, GLFWCloseEventCallback);
-  GLFW_ASSERT;
   glfwSetWindowMaximizeCallback(handle_, GLFWMaximizeEventCallback);
-  GLFW_ASSERT;
   glfwSetWindowIconifyCallback(handle_, GLFWIconifyEventCallback);
-  GLFW_ASSERT;
   glfwSetWindowFocusCallback(handle_, GLFWFocusEventCallback);
-  GLFW_ASSERT;
   glfwSetKeyCallback(handle_, GLFWKeyCallback);
-  GLFW_ASSERT;
   glfwSetCursorPosCallback(handle_, GLFWCursorPosCallback);
-  GLFW_ASSERT;
   glfwSetCursorEnterCallback(handle_, GLFWCursorEnterCallback);
-  GLFW_ASSERT;
   glfwSetMouseButtonCallback(handle_, GLFWMouseButtonCallback);
-  GLFW_ASSERT;
   glfwSetScrollCallback(handle_, GLFWMouseScrollCallback);
-  GLFW_ASSERT;
   glfwSetFramebufferSizeCallback(handle_, GLFWFramebufferResizeCallback);
-  GLFW_ASSERT;
+
+  LOG_INFO("Window created: {}", title_);
 }
 
 GLFWWindow::~GLFWWindow()
 {
   glfwDestroyWindow(handle_);
-  GLFW_ASSERT;
 
-  UnreferenceGlfw();
+  LOG_INFO("Window destroyed: {}", title_);
+
+  GetGLFW().Unref();
 }
 
 void GLFWWindow::PollEvents()
 {
   glfwPollEvents();
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 void GLFWWindow::WaitEvents()
 {
   glfwWaitEvents();
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 void GLFWWindow::WaitEvents(double timeout)
 {
   glfwWaitEventsTimeout(timeout);
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 const std::string& GLFWWindow::GetTitle() const
@@ -166,7 +188,6 @@ void GLFWWindow::SetTitle(const std::string& title)
   title_ = title;
 
   glfwSetWindowTitle(handle_, title.c_str());
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 uint32_t GLFWWindow::GetWidth() const
@@ -174,7 +195,6 @@ uint32_t GLFWWindow::GetWidth() const
   int width;
 
   glfwGetWindowSize(handle_, &width, nullptr);
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return static_cast<uint32_t>(width);
 }
@@ -184,7 +204,6 @@ uint32_t GLFWWindow::GetHeight() const
   int height;
 
   glfwGetWindowSize(handle_, nullptr, &height);
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return static_cast<uint32_t>(height);
 }
@@ -192,43 +211,36 @@ uint32_t GLFWWindow::GetHeight() const
 void GLFWWindow::Resize(uint32_t width, uint32_t height)
 {
   glfwSetWindowSize(handle_, static_cast<int>(width), static_cast<int>(height));
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 void GLFWWindow::Focus()
 {
   glfwFocusWindow(handle_);
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 void GLFWWindow::Maximize()
 {
   glfwMaximizeWindow(handle_);
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 void GLFWWindow::Iconify()
 {
   glfwIconifyWindow(handle_);
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 void GLFWWindow::Restore()
 {
   glfwRestoreWindow(handle_);
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 void GLFWWindow::RequestAttention()
 {
   glfwRequestWindowAttention(handle_);
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 void GLFWWindow::Close()
 {
   glfwSetWindowShouldClose(handle_, 1);
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (bus_)
   {
@@ -243,7 +255,6 @@ void GLFWWindow::Close()
 bool GLFWWindow::IsClosing() const
 {
   bool closing = glfwWindowShouldClose(handle_);
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return closing;
 }
@@ -254,12 +265,10 @@ void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
   {
     GLFWimage icon { static_cast<int>(width), static_cast<int>(height), pixels };
     glfwSetWindowIcon(handle_, 1, &icon);
-    GLFW_ASSERT_DEBUG_ONLY;
   }
   else
   {
     glfwSetWindowIcon(handle_, 0, nullptr);
-    GLFW_ASSERT_DEBUG_ONLY;
   }
 }
 
@@ -273,69 +282,56 @@ void GLFWWindow::SetIcon(uint8_t* pixels, uint32_t width, uint32_t height)
 GLFWmonitor* GetWindowMonitor(GLFWwindow* handle)
 {
   int32_t monitor_count = 0;
-  GLFWmonitor** monitor_ptrs = nullptr;
-  monitor_ptrs = glfwGetMonitors(&monitor_count);
-  GLFW_ASSERT_DEBUG_ONLY;
+  GLFWmonitor** monitor_ptrs = glfwGetMonitors(&monitor_count);
 
-  std::vector<GLFWmonitor*> monitors { monitor_ptrs, monitor_ptrs + monitor_count };
-
-  struct Rectangle
+  struct MonitorInfo
   {
+    GLFWmonitor* ptr;
+
     int32_t x;
     int32_t y;
     int32_t width;
     int32_t height;
   };
 
-  struct MonitorRectangle : Rectangle
+  std::vector<MonitorInfo> monitors;
+  monitors.reserve(monitor_count);
+
+  for (auto it = monitor_ptrs; it != monitor_ptrs + monitor_count; it++)
   {
-    GLFWmonitor* monitor_ptr;
-  };
+    MonitorInfo monitor { *it };
 
-  std::vector<MonitorRectangle> monitor_rectangles;
-  monitor_rectangles.reserve(monitor_count);
+    glfwGetMonitorPos(monitor.ptr, &monitor.x, &monitor.y);
 
-  for (GLFWmonitor* monitor : monitors)
-  {
-    MonitorRectangle monitor_rectangle { .monitor_ptr = monitor };
+    const GLFWvidmode* video_mode = glfwGetVideoMode(monitor.ptr);
+    monitor.width = video_mode->width;
+    monitor.height = video_mode->height;
 
-    glfwGetMonitorPos(monitor, &monitor_rectangle.x, &monitor_rectangle.y);
-    GLFW_ASSERT_DEBUG_ONLY;
-    const GLFWvidmode* video_mode = glfwGetVideoMode(monitor);
-    GLFW_ASSERT_DEBUG_ONLY;
-
-    monitor_rectangle.width = video_mode->width;
-    monitor_rectangle.height = video_mode->height;
-
-    monitor_rectangles.emplace_back(monitor_rectangle);
+    monitors.push_back(monitor);
   }
 
-  Rectangle window_rectangle;
+  int32_t window_x, window_y, window_width, window_height;
 
-  glfwGetWindowPos(handle, &window_rectangle.x, &window_rectangle.y);
-  GLFW_ASSERT_DEBUG_ONLY;
-  glfwGetWindowSize(handle, &window_rectangle.width, &window_rectangle.height);
-  GLFW_ASSERT_DEBUG_ONLY;
+  glfwGetWindowPos(handle, &window_x, &window_y);
+  glfwGetWindowSize(handle, &window_width, &window_height);
 
-  for (const MonitorRectangle& monitor_rectangle : monitor_rectangles)
+  for (const MonitorInfo& monitor : monitors)
   {
     // Does not measure how much the window is overlapping the monitor but if the center of the window is
     // inside the monitor. This is much simpler and can be done because of the symmetric nature of the window.
     // In other words: If the center of the window is inside the monitor then that monitor is the one that contains the
     // most window area of all the monitors and can be deemed as the window's monitor
 
-    const int32_t window_center_pos_x = window_rectangle.x + window_rectangle.width / 2;
-    const int32_t window_center_pos_y = window_rectangle.y + window_rectangle.height / 2;
+    const int32_t window_center_pos_x = window_x + (window_width / 2);
+    const int32_t window_center_pos_y = window_y + (window_height / 2);
 
-    bool is_inside_x =
-      window_center_pos_x >= monitor_rectangle.x && window_center_pos_x < monitor_rectangle.x + monitor_rectangle.width;
-    bool is_inside_y = window_center_pos_y >= monitor_rectangle.y
-                       && window_center_pos_y < monitor_rectangle.y + monitor_rectangle.height;
+    bool inside_h = window_center_pos_x >= monitor.x && window_center_pos_x < monitor.x + monitor.width;
+    bool inside_v = window_center_pos_y >= monitor.y && window_center_pos_y < monitor.y + monitor.height;
 
-    if (is_inside_x && is_inside_y) return monitor_rectangle.monitor_ptr;
+    if (inside_h && inside_v) return monitor.ptr;
   }
 
-  ASSERT(false, "The window should be inside one of the monitor, but it is not");
+  LOG_ERROR("The window should be inside one of the monitor, but it is not");
 
   return nullptr;
 }
@@ -345,7 +341,6 @@ uint32_t GLFWWindow::GetMonitorWidth() const
   GLFWmonitor* monitor = GetWindowMonitor(handle_);
 
   const uint32_t width = glfwGetVideoMode(monitor)->width;
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return width;
 }
@@ -355,7 +350,6 @@ uint32_t GLFWWindow::GetMonitorHeight() const
   GLFWmonitor* monitor = GetWindowMonitor(handle_);
 
   const uint32_t height = glfwGetVideoMode(monitor)->height;
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return height;
 }
@@ -363,7 +357,6 @@ uint32_t GLFWWindow::GetMonitorHeight() const
 bool GLFWWindow::IsIconified() const
 {
   const bool iconified = glfwGetWindowAttrib(handle_, GLFW_ICONIFIED);
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return iconified;
 }
@@ -371,7 +364,6 @@ bool GLFWWindow::IsIconified() const
 bool GLFWWindow::IsMaximized() const
 {
   const bool maximized = glfwGetWindowAttrib(handle_, GLFW_MAXIMIZED);
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return maximized;
 }
@@ -379,7 +371,6 @@ bool GLFWWindow::IsMaximized() const
 bool GLFWWindow::IsFocused() const
 {
   const bool focused = glfwGetWindowAttrib(handle_, GLFW_FOCUSED);
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return focused;
 }
@@ -387,7 +378,6 @@ bool GLFWWindow::IsFocused() const
 bool GLFWWindow::IsVisible() const
 {
   const bool visible = glfwGetWindowAttrib(handle_, GLFW_VISIBLE);
-  GLFW_ASSERT_DEBUG_ONLY;
 
   return visible;
 }
@@ -395,15 +385,13 @@ bool GLFWWindow::IsVisible() const
 void GLFWWindow::SetFullScreenRefreshRate(uint32_t refresh_rate)
 {
   glfwWindowHint(GLFW_REFRESH_RATE, static_cast<int>(refresh_rate));
-  GLFW_ASSERT_DEBUG_ONLY;
 }
 
 VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
 {
   VkSurfaceKHR* surface = nullptr;
 
-  VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
-  GLFW_ASSERT;
+  [[maybe_unused]] VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
 
   ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
 
@@ -415,7 +403,6 @@ std::vector<const char*> GLFWWindow::GetRequiredInstanceExtensions()
   uint32_t glfw_extension_count = 0;
   const char** glfw_extension_string_ptrs;
   glfw_extension_string_ptrs = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
-  GLFW_ASSERT;
 
   return { glfw_extension_string_ptrs, glfw_extension_string_ptrs + glfw_extension_count };
 }
@@ -424,7 +411,6 @@ bool GLFWWindow::GetPhysicalDevicePresentationSupport(
   VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index)
 {
   bool supported = glfwGetPhysicalDevicePresentationSupport(instance, physical_device, queue_family_index);
-  GLFW_ASSERT;
 
   return supported;
 }
@@ -434,39 +420,26 @@ void GLFWWindow::ApplyWindowCreationHints(const WindowCreationHints& hints)
   if (hints == WindowCreationHints::Defaults)
   {
     glfwDefaultWindowHints();
-    GLFW_ASSERT;
 
     return;
   }
 
   glfwWindowHint(GLFW_RESIZABLE, (hints & WindowCreationHints::Resizable) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_VISIBLE, (hints & WindowCreationHints::Visible) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_DECORATED, (hints & WindowCreationHints::Decorated) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_FOCUSED, (hints & WindowCreationHints::Focused) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_AUTO_ICONIFY, (hints & WindowCreationHints::AutoIconified) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_FLOATING, (hints & WindowCreationHints::Floating) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_MAXIMIZED, (hints & WindowCreationHints::Maximised) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_CENTER_CURSOR, (hints & WindowCreationHints::CursorCentered) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, (hints & WindowCreationHints::TransparentFramebuffer) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_FOCUS_ON_SHOW, (hints & WindowCreationHints::FocusingOnShow) != 0);
-  GLFW_ASSERT;
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, (hints & WindowCreationHints::ScalingToMonitor) != 0);
-  GLFW_ASSERT;
 }
 
 void GLFWWindow::GLFWCloseEventCallback(GLFWWindowHandle handle)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -481,7 +454,6 @@ void GLFWWindow::GLFWCloseEventCallback(GLFWWindowHandle handle)
 void GLFWWindow::GLFWMaximizeEventCallback(GLFWWindowHandle handle, int32_t current_state)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -497,7 +469,6 @@ void GLFWWindow::GLFWMaximizeEventCallback(GLFWWindowHandle handle, int32_t curr
 void GLFWWindow::GLFWIconifyEventCallback(GLFWWindowHandle handle, int32_t current_state)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -513,7 +484,6 @@ void GLFWWindow::GLFWIconifyEventCallback(GLFWWindowHandle handle, int32_t curre
 void GLFWWindow::GLFWResizeEventCallback(GLFWWindowHandle handle, int32_t new_width, int32_t new_height)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -530,7 +500,6 @@ void GLFWWindow::GLFWResizeEventCallback(GLFWWindowHandle handle, int32_t new_wi
 void GLFWWindow::GLFWFocusEventCallback(GLFWWindowHandle handle, int32_t current_state)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -546,7 +515,6 @@ void GLFWWindow::GLFWFocusEventCallback(GLFWWindowHandle handle, int32_t current
 void GLFWWindow::GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t scancode, int32_t action, int32_t mods)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -565,7 +533,6 @@ void GLFWWindow::GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t s
 void GLFWWindow::GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, double y_pos)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -582,7 +549,6 @@ void GLFWWindow::GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, do
 void GLFWWindow::GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entered)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -598,7 +564,6 @@ void GLFWWindow::GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entere
 void GLFWWindow::GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button, int32_t action, int32_t mods)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
@@ -616,14 +581,13 @@ void GLFWWindow::GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button
 void GLFWWindow::GLFWMouseScrollCallback(GLFWWindow::GLFWWindowHandle handle, double, double y_offset)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {
     WindowMouseScrollEvent event;
 
     event.window = window;
-    event.vertical_offset = static_cast<uint32_t>(y_offset);
+    event.vertical_offset = static_cast<int32_t>(y_offset);
 
     window->bus_->Publish(event);
   }
@@ -632,7 +596,6 @@ void GLFWWindow::GLFWMouseScrollCallback(GLFWWindow::GLFWWindowHandle handle, do
 void GLFWWindow::GLFWFramebufferResizeCallback(GLFWWindowHandle handle, int32_t new_width, int32_t new_height)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
-  GLFW_ASSERT_DEBUG_ONLY;
 
   if (window && window->bus_)
   {

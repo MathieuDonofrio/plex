@@ -14,6 +14,13 @@ namespace
   template<size_t Tag = 0>
   struct TestKey
   {};
+
+  struct NonDefaultConstructible
+  {
+    NonDefaultConstructible(size_t value) : value_(value) {}
+
+    size_t value_;
+  };
 } // namespace
 
 TEST(TypeMap_Tests, Assure_FirstTime_DefaultState)
@@ -21,6 +28,13 @@ TEST(TypeMap_Tests, Assure_FirstTime_DefaultState)
   TypeMap<TestValue> map;
 
   EXPECT_EQ(map.Assure<TestKey<0>>().value, 0);
+}
+
+TEST(TypeMap_Tests, Assure_NonDefaultConstructibleFirstTime_DefaultState)
+{
+  TypeMap<NonDefaultConstructible> map;
+
+  EXPECT_EQ(map.Assure<TestKey<0>>(99).value_, 99);
 }
 
 TEST(TypeMap_Tests, Assure_AfterStore_StoredValue)

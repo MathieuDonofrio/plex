@@ -149,7 +149,6 @@ enum KeyCode : int32_t
 {
   switch (keycode)
   {
-  case -1: return "Unknown";
   case 32: return "Space";
   case 39: return "Apostrophe";
   case 44: return "Comma";

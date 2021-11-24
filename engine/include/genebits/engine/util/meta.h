@@ -45,11 +45,11 @@ namespace genebits::engine
 /// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
 ///
 /// @param[in] full_name The name of the type.
-/// @param[in] sequence_index An index used as an identifier to a sequence.
+/// @param[in] sequence_key Identifier to the index sequence.
 ///
 /// @return size_t The unique id for the type name and sequence.
 ///
-size_t UniqueId(std::string_view full_name, size_t sequence_index);
+size_t UniqueId(std::string_view full_name, std::string_view sequence_key);
 
 ///
 /// Templated structure that contains meta information about the templated type.
@@ -112,14 +112,16 @@ public:
   ///
   /// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
   ///
-  /// @param[in] sequence_index An index used as an identifier to a sequence.
+  /// @note Implies one branch of overhead that will correctly be branch predicted.
+  ///
+  /// @tparam Sequence Type to use name as identifier for the sequence to use.
   ///
   /// @return size_t The unique id for the type and sequence.
   ///
-  template<size_t SequenceIndex = 0>
+  template<typename Sequence = void>
   static size_t UniqueId()
   {
-    static const size_t value = engine::UniqueId(Name(), SequenceIndex);
+    static const size_t value = engine::UniqueId(Name(), Meta<Sequence>::Name());
 
     return value;
   }

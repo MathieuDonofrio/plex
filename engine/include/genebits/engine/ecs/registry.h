@@ -19,7 +19,7 @@ namespace genebits::engine
 using Entity = uint_fast32_t;
 
 template<std::unsigned_integral Entity, typename... Components>
-class BasicView;
+class PolyView;
 
 ///
 /// High level container for entities of different archetypes.
@@ -123,12 +123,12 @@ public:
   /// component data.
   ///
   /// @tparam Components Component types to unpack.
-  /// @tparam UnaryFunction Function to invoke.
+  /// @tparam Function Function to invoke.
   ///
   /// @param[in] function Function to invoke for every iteration.
   ///
-  template<typename... Components, typename UnaryFunction>
-  void ForEach(UnaryFunction function)
+  template<typename... Components, typename Function>
+  void ForEach(Function function)
   {
     return View<Components...>().ForEach(function);
   }
@@ -139,9 +139,7 @@ public:
   /// This operation is O(n) where n is the amount of archetypes with the component.
   ///
   /// @note
-  ///    This method is the slowest way to unpack and should not be used in performance critical paths.
-  ///    This method exists only for the sake of simplicity. Prefer unpacking during iteration or constructing
-  ///    a view and unpacking with reduced search space.
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
   /// @tparam Component The component to obtain reference of.
   ///
@@ -205,14 +203,14 @@ public:
   /// @return Basic view of the registry for the component types.
   ///
   template<typename... Components>
-  [[nodiscard]] BasicView<Entity, Components...> View()
+  [[nodiscard]] PolyView<Entity, Components...> View()
   {
-    return BasicView<Entity, Components...>(*this);
+    return PolyView<Entity, Components...>(*this);
   }
 
 private:
   template<std::unsigned_integral, typename...>
-  friend class BasicView;
+  friend class PolyView;
 
   ///
   /// Assures the storage for the archetype.
@@ -259,7 +257,7 @@ private:
 /// @tparam Components Component types of the view.
 ///
 template<typename Entity, typename Invocable, typename... Components>
-concept ViewExtendedIterationFunc = requires(Invocable invocable, Entity entity, Components... components)
+concept ExtendedUnpackFunction = requires(Invocable invocable, Entity entity, Components... components)
 {
   invocable(entity, components...);
 };
@@ -273,7 +271,7 @@ concept ViewExtendedIterationFunc = requires(Invocable invocable, Entity entity,
 /// @tparam Components Component types of the view.
 ///
 template<typename Invocable, typename... Components>
-concept ViewReducedIterationFunc = requires(Invocable invocable, Components... components)
+concept ReducedUnpackFunction = requires(Invocable invocable, Components... components)
 {
   invocable(components...);
 };
@@ -288,31 +286,381 @@ concept ViewReducedIterationFunc = requires(Invocable invocable, Components... c
 /// @tparam Components Component types of the view.
 ///
 template<typename Entity, typename Invocable, typename... Components>
-concept ViewIterationFunc =
-  ViewReducedIterationFunc<Invocable, Components...> || ViewExtendedIterationFunc<Entity, Invocable, Components...>;
+concept UnpackFunction =
+  ReducedUnpackFunction<Invocable, Components...> || ExtendedUnpackFunction<Entity, Invocable, Components...>;
 
 ///
-/// View of a registry.
+/// Unpacks the data from a tuple and invokes a function with it.
 ///
-/// Views are a reduced space of entities. They reduce the space by giving it component requirements. In other words,
-/// for an entity to be part of a view it must contain all the component types in the view.
+/// Entity data is usually obtained from view iteration.
 ///
-/// The registry operates on views to reduce the search space for many operations. Sometimes the registry does not
-/// construct the optimal views for the task, and most methods are oriented towards simplicity. It is recommended that
-/// you construct the view yourself in performance critical paths to make sure that you have reduced the search space as
-/// small as possible.
+/// @tparam Entity Entity type.
+/// @tparam Function Function type.
+/// @tparam Components Components to unpack.
 ///
-/// The biggest use case for views is for iteration over a set of components.
+/// @param[in] function Instance of function to invoke.
+/// @param[in] data Data to unpack.
 ///
-/// @warning
-///  This view caches the archetypes, this means that the view must be reconstructed when new archetypes are added.
-///  Be careful when reusing views for long periods of time. If your not sure about when to reconstruct the view,
-///  reconstruct it for every operation, the overhead is quite low.
+template<std::unsigned_integral Entity, typename Function, typename... Components>
+requires UnpackFunction<Entity, Function, Components...>
+constexpr void UnpackAndApply(
+  Function& function, [[maybe_unused]] std::tuple<Entity*, std::remove_cvref_t<Components>*...>& data)
+{
+  if constexpr (ExtendedUnpackFunction<Entity, Function, Components...>)
+  {
+    function(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+  }
+  else
+  {
+    function(*std::get<std::remove_cvref_t<Components>*>(data)...);
+  }
+}
+
 ///
-/// @tparam Components Component types in the view.
+/// View that contains entities of a single archetype that contains all the components in the view.
+///
+/// @tparam Components Component types of the view.
 ///
 template<std::unsigned_integral Entity, typename... Components>
-class BasicView
+class MonoView
+{
+public:
+  ///
+  /// Iterates all entities in the view, unpacks the component data efficiently and invokes the function.
+  ///
+  /// Iteration is very fast with near vector speeds.
+  ///
+  /// @tparam Function Function type to invoke for each entity.
+  ///
+  /// @param[in] function Function to invoke for each entity.
+  ///
+  template<typename Function>
+  requires UnpackFunction<Entity, Function, Components...>
+  void ForEach(Function function)
+  {
+    for (auto& data : *this)
+    {
+      UnpackAndApply<Entity, Function, Components...>(function, data);
+    }
+  }
+
+  ///
+  /// Checks if the entity is in the view.
+  ///
+  /// @param[in] entity Entity to find.
+  ///
+  /// @returns True if the entity exists in the view, false otherwise.
+  ///
+  bool Contains(const Entity entity) const noexcept
+  {
+    return storage_->Contains(entity);
+  }
+
+  ///
+  /// Returns the amount of entities in the view.
+  ///
+  /// @return Amount of entities in the view.
+  ///
+  [[nodiscard]] size_t Size() const noexcept
+  {
+    return storage_->Size();
+  }
+
+  ///
+  /// Returns a reference to the component data for the entity.
+  ///
+  /// This operation is O(n) where n is the amount of archetypes in the view.
+  ///
+  /// @note
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
+  ///
+  /// @tparam Component The component to obtain reference of.
+  ///
+  /// @param[in] entity Entity to unpack data for.
+  ///
+  /// @return The unpacked component data.
+  ///
+  template<typename Component>
+  [[nodiscard]] const Component& Unpack(const Entity entity) const noexcept
+  {
+    ASSERT(Contains(entity), "Entity does not exist in the view");
+
+    return storage_->template Unpack<Component>(entity);
+  }
+
+  ///
+  /// Returns a reference to the component data for the entity.
+  ///
+  /// This operation is O(n) where n is the amount of archetypes in the view.
+  ///
+  /// @note
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
+  ///
+  /// @tparam Component The component to obtain reference of.
+  ///
+  /// @param[in] entity Entity to unpack data for.
+  ///
+  /// @return The unpacked component data.
+  ///
+  template<typename Component>
+  [[nodiscard]] Component& Unpack(const Entity entity) noexcept
+  {
+    return const_cast<Component&>(static_cast<const MonoView*>(this)->Unpack<Component>(entity));
+  }
+
+public:
+  ///
+  /// Entity iterator. Iterates on a selection of entities and components from a single archetype
+  /// storage.
+  ///
+  class Iterator
+  {
+  public:
+    using Data = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
+
+    ///
+    /// Constructs an entity iterator using data.
+    ///
+    /// @param[in] data Data for iterator.
+    ///
+    constexpr Iterator(Data data) noexcept : data_(data) {}
+
+    ///
+    /// Copy constructor.
+    ///
+    /// @param[in] other Iterator to copy.
+    ///
+    constexpr Iterator(const Iterator& other) noexcept : data_(other.data_) {}
+
+    ///
+    /// Copy assignment operator.
+    ///
+    /// @param[in] other Iterator to assign.
+    ///
+    /// @return Reference to assigned iterator.
+    ///
+    constexpr Iterator& operator=(const Iterator& other) noexcept
+    {
+      data_ = other.data_;
+      return *this;
+    }
+
+    ///
+    /// Add-assign operator.
+    ///
+    /// @return Reference to iterator after add.
+    ///
+    constexpr Iterator& operator+=(size_t amount) noexcept
+    {
+      std::get<0>(data_) += amount;
+      ((std::get<std::remove_cvref_t<Components>*>(data_) += amount), ...);
+      return *this;
+    }
+
+    ///
+    /// Subtract-assign operator.
+    ///
+    /// @return Reference to iterator after add.
+    ///
+    constexpr Iterator& operator-=(size_t amount) noexcept
+    {
+      std::get<0>(data_) -= amount;
+      ((std::get<std::remove_cvref_t<Components>*>(data_) -= amount), ...);
+      return *this;
+    }
+
+    ///
+    /// Pre-increment operator.
+    ///
+    /// @return Reference to iterator after increment.
+    ///
+    constexpr Iterator& operator++() noexcept
+    {
+      ++std::get<0>(data_);
+      (++std::get<std::remove_cvref_t<Components>*>(data_), ...);
+      return *this;
+    }
+
+    ///
+    /// Pre-decrement operator.
+    ///
+    /// @return Reference to iterator before decrement.
+    ///
+    constexpr Iterator& operator--() noexcept
+    {
+      --std::get<0>(data_);
+      (--std::get<std::remove_cvref_t<Components>*>(data_), ...);
+      return *this;
+    }
+
+    ///
+    /// Post-increment operator.
+    ///
+    /// @return Copy of iterator before increment.
+    ///
+    constexpr const Iterator operator++(int) noexcept
+    {
+      Iterator copy(*this);
+      operator++();
+      return copy;
+    }
+
+    ///
+    /// Post-decrement operator.
+    ///
+    /// @return Copy of iterator before decrement.
+    ///
+    constexpr const Iterator operator--(int) noexcept
+    {
+      Iterator copy(*this);
+      operator--();
+      return copy;
+    }
+
+    ///
+    /// Add operator.
+    ///
+    /// @return Result.
+    ///
+    constexpr Iterator operator+(size_t amount) const noexcept
+    {
+      return Iterator(std::make_tuple<Entity*, std::remove_cvref_t<Components>*...>(
+        std::get<0>(data_) + amount, (std::get<std::remove_cvref_t<Components>*>(data_) + amount)...));
+    }
+
+    ///
+    /// Subtract operator.
+    ///
+    /// @return Result.
+    ///
+    constexpr Iterator operator-(size_t amount) const noexcept
+    {
+      return Iterator(std::make_tuple<Entity*, std::remove_cvref_t<Components>*...>(
+        std::get<0>(data_) - amount, (std::get<std::remove_cvref_t<Components>*>(data_) - amount)...));
+    }
+
+    ///
+    /// Returns reference to entity data.
+    ///
+    /// @return Reference to data.
+    ///
+    constexpr const Data& operator*() const noexcept
+    {
+      return data_;
+    }
+
+    ///
+    /// Returns reference to entity data.
+    ///
+    /// @return Reference to data.
+    ///
+    constexpr Data& operator*() noexcept
+    {
+      return data_;
+    }
+
+    ///
+    /// Returns pointer to entity data.
+    ///
+    /// @return Pointer to data.
+    ///
+    constexpr const Data* operator->() const noexcept
+    {
+      return *data_;
+    }
+
+    ///
+    /// Returns pointer to entity data.
+    ///
+    /// @return Pointer to data.
+    ///
+    constexpr Data* operator->() noexcept
+    {
+      return *data_;
+    }
+
+    ///
+    /// Compares the iterator to another iterator.
+    ///
+    /// @param other Entity iterator.
+    ///
+    /// @return True if iterator is equal to other iterator, false otherwise.
+    ///
+    constexpr bool operator==(const Iterator& other) const noexcept
+    {
+      return std::get<0>(data_) == std::get<0>(other.data_);
+    }
+
+    ///
+    /// Compares the iterator to an entity iterator.
+    ///
+    /// @param other Entity iterator.
+    ///
+    /// @return True if iterator is not equal to other iterator, false otherwise..
+    ///
+    constexpr bool operator!=(const Iterator& other) const noexcept
+    {
+      return !(*this == other);
+    }
+
+  private:
+    template<std::unsigned_integral, typename...>
+    friend class MonoView;
+
+    ///
+    /// Constructs an entity iterator using a storage and an offset.
+    ///
+    /// @param[in] storage Storage to iterate on.
+    /// @param[in] offset Offset of the iteration in the entity array of the storage.
+    ///
+    constexpr Iterator(Storage<Entity>* storage, size_t offset) noexcept
+      : data_(
+        storage->data() + offset, (storage->template Access<std::remove_cvref_t<Components>>().data() + offset)...)
+    {}
+
+  private:
+    Data data_;
+  };
+
+  // Style Exception: STL
+  // clang-format off
+
+  Iterator begin() noexcept { return Iterator(storage_, 0); }
+  Iterator end() noexcept { return Iterator(storage_, storage_->Size()); }
+
+  Entity* ebegin() noexcept { return storage_->begin(); }
+  Entity* eend() noexcept { return storage_->end(); }
+
+  // clang-format on
+
+private:
+  template<std::unsigned_integral, typename...>
+  friend class PolyView;
+
+  ///
+  /// Constructs a view from a storage.
+  ///
+  /// @param[in] storage Storage to construct view with.
+  ///
+  constexpr MonoView(Storage<Entity>* storage) : storage_(storage) {}
+
+private:
+  Storage<Entity>* storage_;
+};
+
+///
+/// View that contains entities of all archetypes that contain all the components in the view.
+///
+/// @warning
+///     This view only guarantees that it will contain the archetypes that meet its requirements
+///     at the time of creation. If a new archetype is created with all the required components after
+///     this view was created, it will not be in the view. For this reason, it is good practice to
+///     recreate views when needed.
+///
+/// @tparam Components Required component types for the view.
+///
+template<std::unsigned_integral Entity, typename... Components>
+class PolyView
 {
 public:
   static constexpr bool cNoComponents = sizeof...(Components) == 0;
@@ -322,7 +670,7 @@ public:
   ///
   /// @param[in] registry Registry to construct view for.
   ///
-  constexpr explicit BasicView(Registry<Entity>& registry)
+  constexpr explicit PolyView(Registry<Entity>& registry)
     : registry_(registry),
       archetypes_(registry.graph_.ViewArchetypes(registry.graph_.template AssureView<Components...>()))
   {}
@@ -335,62 +683,19 @@ public:
   /// There is some overhead due to having multiple storages to iterate on. This causes "gaps" between contiguous blocks
   /// of memory and may cause cache misses in views with a high archetype to entity ratio.
   ///
-  /// @tparam UnaryFunction Function type to invoke for each entity.
+  /// @tparam Function Function type to invoke for each entity.
   ///
   /// @param[in] function Function to invoke for each entity.
   ///
-  template<typename UnaryFunction>
-  requires ViewIterationFunc<Entity, UnaryFunction, Components...>
-  void ForEach(UnaryFunction function)
+  template<typename Function>
+  requires UnpackFunction<Entity, Function, Components...>
+  void ForEach(Function function)
   {
-    for (const auto archetype : archetypes_)
+    for (auto mono_view : *this)
     {
-      auto storage = registry_.storages_[archetype];
-
-      ASSERT(storage, "Storage not initialized");
-
-      if constexpr (ViewExtendedIterationFunc<Entity, UnaryFunction, Components...>)
+      for (auto& data : mono_view)
       {
-        // Extended iteration (With entity identifier)
-
-        auto data =
-          std::make_tuple(storage->begin(), storage->template Access<std::remove_cvref_t<Components>>().begin()...);
-
-        const auto end = storage->end();
-
-        while (std::get<0>(data) != end)
-        {
-          function(*std::get<0>(data), *std::get<Index<Components, Components...>::value + 1>(data)...);
-
-          ++std::get<0>(data);
-          ((++std::get<Index<Components, Components...>::value + 1>(data)), ...);
-        }
-      }
-      else if constexpr (!cNoComponents)
-      {
-        // Reduced iteration (Without entity identifier)
-
-        auto data = std::make_tuple(storage->template Access<std::remove_cvref_t<Components>>().begin()...);
-
-        const auto end = std::get<0>(data) + storage->Size();
-
-        while (std::get<0>(data) != end)
-        {
-          function(*std::get<Index<Components, Components...>::value>(data)...);
-
-          ((++std::get<Index<Components, Components...>::value>(data)), ...);
-        }
-      }
-      else
-      {
-        // Void iteration (No unpacking)
-
-        const auto end = storage->Size();
-
-        for (size_t i = 0; i != end; ++i)
-        {
-          function();
-        }
+        UnpackAndApply<Entity, Function, Components...>(function, data);
       }
     }
   }
@@ -514,8 +819,7 @@ public:
   /// This operation is O(n) where n is the amount of archetypes in the view.
   ///
   /// @note
-  ///    This method is much slower than the unpacking that takes place during iteration. However, this is faster than
-  ///    unpacking using the registry in most cases.
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
   /// @tparam Component The component to obtain reference of.
   ///
@@ -550,8 +854,7 @@ public:
   /// This operation is O(n) where n is the amount of archetypes in the view.
   ///
   /// @note
-  ///    This method is much slower than the unpacking that takes place during iteration. However, this is faster than
-  ///    unpacking using the registry in most cases.
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
   /// @tparam Component The component to obtain reference of.
   ///
@@ -562,26 +865,163 @@ public:
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity) noexcept
   {
-    return const_cast<Component&>(static_cast<const BasicView*>(this)->Unpack<Component>(entity));
+    return const_cast<Component&>(static_cast<const PolyView*>(this)->Unpack<Component>(entity));
   }
 
-private:
+public:
   ///
-  /// Utility used for obtaining the index of the type in a variadic template.
+  /// Poly view iterator. Iterates on single views in the view.
   ///
-  /// @tparam Type Type to obtain index for.
-  /// @tparam List List of types to search for index.
-  ///
-  template<typename Type, typename... List>
-  struct Index;
+  class Iterator
+  {
+  public:
+    ///
+    /// Add-assign operator.
+    ///
+    /// @return Reference to iterator after add.
+    ///
+    constexpr Iterator& operator+=(size_t amount) noexcept
+    {
+      archetype_ += amount;
+      return *this;
+    }
 
-  template<typename Type, typename... List>
-  struct Index<Type, Type, List...> : std::integral_constant<std::size_t, 0>
-  {};
+    ///
+    /// Subtract-assign operator.
+    ///
+    /// @return Reference to iterator after add.
+    ///
+    constexpr Iterator& operator-=(size_t amount) noexcept
+    {
+      archetype_ -= amount;
+      return *this;
+    }
 
-  template<typename Type1, typename Type2, typename... List>
-  struct Index<Type1, Type2, List...> : std::integral_constant<std::size_t, 1 + Index<Type1, List...>::value>
-  {};
+    ///
+    /// Pre-increment operator.
+    ///
+    /// @return Reference to iterator before increment.
+    ///
+    constexpr Iterator& operator++() noexcept
+    {
+      return ++archetype_, *this;
+    }
+
+    ///
+    /// Pre-decrement operator.
+    ///
+    /// @return Reference to iterator before decrement.
+    ///
+    constexpr Iterator& operator--() noexcept
+    {
+      return --archetype_, *this;
+    }
+
+    ///
+    /// Post-increment operator.
+    ///
+    /// @return Copy of iterator before increment.
+    ///
+    constexpr const Iterator operator++(int) noexcept
+    {
+      Iterator copy(*this);
+      operator++();
+      return copy;
+    }
+
+    ///
+    /// Post-decrement operator.
+    ///
+    /// @return Copy of iterator before decrement.
+    ///
+    constexpr const Iterator operator--(int) noexcept
+    {
+      Iterator copy(*this);
+      operator--();
+      return copy;
+    }
+
+    ///
+    /// Add operator.
+    ///
+    /// @return Result.
+    ///
+    constexpr Iterator operator+(size_t amount) const noexcept
+    {
+      return Iterator(archetype_ + amount, registry_);
+    }
+
+    ///
+    /// Subtract operator.
+    ///
+    /// @return Result.
+    ///
+    constexpr Iterator operator-(size_t amount) const noexcept
+    {
+      return Iterator(archetype_ - amount, registry_);
+    }
+
+    ///
+    /// Returns the reference to the storage.
+    ///
+    /// @return Storage reference.
+    ///
+    constexpr MonoView<Entity, Components...> operator*() const noexcept
+    {
+      return MonoView<Entity, Components...> { registry_.storages_[*archetype_] };
+    }
+
+    ///
+    /// Returns whether or not iterators are equal.
+    ///
+    /// @param[in] other Iterator to compare.
+    ///
+    /// @return True if both iterators are equal, false otherwise.
+    ///
+    constexpr bool operator==(const Iterator& other) const noexcept
+    {
+      return archetype_ == other.archetype_;
+    }
+
+    ///
+    /// Returns whether or not iterators are equal.
+    ///
+    /// @param[in] other Iterator to compare.
+    ///
+    /// @return True if both iterators are not equal, false otherwise.
+    ///
+    constexpr bool operator!=(const Iterator& other) const noexcept
+    {
+      return archetype_ != other.archetype_;
+    }
+
+  private:
+    template<std::unsigned_integral, typename...>
+    friend class PolyView;
+
+    ///
+    /// Constructs an iterator with the archetype array and a registry reference.
+    ///
+    /// @param[in] archetype Archetype
+    ///
+    /// @param[in] registry Registry to obtain storages from.
+    ///
+    constexpr Iterator(const ArchetypeId* archetype, Registry<Entity>& registry) noexcept
+      : archetype_(archetype), registry_(registry)
+    {}
+
+  private:
+    const ArchetypeId* archetype_;
+    Registry<Entity>& registry_;
+  };
+
+  // Style Exception: STL
+  // clang-format off
+
+  [[nodiscard]] Iterator begin() { return Iterator(archetypes_.begin(), registry_); }
+  [[nodiscard]] Iterator end() { return Iterator(archetypes_.end(), registry_); }
+
+  // clang-format on
 
 private:
   Registry<Entity>& registry_;
