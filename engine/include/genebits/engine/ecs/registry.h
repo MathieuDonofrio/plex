@@ -139,9 +139,7 @@ public:
   /// This operation is O(n) where n is the amount of archetypes with the component.
   ///
   /// @note
-  ///    This method is the slowest way to unpack and should not be used in performance critical paths.
-  ///    This method exists only for the sake of simplicity. Prefer unpacking during iteration or constructing
-  ///    a view and unpacking with reduced search space.
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
   /// @tparam Component The component to obtain reference of.
   ///
@@ -319,12 +317,9 @@ constexpr void UnpackAndApply(
 }
 
 ///
-/// View of selected components from a single archetype storage.
+/// View that contains entities of a single archetype that contains all the components in the view.
 ///
-/// @note For view across archetypes, see PolyView.
-///
-/// @tparam Entity Entity type.
-/// @tparam Components Components to unpack.
+/// @tparam Components Component types of the view.
 ///
 template<std::unsigned_integral Entity, typename... Components>
 class MonoView
@@ -377,8 +372,7 @@ public:
   /// This operation is O(n) where n is the amount of archetypes in the view.
   ///
   /// @note
-  ///    This method is much slower than the unpacking that takes place during iteration. However, this is faster than
-  ///    unpacking using the registry in most cases.
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
   /// @tparam Component The component to obtain reference of.
   ///
@@ -400,8 +394,7 @@ public:
   /// This operation is O(n) where n is the amount of archetypes in the view.
   ///
   /// @note
-  ///    This method is much slower than the unpacking that takes place during iteration. However, this is faster than
-  ///    unpacking using the registry in most cases.
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
   /// @tparam Component The component to obtain reference of.
   ///
@@ -656,24 +649,15 @@ private:
 };
 
 ///
-/// View of a registry.
-///
-/// Views are a reduced space of entities. They reduce the space by giving it component requirements. In other words,
-/// for an entity to be part of a view it must contain all the component types in the view.
-///
-/// The registry operates on views to reduce the search space for many operations. Sometimes the registry does not
-/// construct the optimal views for the task, and most methods are oriented towards simplicity. It is recommended that
-/// you construct the view yourself in performance critical paths to make sure that you have reduced the search space as
-/// small as possible.
-///
-/// The biggest use case for views is for iteration over a set of components.
+/// View that contains entities of all archetypes that contain all the components in the view.
 ///
 /// @warning
-///  This view caches the archetypes, this means that the view must be reconstructed when new archetypes are added.
-///  Be careful when reusing views for long periods of time. If your not sure about when to reconstruct the view,
-///  reconstruct it for every operation, the overhead is quite low.
+///     This view only guarantees that it will contain the archetypes that meet its requirements
+///     at the time of creation. If a new archetype is created with all the required components after
+///     this view was created, it will not be in the view. For this reason, it is good practice to
+///     recreate views when needed.
 ///
-/// @tparam Components Component types in the view.
+/// @tparam Components Required component types for the view.
 ///
 template<std::unsigned_integral Entity, typename... Components>
 class PolyView
@@ -835,8 +819,7 @@ public:
   /// This operation is O(n) where n is the amount of archetypes in the view.
   ///
   /// @note
-  ///    This method is much slower than the unpacking that takes place during iteration. However, this is faster than
-  ///    unpacking using the registry in most cases.
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
   /// @tparam Component The component to obtain reference of.
   ///
@@ -871,8 +854,7 @@ public:
   /// This operation is O(n) where n is the amount of archetypes in the view.
   ///
   /// @note
-  ///    This method is much slower than the unpacking that takes place during iteration. However, this is faster than
-  ///    unpacking using the registry in most cases.
+  ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
   /// @tparam Component The component to obtain reference of.
   ///

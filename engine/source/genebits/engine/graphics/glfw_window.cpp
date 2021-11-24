@@ -322,8 +322,8 @@ GLFWmonitor* GetWindowMonitor(GLFWwindow* handle)
     // In other words: If the center of the window is inside the monitor then that monitor is the one that contains the
     // most window area of all the monitors and can be deemed as the window's monitor
 
-    const int32_t window_center_pos_x = window_x + (window_width >> 1);
-    const int32_t window_center_pos_y = window_y + (window_height >> 1);
+    const int32_t window_center_pos_x = window_x + (window_width / 2);
+    const int32_t window_center_pos_y = window_y + (window_height / 2);
 
     bool inside_h = window_center_pos_x >= monitor.x && window_center_pos_x < monitor.x + monitor.width;
     bool inside_v = window_center_pos_y >= monitor.y && window_center_pos_y < monitor.y + monitor.height;
