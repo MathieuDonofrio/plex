@@ -231,17 +231,18 @@ consteval uint64_t CompileTimeSeed(const std::source_location location = std::so
 ///
 inline uint64_t Seed()
 {
-  // Initialized with time based seed
-  static std::atomic<uint64_t> state = static_cast<uint64_t>(std::time(nullptr)) ^ Random::cScramble;
+  // Initialized with time based seed.
+  static std::atomic<uint64_t> state = static_cast<uint64_t>(std::time(nullptr));
 
   while (true)
   {
-    uint64_t current = state;
+    uint64_t current = state.load(std::memory_order_relaxed);
 
-    // Runs an LCG iteration for randomness in the seed.
-    const uint64_t next = current * Random::cMultiplier + Random::cIncrement;
+    // L'Ecuyer, "Tables of Linear Congruential Generators of
+    // Different Sizes and Good Lattice Structure", 1999
+    const uint64_t next = current * 1181783497276652981L;
 
-    if (current == state.exchange(next, std::memory_order_relaxed)) return next;
+    if (state.compare_exchange_weak(current, next, std::memory_order_relaxed)) return next;
   }
 }
 
