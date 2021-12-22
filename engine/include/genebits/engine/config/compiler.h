@@ -52,14 +52,8 @@
 #error Non standard C++ not supported
 #endif
 
-#if defined(__AVX512F__)
-#define SIMD_WIDTH 16
-#elif defined(__AVX2__) || defined(__AVX__)
-#define SIMD_WIDTH 8
-#elif defined(__SSE4_2__)
-#define SIMD_WIDTH 4
-#else
-#define SIMD_WIDTH 1
+#ifndef __AVX2__
+#error AVX2 is required.
 #endif
 
 #endif

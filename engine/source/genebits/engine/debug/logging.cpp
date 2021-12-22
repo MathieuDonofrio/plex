@@ -1,6 +1,4 @@
-#include "genebits/engine/core/environment.h"
-
-#include "genebits/engine/debug/stacktrace.h"
+#include "genebits/engine/debug/logging.h"
 
 #ifndef NDEBUG
 
@@ -39,39 +37,25 @@ void CrashSignalHandler(int signal)
 
   exit(1);
 }
+
+TerminalLogger InitializeDebugTerminalLogging()
+{
+  signal(SIGSEGV, CrashSignalHandler); // On segmentation fault
+  signal(SIGABRT_COMPAT, CrashSignalHandler); // On abort (assert)
+
+  return TerminalLogger(GetLoggingEventBus());
+}
+
+[[maybe_unused]] auto terminal_logger = InitializeDebugTerminalLogging();
 } // namespace
 #endif
 
 namespace genebits::engine
 {
-struct Environment::Pimpl
+EventBus& GetLoggingEventBus()
 {
-#ifndef NDEBUG
-  TerminalLogger* terminal_logger;
-#endif
-};
+  static EventBus bus;
 
-Environment::Environment() : pimpl_(new Pimpl())
-{
-#ifndef NDEBUG
-  signal(SIGSEGV, CrashSignalHandler); // On segmentation fault
-  signal(SIGABRT_COMPAT, CrashSignalHandler); // On abort (assert)
-
-  pimpl_->terminal_logger = new TerminalLogger(this->GetEventBus());
-#endif
-}
-
-Environment::~Environment()
-{
-#ifndef NDEBUG
-  delete pimpl_->terminal_logger;
-#endif
-
-  delete pimpl_;
-}
-
-namespace details
-{
-  Environment environment {};
+  return bus;
 }
 } // namespace genebits::engine

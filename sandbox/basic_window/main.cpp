@@ -21,6 +21,8 @@ struct TestWindowListener : public Listener<TestWindowListener,
                               WindowMouseScrollEvent,
                               WindowFramebufferResizeEvent>
 {
+  TestWindowListener(EventBus& bus) : Listener(bus) {}
+
   void Listen(const WindowCloseEvent&)
   {
     std::cout << "window close event" << std::endl;
@@ -89,15 +91,19 @@ struct TestWindowListener : public Listener<TestWindowListener,
 
 int main(int, char**)
 {
+  // Setup event bus
+
+  EventBus bus;
+
   // Setup listener
 
-  TestWindowListener listener {};
+  TestWindowListener listener { bus };
 
   // Create Window
 
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
 
-  Window* window = CreateWindow("Hello world", 256, 256, hints);
+  Window* window = CreateWindow("Hello world", 256, 256, &bus, hints);
 
   // Window loop
   auto vulkan_dummy = new VulkanDummy(window, "Genebits", true, VulkanDummy::DebugMessageSeverityThreshold::Warn);

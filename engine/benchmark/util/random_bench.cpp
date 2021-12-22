@@ -4,7 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 static void Random_STD_Rand(benchmark::State& state)
 {
@@ -75,4 +75,4 @@ static void Random_Seed(benchmark::State& state)
 }
 
 BENCHMARK(Random_Seed);
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

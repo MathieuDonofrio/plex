@@ -62,27 +62,27 @@ public:
 
 TEST(Allocator_Tests, RoundToAlign_Aligned)
 {
-  ASSERT_EQ(RoundToAligned(0), 0u);
-  ASSERT_EQ(RoundToAligned(8), 8u);
+  EXPECT_EQ(RoundToAligned(0), 0u);
+  EXPECT_EQ(RoundToAligned(8), 8u);
 }
 
 TEST(Allocator_Tests, RoundToAlign_NotAligned)
 {
   for (size_t i = 1; i < 8; i++)
   {
-    ASSERT_EQ(RoundToAligned(i), 8u);
+    EXPECT_EQ(RoundToAligned(i), 8u);
   }
 
   for (size_t i = 9; i < 16; i++)
   {
-    ASSERT_EQ(RoundToAligned(i), 16u);
+    EXPECT_EQ(RoundToAligned(i), 16u);
   }
 }
 
 TEST(Allocator_Tests, RoundToAlign_VeryLargeNumberNotAligned)
 {
-  ASSERT_EQ(RoundToAligned(8001), 8008u);
-  ASSERT_EQ(RoundToAligned(1600009), 1600016u);
+  EXPECT_EQ(RoundToAligned(8001), 8008u);
+  EXPECT_EQ(RoundToAligned(1600009), 1600016u);
 }
 
 TEST(Allocator_Tests, Mallocator_Allocate_AlwaysValid)
@@ -91,13 +91,13 @@ TEST(Allocator_Tests, Mallocator_Allocate_AlwaysValid)
 
   Block block1 = allocator.Allocate(1000);
 
-  ASSERT_NE(block1.ptr, nullptr);
-  ASSERT_EQ(block1.size, 1000u);
+  EXPECT_NE(block1.ptr, nullptr);
+  EXPECT_EQ(block1.size, 1000u);
 
   Block block2 = allocator.Allocate(2000);
 
-  ASSERT_NE(block2.ptr, nullptr);
-  ASSERT_EQ(block2.size, 2000u);
+  EXPECT_NE(block2.ptr, nullptr);
+  EXPECT_EQ(block2.size, 2000u);
 
   allocator.Deallocate(block1);
   allocator.Deallocate(block2);
@@ -111,10 +111,10 @@ TEST(Allocator_Tests, Mallocator_Reallocate_Works)
 
   bool result = allocator.Reallocate(block, 2000);
 
-  ASSERT_TRUE(result);
+  EXPECT_TRUE(result);
 
-  ASSERT_NE(block.ptr, nullptr);
-  ASSERT_EQ(block.size, 2000u);
+  EXPECT_NE(block.ptr, nullptr);
+  EXPECT_EQ(block.size, 2000u);
 
   allocator.Deallocate(block);
 }
@@ -125,7 +125,7 @@ TEST(Allocator_Tests, Mallocator_Owns)
 
   Block block = allocator.Allocate(1000);
 
-  ASSERT_TRUE(allocator.Owns(block));
+  EXPECT_TRUE(allocator.Owns(block));
 
   allocator.Deallocate(block);
 }
@@ -136,13 +136,13 @@ TEST(Allocator_Tests, StackAllocate_Allocate_SufficientSpace)
 
   Block block1 = allocator.Allocate(400);
 
-  ASSERT_NE(block1.ptr, nullptr);
-  ASSERT_EQ(block1.size, 400u);
+  EXPECT_NE(block1.ptr, nullptr);
+  EXPECT_EQ(block1.size, 400u);
 
   Block block2 = allocator.Allocate(400);
 
-  ASSERT_NE(block2.ptr, nullptr);
-  ASSERT_EQ(block2.size, 400u);
+  EXPECT_NE(block2.ptr, nullptr);
+  EXPECT_EQ(block2.size, 400u);
 }
 
 TEST(Allocator_Tests, StackAllocate_Allocate_InsufficientSpace)
@@ -151,8 +151,8 @@ TEST(Allocator_Tests, StackAllocate_Allocate_InsufficientSpace)
 
   Block block1 = allocator.Allocate(801);
 
-  ASSERT_EQ(block1.ptr, nullptr);
-  ASSERT_EQ(block1.size, 0u);
+  EXPECT_EQ(block1.ptr, nullptr);
+  EXPECT_EQ(block1.size, 0u);
 }
 
 TEST(Allocator_Tests, StackAllocate_Deallocate_RegainSpace)
@@ -168,8 +168,8 @@ TEST(Allocator_Tests, StackAllocate_Deallocate_RegainSpace)
 
   block = allocator.Allocate(800);
 
-  ASSERT_NE(block.ptr, nullptr);
-  ASSERT_EQ(block.size, 800u);
+  EXPECT_NE(block.ptr, nullptr);
+  EXPECT_EQ(block.size, 800u);
 }
 
 TEST(Allocator_Tests, StackAllocate_Deallocate_NotLast)
@@ -185,8 +185,8 @@ TEST(Allocator_Tests, StackAllocate_Deallocate_NotLast)
 
   Block block3 = allocator.Allocate(400);
 
-  ASSERT_EQ(block3.ptr, nullptr);
-  ASSERT_EQ(block3.size, 0u);
+  EXPECT_EQ(block3.ptr, nullptr);
+  EXPECT_EQ(block3.size, 0u);
 }
 
 TEST(Allocator_Tests, StackAllocate_Reallocate_SufficientSpace)
@@ -199,9 +199,9 @@ TEST(Allocator_Tests, StackAllocate_Reallocate_SufficientSpace)
 
   bool result = allocator.Reallocate(block, 800);
 
-  ASSERT_TRUE(result);
-  ASSERT_EQ(block.ptr, old_ptr);
-  ASSERT_EQ(block.size, 800u);
+  EXPECT_TRUE(result);
+  EXPECT_EQ(block.ptr, old_ptr);
+  EXPECT_EQ(block.size, 800u);
 }
 
 TEST(Allocator_Tests, StackAllocate_Reallocate_InsufficientSpace)
@@ -214,9 +214,9 @@ TEST(Allocator_Tests, StackAllocate_Reallocate_InsufficientSpace)
 
   bool result = allocator.Reallocate(block, 801);
 
-  ASSERT_FALSE(result);
-  ASSERT_EQ(block.ptr, old_ptr);
-  ASSERT_EQ(block.size, 400u);
+  EXPECT_FALSE(result);
+  EXPECT_EQ(block.ptr, old_ptr);
+  EXPECT_EQ(block.size, 400u);
 }
 
 TEST(Allocator_Tests, StackAllocate_Reallocate_NotLast)
@@ -226,21 +226,21 @@ TEST(Allocator_Tests, StackAllocate_Reallocate_NotLast)
   Block block1 = allocator.Allocate(200);
   Block block2 = allocator.Allocate(400);
 
-  ASSERT_NE(block2.ptr, nullptr);
-  ASSERT_EQ(block2.size, 400u);
+  EXPECT_NE(block2.ptr, nullptr);
+  EXPECT_EQ(block2.size, 400u);
 
   char* old_ptr = block1.ptr;
 
   bool result = allocator.Reallocate(block1, 401u);
 
-  ASSERT_FALSE(result);
-  ASSERT_EQ(block1.ptr, old_ptr);
-  ASSERT_EQ(block1.size, 200u);
+  EXPECT_FALSE(result);
+  EXPECT_EQ(block1.ptr, old_ptr);
+  EXPECT_EQ(block1.size, 200u);
 
   Block block3 = allocator.Allocate(200);
 
-  ASSERT_NE(block3.ptr, nullptr);
-  ASSERT_EQ(block3.size, 200u);
+  EXPECT_NE(block3.ptr, nullptr);
+  EXPECT_EQ(block3.size, 200u);
 }
 
 TEST(Allocator_Tests, StackAllocate_Owns_Valid)
@@ -250,8 +250,8 @@ TEST(Allocator_Tests, StackAllocate_Owns_Valid)
   Block block1 = allocator.Allocate(400);
   Block block2 = allocator.Allocate(400);
 
-  ASSERT_TRUE(allocator.Owns(block1));
-  ASSERT_TRUE(allocator.Owns(block2));
+  EXPECT_TRUE(allocator.Owns(block1));
+  EXPECT_TRUE(allocator.Owns(block2));
 }
 
 TEST(Allocator_Tests, StackAllocate_Owns_NotValid)
@@ -262,7 +262,7 @@ TEST(Allocator_Tests, StackAllocate_Owns_NotValid)
 
   Block block { &c, 16 };
 
-  ASSERT_FALSE(allocator.Owns(block));
+  EXPECT_FALSE(allocator.Owns(block));
 }
 
 TEST(Allocator_Tests, FallbackAllocator_Allocate_Primary)
@@ -275,7 +275,7 @@ TEST(Allocator_Tests, FallbackAllocator_Allocate_Primary)
 
   (void)block; // Suppress warning
 
-  ASSERT_FALSE(allocate_call[1]);
+  EXPECT_FALSE(allocate_call[1]);
 
   allocator.Deallocate(block);
 }
@@ -290,7 +290,7 @@ TEST(Allocator_Tests, FallbackAllocator_Allocate_Fallback)
 
   (void)block; // Suppress warning
 
-  ASSERT_TRUE(allocate_call[1]);
+  EXPECT_TRUE(allocate_call[1]);
 
   allocator.Deallocate(block);
 }
@@ -305,7 +305,7 @@ TEST(Allocator_Tests, FallbackAllocator_Deallocate_Primary)
 
   allocator.Deallocate(block);
 
-  ASSERT_FALSE(deallocate_call[1]);
+  EXPECT_FALSE(deallocate_call[1]);
 }
 
 TEST(Allocator_Tests, FallbackAllocator_Deallocate_Fallback)
@@ -318,7 +318,7 @@ TEST(Allocator_Tests, FallbackAllocator_Deallocate_Fallback)
 
   allocator.Deallocate(block);
 
-  ASSERT_TRUE(deallocate_call[1]);
+  EXPECT_TRUE(deallocate_call[1]);
 }
 
 TEST(Allocator_Tests, FallbackAllocator_Reallocate_PrimaryOwns)
@@ -331,8 +331,8 @@ TEST(Allocator_Tests, FallbackAllocator_Reallocate_PrimaryOwns)
 
   bool result = allocator.Reallocate(block, 800);
 
-  ASSERT_TRUE(result);
-  ASSERT_FALSE(reallocate_call[1]);
+  EXPECT_TRUE(result);
+  EXPECT_FALSE(reallocate_call[1]);
 
   allocator.Deallocate(block);
 }
@@ -352,24 +352,24 @@ TEST(Allocator_Tests, FallbackAllocator_Reallocate_PrimaryOwnsButFails)
 
   bool result = allocator.Reallocate(block1, 801);
 
-  ASSERT_TRUE(result);
-  ASSERT_TRUE(allocate_call[1]);
-  ASSERT_FALSE(reallocate_call[1]);
-  ASSERT_NE(block1.ptr, nullptr);
-  ASSERT_EQ(block1.size, 801u);
+  EXPECT_TRUE(result);
+  EXPECT_TRUE(allocate_call[1]);
+  EXPECT_FALSE(reallocate_call[1]);
+  EXPECT_NE(block1.ptr, nullptr);
+  EXPECT_EQ(block1.size, 801u);
 
   for (auto i = 0; i < 400; i++)
   {
-    ASSERT_EQ(block1.ptr[i], old_memory[i]);
+    EXPECT_EQ(block1.ptr[i], old_memory[i]);
   }
 
   allocate_call[1] = false;
 
   Block block2 = allocator.Allocate(800);
 
-  ASSERT_NE(block2.ptr, nullptr);
-  ASSERT_EQ(block2.size, 800u);
-  ASSERT_FALSE(allocate_call[1]);
+  EXPECT_NE(block2.ptr, nullptr);
+  EXPECT_EQ(block2.size, 800u);
+  EXPECT_FALSE(allocate_call[1]);
 
   allocator.Deallocate(block1);
   allocator.Deallocate(block2);
@@ -383,9 +383,9 @@ TEST(Allocator_Tests, FallbackAllocator_Reallocate_BothFail)
 
   bool result = allocator.Reallocate(block, 801);
 
-  ASSERT_FALSE(result);
-  ASSERT_NE(block.ptr, nullptr);
-  ASSERT_EQ(block.size, 800u);
+  EXPECT_FALSE(result);
+  EXPECT_NE(block.ptr, nullptr);
+  EXPECT_EQ(block.size, 800u);
 }
 
 TEST(Allocator_Tests, FallbackAllocator_Reallocate_FallbackOwns)
@@ -398,8 +398,8 @@ TEST(Allocator_Tests, FallbackAllocator_Reallocate_FallbackOwns)
 
   bool result = allocator.Reallocate(block, 2000);
 
-  ASSERT_TRUE(result);
-  ASSERT_TRUE(reallocate_call[1]);
+  EXPECT_TRUE(result);
+  EXPECT_TRUE(reallocate_call[1]);
 
   allocator.Deallocate(block);
 }
@@ -412,7 +412,7 @@ TEST(Allocator_Tests, FallbackAllocator_Owns_None)
 
   bool result = allocator.Owns(block);
 
-  ASSERT_FALSE(result);
+  EXPECT_FALSE(result);
 }
 
 TEST(Allocator_Tests, FallbackAllocator_Owns_Primary)
@@ -423,7 +423,7 @@ TEST(Allocator_Tests, FallbackAllocator_Owns_Primary)
 
   bool result = allocator.Owns(block);
 
-  ASSERT_TRUE(result);
+  EXPECT_TRUE(result);
 }
 
 TEST(Allocator_Tests, FallbackAllocator_Owns_Fallback)
@@ -437,8 +437,8 @@ TEST(Allocator_Tests, FallbackAllocator_Owns_Fallback)
 
   bool result = allocator.Owns(block2);
 
-  ASSERT_TRUE(result);
-  ASSERT_TRUE(owns_call[1]);
+  EXPECT_TRUE(result);
+  EXPECT_TRUE(owns_call[1]);
 
   allocator.Deallocate(block1);
   allocator.Deallocate(block2);
@@ -453,20 +453,20 @@ TEST(Allocator_Tests, Segregator_Allocate_Small)
 
   Block block1 = allocator.Allocate(200);
 
-  ASSERT_NE(block1.ptr, nullptr);
-  ASSERT_EQ(block1.size, 200u);
-  ASSERT_TRUE(allocate_call[1]);
-  ASSERT_FALSE(allocate_call[2]);
+  EXPECT_NE(block1.ptr, nullptr);
+  EXPECT_EQ(block1.size, 200u);
+  EXPECT_TRUE(allocate_call[1]);
+  EXPECT_FALSE(allocate_call[2]);
 
   allocate_call[1] = false;
   allocate_call[2] = false;
 
   Block block2 = allocator.Allocate(400);
 
-  ASSERT_NE(block2.ptr, nullptr);
-  ASSERT_EQ(block2.size, 400u);
-  ASSERT_TRUE(allocate_call[1]);
-  ASSERT_FALSE(allocate_call[2]);
+  EXPECT_NE(block2.ptr, nullptr);
+  EXPECT_EQ(block2.size, 400u);
+  EXPECT_TRUE(allocate_call[1]);
+  EXPECT_FALSE(allocate_call[2]);
 
   allocator.Deallocate(block1);
   allocator.Deallocate(block2);
@@ -481,20 +481,20 @@ TEST(Allocator_Tests, Segregator_Allocate_Large)
 
   Block block1 = allocator.Allocate(401);
 
-  ASSERT_NE(block1.ptr, nullptr);
-  ASSERT_EQ(block1.size, 401u);
-  ASSERT_FALSE(allocate_call[1]);
-  ASSERT_TRUE(allocate_call[2]);
+  EXPECT_NE(block1.ptr, nullptr);
+  EXPECT_EQ(block1.size, 401u);
+  EXPECT_FALSE(allocate_call[1]);
+  EXPECT_TRUE(allocate_call[2]);
 
   allocate_call[1] = false;
   allocate_call[2] = false;
 
   Block block2 = allocator.Allocate(1000);
 
-  ASSERT_NE(block2.ptr, nullptr);
-  ASSERT_EQ(block2.size, 1000u);
-  ASSERT_FALSE(allocate_call[1]);
-  ASSERT_TRUE(allocate_call[2]);
+  EXPECT_NE(block2.ptr, nullptr);
+  EXPECT_EQ(block2.size, 1000u);
+  EXPECT_FALSE(allocate_call[1]);
+  EXPECT_TRUE(allocate_call[2]);
 
   allocator.Deallocate(block1);
   allocator.Deallocate(block2);
@@ -512,9 +512,9 @@ TEST(Allocator_Tests, Segregator_Deallocate_Small)
 
   Block block2 = allocator.Allocate(400);
 
-  ASSERT_NE(block2.ptr, nullptr);
-  ASSERT_EQ(block2.size, 400u);
-  ASSERT_FALSE(deallocate_call[1]);
+  EXPECT_NE(block2.ptr, nullptr);
+  EXPECT_EQ(block2.size, 400u);
+  EXPECT_FALSE(deallocate_call[1]);
 }
 
 TEST(Allocator_Tests, Segregator_Deallocate_Large)
@@ -527,9 +527,9 @@ TEST(Allocator_Tests, Segregator_Deallocate_Large)
 
   allocator.Deallocate(block);
 
-  ASSERT_NE(block.ptr, nullptr);
-  ASSERT_EQ(block.size, 401u);
-  ASSERT_TRUE(deallocate_call[1]);
+  EXPECT_NE(block.ptr, nullptr);
+  EXPECT_EQ(block.size, 401u);
+  EXPECT_TRUE(deallocate_call[1]);
 }
 
 TEST(Allocator_Tests, Segregator_Reallocate_Small)
@@ -542,10 +542,10 @@ TEST(Allocator_Tests, Segregator_Reallocate_Small)
 
   bool result = allocator.Reallocate(block, 400);
 
-  ASSERT_TRUE(result);
-  ASSERT_NE(block.ptr, nullptr);
-  ASSERT_EQ(block.size, 400u);
-  ASSERT_FALSE(reallocate_call[1]);
+  EXPECT_TRUE(result);
+  EXPECT_NE(block.ptr, nullptr);
+  EXPECT_EQ(block.size, 400u);
+  EXPECT_FALSE(reallocate_call[1]);
 }
 
 TEST(Allocator_Tests, Segregator_Reallocate_SmallButFails)
@@ -564,10 +564,10 @@ TEST(Allocator_Tests, Segregator_Reallocate_SmallButFails)
 
   bool result = allocator.Reallocate(block2, 400);
 
-  ASSERT_FALSE(result);
-  ASSERT_EQ(block2.ptr, old_ptr);
-  ASSERT_EQ(block2.size, 200u);
-  ASSERT_FALSE(reallocate_call[1]);
+  EXPECT_FALSE(result);
+  EXPECT_EQ(block2.ptr, old_ptr);
+  EXPECT_EQ(block2.size, 200u);
+  EXPECT_FALSE(reallocate_call[1]);
 }
 
 TEST(Allocator_Tests, Segregator_Reallocate_PreviouslySmallButNowLarge)
@@ -582,10 +582,10 @@ TEST(Allocator_Tests, Segregator_Reallocate_PreviouslySmallButNowLarge)
 
   bool result = allocator.Reallocate(block, 401);
 
-  ASSERT_TRUE(result);
-  ASSERT_NE(block.ptr, old_ptr);
-  ASSERT_EQ(block.size, 401u);
-  ASSERT_TRUE(allocate_call[1]);
+  EXPECT_TRUE(result);
+  EXPECT_NE(block.ptr, old_ptr);
+  EXPECT_EQ(block.size, 401u);
+  EXPECT_TRUE(allocate_call[1]);
 }
 
 TEST(Allocator_Tests, Segregator_Reallocate_PreviouslySmallButNowLargeButFails)
@@ -598,9 +598,9 @@ TEST(Allocator_Tests, Segregator_Reallocate_PreviouslySmallButNowLargeButFails)
 
   bool result = allocator.Reallocate(block, 401);
 
-  ASSERT_FALSE(result);
-  ASSERT_EQ(block.ptr, old_ptr);
-  ASSERT_EQ(block.size, 200u);
+  EXPECT_FALSE(result);
+  EXPECT_EQ(block.ptr, old_ptr);
+  EXPECT_EQ(block.size, 200u);
 }
 
 TEST(Allocator_Tests, Segregator_Reallocate_Large)
@@ -611,13 +611,13 @@ TEST(Allocator_Tests, Segregator_Reallocate_Large)
 
   Block block = allocator.Allocate(401);
 
-  ASSERT_EQ(block.size, 401u);
+  EXPECT_EQ(block.size, 401u);
 
   bool result = allocator.Reallocate(block, 800);
 
-  ASSERT_TRUE(result);
-  ASSERT_EQ(block.size, 800u);
-  ASSERT_TRUE(reallocate_call[1]);
+  EXPECT_TRUE(result);
+  EXPECT_EQ(block.size, 800u);
+  EXPECT_TRUE(reallocate_call[1]);
 }
 
 TEST(Allocator_Tests, Segregator_Owns_None)
@@ -628,7 +628,7 @@ TEST(Allocator_Tests, Segregator_Owns_None)
 
   bool result = allocator.Owns(block);
 
-  ASSERT_FALSE(result);
+  EXPECT_FALSE(result);
 }
 
 TEST(Allocator_Tests, Segregator_Owns_Small)
@@ -639,7 +639,7 @@ TEST(Allocator_Tests, Segregator_Owns_Small)
 
   bool result = allocator.Owns(block);
 
-  ASSERT_TRUE(result);
+  EXPECT_TRUE(result);
 }
 
 TEST(Allocator_Tests, Segregator_Owns_Large)
@@ -652,8 +652,8 @@ TEST(Allocator_Tests, Segregator_Owns_Large)
 
   bool result = allocator.Owns(block);
 
-  ASSERT_TRUE(result);
-  ASSERT_TRUE(owns_call[1]);
+  EXPECT_TRUE(result);
+  EXPECT_TRUE(owns_call[1]);
 
   allocator.Deallocate(block);
 }

@@ -1,10 +1,10 @@
-#include "genebits/engine/events/event_handler.h"
+#include "genebits/engine/util/delegate.h"
 
 #include <functional>
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 namespace
 {
@@ -26,7 +26,7 @@ namespace
   };
 } // namespace
 
-static void EventHandler_STD_FunctionBind_Construct(benchmark::State& state)
+static void Delegate_STD_FunctionBind_Construct(benchmark::State& state)
 {
   using namespace std::placeholders;
 
@@ -40,9 +40,9 @@ static void EventHandler_STD_FunctionBind_Construct(benchmark::State& state)
   }
 }
 
-BENCHMARK(EventHandler_STD_FunctionBind_Construct);
+BENCHMARK(Delegate_STD_FunctionBind_Construct);
 
-static void EventHandler_STD_FunctionBind_Invoke_Overhead(benchmark::State& state)
+static void Delegate_STD_FunctionBind_Invoke_Overhead(benchmark::State& state)
 {
   using namespace std::placeholders;
 
@@ -61,9 +61,9 @@ static void EventHandler_STD_FunctionBind_Invoke_Overhead(benchmark::State& stat
   benchmark::DoNotOptimize(listener);
 }
 
-BENCHMARK(EventHandler_STD_FunctionBind_Invoke_Overhead);
+BENCHMARK(Delegate_STD_FunctionBind_Invoke_Overhead);
 
-static void EventHandler_STD_FunctionBind_Invoke_ZeroOverhead(benchmark::State& state)
+static void Delegate_STD_FunctionBind_Invoke_ZeroOverhead(benchmark::State& state)
 {
   using namespace std::placeholders;
 
@@ -82,9 +82,9 @@ static void EventHandler_STD_FunctionBind_Invoke_ZeroOverhead(benchmark::State& 
   benchmark::DoNotOptimize(listener);
 }
 
-BENCHMARK(EventHandler_STD_FunctionBind_Invoke_ZeroOverhead);
+BENCHMARK(Delegate_STD_FunctionBind_Invoke_ZeroOverhead);
 
-static void EventHandler_Construct(benchmark::State& state)
+static void Delegate_Construct(benchmark::State& state)
 {
   using namespace std::placeholders;
 
@@ -92,7 +92,7 @@ static void EventHandler_Construct(benchmark::State& state)
 
   for (auto _ : state)
   {
-    EventHandler<TestEvent> handler;
+    Delegate<void(const TestEvent&)> handler;
     handler.Bind<TestListener, &TestListener::listenOverhead>(&listener);
 
     benchmark::DoNotOptimize(handler);
@@ -101,13 +101,13 @@ static void EventHandler_Construct(benchmark::State& state)
   benchmark::DoNotOptimize(listener);
 }
 
-BENCHMARK(EventHandler_Construct);
+BENCHMARK(Delegate_Construct);
 
-static void EventHandler_Invoke_Overhead(benchmark::State& state)
+static void Delegate_Invoke_Overhead(benchmark::State& state)
 {
   TestListener listener;
 
-  EventHandler<TestEvent> handler;
+  Delegate<void(const TestEvent&)> handler;
   handler.Bind<TestListener, &TestListener::listenOverhead>(&listener);
 
   TestEvent event { static_cast<size_t>(std::rand()) };
@@ -121,13 +121,13 @@ static void EventHandler_Invoke_Overhead(benchmark::State& state)
   benchmark::DoNotOptimize(listener);
 }
 
-BENCHMARK(EventHandler_Invoke_Overhead);
+BENCHMARK(Delegate_Invoke_Overhead);
 
-static void EventHandler_Invoke_ZeroOverhead(benchmark::State& state)
+static void Delegate_Invoke_ZeroOverhead(benchmark::State& state)
 {
   TestListener listener;
 
-  EventHandler<TestEvent> handler;
+  Delegate<void(const TestEvent&)> handler;
   handler.Bind<TestListener, &TestListener::listenZeroOverhead>(&listener);
 
   TestEvent event { static_cast<size_t>(std::rand()) };
@@ -141,6 +141,6 @@ static void EventHandler_Invoke_ZeroOverhead(benchmark::State& state)
   benchmark::DoNotOptimize(listener);
 }
 
-BENCHMARK(EventHandler_Invoke_ZeroOverhead);
+BENCHMARK(Delegate_Invoke_ZeroOverhead);
 
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

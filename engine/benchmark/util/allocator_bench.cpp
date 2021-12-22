@@ -4,60 +4,102 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
-static void Allocator_STD_Allocator_AllocateDeallocate(benchmark::State& state)
+static void Allocator_STD_Allocator_Allocate(benchmark::State& state)
 {
   std::allocator<char> allocator;
 
-  constexpr size_t size = 16000;
+  const size_t amount = state.range(0);
 
   for (auto _ : state)
   {
-    char* ptr = allocator.allocate(size);
+    char* ptr = allocator.allocate(amount);
+
+    state.PauseTiming();
+
+    allocator.deallocate(ptr, amount);
 
     benchmark::DoNotOptimize(ptr);
 
-    allocator.deallocate(ptr, size);
+    state.ResumeTiming();
   }
+
+  state.SetComplexityN(amount);
 }
 
-BENCHMARK(Allocator_STD_Allocator_AllocateDeallocate);
+BENCHMARK(Allocator_STD_Allocator_Allocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-static void Allocator_StackAllocator_AllocateDeallocate(benchmark::State& state)
+static void Allocator_STD_Allocator_Deallocate(benchmark::State& state)
 {
-  constexpr size_t size = 16000;
+  std::allocator<char> allocator;
 
-  AllocatorAdapter<char, StackAllocator<size>> allocator;
+  const size_t amount = state.range(0);
 
   for (auto _ : state)
   {
-    char* ptr = allocator.allocate(size);
+    state.PauseTiming();
+
+    char* ptr = allocator.allocate(amount);
 
     benchmark::DoNotOptimize(ptr);
 
-    allocator.deallocate(ptr, size);
+    state.ResumeTiming();
+
+    allocator.deallocate(ptr, amount);
   }
+
+  state.SetComplexityN(amount);
 }
 
-BENCHMARK(Allocator_StackAllocator_AllocateDeallocate);
+BENCHMARK(Allocator_STD_Allocator_Deallocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-static void Allocator_Mallocator_AllocateDeallocate(benchmark::State& state)
+static void Allocator_Mallocator_Allocate(benchmark::State& state)
 {
-  constexpr size_t size = 16000;
+  const size_t amount = state.range(0);
 
-  AllocatorAdapter<char, Mallocator> allocator;
+  Mallocator allocator;
 
   for (auto _ : state)
   {
-    char* ptr = allocator.allocate(size);
+    Block block = allocator.Allocate(amount);
 
-    benchmark::DoNotOptimize(ptr);
+    state.PauseTiming();
 
-    allocator.deallocate(ptr, size);
+    benchmark::DoNotOptimize(block);
+
+    allocator.Deallocate(block);
+
+    state.ResumeTiming();
   }
+
+  state.SetComplexityN(amount);
 }
 
-BENCHMARK(Allocator_Mallocator_AllocateDeallocate);
+BENCHMARK(Allocator_Mallocator_Allocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-} // namespace genebits::engine
+static void Allocator_Mallocator_Deallocate(benchmark::State& state)
+{
+  const size_t amount = state.range(0);
+
+  Mallocator allocator;
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    Block block = allocator.Allocate(amount);
+
+    benchmark::DoNotOptimize(block);
+
+    state.ResumeTiming();
+
+    allocator.Deallocate(block);
+  }
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(Allocator_Mallocator_Deallocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+
+} // namespace genebits::engine::bench

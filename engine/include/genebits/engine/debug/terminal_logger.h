@@ -21,6 +21,8 @@ public:
   ///
   /// Constructor.
   ///
+  /// @tparam HotEvent Hot event types for the event bus.
+  ///
   /// @param[in] bus Bus to subscribe logger to.
   ///
   explicit TerminalLogger(EventBus& bus) : Listener<TerminalLogger, LogEvent>(bus) {};

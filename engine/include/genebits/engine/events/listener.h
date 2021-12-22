@@ -3,7 +3,6 @@
 
 #include <type_traits>
 
-#include "genebits/engine/core/environment.h"
 #include "genebits/engine/events/event_bus.h"
 
 namespace genebits::engine
@@ -49,11 +48,6 @@ public:
   {
     (bus_->Subscribe(GetEventHandler<Events>()), ...);
   }
-
-  ///
-  /// Default constructor. Uses the environment event bus.
-  ///
-  Listener() noexcept : Listener(GetEnvironment().GetEventBus()) {}
 
   ///
   /// Destructor.

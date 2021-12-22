@@ -10,21 +10,21 @@ TEST(FastVector_Tests, Empty_Trivial_AfterDefaultConstruction_True)
 {
   FastVector<double> vector;
 
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, Size_Trivial_AfterDefaultConstruction_Zero)
 {
   FastVector<double> vector;
 
-  ASSERT_EQ(vector.Size(), 0);
+  EXPECT_EQ(vector.Size(), 0);
 }
 
 TEST(FastVector_Tests, Capacity_Trivial_AfterDefaultConstruction_Zero)
 {
   FastVector<double> vector;
 
-  ASSERT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(vector.Capacity(), 0);
 }
 
 TEST(FastVector_Tests, PushBack_Trivial_Single_SizeIncrease)
@@ -33,7 +33,7 @@ TEST(FastVector_Tests, PushBack_Trivial_Single_SizeIncrease)
 
   vector.PushBack(0);
 
-  ASSERT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector.Size(), 1);
 }
 
 TEST(FastVector_Tests, PushBack_NonTrivial_Single_SizeIncrease)
@@ -42,7 +42,7 @@ TEST(FastVector_Tests, PushBack_NonTrivial_Single_SizeIncrease)
 
   vector.PushBack("0");
 
-  ASSERT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector.Size(), 1);
 }
 
 TEST(FastVector_Tests, PushBack_Trivial_Double_SizeIncrease)
@@ -52,7 +52,7 @@ TEST(FastVector_Tests, PushBack_Trivial_Double_SizeIncrease)
   vector.PushBack(0);
   vector.PushBack(0);
 
-  ASSERT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.Size(), 2);
 }
 
 TEST(FastVector_Tests, PushBack_NonTrivial_Double_SizeIncrease)
@@ -62,7 +62,7 @@ TEST(FastVector_Tests, PushBack_NonTrivial_Double_SizeIncrease)
   vector.PushBack("0");
   vector.PushBack("0");
 
-  ASSERT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.Size(), 2);
 }
 
 TEST(FastVector_Tests, PushBack_Trivial_Many_SizeIncrease)
@@ -76,7 +76,7 @@ TEST(FastVector_Tests, PushBack_Trivial_Many_SizeIncrease)
     vector.PushBack(static_cast<double>(0));
   }
 
-  ASSERT_EQ(vector.Size(), cAmount);
+  EXPECT_EQ(vector.Size(), cAmount);
 }
 
 TEST(FastVector_Tests, PushBack_NonTrivial_Many_SizeIncrease)
@@ -90,7 +90,7 @@ TEST(FastVector_Tests, PushBack_NonTrivial_Many_SizeIncrease)
     vector.PushBack(std::to_string(i));
   }
 
-  ASSERT_EQ(vector.Size(), cAmount);
+  EXPECT_EQ(vector.Size(), cAmount);
 }
 
 TEST(FastVector_Tests, PushBack_Trivial_Single_CorrectValue)
@@ -101,7 +101,7 @@ TEST(FastVector_Tests, PushBack_Trivial_Single_CorrectValue)
 
   vector.PushBack(value);
 
-  ASSERT_EQ(vector[0], value);
+  EXPECT_EQ(vector[0], value);
 }
 
 TEST(FastVector_Tests, PushBack_NonTrivial_Single_CorrectValue)
@@ -112,7 +112,7 @@ TEST(FastVector_Tests, PushBack_NonTrivial_Single_CorrectValue)
 
   vector.PushBack(value);
 
-  ASSERT_EQ(vector[0], value);
+  EXPECT_EQ(vector[0], value);
 }
 
 TEST(FastVector_Tests, PushBack_Trivial_Double_CorrectValues)
@@ -122,8 +122,8 @@ TEST(FastVector_Tests, PushBack_Trivial_Double_CorrectValues)
   vector.PushBack(10);
   vector.PushBack(11);
 
-  ASSERT_EQ(vector[0], 10);
-  ASSERT_EQ(vector[1], 11);
+  EXPECT_EQ(vector[0], 10);
+  EXPECT_EQ(vector[1], 11);
 }
 
 TEST(FastVector_Tests, PushBack_NonTrivial_Double_CorrectValues)
@@ -133,8 +133,8 @@ TEST(FastVector_Tests, PushBack_NonTrivial_Double_CorrectValues)
   vector.PushBack("10");
   vector.PushBack("11");
 
-  ASSERT_EQ(vector[0], std::string { "10" });
-  ASSERT_EQ(vector[1], std::string { "11" });
+  EXPECT_EQ(vector[0], std::string { "10" });
+  EXPECT_EQ(vector[1], std::string { "11" });
 }
 
 TEST(FastVector_Tests, PushBack_Trivial_Many_CorrectValues)
@@ -150,7 +150,7 @@ TEST(FastVector_Tests, PushBack_Trivial_Many_CorrectValues)
 
   for (size_t i = 0; i < cAmount; i++)
   {
-    ASSERT_EQ(vector[i], static_cast<double>(i));
+    EXPECT_EQ(vector[i], static_cast<double>(i));
   }
 }
 
@@ -167,7 +167,7 @@ TEST(FastVector_Tests, PushBack_NonTrivial_Many_CorrectValues)
 
   for (size_t i = 0; i < cAmount; i++)
   {
-    ASSERT_EQ(vector[i], std::to_string(i));
+    EXPECT_EQ(vector[i], std::to_string(i));
   }
 }
 
@@ -178,8 +178,8 @@ TEST(FastVector_Tests, PopBack_Trivial_Single_SizeDecrease)
   vector.PushBack(0);
   vector.PopBack();
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, Clear_Trivial_Empty)
@@ -191,8 +191,8 @@ TEST(FastVector_Tests, Clear_Trivial_Empty)
 
   vector.Clear();
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, Clear_NonTrivial_Empty)
@@ -204,8 +204,8 @@ TEST(FastVector_Tests, Clear_NonTrivial_Empty)
 
   vector.Clear();
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, Reserve_Trivial_Empty_CorrectCapacity)
@@ -214,7 +214,7 @@ TEST(FastVector_Tests, Reserve_Trivial_Empty_CorrectCapacity)
 
   vector.Reserve(10);
 
-  ASSERT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.Capacity(), 10);
 }
 
 TEST(FastVector_Tests, Reserve_NonTrivial_Empty_CorrectCapacity)
@@ -223,7 +223,7 @@ TEST(FastVector_Tests, Reserve_NonTrivial_Empty_CorrectCapacity)
 
   vector.Reserve(10);
 
-  ASSERT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.Capacity(), 10);
 }
 
 TEST(FastVector_Tests, Reserve_Trivial_Increase_CorrectCapacity)
@@ -232,11 +232,11 @@ TEST(FastVector_Tests, Reserve_Trivial_Increase_CorrectCapacity)
 
   vector.Reserve(5);
 
-  ASSERT_EQ(vector.Capacity(), 5);
+  EXPECT_EQ(vector.Capacity(), 5);
 
   vector.Reserve(10);
 
-  ASSERT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.Capacity(), 10);
 }
 
 TEST(FastVector_Tests, Reserve_NonTrivial_Increase_CorrectCapacity)
@@ -245,11 +245,11 @@ TEST(FastVector_Tests, Reserve_NonTrivial_Increase_CorrectCapacity)
 
   vector.Reserve(5);
 
-  ASSERT_EQ(vector.Capacity(), 5);
+  EXPECT_EQ(vector.Capacity(), 5);
 
   vector.Reserve(10);
 
-  ASSERT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.Capacity(), 10);
 }
 
 TEST(FastVector_Tests, Reserve_Trivial_Decrease_DoNothing)
@@ -258,11 +258,11 @@ TEST(FastVector_Tests, Reserve_Trivial_Decrease_DoNothing)
 
   vector.Reserve(10);
 
-  ASSERT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.Capacity(), 10);
 
   vector.Reserve(5);
 
-  ASSERT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.Capacity(), 10);
 }
 
 TEST(FastVector_Tests, Reserve_NonTrivial_Decrease_DoNothing)
@@ -271,11 +271,11 @@ TEST(FastVector_Tests, Reserve_NonTrivial_Decrease_DoNothing)
 
   vector.Reserve(10);
 
-  ASSERT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.Capacity(), 10);
 
   vector.Reserve(5);
 
-  ASSERT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.Capacity(), 10);
 }
 
 TEST(FastVector_Tests, PopBack_NonTrivial_Single_SizeDecrease)
@@ -285,8 +285,8 @@ TEST(FastVector_Tests, PopBack_NonTrivial_Single_SizeDecrease)
   vector.PushBack("0");
   vector.PopBack();
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, PopBack_Trivial_Double_SizeDecrease)
@@ -298,8 +298,8 @@ TEST(FastVector_Tests, PopBack_Trivial_Double_SizeDecrease)
   vector.PopBack();
   vector.PopBack();
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, PopBack_NonTrivial_Double_SizeDecrease)
@@ -311,8 +311,8 @@ TEST(FastVector_Tests, PopBack_NonTrivial_Double_SizeDecrease)
   vector.PopBack();
   vector.PopBack();
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, PopBack_Trivial_DoublePushSinglePop_SizeDecrease)
@@ -323,8 +323,8 @@ TEST(FastVector_Tests, PopBack_Trivial_DoublePushSinglePop_SizeDecrease)
   vector.PushBack(0);
   vector.PopBack();
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_FALSE(vector.Empty());
 }
 
 TEST(FastVector_Tests, PopBack_NonTrivial_DoublePushSinglePop_SizeDecrease)
@@ -335,8 +335,8 @@ TEST(FastVector_Tests, PopBack_NonTrivial_DoublePushSinglePop_SizeDecrease)
   vector.PushBack("0");
   vector.PopBack();
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_FALSE(vector.Empty());
 }
 
 TEST(FastVector_Tests, PopBack_Trivial_DoublePushSinglePop_CorrectValue)
@@ -347,7 +347,7 @@ TEST(FastVector_Tests, PopBack_Trivial_DoublePushSinglePop_CorrectValue)
   vector.PushBack(2);
   vector.PopBack();
 
-  ASSERT_EQ(vector[0], 1);
+  EXPECT_EQ(vector[0], 1);
 }
 
 TEST(FastVector_Tests, PopBack_NonTrivial_DoublePushSinglePop_CorrectValue)
@@ -358,7 +358,7 @@ TEST(FastVector_Tests, PopBack_NonTrivial_DoublePushSinglePop_CorrectValue)
   vector.PushBack("2");
   vector.PopBack();
 
-  ASSERT_EQ(vector[0], std::string { "1" });
+  EXPECT_EQ(vector[0], std::string { "1" });
 }
 
 TEST(FastVector_Tests, PopBack_Trivial_PushPopPush_CorrectValues)
@@ -369,8 +369,8 @@ TEST(FastVector_Tests, PopBack_Trivial_PushPopPush_CorrectValues)
   vector.PopBack();
   vector.PushBack(2);
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_EQ(vector[0], 2);
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector[0], 2);
 }
 
 TEST(FastVector_Tests, PopBack_NonTrivial_PushPopPush_CorrectSize)
@@ -381,8 +381,8 @@ TEST(FastVector_Tests, PopBack_NonTrivial_PushPopPush_CorrectSize)
   vector.PopBack();
   vector.PushBack("2");
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_EQ(vector[0], std::string { "2" });
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector[0], std::string { "2" });
 }
 
 TEST(FastVector_Tests, PopBack_Trivial_PushPushPopPush_CorrectValues)
@@ -394,8 +394,8 @@ TEST(FastVector_Tests, PopBack_Trivial_PushPushPopPush_CorrectValues)
   vector.PopBack();
   vector.PushBack(3);
 
-  ASSERT_EQ(vector.Size(), 2);
-  ASSERT_EQ(vector[1], 3);
+  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector[1], 3);
 }
 
 TEST(FastVector_Tests, PopBack_NonTrivial_PushPushPopPush_CorrectValues)
@@ -407,8 +407,8 @@ TEST(FastVector_Tests, PopBack_NonTrivial_PushPushPopPush_CorrectValues)
   vector.PopBack();
   vector.PushBack("3");
 
-  ASSERT_EQ(vector.Size(), 2);
-  ASSERT_EQ(vector[1], std::string { "3" });
+  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector[1], std::string { "3" });
 }
 
 TEST(FastVector_Tests, EraseAt_Trivial_Single_CorrectValues)
@@ -418,8 +418,8 @@ TEST(FastVector_Tests, EraseAt_Trivial_Single_CorrectValues)
   vector.PushBack(1);
   vector.EraseAt(0);
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, EraseAt_NonTrivial_Single_CorrectValues)
@@ -429,8 +429,8 @@ TEST(FastVector_Tests, EraseAt_NonTrivial_Single_CorrectValues)
   vector.PushBack("1");
   vector.EraseAt(0);
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, EraseAt_Trivial_Double_CorrectValues)
@@ -441,14 +441,14 @@ TEST(FastVector_Tests, EraseAt_Trivial_Double_CorrectValues)
   vector.PushBack(2);
   vector.EraseAt(1);
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_FALSE(vector.Empty());
-  ASSERT_EQ(vector[0], 1);
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector[0], 1);
 
   vector.EraseAt(0);
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, EraseAt_NonTrivial_Double_CorrectValues)
@@ -459,14 +459,14 @@ TEST(FastVector_Tests, EraseAt_NonTrivial_Double_CorrectValues)
   vector.PushBack("2");
   vector.EraseAt(1);
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_FALSE(vector.Empty());
-  ASSERT_EQ(vector[0], "1");
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector[0], "1");
 
   vector.EraseAt(0);
 
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_TRUE(vector.Empty());
 }
 
 TEST(FastVector_Tests, EraseAt_Trivial_PushPushErase_CorrectValues)
@@ -477,9 +477,9 @@ TEST(FastVector_Tests, EraseAt_Trivial_PushPushErase_CorrectValues)
   vector.PushBack(2);
   vector.EraseAt(0);
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_FALSE(vector.Empty());
-  ASSERT_EQ(vector[0], 2);
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector[0], 2);
 }
 
 TEST(FastVector_Tests, EraseAt_NonTrivial_PushPushErase_CorrectValues)
@@ -490,9 +490,9 @@ TEST(FastVector_Tests, EraseAt_NonTrivial_PushPushErase_CorrectValues)
   vector.PushBack("2");
   vector.EraseAt(0);
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_FALSE(vector.Empty());
-  ASSERT_EQ(vector[0], "2");
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector[0], "2");
 }
 
 TEST(FastVector_Tests, Erase_Trivial_PushPushErase_CorrectValues)
@@ -504,9 +504,9 @@ TEST(FastVector_Tests, Erase_Trivial_PushPushErase_CorrectValues)
 
   vector.Erase(std::find(vector.begin(), vector.end(), 1));
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_FALSE(vector.Empty());
-  ASSERT_EQ(vector[0], 2);
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector[0], 2);
 }
 
 TEST(FastVector_Tests, Erase_NonTrivial_PushPushErase_CorrectValues)
@@ -518,9 +518,9 @@ TEST(FastVector_Tests, Erase_NonTrivial_PushPushErase_CorrectValues)
 
   vector.Erase(std::find(vector.begin(), vector.end(), std::string { "1" }));
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_FALSE(vector.Empty());
-  ASSERT_EQ(vector[0], std::string { "2" });
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector[0], std::string { "2" });
 }
 
 TEST(FastVector_Tests, Resize_Trivial_Empty_SizeIncrease)
@@ -531,8 +531,8 @@ TEST(FastVector_Tests, Resize_Trivial_Empty_SizeIncrease)
 
   vector.Resize(cAmount);
 
-  ASSERT_EQ(vector.Size(), cAmount);
-  ASSERT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.Size(), cAmount);
+  EXPECT_FALSE(vector.Empty());
 }
 
 TEST(FastVector_Tests, Resize_NonTrivial_Empty_SizeIncrease)
@@ -543,8 +543,8 @@ TEST(FastVector_Tests, Resize_NonTrivial_Empty_SizeIncrease)
 
   vector.Resize(cAmount);
 
-  ASSERT_EQ(vector.Size(), cAmount);
-  ASSERT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.Size(), cAmount);
+  EXPECT_FALSE(vector.Empty());
 }
 
 TEST(FastVector_Tests, Resize_Trivial_Empty_DefaultValues)
@@ -557,7 +557,7 @@ TEST(FastVector_Tests, Resize_Trivial_Empty_DefaultValues)
 
   for (size_t i = 0; i < cAmount; i++)
   {
-    ASSERT_EQ(vector[i], double {});
+    EXPECT_EQ(vector[i], double {});
   }
 }
 
@@ -571,7 +571,7 @@ TEST(FastVector_Tests, Resize_NonTrivial_Empty_DefaultValues)
 
   for (size_t i = 0; i < cAmount; i++)
   {
-    ASSERT_EQ(vector[i], std::string {});
+    EXPECT_EQ(vector[i], std::string {});
   }
 }
 
@@ -586,14 +586,14 @@ TEST(FastVector_Tests, Resize_Trivial_Increase_CorrectValues)
 
   vector.Resize(cAmount);
 
-  ASSERT_EQ(vector.Size(), cAmount);
+  EXPECT_EQ(vector.Size(), cAmount);
 
-  ASSERT_EQ(vector[0], 1);
-  ASSERT_EQ(vector[1], 2);
+  EXPECT_EQ(vector[0], 1);
+  EXPECT_EQ(vector[1], 2);
 
   for (size_t i = 2; i < cAmount; i++)
   {
-    ASSERT_EQ(vector[i], double {});
+    EXPECT_EQ(vector[i], double {});
   }
 }
 
@@ -608,14 +608,14 @@ TEST(FastVector_Tests, Resize_NonTrivial_Increase_CorrectValues)
 
   vector.Resize(cAmount);
 
-  ASSERT_EQ(vector.Size(), cAmount);
+  EXPECT_EQ(vector.Size(), cAmount);
 
-  ASSERT_EQ(vector[0], std::string { "1" });
-  ASSERT_EQ(vector[1], std::string { "2" });
+  EXPECT_EQ(vector[0], std::string { "1" });
+  EXPECT_EQ(vector[1], std::string { "2" });
 
   for (size_t i = 2; i < cAmount; i++)
   {
-    ASSERT_EQ(vector[i], std::string {});
+    EXPECT_EQ(vector[i], std::string {});
   }
 }
 
@@ -629,15 +629,15 @@ TEST(FastVector_Tests, Resize_Trivial_Decrease_CorrectValues)
 
   vector.Resize(2);
 
-  ASSERT_EQ(vector.Size(), 2);
-  ASSERT_EQ(vector[0], 1);
-  ASSERT_EQ(vector[1], 2);
+  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector[0], 1);
+  EXPECT_EQ(vector[1], 2);
 
   vector.PushBack(4);
   vector.Resize(1);
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_EQ(vector[0], 1);
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector[0], 1);
 }
 
 TEST(FastVector_Tests, Resize_NonTrivial_Decrease_CorrectValues)
@@ -650,15 +650,15 @@ TEST(FastVector_Tests, Resize_NonTrivial_Decrease_CorrectValues)
 
   vector.Resize(2);
 
-  ASSERT_EQ(vector.Size(), 2);
-  ASSERT_EQ(vector[0], std::string { "1" });
-  ASSERT_EQ(vector[1], std::string { "2" });
+  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector[0], std::string { "1" });
+  EXPECT_EQ(vector[1], std::string { "2" });
 
   vector.PushBack("4");
   vector.Resize(1);
 
-  ASSERT_EQ(vector.Size(), 1);
-  ASSERT_EQ(vector[0], std::string { "1" });
+  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector[0], std::string { "1" });
 }
 
 TEST(FastVector_Tests, BuiltInForEach_Trivial_IterateMany_CorrectValues)
@@ -676,7 +676,7 @@ TEST(FastVector_Tests, BuiltInForEach_Trivial_IterateMany_CorrectValues)
 
   for (auto value : vector)
   {
-    ASSERT_EQ(vector[counter], value);
+    EXPECT_EQ(vector[counter], value);
 
     counter++;
   }
@@ -697,7 +697,7 @@ TEST(FastVector_Tests, BuiltInForEach_NonTrivial_IterateMany_CorrectValues)
 
   for (auto value : vector)
   {
-    ASSERT_EQ(vector[counter], value);
+    EXPECT_EQ(vector[counter], value);
 
     counter++;
   }
@@ -718,7 +718,7 @@ TEST(FastVector_Tests, Begin_Trivial_IterateMany_CorrectValues)
 
   for (auto it = vector.begin(); it != vector.end(); it++)
   {
-    ASSERT_EQ(vector[counter], *it);
+    EXPECT_EQ(vector[counter], *it);
 
     counter++;
   }
@@ -739,7 +739,7 @@ TEST(FastVector_Tests, CBegin_Trivial_IterateMany_CorrectValues)
 
   for (auto it = vector.cbegin(); it != vector.cend(); it++)
   {
-    ASSERT_EQ(vector[counter], *it);
+    EXPECT_EQ(vector[counter], *it);
 
     counter++;
   }
@@ -760,7 +760,7 @@ TEST(FastVector_Tests, RBegin_Trivial_IterateMany_CorrectValues)
 
   for (auto it = vector.rbegin(); it != vector.rend(); it++)
   {
-    ASSERT_EQ(vector[cAmount - counter - 1], *it);
+    EXPECT_EQ(vector[cAmount - counter - 1], *it);
 
     counter++;
   }
@@ -777,7 +777,7 @@ TEST(FastVector_Tests, Front_Trivial_CorrectValue)
     vector.PushBack(static_cast<double>(i));
   }
 
-  ASSERT_EQ(vector.front(), 0);
+  EXPECT_EQ(vector.front(), 0);
 }
 
 TEST(FastVector_Tests, Back_Trivial_CorrectValue)
@@ -791,7 +791,7 @@ TEST(FastVector_Tests, Back_Trivial_CorrectValue)
     vector.PushBack(static_cast<double>(i));
   }
 
-  ASSERT_EQ(vector.back(), cAmount - 1);
+  EXPECT_EQ(vector.back(), cAmount - 1);
 }
 
 TEST(FastVector_Tests, MoveConstructor_Trivial_CorrectValues)
@@ -803,12 +803,12 @@ TEST(FastVector_Tests, MoveConstructor_Trivial_CorrectValues)
 
   FastVector<double> copy { std::move(vector) };
 
-  ASSERT_EQ(copy.Size(), 2);
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(copy.Size(), 2);
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_EQ(vector.Capacity(), 0);
 
-  ASSERT_EQ(copy[0], 1);
-  ASSERT_EQ(copy[1], 2);
+  EXPECT_EQ(copy[0], 1);
+  EXPECT_EQ(copy[1], 2);
 }
 
 TEST(FastVector_Tests, MoveConstructor_NonTrivial_CorrectValues)
@@ -820,12 +820,12 @@ TEST(FastVector_Tests, MoveConstructor_NonTrivial_CorrectValues)
 
   FastVector<std::string> copy { std::move(vector) };
 
-  ASSERT_EQ(copy.Size(), 2);
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(copy.Size(), 2);
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_EQ(vector.Capacity(), 0);
 
-  ASSERT_EQ(copy[0], std::string { "1" });
-  ASSERT_EQ(copy[1], std::string { "2" });
+  EXPECT_EQ(copy[0], std::string { "1" });
+  EXPECT_EQ(copy[1], std::string { "2" });
 }
 
 TEST(FastVector_Tests, MoveAssignment_Trivial_CorrectValues)
@@ -837,12 +837,12 @@ TEST(FastVector_Tests, MoveAssignment_Trivial_CorrectValues)
 
   FastVector<double> moved = std::move(vector);
 
-  ASSERT_EQ(moved.Size(), 2);
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(moved.Size(), 2);
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_EQ(vector.Capacity(), 0);
 
-  ASSERT_EQ(moved[0], 1);
-  ASSERT_EQ(moved[1], 2);
+  EXPECT_EQ(moved[0], 1);
+  EXPECT_EQ(moved[1], 2);
 }
 
 TEST(FastVector_Tests, MoveAssignment_NonTrivial_CorrectValues)
@@ -854,12 +854,26 @@ TEST(FastVector_Tests, MoveAssignment_NonTrivial_CorrectValues)
 
   FastVector<std::string> moved = std::move(vector);
 
-  ASSERT_EQ(moved.Size(), 2);
-  ASSERT_EQ(vector.Size(), 0);
-  ASSERT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(moved.Size(), 2);
+  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_EQ(vector.Capacity(), 0);
 
-  ASSERT_EQ(moved[0], std::string { "1" });
-  ASSERT_EQ(moved[1], std::string { "2" });
+  EXPECT_EQ(moved[0], std::string { "1" });
+  EXPECT_EQ(moved[1], std::string { "2" });
+}
+
+TEST(FastVector_Tests, MoveAssignment_SelfMove_DoNothing)
+{
+  FastVector<int> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  vector = std::move(vector);
+
+  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector[0], 1);
+  EXPECT_EQ(vector[1], 2);
 }
 
 TEST(FastVector_Tests, CopyConstructor_Trivial_CorrectValues)
@@ -871,14 +885,14 @@ TEST(FastVector_Tests, CopyConstructor_Trivial_CorrectValues)
 
   FastVector<double> copy { vector };
 
-  ASSERT_EQ(copy.Size(), 2);
-  ASSERT_EQ(copy.Capacity(), 2);
-  ASSERT_EQ(vector.Size(), 2);
+  EXPECT_EQ(copy.Size(), 2);
+  EXPECT_EQ(copy.Capacity(), 2);
+  EXPECT_EQ(vector.Size(), 2);
 
-  ASSERT_EQ(vector[0], 1);
-  ASSERT_EQ(vector[1], 2);
-  ASSERT_EQ(copy[0], 1);
-  ASSERT_EQ(copy[1], 2);
+  EXPECT_EQ(vector[0], 1);
+  EXPECT_EQ(vector[1], 2);
+  EXPECT_EQ(copy[0], 1);
+  EXPECT_EQ(copy[1], 2);
 }
 
 TEST(FastVector_Tests, CopyConstructor_NonTrivial_CorrectValues)
@@ -890,14 +904,14 @@ TEST(FastVector_Tests, CopyConstructor_NonTrivial_CorrectValues)
 
   FastVector<std::string> copy { vector };
 
-  ASSERT_EQ(copy.Size(), 2);
-  ASSERT_EQ(copy.Capacity(), 2);
-  ASSERT_EQ(vector.Size(), 2);
+  EXPECT_EQ(copy.Size(), 2);
+  EXPECT_EQ(copy.Capacity(), 2);
+  EXPECT_EQ(vector.Size(), 2);
 
-  ASSERT_EQ(vector[0], std::string { "1" });
-  ASSERT_EQ(vector[1], std::string { "2" });
-  ASSERT_EQ(copy[0], std::string { "1" });
-  ASSERT_EQ(copy[1], std::string { "2" });
+  EXPECT_EQ(vector[0], std::string { "1" });
+  EXPECT_EQ(vector[1], std::string { "2" });
+  EXPECT_EQ(copy[0], std::string { "1" });
+  EXPECT_EQ(copy[1], std::string { "2" });
 }
 
 TEST(FastVector_Tests, CopyAssignment_Trivial_CorrectValues)
@@ -909,14 +923,14 @@ TEST(FastVector_Tests, CopyAssignment_Trivial_CorrectValues)
 
   FastVector<double> copy = vector;
 
-  ASSERT_EQ(copy.Size(), 2);
-  ASSERT_EQ(copy.Capacity(), 2);
-  ASSERT_EQ(vector.Size(), 2);
+  EXPECT_EQ(copy.Size(), 2);
+  EXPECT_EQ(copy.Capacity(), 2);
+  EXPECT_EQ(vector.Size(), 2);
 
-  ASSERT_EQ(vector[0], 1);
-  ASSERT_EQ(vector[1], 2);
-  ASSERT_EQ(copy[0], 1);
-  ASSERT_EQ(copy[1], 2);
+  EXPECT_EQ(vector[0], 1);
+  EXPECT_EQ(vector[1], 2);
+  EXPECT_EQ(copy[0], 1);
+  EXPECT_EQ(copy[1], 2);
 }
 
 TEST(FastVector_Tests, CopyAssignment_NonTrivial_CorrectValues)
@@ -928,14 +942,97 @@ TEST(FastVector_Tests, CopyAssignment_NonTrivial_CorrectValues)
 
   FastVector<std::string> copy = vector;
 
-  ASSERT_EQ(copy.Size(), 2);
-  ASSERT_EQ(copy.Capacity(), 2);
-  ASSERT_EQ(vector.Size(), 2);
+  EXPECT_EQ(copy.Size(), 2);
+  EXPECT_EQ(copy.Capacity(), 2);
+  EXPECT_EQ(vector.Size(), 2);
 
-  ASSERT_EQ(vector[0], std::string { "1" });
-  ASSERT_EQ(vector[1], std::string { "2" });
-  ASSERT_EQ(copy[0], std::string { "1" });
-  ASSERT_EQ(copy[1], std::string { "2" });
+  EXPECT_EQ(vector[0], std::string { "1" });
+  EXPECT_EQ(vector[1], std::string { "2" });
+  EXPECT_EQ(copy[0], std::string { "1" });
+  EXPECT_EQ(copy[1], std::string { "2" });
+}
+
+TEST(FastVector_Tests, CopyAssignment_SelfAssignement_DoNothing)
+{
+  FastVector<int> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  vector = vector;
+
+  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector[0], 1);
+  EXPECT_EQ(vector[1], 2);
+}
+
+TEST(FastVector_Tests, Equality_Empty_Equal)
+{
+  FastVector<int> vector1;
+
+  FastVector<int> vector2;
+
+  EXPECT_EQ(vector1, vector2);
+}
+
+TEST(FastVector_Tests, Equality_SelfEquality_Equal)
+{
+  FastVector<int> vector;
+
+  vector.PushBack(1);
+  vector.PushBack(2);
+
+  EXPECT_EQ(vector, vector);
+}
+
+TEST(FastVector_Tests, Equality_SameValues_Equal)
+{
+  FastVector<int> vector1;
+
+  vector1.PushBack(1);
+  vector1.PushBack(2);
+  vector1.PushBack(3);
+
+  FastVector<int> vector2;
+
+  vector2.PushBack(1);
+  vector2.PushBack(2);
+  vector2.PushBack(3);
+
+  EXPECT_EQ(vector1, vector2);
+}
+
+TEST(FastVector_Tests, Inequality_DifferentSize_NotEqual)
+{
+  FastVector<int> vector1;
+
+  vector1.PushBack(1);
+  vector1.PushBack(2);
+
+  FastVector<int> vector2;
+
+  vector2.PushBack(1);
+  vector2.PushBack(2);
+  vector2.PushBack(3);
+
+  EXPECT_NE(vector1, vector2);
+}
+
+TEST(FastVector_Tests, Inequality_DifferentValues_NotEqual)
+{
+  FastVector<int> vector1;
+
+  vector1.PushBack(1);
+  vector1.PushBack(4);
+  vector1.PushBack(3);
+
+  FastVector<int> vector2;
+
+  vector2.PushBack(1);
+  vector2.PushBack(2);
+  vector2.PushBack(3);
+
+  EXPECT_NE(vector1, vector2);
 }
 
 } // namespace genebits::engine::tests

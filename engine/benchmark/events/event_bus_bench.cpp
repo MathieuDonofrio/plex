@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 namespace
 {
@@ -22,51 +22,78 @@ namespace
   };
 } // namespace
 
-static void EventBus_SubscribeUnsubscribe(benchmark::State& state)
+static void EventBus_Subscribe(benchmark::State& state)
 {
-  TestListener listener;
+  const size_t amount = state.range(0);
 
-  EventHandler<TestEvent> handler;
-  handler.Bind<TestListener, &TestListener::listen>(&listener);
+  std::vector<EventHandler<TestEvent>> handlers;
 
-  for (auto _ : state)
+  for (size_t i = 0; i < amount; i++)
   {
-    EventBus bus;
+    TestListener listener;
+    EventHandler<TestEvent> handler;
 
-    bus.Subscribe(handler);
-    bus.Unsubscribe(handler);
+    handler.Bind<TestListener, &TestListener::listen>(&listener);
 
-    benchmark::DoNotOptimize(bus);
-  }
-
-  benchmark::DoNotOptimize(listener);
-  benchmark::DoNotOptimize(handler);
-}
-
-BENCHMARK(EventBus_SubscribeUnsubscribe);
-
-static void EventBus_SubscribeUnsubscribe_10(benchmark::State& state)
-{
-  constexpr size_t cAmount = 10;
-
-  TestListener listeners[cAmount];
-  EventHandler<TestEvent> handlers[cAmount];
-
-  for (size_t i = 0; i < cAmount; i++)
-  {
-    handlers[i].Bind<TestListener, &TestListener::listen>(&listeners[i]);
+    handlers.push_back(handler);
   }
 
   for (auto _ : state)
   {
+    state.PauseTiming();
+
     EventBus bus;
 
-    for (size_t i = 0; i < cAmount; i++)
+    state.ResumeTiming();
+
+    for (size_t i = 0; i < amount; i++)
     {
       bus.Subscribe(handlers[i]);
     }
 
-    for (size_t i = 0; i < cAmount; i++)
+    benchmark::DoNotOptimize(bus);
+  }
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    benchmark::DoNotOptimize(handlers[i]);
+  }
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(EventBus_Subscribe)->Arg(10)->Arg(100)->Arg(1000)->Complexity();
+
+static void EventBus_Unsubscribe(benchmark::State& state)
+{
+  const size_t amount = state.range(0);
+
+  std::vector<EventHandler<TestEvent>> handlers;
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    TestListener listener;
+    EventHandler<TestEvent> handler;
+
+    handler.Bind<TestListener, &TestListener::listen>(&listener);
+
+    handlers.push_back(handler);
+  }
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    EventBus bus;
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      bus.Subscribe(handlers[i]);
+    }
+
+    state.ResumeTiming();
+
+    for (size_t i = 0; i < amount; i++)
     {
       bus.Unsubscribe(handlers[i]);
     }
@@ -74,92 +101,30 @@ static void EventBus_SubscribeUnsubscribe_10(benchmark::State& state)
     benchmark::DoNotOptimize(bus);
   }
 
-  for (size_t i = 0; i < cAmount; i++)
+  for (size_t i = 0; i < amount; i++)
   {
-    benchmark::DoNotOptimize(listeners[i]);
     benchmark::DoNotOptimize(handlers[i]);
   }
+
+  state.SetComplexityN(amount);
 }
 
-BENCHMARK(EventBus_SubscribeUnsubscribe_10);
-
-static void EventBus_SubscribeUnsubscribe_100(benchmark::State& state)
-{
-  constexpr size_t cAmount = 100;
-
-  TestListener listeners[cAmount];
-  EventHandler<TestEvent> handlers[cAmount];
-
-  for (size_t i = 0; i < cAmount; i++)
-  {
-    handlers[i].Bind<TestListener, &TestListener::listen>(&listeners[i]);
-  }
-
-  for (auto _ : state)
-  {
-    EventBus bus;
-
-    for (size_t i = 0; i < cAmount; i++)
-    {
-      bus.Subscribe(handlers[i]);
-    }
-
-    for (size_t i = 0; i < cAmount; i++)
-    {
-      bus.Unsubscribe(handlers[i]);
-    }
-
-    benchmark::DoNotOptimize(bus);
-  }
-
-  for (size_t i = 0; i < cAmount; i++)
-  {
-    benchmark::DoNotOptimize(listeners[i]);
-    benchmark::DoNotOptimize(handlers[i]);
-  }
-}
-
-BENCHMARK(EventBus_SubscribeUnsubscribe_100);
+BENCHMARK(EventBus_Unsubscribe)->Arg(10)->Arg(100)->Arg(1000)->Complexity();
 
 static void EventBus_Publish(benchmark::State& state)
 {
-  EventBus bus;
-
-  TestListener listener;
-
-  EventHandler<TestEvent> handler;
-  handler.Bind<TestListener, &TestListener::listen>(&listener);
-
-  bus.Subscribe(handler);
-
-  TestEvent event;
-
-  for (auto _ : state)
-  {
-    bus.Publish(event);
-  }
-
-  benchmark::DoNotOptimize(event);
-  benchmark::DoNotOptimize(bus);
-  benchmark::DoNotOptimize(listener);
-  benchmark::DoNotOptimize(handler);
-}
-
-BENCHMARK(EventBus_Publish);
-
-static void EventBus_Publish_10(benchmark::State& state)
-{
-  constexpr size_t cAmount = 10;
+  const size_t amount = state.range(0);
 
   EventBus bus;
 
-  TestListener listeners[cAmount];
-  EventHandler<TestEvent> handlers[cAmount];
-
-  for (size_t i = 0; i < cAmount; i++)
+  for (size_t i = 0; i < amount; i++)
   {
-    handlers[i].Bind<TestListener, &TestListener::listen>(&listeners[i]);
-    bus.Subscribe(handlers[i]);
+    TestListener listener;
+    EventHandler<TestEvent> handler;
+
+    handler.Bind<TestListener, &TestListener::listen>(&listener);
+
+    bus.Subscribe(handler);
   }
 
   TestEvent event;
@@ -172,47 +137,9 @@ static void EventBus_Publish_10(benchmark::State& state)
   benchmark::DoNotOptimize(event);
   benchmark::DoNotOptimize(bus);
 
-  for (size_t i = 0; i < cAmount; i++)
-  {
-    benchmark::DoNotOptimize(listeners[i]);
-    benchmark::DoNotOptimize(handlers[i]);
-  }
+  state.SetComplexityN(amount);
 }
 
-BENCHMARK(EventBus_Publish_10);
+BENCHMARK(EventBus_Publish)->Arg(10)->Arg(100)->Arg(1000)->Complexity();
 
-static void EventBus_Publish_100(benchmark::State& state)
-{
-  constexpr size_t cAmount = 100;
-
-  EventBus bus;
-
-  TestListener listeners[cAmount];
-  EventHandler<TestEvent> handlers[cAmount];
-
-  for (size_t i = 0; i < cAmount; i++)
-  {
-    handlers[i].Bind<TestListener, &TestListener::listen>(&listeners[i]);
-    bus.Subscribe(handlers[i]);
-  }
-
-  TestEvent event;
-
-  for (auto _ : state)
-  {
-    bus.Publish(event);
-  }
-
-  benchmark::DoNotOptimize(event);
-  benchmark::DoNotOptimize(bus);
-
-  for (size_t i = 0; i < cAmount; i++)
-  {
-    benchmark::DoNotOptimize(listeners[i]);
-    benchmark::DoNotOptimize(handlers[i]);
-  }
-}
-
-BENCHMARK(EventBus_Publish_100);
-
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

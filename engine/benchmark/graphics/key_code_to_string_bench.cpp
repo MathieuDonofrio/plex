@@ -6,7 +6,7 @@
 
 #include "genebits/engine/util/random.h"
 
-namespace genebits::engine
+namespace genebits::engine::bench
 {
 
 static void Worst_KeyCodeToStringSwitch(benchmark::State& state)
@@ -49,4 +49,4 @@ static void Random_KeyCodeToStringSwitch(benchmark::State& state)
 
 BENCHMARK(Random_KeyCodeToStringSwitch);
 
-} // namespace genebits::engine
+} // namespace genebits::engine::bench

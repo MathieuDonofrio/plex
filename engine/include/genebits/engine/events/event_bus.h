@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 
-#include "genebits/engine/events/event_handler.h"
+#include "genebits/engine/util/delegate.h"
 #include "genebits/engine/util/erased_ptr.h"
 #include "genebits/engine/util/fast_vector.h"
 #include "genebits/engine/util/meta.h"
@@ -12,15 +12,24 @@
 
 namespace genebits::engine
 {
-namespace
+///
+/// Delegate alias for handling events.
+///
+/// @see Delegate
+///
+/// @tparam Event Type of event for the delegate to handle.
+///
+template<typename Event>
+using EventHandler = Delegate<void(const Event&)>;
+
+namespace details
 {
   ///
   /// Pool of event handlers.
   ///
   /// @tparam Event Event type to handle
-  /// @tparam AllocatorImpl Allocator to use to allocated memory.
   ///
-  template<typename Event, Allocator AllocatorImpl>
+  template<typename Event>
   class EventHandlerPool
   {
   public:
@@ -68,17 +77,14 @@ namespace
     }
 
   private:
-    FastVector<EventHandler<Event>, AllocatorImpl> handlers_;
+    FastVector<EventHandler<Event>> handlers_;
   };
-} // namespace
+} // namespace details
 
 ///
 /// Event bus is used as a container for event handlers of any event type.
 ///
 /// You can subscribe event handlers to the bus and publish events.
-///
-/// @tparam TypeMapAllocator Allocator used to allocate memory for the type map.
-/// @tparam HandlersAllocator Allocator used to allocator memory for the handlers.
 ///
 class EventBus
 {
@@ -141,11 +147,8 @@ public:
   }
 
 private:
-  using TypeMapAllocator = Mallocator;
-  using HandlersAllocator = Mallocator;
-
   ///
-  /// Safely returns the event handler pool for the event type. Properly intializes the pool if
+  /// Safely returns the event handler pool for the event type. Properly initializes the pool if
   /// it has never been accessed before.
   ///
   /// @tparam Event Event type to get handlers pool for.
@@ -153,17 +156,17 @@ private:
   /// @return Event handler pool for the event type.
   ///
   template<typename Event>
-  EventHandlerPool<Event, HandlersAllocator>* Assure() noexcept
+  details::EventHandlerPool<Event>* Assure() noexcept
   {
     auto& pool = pools_.Assure<Event>();
 
-    if (!pool) [[unlikely]] { pool.Reset(new EventHandlerPool<Event, HandlersAllocator>()); }
+    if (!pool) [[unlikely]] { pool.Reset(new details::EventHandlerPool<Event>()); }
 
-    return pool.Cast<EventHandlerPool<Event, HandlersAllocator>>();
+    return pool.template Cast<details::EventHandlerPool<Event>>();
   }
 
 private:
-  TypeMap<ErasedPtr<void>, TypeMapAllocator> pools_;
+  TypeMap<ErasedPtr<void>, EventBus> pools_;
 };
 
 } // namespace genebits::engine

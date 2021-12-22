@@ -13,7 +13,7 @@ namespace genebits::engine
 /// @tparam Type The type to check
 ///
 template<typename Type>
-concept TypeMapValueType = std::is_default_constructible_v<Type> && FastVectorType<Type>;
+concept TypeMapValueType = FastVectorType<Type>;
 
 ///
 /// Map used to map types to values where the type is the key.
@@ -23,9 +23,10 @@ concept TypeMapValueType = std::is_default_constructible_v<Type> && FastVectorTy
 /// This map is extremely low overhead and performance oriented.
 ///
 /// @tparam Value Value to map types with.
+/// @tparam Tag Optional extra tag to make unique id sequence more unique.
 /// @tparam AllocatorImpl Allocator to use to allocate memory.
 ///
-template<TypeMapValueType Value, Allocator AllocatorImpl = Mallocator>
+template<TypeMapValueType Value, typename Tag = void, Allocator AllocatorImpl = Mallocator>
 class TypeMap
 {
 public:
@@ -34,15 +35,16 @@ public:
   ///
   /// If the mapping never existed, this method will make sure that it is created.
   ///
-  /// Usually O(1) with very little overhead, but sometimes during creating of the
-  /// mapping (only happens once per key) and internal resize must be called.
+  /// Usually O(1). If a value was never initialized for the type this method is expensive
+  /// but this happens at most only once per type.
   ///
   /// @tparam Type The type to use as key.
+  /// @tparam Args The arguments used to initialize new values.
   ///
   /// @return Reference to the value mapped by the type.
   ///
-  template<typename Type>
-  Value& Assure() noexcept
+  template<typename Type, typename... Args>
+  requires std::is_constructible_v<Value, Args...> Value& Assure(Args&&... args) noexcept
   {
     const size_t index = Key<Type>();
 
@@ -50,7 +52,7 @@ public:
     {
       ASSERT(index < 10000, "To many types"); // Highly unlikely the map exceeds 10k types, probably a bug.
 
-      values_.Resize(index + 1);
+      values_.Resize(index + 1, std::forward<Args>(args)...);
     }
 
     return values_[index];
@@ -77,6 +79,25 @@ public:
     return values_[Key<Type>()];
   }
 
+  ///
+  /// Returns the value reference for the type key.
+  ///
+  /// Always O(1) with extremely low overhead. Essentially an array lookup.
+  ///
+  /// @warning
+  ///     Make sure Assure was called at least once for this type. Or else
+  ///     this method is undefined behaviour.
+  ///
+  /// @tparam Type The type to use as key.
+  ///
+  /// @return Reference to the value mapped by the type.
+  ///
+  template<typename Type>
+  [[nodiscard]] Value& Get() noexcept
+  {
+    return const_cast<Value&>(static_cast<const TypeMap*>(this)->template Get<Type>());
+  }
+
 private:
   ///
   /// Obtains the key for a type.
@@ -91,7 +112,7 @@ private:
   template<typename Type>
   [[nodiscard]] static size_t Key() noexcept
   {
-    return Meta<Type>::template UniqueId<Meta<TypeMap<Value, AllocatorImpl>>::Hash()>();
+    return Meta<Type>::template UniqueId<TypeMap<Value, Tag, AllocatorImpl>>();
   }
 
 private:
