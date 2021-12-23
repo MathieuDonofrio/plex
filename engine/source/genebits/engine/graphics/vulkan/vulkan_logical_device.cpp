@@ -1,4 +1,4 @@
-#include "genebits/engine/graphics/vulkan_logical_device.h"
+#include "vulkan_logical_device.h"
 
 namespace genebits::engine
 {

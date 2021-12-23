@@ -1,4 +1,4 @@
-#include "genebits/engine/graphics/glfw_window.h"
+#include "glfw_window.h"
 
 #include <atomic>
 

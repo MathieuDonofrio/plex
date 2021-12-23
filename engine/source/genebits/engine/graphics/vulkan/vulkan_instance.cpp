@@ -1,22 +1,31 @@
-#include "genebits/engine/graphics/vulkan_instance.h"
+#include "vulkan_instance.h"
 
 #include "genebits/engine/config/version.h"
 #include "genebits/engine/debug/logging.h"
 
 #include <format>
+#include <iostream>
 
 namespace genebits::engine
 {
 
-VulkanInstance::VulkanInstance(VulkanCapableWindow* vulkan_capable_window,
+VulkanInstance::VulkanInstance(Window* window_handle,
   const char* application_name,
   bool use_debug_messenger,
-  DebugMessageSeverityThreshold debug_message_severity_threshold)
-  : debug_message_severity_threshold_(debug_message_severity_threshold)
+  GraphicsDebugLevel debug_message_severity_threshold)
+  : GraphicInstance(application_name, use_debug_messenger, debug_message_severity_threshold)
 {
+  Initialize(window_handle);
+}
+
+void VulkanInstance::Initialize(Window* window_handle)
+{
+  // TODO Add logging for initialization and destruction
+  auto vulkan_capable_window_ptr = dynamic_cast<VulkanCapableWindow*>(window_handle);
+
   VkApplicationInfo app_info {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  app_info.pApplicationName = application_name;
+  app_info.pApplicationName = application_name_;
   app_info.applicationVersion = VK_MAKE_VERSION(GENEBITS_VERSION_MAJOR, GENEBITS_VERSION_MINOR, GENEBITS_VERSION_PATCH);
   app_info.pEngineName = "Genebits engine";
   app_info.engineVersion = VK_MAKE_VERSION(GENEBITS_VERSION_MAJOR, GENEBITS_VERSION_MINOR, GENEBITS_VERSION_PATCH);
@@ -27,7 +36,7 @@ VulkanInstance::VulkanInstance(VulkanCapableWindow* vulkan_capable_window,
   create_info.pApplicationInfo = &app_info;
 
   VkDebugUtilsMessengerCreateInfoEXT debug_create_info {};
-  if (use_debug_messenger)
+  if (is_debug_)
   {
     if (QueryValidationLayersSupport(validation_layer_names_))
     {
@@ -44,9 +53,9 @@ VulkanInstance::VulkanInstance(VulkanCapableWindow* vulkan_capable_window,
     create_info.pNext = nullptr;
   }
 
-  std::vector<const char*> required_extensions = vulkan_capable_window->GetRequiredInstanceExtensions();
+  std::vector<const char*> required_extensions = vulkan_capable_window_ptr->GetRequiredInstanceExtensions();
 
-  if (use_debug_messenger) { required_extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME); }
+  if (is_debug_) { required_extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME); }
 
   create_info.enabledExtensionCount = static_cast<uint32_t>(required_extensions.size());
   create_info.ppEnabledExtensionNames = required_extensions.data();
@@ -56,7 +65,7 @@ VulkanInstance::VulkanInstance(VulkanCapableWindow* vulkan_capable_window,
     LOG_ERROR("Failed to create Vulkan instance");
   }
 
-  if (use_debug_messenger) { CreateDebugMessenger(instance_handle_, &debug_messenger_); }
+  if (is_debug_) { CreateDebugMessenger(instance_handle_, &debug_messenger_); }
 }
 
 VulkanInstance::~VulkanInstance()
@@ -184,7 +193,6 @@ void VulkanInstance::DestroyDebugUtilsMessengerEXT(
     destroy_debug_messenger_function_ptr(handle, debug_messenger, allocator_ptr);
   }
 }
-
 void VulkanInstance::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& create_info) noexcept
 {
   create_info = {};

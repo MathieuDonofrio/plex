@@ -1,4 +1,4 @@
-#include "genebits/engine/graphics/vulkan_queue_family_indices.h"
+#include "vulkan_queue_family_indices.h"
 
 #include <algorithm>
 

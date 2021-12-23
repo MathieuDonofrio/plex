@@ -6,8 +6,8 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include "genebits/engine/graphics/vulkan_queue_family_indices.h"
-#include "genebits/engine/graphics/vulkan_swap_chain_support_details.h"
+#include "vulkan_queue_family_indices.h"
+#include "vulkan_swap_chain_support_details.h"
 
 namespace genebits::engine
 {

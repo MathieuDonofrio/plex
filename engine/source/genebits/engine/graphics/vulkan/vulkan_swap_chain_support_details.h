@@ -13,7 +13,7 @@ struct VulkanSwapChainSupportDetails
   VkSurfaceCapabilitiesKHR capabilities;
   std::vector<VkSurfaceFormatKHR> formats;
   std::vector<VkPresentModeKHR> present_modes;
-}
+};
 
 } // namespace genebits::engine
 
