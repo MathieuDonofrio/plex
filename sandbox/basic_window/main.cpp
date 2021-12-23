@@ -3,8 +3,7 @@
 
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/events/listener.h"
-#include "genebits/engine/graphics/vulkan_dummy.h"
-#include "genebits/engine/graphics/window.h"
+#include "genebits/engine/graphics/renderer.h"
 
 using namespace genebits::engine;
 
@@ -105,9 +104,11 @@ int main(int, char**)
 
   Window* window = CreateWindow("Hello world", 256, 256, &bus, hints);
 
+  auto renderer = new Renderer(window, "Genebits", true, GraphicsDebugLevel::Trace, RenderingBackend::VULKAN);
+  (void)(renderer);
   // Window loop
-  auto vulkan_dummy = new VulkanDummy(window, "Genebits", true, VulkanDummy::DebugMessageSeverityThreshold::Warn);
-  vulkan_dummy->DummyFunction(*vulkan_dummy);
+  //  auto vulkan_dummy = new VulkanDummy(window, "Genebits", true, VulkanDummy::DebugMessageSeverityThreshold::Warn);
+  //  vulkan_dummy->DummyFunction(*vulkan_dummy);
 
   while (!window->IsClosing())
   {
@@ -118,6 +119,7 @@ int main(int, char**)
   // Cleanup
 
   delete window;
+  delete renderer;
 
   return 0;
 }
