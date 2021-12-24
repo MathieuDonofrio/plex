@@ -20,12 +20,16 @@ public:
   /// Parametric constructor.
   ///
   /// @param[in] thread_count Amount of worker threads to create pool with.
+  /// @param[in] lock_threads Locks every thread to a physical processor.
   ///
-  explicit ThreadPool(const size_t thread_count) : running_(false), threads_(nullptr), thread_count_(thread_count)
+  ThreadPool(const size_t thread_count, bool lock_threads)
+    : running_(false), threads_(nullptr), thread_count_(thread_count)
   {
     ASSERT(thread_count > 0, "Thread pool cannot have 0 threads");
 
     CreateWorkers();
+
+    if (lock_threads) SetWorkerThreadAffinity();
   }
 
   ///
@@ -34,20 +38,15 @@ public:
   /// Tries to create threads equal to amount of physical processors, sometimes this is not
   /// accurate.
   ///
-  /// @note Will also attempt to set the threads affinity so that every thread only runs on one
-  /// physical core.
+  /// Every thread is locked to a physical processor.
   ///
-  ThreadPool() : ThreadPool(GetAmountPhysicalProcessors())
-  {
-    SetWorkerThreadAffinity();
-  }
+  ThreadPool() : ThreadPool(GetAmountPhysicalProcessors(), true) {}
 
   ///
   /// Destructor.
   ///
   ~ThreadPool()
   {
-    WaitForTasks();
     DestroyWorkers();
   }
 
@@ -119,18 +118,26 @@ private:
 
     while (running_) // Always locked when doing an iteration
     {
-      if (Task* task = tasks_.Front()) // Not empty
+      Task* task = tasks_.Front();
+
+      if (task)
       {
-        tasks_.Pop();
+        do
+        {
+          tasks_.Pop();
 
-        // Make sure we are unlocked for task execution
-        lock.unlock();
+          // Make sure we are unlocked for task execution
+          lock.unlock();
 
-        task->Executor().Invoke();
-        task->Finish();
+          task->Executor().Invoke();
+          task->Finish();
 
-        // Lock before running another iteration
-        lock.lock();
+          // Lock before running another iteration
+          lock.lock();
+
+          task = tasks_.Front();
+        }
+        while (task);
       }
       else
       {
@@ -141,33 +148,6 @@ private:
         // See the schedule method.
         condition_.wait(lock);
       }
-    }
-  }
-
-  ///
-  /// Non-intrusively waits until all tasks are finished.
-  ///
-  /// Spins and sleeps in between iterations.
-  ///
-  /// @warning Not efficient, should only be used for destruction of the pool.
-  ///
-  void WaitForTasks()
-  {
-    while (true)
-    {
-      mutex_.lock();
-
-      const bool empty = tasks_.Empty();
-
-      mutex_.unlock();
-
-      if (!empty)
-      {
-        // Sleep a little in between spins to free the CPU
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-      }
-      else
-        return;
     }
   }
 
@@ -194,18 +174,20 @@ private:
   /// Tries to set the worker thread affinity so that every worker can only run on
   /// one physical processor.
   ///
-  /// If the amount of worker threads is greater than the amount of physical processors
-  /// excess worker threads will we free to run on any processor.
+  /// If the amount of worker threads is greater than the amount of physical processors,
+  /// multiple worker threads can be assigned per physical processor.
   ///
   /// @note This does nothing if cpu info is not supported.
   ///
   void SetWorkerThreadAffinity()
   {
-    CPUInfo info = GetCPUInfo();
+    const CPUInfo info = GetCPUInfo();
 
-    for (size_t i = 0; i < thread_count_ && i < info.processors.size(); i++)
+    const auto core_count = info.processors.size();
+
+    for (size_t i = 0; i < thread_count_; i++)
     {
-      SetThreadAffinity(threads_[i].native_handle(), info.processors[i].mask);
+      SetThreadAffinity(threads_[i].native_handle(), info.processors[i % core_count].mask);
     }
   }
 
@@ -220,8 +202,6 @@ private:
 
     running_ = false;
 
-    ASSERT(tasks_.Empty(), "Tasks left when destroying workers");
-
     mutex_.unlock();
 
     condition_.notify_all();
@@ -231,13 +211,9 @@ private:
       threads_[i].join();
     }
 
-    mutex_.lock();
-
-    ASSERT(tasks_.Empty(), "Tasks where added during destruction of workers");
+    ASSERT(tasks_.Empty(), "There are still tasks");
 
     delete[] threads_;
-
-    mutex_.unlock();
   }
 
 private:

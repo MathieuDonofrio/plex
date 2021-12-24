@@ -6,14 +6,14 @@ namespace genebits::engine::tests
 {
 TEST(ThreadPool_Tests, Constructor_CustomAmountThreads_CorrectCount)
 {
-  ThreadPool pool(4);
+  ThreadPool pool(4, false);
 
   EXPECT_EQ(pool.ThreadCount(), 4);
 }
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Wait_CorrectExecution)
 {
-  ThreadPool pool(1);
+  ThreadPool pool(1, false);
 
   Task task;
 
@@ -30,7 +30,7 @@ TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Wait_CorrectExecution)
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Poll_CorrectExecution)
 {
-  ThreadPool pool(1);
+  ThreadPool pool(1, false);
 
   Task task;
 
@@ -47,7 +47,7 @@ TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Poll_CorrectExecution)
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_TryPollWait_CorrectExecution)
 {
-  ThreadPool pool(1);
+  ThreadPool pool(1, false);
 
   Task task;
 
@@ -64,7 +64,7 @@ TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_TryPollWait_CorrectExecution)
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_DoubleWait_CorrectExecution)
 {
-  ThreadPool pool(1);
+  ThreadPool pool(1, false);
 
   Task task;
 
@@ -82,7 +82,7 @@ TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_DoubleWait_CorrectExecution)
 
 TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Wait_CorrectExecution)
 {
-  ThreadPool pool(16);
+  ThreadPool pool(16, false);
 
   Task task;
 
@@ -99,7 +99,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Wait_CorrectExecution)
 
 TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Poll_CorrectExecution)
 {
-  ThreadPool pool(16);
+  ThreadPool pool(16, false);
 
   Task task;
 
@@ -116,7 +116,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsOneTask_Poll_CorrectExecution)
 
 TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Wait_CorrectExecution)
 {
-  ThreadPool pool(16);
+  ThreadPool pool(16, false);
 
   constexpr size_t amount = 2000;
 
@@ -142,7 +142,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Wait_CorrectExecution)
 
 TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Poll_CorrectExecution)
 {
-  ThreadPool pool(16);
+  ThreadPool pool(16, false);
 
   // If the amount is to big the stack array will be too big.
   constexpr size_t amount = 2000;
@@ -168,7 +168,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Poll_CorrectExecution)
 
 TEST(ThreadPool_Tests, EnqueueAll_OneThreadOneTask_CorrectExecution)
 {
-  ThreadPool pool(1);
+  ThreadPool pool(1, false);
 
   Task task;
 
@@ -185,7 +185,7 @@ TEST(ThreadPool_Tests, EnqueueAll_OneThreadOneTask_CorrectExecution)
 
 TEST(ThreadPool_Tests, EnqueueAll_OneThreadMultipleTasks_CorrectExecution)
 {
-  ThreadPool pool(1);
+  ThreadPool pool(1, false);
 
   constexpr size_t amount = 10;
 
@@ -210,7 +210,32 @@ TEST(ThreadPool_Tests, EnqueueAll_OneThreadMultipleTasks_CorrectExecution)
 
 TEST(ThreadPool_Tests, EnqueueAll_16ThreadsMultipleTasks_CorrectExecution)
 {
-  ThreadPool pool(16);
+  ThreadPool pool(16, false);
+
+  constexpr size_t amount = 100;
+
+  Task tasks[amount];
+
+  std::atomic_int count = 0;
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    tasks[i].Executor().Bind([&count]() { count++; });
+  }
+
+  pool.EnqueueAll(&tasks[0], &tasks[amount]);
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    tasks[i].Wait();
+  }
+
+  EXPECT_EQ(count, amount);
+}
+
+TEST(ThreadPool_Tests, EnqueueAll_OneThreadPerCoreMultipleTasks_CorrectExecution)
+{
+  ThreadPool pool;
 
   constexpr size_t amount = 100;
 
