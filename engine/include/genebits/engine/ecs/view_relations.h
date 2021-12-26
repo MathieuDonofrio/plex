@@ -1,19 +1,17 @@
-#ifndef GENEBITS_ENGINE_ECS_ARCHETYPE_GRAPH_H
-#define GENEBITS_ENGINE_ECS_ARCHETYPE_GRAPH_H
+#ifndef GENEBITS_ENGINE_ECS_VIEW_RELATIONS_H
+#define GENEBITS_ENGINE_ECS_VIEW_RELATIONS_H
 
 #include "genebits/engine/ecs/archetype.h"
 
 namespace genebits::engine
 {
 ///
-/// Archetype graph for keeping track of what archetypes are associated with what view.
+/// Keeps track of what archetypes are in every view in an array ready for lookup.
 ///
-/// The graph is flattened for performance.
-///
-class ArchetypeGraph final
+class ViewRelations final
 {
 public:
-  ArchetypeGraph()
+  ViewRelations()
   {
     // Assure the empty view. This guarantees that it will be first in the arrays.
     AssureView();

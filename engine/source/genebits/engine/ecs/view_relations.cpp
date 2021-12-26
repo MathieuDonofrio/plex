@@ -1,9 +1,9 @@
 
-#include "genebits/engine/ecs/archetype_graph.h"
+#include "genebits/engine/ecs/view_relations.h"
 
 namespace genebits::engine
 {
-void ArchetypeGraph::AddView(ViewId id)
+void ViewRelations::AddView(ViewId id)
 {
   if (id >= view_archetypes_.Size()) view_archetypes_.Resize(id + 1);
 
@@ -30,7 +30,7 @@ void ArchetypeGraph::AddView(ViewId id)
   }
 }
 
-void ArchetypeGraph::AddArchetype(ArchetypeId id)
+void ViewRelations::AddArchetype(ArchetypeId id)
 {
   auto& archetype_components = archetype_components_[id];
 

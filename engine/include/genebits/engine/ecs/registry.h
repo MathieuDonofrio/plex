@@ -7,9 +7,9 @@
 #include <type_traits>
 
 #include "genebits/engine/ecs/archetype.h"
-#include "genebits/engine/ecs/archetype_graph.h"
 #include "genebits/engine/ecs/entity_manager.h"
 #include "genebits/engine/ecs/storage.h"
+#include "genebits/engine/ecs/view_relations.h"
 
 namespace genebits::engine
 {
@@ -224,7 +224,7 @@ private:
   template<typename... Components>
   Storage<Entity>& Assure()
   {
-    const ArchetypeId archetype = graph_.template AssureArchetype<Components...>();
+    const ArchetypeId archetype = relations_.template AssureArchetype<Components...>();
 
     if (storages_.Size() <= archetype) storages_.Resize(archetype + 1, nullptr);
 
@@ -242,7 +242,7 @@ private:
 private:
   SharedSparseArray<Entity> mappings_;
   EntityManager<Entity> manager_;
-  ArchetypeGraph graph_;
+  ViewRelations relations_;
 
   FastVector<Storage<Entity>*> storages_;
 };
@@ -672,7 +672,7 @@ public:
   ///
   constexpr explicit PolyView(Registry<Entity>& registry)
     : registry_(registry),
-      archetypes_(registry.graph_.ViewArchetypes(registry.graph_.template AssureView<Components...>()))
+      archetypes_(registry.relations_.ViewArchetypes(registry.relations_.template AssureView<Components...>()))
   {}
 
   ///
