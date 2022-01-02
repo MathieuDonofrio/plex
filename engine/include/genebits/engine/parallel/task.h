@@ -6,6 +6,14 @@
 
 namespace genebits::engine
 {
+class Task;
+
+struct TaskList
+{
+  Task* first;
+  Task* last;
+};
+
 ///
 /// Delegate alias for executing tasks.
 ///
@@ -155,43 +163,6 @@ private:
   TaskExecutor executor_;
   Task* next_;
   std::atomic_bool flag_;
-};
-
-///
-/// Task with extra data.
-///
-/// @note If the data is small, there is no memory overhead because of the aligned task. The free space is
-/// equal to the hardware_destructive_interference_size (usually 64 bytes) - size of Task. If data
-/// exceeds this amount the size of the task will increase.
-///
-/// @see Task
-///
-template<typename Data>
-class DataTask : public Task
-{
-public:
-  ///
-  /// Returns the data associated with this task.
-  ///
-  /// @return Data of the task.
-  ///
-  [[nodiscard]] constexpr Data& GetData() noexcept
-  {
-    return data;
-  };
-
-  ///
-  /// Returns the data associated with this task.
-  ///
-  /// @return Data of the task.
-  ///
-  [[nodiscard]] constexpr const Data& GetData() const noexcept
-  {
-    return data;
-  };
-
-private:
-  Data data;
 };
 
 ///

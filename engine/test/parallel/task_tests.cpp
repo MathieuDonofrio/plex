@@ -4,8 +4,6 @@
 
 namespace genebits::engine::tests
 {
-static_assert(sizeof(Task) == sizeof(DataTask<double>));
-
 TEST(Task_Tests, Finished_OnConstruction_False)
 {
   Task task;
