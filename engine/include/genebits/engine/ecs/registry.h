@@ -252,14 +252,14 @@ private:
 ///
 /// The function be invocable with the entity as the first argument and all components after.
 ///
-/// @tparam Entity Entity integral type.
 /// @tparam Invocable Invocable functor type.
+/// @tparam Entity Entity integral type.
 /// @tparam Components Component types of the view.
 ///
-template<typename Entity, typename Invocable, typename... Components>
-concept ExtendedUnpackFunction = requires(Invocable invocable, Entity entity, Components... components)
+template<typename Invocable, typename Entity, typename... Components>
+concept EntitiesExtendedFunction = requires(Invocable invocable, Entity entity, Components... components)
 {
-  invocable(entity, components...);
+  invocable(std::forward<Entity>(entity), std::forward<Components>(components)...);
 };
 
 ///
@@ -271,9 +271,9 @@ concept ExtendedUnpackFunction = requires(Invocable invocable, Entity entity, Co
 /// @tparam Components Component types of the view.
 ///
 template<typename Invocable, typename... Components>
-concept ReducedUnpackFunction = requires(Invocable invocable, Components... components)
+concept EntitiesReducedFunction = requires(Invocable invocable, Components... components)
 {
-  invocable(components...);
+  invocable(std::forward<Components>(components)...);
 };
 
 ///
@@ -281,39 +281,68 @@ concept ReducedUnpackFunction = requires(Invocable invocable, Components... comp
 ///
 /// Requires that the function either meets the requirements of either the reduced function or the extended function.
 ///
-/// @tparam Entity Entity integral type.
 /// @tparam Invocable Invocable functor type.
+/// @tparam Entity Entity integral type.
 /// @tparam Components Component types of the view.
 ///
-template<typename Entity, typename Invocable, typename... Components>
-concept UnpackFunction =
-  ReducedUnpackFunction<Invocable, Components...> || ExtendedUnpackFunction<Entity, Invocable, Components...>;
+template<typename Invocable, typename Entity, typename... Components>
+concept EntitiesFunction =
+  EntitiesReducedFunction<Invocable, Components...> || EntitiesExtendedFunction<Invocable, Entity, Components...>;
 
-///
-/// Unpacks the data from a tuple and invokes a function with it.
-///
-/// Entity data is usually obtained from view iteration.
-///
-/// @tparam Entity Entity type.
-/// @tparam Function Function type.
-/// @tparam Components Components to unpack.
-///
-/// @param[in] function Instance of function to invoke.
-/// @param[in] data Data to unpack.
-///
-template<std::unsigned_integral Entity, typename Function, typename... Components>
-requires UnpackFunction<Entity, Function, Components...>
-constexpr void UnpackAndApply(
-  Function& function, [[maybe_unused]] std::tuple<Entity*, std::remove_cvref_t<Components>*...>& data)
+template<typename Entity, typename... Components>
+using EntityData = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
+
+template<typename Function, typename Entity, typename... Components>
+requires EntitiesExtendedFunction<Function, Entity, Components...>
+constexpr void EntityApply(Function& func, EntityData<Entity, Components...>& data)
 {
-  if constexpr (ExtendedUnpackFunction<Entity, Function, Components...>)
-  {
-    function(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
-  }
-  else
-  {
-    function(*std::get<std::remove_cvref_t<Components>*>(data)...);
-  }
+  func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+template<typename Function, typename Entity, typename... Components>
+requires EntitiesReducedFunction<Function, Components...>
+constexpr void EntityApply(Function& func, EntityData<Entity, Components...>& data)
+{
+  func(*std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+template<class Type, typename Entity, typename... Components>
+constexpr void EntityApply(
+  void (Type::*func)(Entity, Components...) const, Type* instance, EntityData<Entity, Components...>& data)
+{
+  instance->*func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+template<class Type, typename Entity, typename... Components>
+constexpr void EntityApply(
+  void (Type::*func)(Entity, Components...), Type* instance, EntityData<Entity, Components...>& data)
+{
+  instance->*func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+template<class Type, typename Entity, typename... Components>
+constexpr void EntityApply(
+  void (Type::*func)(Components...) const, Type* instance, EntityData<Entity, Components...>& data)
+{
+  instance->*func(*std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+template<class Type, typename Entity, typename... Components>
+constexpr void EntityApply(void (Type::*func)(Components...), Type* instance, EntityData<Entity, Components...>& data)
+{
+  instance->*func(*std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+template<typename Entity, typename... Components>
+constexpr void EntityApply(void (*func)(Entity, Components...), EntityData<Entity, Components...>& data)
+{
+  func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+template<typename Entity, typename... Components>
+constexpr void EntityApply(void (*func)(Components...), EntityData<Entity, Components...>& data)
+{
+  func(*std::get<std::remove_cvref_t<Components>*>(data)...);
 }
 
 ///
@@ -335,12 +364,12 @@ public:
   /// @param[in] function Function to invoke for each entity.
   ///
   template<typename Function>
-  requires UnpackFunction<Entity, Function, Components...>
+  requires EntitiesFunction<Function, Entity, Components...>
   void ForEach(Function function)
   {
     for (auto& data : *this)
     {
-      UnpackAndApply<Entity, Function, Components...>(function, data);
+      EntityApply<Function, Entity, Components...>(function, data);
     }
   }
 
@@ -416,7 +445,7 @@ public:
   class Iterator
   {
   public:
-    using Data = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
+    using Data = EntityData<Entity, Components...>;
 
     ///
     /// Constructs an entity iterator using data.
@@ -688,14 +717,14 @@ public:
   /// @param[in] function Function to invoke for each entity.
   ///
   template<typename Function>
-  requires UnpackFunction<Entity, Function, Components...>
+  requires EntitiesFunction<Function, Entity, Components...>
   void ForEach(Function function)
   {
     for (auto mono_view : *this)
     {
       for (auto& data : mono_view)
       {
-        UnpackAndApply<Entity, Function, Components...>(function, data);
+        EntityApply<Function, Entity, Components...>(function, data);
       }
     }
   }
