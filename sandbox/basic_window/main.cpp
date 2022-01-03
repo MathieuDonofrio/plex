@@ -104,7 +104,7 @@ int main(int, char**)
 
   Window* window = CreateWindow("Hello world", 256, 256, &bus, hints);
 
-  auto renderer = new Renderer(window, "Genebits", true, GraphicsDebugLevel::Trace, RenderingBackend::VULKAN);
+  auto renderer = CreateRenderer(window, "Genebits", true, GraphicsDebugLevel::Info, RenderingBackend::VULKAN);
   (void)(renderer);
   // Window loop
   //  auto vulkan_dummy = new VulkanDummy(window, "Genebits", true, VulkanDummy::DebugMessageSeverityThreshold::Warn);
