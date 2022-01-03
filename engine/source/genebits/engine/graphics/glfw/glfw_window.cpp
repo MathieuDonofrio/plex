@@ -387,13 +387,13 @@ void GLFWWindow::SetFullScreenRefreshRate(uint32_t refresh_rate)
   glfwWindowHint(GLFW_REFRESH_RATE, static_cast<int>(refresh_rate));
 }
 
-VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
+VkSurfaceKHR GLFWWindow::CreateWindowSurface(VkInstance instance)
 {
-  VkSurfaceKHR* surface = nullptr;
+  VkSurfaceKHR surface;
 
-  [[maybe_unused]] VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
+  [[maybe_unused]] VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, &surface);
 
-  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
+  ASSERT(result == VK_SUCCESS, "Failed to create Vulkan window surface");
 
   return surface;
 }
@@ -607,6 +607,17 @@ void GLFWWindow::GLFWFramebufferResizeCallback(GLFWWindowHandle handle, int32_t 
 
     window->bus_->Publish(event);
   }
+}
+
+// TODO move to window.h
+std::pair<int32_t, int32_t> GLFWWindow::GetFrameBufferSize()
+{
+  int width = 0;
+  int height = 0;
+
+  glfwGetFramebufferSize(handle_, &width, &height);
+
+  return { width, height };
 }
 
 } // namespace genebits::engine

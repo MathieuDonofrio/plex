@@ -214,7 +214,7 @@ public:
   ///
   /// @Return Vulkan surface
   ///
-  VkSurfaceKHR* CreateWindowSurface(VkInstance instance) override;
+  VkSurfaceKHR CreateWindowSurface(VkInstance instance) override;
 
   ///
   /// Returns the names of vulkan instance extensions required by the window API to create
@@ -236,6 +236,8 @@ public:
   ///
   bool GetPhysicalDevicePresentationSupport(
     VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index) override;
+
+  std::pair<int32_t, int32_t> GetFrameBufferSize() override;
 
 private:
   using GLFWWindowHandle = ::GLFWwindow*;
