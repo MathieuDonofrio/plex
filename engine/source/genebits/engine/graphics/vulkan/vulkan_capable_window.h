@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "../../../../../../../../../../../VulkanSDK/1.2.162.1/Include/vulkan/vulkan_core.h"
+#include "vulkan/vulkan_core.h"
 
 namespace genebits::engine
 {
@@ -22,7 +22,7 @@ public:
   ///
   /// @Return Vulkan surface
   ///
-  [[nodiscard]] virtual VkSurfaceKHR* CreateWindowSurface(VkInstance instance) = 0;
+  [[nodiscard]] virtual VkSurfaceKHR CreateWindowSurface(VkInstance instance) = 0;
 
   ///
   /// Returns the names of vulkan instance extensions required by the window API to create
@@ -44,6 +44,11 @@ public:
   ///
   virtual bool GetPhysicalDevicePresentationSupport(
     VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index) = 0;
+
+  /// TODO DOC
+  ///
+  ///
+  virtual std::pair<int32_t, int32_t> GetFrameBufferSize() = 0;
 };
 } // namespace genebits::engine
 

@@ -9,20 +9,22 @@
 namespace genebits::engine
 {
 
-VulkanInstance::VulkanInstance(Window* window_handle,
+VulkanInstance::VulkanInstance(VulkanCapableWindow* window_handle,
   const char* application_name,
   bool use_debug_messenger,
-  GraphicsDebugLevel debug_message_severity_threshold)
-  : GraphicInstance(application_name, use_debug_messenger, debug_message_severity_threshold)
+  GraphicsDebugLevel debug_level)
+  : application_name_(application_name), use_debug_messenger_(use_debug_messenger),
+    debug_message_severity_threshold_(debug_level)
 {
-  Initialize(window_handle);
+  if (!Initialize(window_handle)) { LOG_ERROR("Failed to initialize vulkan instance"); }
+  else
+  {
+    LOG_INFO("Vulkan instance initialized");
+  }
 }
 
-void VulkanInstance::Initialize(Window* window_handle)
+bool VulkanInstance::Initialize(VulkanCapableWindow* window_handle)
 {
-  // TODO Add logging for initialization and destruction
-  auto vulkan_capable_window_ptr = dynamic_cast<VulkanCapableWindow*>(window_handle);
-
   VkApplicationInfo app_info {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.pApplicationName = application_name_;
@@ -36,7 +38,7 @@ void VulkanInstance::Initialize(Window* window_handle)
   create_info.pApplicationInfo = &app_info;
 
   VkDebugUtilsMessengerCreateInfoEXT debug_create_info {};
-  if (is_debug_)
+  if (use_debug_messenger_)
   {
     if (QueryValidationLayersSupport(validation_layer_names_))
     {
@@ -53,26 +55,52 @@ void VulkanInstance::Initialize(Window* window_handle)
     create_info.pNext = nullptr;
   }
 
-  std::vector<const char*> required_extensions = vulkan_capable_window_ptr->GetRequiredInstanceExtensions();
+  std::vector<const char*> required_extensions = window_handle->GetRequiredInstanceExtensions();
 
-  if (is_debug_) { required_extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME); }
+  if (use_debug_messenger_) { required_extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME); }
 
   create_info.enabledExtensionCount = static_cast<uint32_t>(required_extensions.size());
   create_info.ppEnabledExtensionNames = required_extensions.data();
 
-  if (vkCreateInstance(&create_info, nullptr, &instance_handle_) != VK_SUCCESS)
+  if (vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS)
   {
     LOG_ERROR("Failed to create Vulkan instance");
   }
 
-  if (is_debug_) { CreateDebugMessenger(instance_handle_, &debug_messenger_); }
+  if (use_debug_messenger_) { CreateDebugMessenger(instance_, &debug_messenger_); }
+
+  return instance_ != VK_NULL_HANDLE;
 }
 
 VulkanInstance::~VulkanInstance()
 {
-  if (debug_messenger_ != nullptr) { DestroyDebugUtilsMessengerEXT(instance_handle_, debug_messenger_, nullptr); }
+  if (debug_messenger_ != nullptr) { DestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr); }
 
-  vkDestroyInstance(instance_handle_, nullptr);
+  vkDestroyInstance(instance_, nullptr);
+  instance_ = VK_NULL_HANDLE;
+
+  LOG_INFO("Vulkan instance destroyed");
+}
+
+const VkInstance VulkanInstance::GetHandle() const noexcept
+{
+  return instance_;
+}
+
+const void VulkanInstance::PrintAvailableExtensions()
+{
+  uint32_t extension_count = 0;
+  vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr);
+
+  std::vector<VkExtensionProperties> extensions(extension_count);
+  vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data());
+
+  LOG_INFO("Available extensions:\n");
+  for (const auto& extension : extensions)
+  {
+    LOG_INFO("\t{}\n", extension.extensionName);
+  }
+  // std::cout.flush(); // Sometimes in CLion the console doesn't show anything in debug mode
 }
 
 void VulkanInstance::CreateDebugMessenger(VkInstance instance_handle, VkDebugUtilsMessengerEXT* debug_messenger_ptr)
@@ -163,7 +191,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::DebugMessengerCallback(
 
   return VK_FALSE; // returning VK_TRUE is for testing the validation layers themselves usually
 }
-
 VkResult VulkanInstance::CreateDebugUtilsMessengerEXT(VkInstance handle,
   const VkDebugUtilsMessengerCreateInfoEXT* create_info_ptr,
   const VkAllocationCallbacks* allocator_ptr,
@@ -181,7 +208,6 @@ VkResult VulkanInstance::CreateDebugUtilsMessengerEXT(VkInstance handle,
     return VK_ERROR_EXTENSION_NOT_PRESENT;
   }
 }
-
 void VulkanInstance::DestroyDebugUtilsMessengerEXT(
   VkInstance handle, VkDebugUtilsMessengerEXT debug_messenger, const VkAllocationCallbacks* allocator_ptr)
 {
@@ -193,6 +219,7 @@ void VulkanInstance::DestroyDebugUtilsMessengerEXT(
     destroy_debug_messenger_function_ptr(handle, debug_messenger, allocator_ptr);
   }
 }
+
 void VulkanInstance::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& create_info) noexcept
 {
   create_info = {};
