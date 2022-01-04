@@ -6,16 +6,22 @@ using namespace genebits::engine;
 
 namespace genebits::engine
 {
+
 template<typename... Components>
-class MySystem : public System<Entity, Components...>
+class MySystem : public System<Components...>
 {
 public:
   MySystem(size_t id) : id_(id) {}
 
-  void OnUpdate() override
+  void OnUpdate(JobHandle dependencies) override
   {
+    LOG_INFO("System {}: dependencies={}", id_, dependencies ? dependencies.Count() : 0);
 
-    LOG_INFO("System {}", id_);
+    auto job = new BasicJob([&]() { LOG_INFO("Running System Job {}", id_); });
+
+    JobHandle handle = this->GetScheduler().Schedule(job, dependencies);
+
+    this->SetJobHandle(handle);
   }
 
 private:
@@ -27,25 +33,21 @@ int main()
 {
   using namespace genebits::engine;
 
-  /*
   Registry<Entity> registry;
 
   registry.Create();
   registry.Create();
 
-
   ThreadPool pool;
 
   JobScheduler scheduler(pool);
 
-   */
+  SystemGroup group(&scheduler, &registry);
 
-  SystemGroup group;
-
-  MySystem<const int, float> system1(1);
-  MySystem<const int> system2(2);
-  MySystem<const float, int> system3(3);
-  MySystem<const int> system4(4);
+  MySystem<int> system1(1);
+  MySystem<const int, const float, double> system2(2);
+  MySystem<float, const int> system3(3);
+  MySystem<const int, const float, bool> system4(4);
 
   group.AddSystem(&system1);
   group.AddSystem(&system2);
