@@ -36,9 +36,37 @@ namespace
       }
     }
   }
+
+  void FindSyncDependencies(
+    std::set<SystemBase*>& solved, std::set<SystemBase*>& dependencies, std::vector<SystemBase*>& sync)
+  {
+    for (SystemBase* dependency : dependencies)
+    {
+      if (!solved.contains(dependency))
+      {
+        sync.push_back(dependency);
+        solved.insert(dependency);
+      }
+    }
+  }
 } // namespace
 
-void SystemGroup::UpdateSync()
+void SystemGroup::ComputeDependencies()
+{
+  for (auto it = systems_.rbegin(); it != systems_.rend(); ++it)
+  {
+    it->same_frame_dependencies.clear();
+    it->last_frame_dependencies.clear();
+
+    for (SystemDataAccess data : it->access)
+    {
+      FindDependencies(it + 1, systems_.rend(), it->same_frame_dependencies, data);
+      FindDependencies(systems_.rbegin(), it, it->last_frame_dependencies, data);
+    }
+  }
+}
+
+void SystemGroup::ComputeSynchronizations()
 {
   std::set<SystemBase*> solved;
 
@@ -46,28 +74,12 @@ void SystemGroup::UpdateSync()
   {
     it->sync.clear();
 
-    for (SystemBase* dependency : it->dependencies)
-    {
-      if (!solved.contains(dependency))
-      {
-        it->sync.push_back(dependency);
-        solved.insert(dependency);
-      }
-    }
+    FindSyncDependencies(solved, it->same_frame_dependencies, it->sync);
   }
-}
 
-void SystemGroup::UpdateDependencies()
-{
-  for (auto it = systems_.rbegin(); it != systems_.rend(); ++it)
+  for (auto it = systems_.begin(); it != systems_.end(); ++it)
   {
-    it->dependencies.clear();
-
-    for (SystemDataAccess data : it->access)
-    {
-      FindDependencies(it + 1, systems_.rend(), it->dependencies, data);
-      FindDependencies(systems_.rbegin(), it, it->dependencies, data);
-    }
+    FindSyncDependencies(solved, it->last_frame_dependencies, it->sync);
   }
 }
 

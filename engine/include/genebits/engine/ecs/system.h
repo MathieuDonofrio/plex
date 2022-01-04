@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_ECS_SYSTEM_H
 
 #include "genebits/engine/debug/assertion.h"
+#include "genebits/engine/debug/logging.h"
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/registry.h"
 #include "genebits/engine/parallel/job.h"
@@ -21,45 +22,77 @@ struct SystemDataAccess
   bool read_only;
 };
 
+template<typename... Components>
+class System;
+
+class SystemGroup;
+
 class SystemBase
 {
 public:
-  virtual void OnUpdate() = 0;
+  virtual ~SystemBase() = default;
+
+  virtual void OnUpdate(JobHandle dependencies) = 0;
 
   virtual std::vector<SystemDataAccess> GetDataAccess() = 0;
 
-  virtual JobHandle GetJobHandle() = 0;
+  constexpr void SetJobHandle(JobHandle handle) noexcept
+  {
+    handle_ = handle;
+  }
+
+  [[nodiscard]] constexpr JobHandle& GetJobHandle() noexcept
+  {
+    return handle_;
+  }
+
+  [[nodiscard]] constexpr JobScheduler& GetScheduler() noexcept
+  {
+    return *scheduler_;
+  }
+
+private:
+  friend SystemGroup;
+
+  template<typename... Components>
+  friend class System;
+
+  Registry<Entity>* registry_;
+  JobScheduler* scheduler_;
+
+  JobHandle handle_;
 };
 
 class SystemGroup
 {
 public:
-  SystemGroup() : systems_(false) {}
+  SystemGroup(JobScheduler* job_scheduler, Registry<Entity>* registry)
+    : job_scheduler_(job_scheduler), registry_(registry)
+  {}
 
   void Run()
   {
-    if (modified_) Compile();
-
-    for (const SystemInfo& info : systems_)
+    for (SystemInfo& info : systems_)
     {
-      for (SystemBase* dependency : info.sync)
-      {
-        JobHandle handle = dependency->GetJobHandle();
+      JobHandle dependencies = GetDependencies(info);
 
-        if (handle) handle.Complete();
-      }
+      info.system->OnUpdate(dependencies);
+    }
+  }
 
-      info.system->OnUpdate();
+  void ForceComplete()
+  {
+    for (auto it = systems_.rbegin(); it != systems_.rend(); ++it)
+    {
+      it->system->GetJobHandle().Complete();
     }
   }
 
   void Compile()
   {
-    UpdateDependencies();
+    ComputeDependencies();
 
-    UpdateSync();
-
-    modified_ = false;
+    ComputeSynchronizations();
   }
 
   void AddSystem(SystemBase* system)
@@ -69,9 +102,9 @@ public:
     info.system = system;
     info.access = system->GetDataAccess();
 
-    systems_.push_back(std::move(info));
+    InitializeSystem(system);
 
-    modified_ = true;
+    systems_.push_back(std::move(info));
   }
 
   [[nodiscard]] constexpr size_t Count() noexcept
@@ -86,21 +119,51 @@ private:
 
     std::vector<SystemDataAccess> access;
 
-    std::set<SystemBase*> dependencies;
+    std::set<SystemBase*> same_frame_dependencies;
+    std::set<SystemBase*> last_frame_dependencies;
+
     std::vector<SystemBase*> sync;
   };
 
-  void UpdateSync();
+  JobHandle GetDependencies(SystemInfo& info)
+  {
+    JobHandle dependencies;
 
-  void UpdateDependencies();
+    for (auto it = info.sync.begin(); it != info.sync.end(); ++it)
+    {
+      JobHandle other = (*it)->GetJobHandle();
+
+      if (dependencies)
+      {
+        if (other) dependencies.Combine(other);
+      }
+      else
+      {
+        dependencies = other;
+      }
+    }
+
+    return dependencies;
+  }
+
+  void InitializeSystem(SystemBase* system)
+  {
+    system->registry_ = registry_;
+    system->scheduler_ = job_scheduler_;
+  }
+
+  void ComputeDependencies();
+
+  void ComputeSynchronizations();
 
 private:
-  std::vector<SystemInfo> systems_;
+  JobScheduler* job_scheduler_;
+  Registry<Entity>* registry_;
 
-  bool modified_;
+  std::vector<SystemInfo> systems_;
 };
 
-template<typename Entity, typename... Components>
+template<typename... Components>
 class System : public SystemBase
 {
 public:
@@ -113,32 +176,10 @@ public:
     return access;
   }
 
-  JobHandle GetJobHandle() final
-  {
-    return job_handle_;
-  }
-
-  void MarkSystemJobHandle(JobHandle handle) noexcept
-  {
-    job_handle_ = handle;
-  }
-
   PolyView<Entity, Components...> GetView()
   {
-    return registry_->View();
+    return registry_->template View<Components...>();
   }
-
-  JobScheduler& GetScheduler() noexcept
-  {
-    return *scheduler_;
-  }
-
-private:
-  // TODO Initialization
-  JobScheduler* scheduler_;
-  Registry<Entity>* registry_;
-
-  JobHandle job_handle_;
 };
 
 // JOBS
@@ -153,7 +194,12 @@ public:
     task_.Executor().template Bind<EntitiesJob, &EntitiesJob::UpdateAll>(this);
   }
 
-  constexpr TaskList GetTasks() noexcept override
+  void Wait() noexcept final
+  {
+    task_.Wait();
+  }
+
+  constexpr TaskList GetTasks() noexcept final
   {
     return { &task_, &task_ + 1 };
   }
