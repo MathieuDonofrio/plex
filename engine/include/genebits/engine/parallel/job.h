@@ -13,12 +13,56 @@ public:
   virtual ~JobBase() = default;
 
   virtual TaskList GetTasks() = 0;
+
+  virtual void Wait() = 0;
 };
 
-struct JobGroup
+class JobGroup
 {
-  JobBase* jobs[64];
-  size_t count;
+public:
+  static constexpr size_t cMaxJobs = 64;
+
+  void Combine(JobGroup* other)
+  {
+    ASSERT(other, "Job group is nullptr");
+    ASSERT(count_ + other->count_ <= cMaxJobs, "Job handles cannot contain more than 64 jobs");
+
+    std::uninitialized_copy(other->jobs_, other->jobs_ + other->count_, jobs_ + count_);
+
+    count_ += other->count_;
+  }
+
+  void Wait()
+  {
+    const auto last = jobs_ - 1;
+
+    for (auto first = last + count_; first != last; --first)
+    {
+      (*first)->Wait();
+    }
+  }
+
+  constexpr void PushBack(JobBase* job)
+  {
+    ASSERT(count_ < cMaxJobs, "Job group full");
+
+    jobs_[count_++] = job;
+  }
+
+  constexpr void ClearAndPushBack(JobBase* job)
+  {
+    jobs_[0] = job;
+    count_ = 1;
+  }
+
+  constexpr size_t Count() const
+  {
+    return count_;
+  }
+
+private:
+  JobBase* jobs_[cMaxJobs];
+  size_t count_;
 };
 
 class JobScheduler;
@@ -30,11 +74,18 @@ public:
 
   constexpr JobHandle(JobGroup* group, JobScheduler* scheduler) noexcept : group_(group), scheduler_(scheduler) {}
 
+  void Combine(JobHandle handle);
+
   void Complete();
+
+  [[nodiscard]] constexpr size_t Count() const noexcept
+  {
+    return group_->Count();
+  }
 
   [[nodiscard]] constexpr operator bool() const noexcept
   {
-    return group_;
+    return group_ != nullptr;
   }
 
 private:
@@ -49,52 +100,64 @@ class JobScheduler
 public:
   constexpr explicit JobScheduler(ThreadPool& pool) noexcept : pool_(pool) {}
 
+  ~JobScheduler()
+  {
+    DestroyJobGroups();
+  }
+
+  [[nodiscard]] JobHandle Schedule(JobBase* job, JobHandle dependencies)
+  {
+    JobHandle handle = CreateJobHandle(job);
+
+    Complete(dependencies);
+
+    SumbitJobTasks(job);
+
+    return handle;
+  }
+
   [[nodiscard]] JobHandle Schedule(JobBase* job)
   {
-    TaskList tasks = job->GetTasks();
+    JobHandle handle = CreateJobHandle(job);
 
-    pool_.EnqueueAll(tasks.first, tasks.last);
+    SumbitJobTasks(job);
 
-    JobGroup* group = GetJobGroup();
+    return handle;
+  }
 
-    group->jobs[0] = job;
-    group->count = 1;
+  JobHandle CombineJobHandles(JobHandle handle, JobHandle other)
+  {
+    handle.group_->Combine(other.group_);
 
-    return JobHandle { group, this };
+    DestroyJobHandle(other);
+
+    return handle;
   }
 
   void Complete(JobHandle handle)
   {
-    // Greedy complete. Start with last added task.
+    if (!handle) return;
 
-    JobBase** end = handle.group_->jobs - 1;
-    JobBase** begin = end + handle.group_->count;
+    handle.group_->Wait();
 
-    for (; begin != end; --begin)
-    {
-      TaskList tasks = (*begin)->GetTasks();
-
-      for (; tasks.first != tasks.last; ++tasks.first)
-      {
-        tasks.first->Wait();
-      }
-    }
-
-    recycled_job_groups_.PushBack(handle.group_);
-  }
-
-  JobHandle CombineJobHandles(JobHandle h1, JobHandle h2)
-  {
-    std::uninitialized_copy(h2.group_->jobs, h2.group_->jobs + h2.group_->count, h1.group_->jobs + h1.group_->count);
-
-    h1.group_->count += h2.group_->count;
-
-    recycled_job_groups_.PushBack(h2.group_);
-
-    return h1;
+    DestroyJobHandle(handle);
   }
 
 private:
+  JobHandle CreateJobHandle(JobBase* job)
+  {
+    JobGroup* group = GetJobGroup();
+
+    group->ClearAndPushBack(job);
+
+    return JobHandle { group, this };
+  }
+
+  void DestroyJobHandle(JobHandle handle)
+  {
+    recycled_job_groups_.PushBack(handle.group_);
+  }
+
   JobGroup* GetJobGroup()
   {
     if (!recycled_job_groups_.Empty())
@@ -108,11 +171,93 @@ private:
     return new JobGroup();
   }
 
+  void SumbitJobTasks(JobBase* job)
+  {
+    TaskList tasks = job->GetTasks();
+
+    pool_.EnqueueAll(tasks.first, tasks.last);
+  }
+
+  void DestroyJobGroups()
+  {
+    for (JobGroup* group : recycled_job_groups_)
+    {
+      delete group;
+    }
+  }
+
 private:
   ThreadPool& pool_;
 
-  FastVector<JobGroup*> recycled_job_groups_; // TODO Handle mem leak
+  FastVector<JobGroup*> recycled_job_groups_;
 };
+
+template<typename Function>
+concept BasicJobFunction = requires(Function function)
+{
+  function();
+};
+
+template<BasicJobFunction Function>
+class BasicJob : public JobBase
+{
+public:
+  constexpr explicit BasicJob(Function executor) noexcept : task_(std::move(executor))
+  {
+    task_.Executor().template Bind([this]() { task_.executor_(); });
+  }
+
+  void Wait() noexcept final
+  {
+    task_.Wait();
+  }
+
+  constexpr TaskList GetTasks() noexcept final
+  {
+    return { &task_, &task_ + 1 };
+  }
+
+private:
+  class DataTask : public Task
+  {
+  public:
+    constexpr DataTask(Function&& executor) : executor_(executor) {}
+
+  private:
+    Function executor_;
+  };
+
+  DataTask task_;
+};
+
+template<BasicJobFunction Function>
+requires DelegateInvocable<Function, void>
+class BasicJob<Function> : public JobBase
+{
+public:
+  constexpr explicit BasicJob(Function executor) noexcept
+  {
+    task_.Executor().Bind(std::move(executor));
+  }
+
+  void Wait() noexcept final
+  {
+    task_.Wait();
+  }
+
+  constexpr TaskList GetTasks() noexcept final
+  {
+    return { &task_, &task_ + 1 };
+  }
+
+private:
+  Task task_;
+};
+
+inline void JobHandle::Combine(JobHandle handle)
+{
+  scheduler_->CombineJobHandles(*this, handle);
+}
 
 inline void JobHandle::Complete()
 {
