@@ -192,66 +192,175 @@ private:
   FastVector<JobGroup*> recycled_job_groups_;
 };
 
-template<typename Function>
-concept BasicJobFunction = requires(Function function)
-{
-  function();
-};
-
-template<BasicJobFunction Function>
-class BasicJob : public JobBase
+template<typename Functor>
+class BasicJob : public JobBase, private Task
 {
 public:
-  constexpr explicit BasicJob(Function executor) noexcept : task_(std::move(executor))
+  constexpr BasicJob() : Task()
   {
-    task_.Executor().template Bind([this]() { task_.executor_(); });
+    static_assert(std::is_base_of_v<BasicJob, Functor>);
+
+    Executor().template Bind<Functor, &Functor::operator()>(static_cast<Functor*>(this));
   }
 
   void Wait() noexcept final
   {
-    task_.Wait();
+    Task::Wait();
   }
 
   constexpr TaskList GetTasks() noexcept final
   {
-    return { &task_, &task_ + 1 };
+    return { static_cast<Task*>(this), static_cast<Task*>(this) + 1 };
+  }
+};
+
+template<typename Functor>
+class BasicLambdaJob : public BasicJob<BasicLambdaJob<Functor>>
+{
+public:
+  BasicLambdaJob(Functor functor) : BasicJob<BasicLambdaJob<Functor>>(), functor_(std::move(functor)) {}
+
+  void operator()()
+  {
+    functor_();
   }
 
 private:
-  class DataTask : public Task
-  {
-  public:
-    constexpr DataTask(Function&& executor) : executor_(executor) {}
+  Functor functor_;
+};
 
-  private:
-    Function executor_;
+template<typename Functor>
+class ParallelForJob : public JobBase
+{
+public:
+  ParallelForJob(size_t amount, size_t batches)
+  {
+    static_assert(std::is_base_of_v<ParallelForJob<Functor>, Functor>);
+
+    CreateBatchTasks(amount, batches);
+  }
+
+  ParallelForJob(size_t amount) : ParallelForJob(amount, cMaxBatches) {}
+
+  void Wait() noexcept final
+  {
+    // Greedy wait. Waits for the last task first.
+    // This assumes that the last task was enqueued last and that work is well-balanced between all tasks.
+
+    const auto last = tasks_ - 1;
+
+    for (auto first = last + task_count_; first != last; --first)
+    {
+      first->Wait();
+    }
+  }
+
+  constexpr TaskList GetTasks() noexcept final
+  {
+    return { tasks_, tasks_ + task_count_ };
+  }
+
+private:
+  static constexpr size_t cMaxBatches = 8;
+
+  struct ParallelForJobTask : public Task
+  {
+    size_t start;
+    size_t end;
   };
 
-  DataTask task_;
-};
-
-template<BasicJobFunction Function>
-requires DelegateInvocable<Function, void>
-class BasicJob<Function> : public JobBase
-{
-public:
-  constexpr explicit BasicJob(Function executor) noexcept
+  template<int N>
+  struct BatchTaskBuilder
   {
-    task_.Executor().Bind(std::move(executor));
+    void BuildAll(ParallelForJob* job, size_t batches, size_t batch_size, size_t batch_remainder)
+    {
+      job->CreateBatchTask<N - 1>(batches, batch_size, batch_remainder);
+      BatchTaskBuilder<N - 1>().BuildAll(job, batches, batch_size, batch_remainder);
+    }
+  };
+
+  template<>
+  struct BatchTaskBuilder<0>
+  {
+    void BuildAll(ParallelForJob*, size_t, size_t, size_t) {}
+  };
+
+  void CreateBatchTasks(size_t amount_elements, size_t preferred_batches)
+  {
+    static const size_t processors = GetAmountPhysicalProcessors();
+
+    const size_t batch_hint = processors == 0 ? preferred_batches : std::min(processors, preferred_batches);
+
+    const size_t batches = amount_elements < batch_hint ? amount_elements : batch_hint;
+    const size_t batch_size = amount_elements / batches;
+    const size_t batch_remainder = amount_elements % batches;
+
+    task_count_ = batches;
+
+    BatchTaskBuilder<cMaxBatches>().BuildAll(this, batches, batch_size, batch_remainder);
   }
 
-  void Wait() noexcept final
+  template<size_t TaskIndex>
+  void CreateBatchTask(size_t batches, size_t batch_size, size_t batch_remainder)
   {
-    task_.Wait();
+    ParallelForJobTask& task_ = tasks_[TaskIndex];
+
+    if (TaskIndex < batches)
+    {
+      if (TaskIndex < batch_remainder)
+      {
+        task_.start = TaskIndex * batch_size + TaskIndex;
+        task_.end = task_.start + batch_size + 1;
+      }
+      else
+      {
+        task_.start = TaskIndex * batch_size + batch_remainder;
+        task_.end = task_.start + batch_size;
+      }
+
+      task_.Executor().template Bind<ParallelForJob, &ParallelForJob::TaskExecute<TaskIndex>>(this);
+    }
+    else
+    {
+      task_.template Finish<false>();
+    }
   }
 
-  constexpr TaskList GetTasks() noexcept final
+  template<size_t TaskIndex>
+  void TaskExecute()
   {
-    return { &task_, &task_ + 1 };
+    ParallelForJobTask& task_ = tasks_[TaskIndex];
+
+    for (size_t i = task_.start; i != task_.end; ++i)
+    {
+      static_cast<Functor*>(this)->operator()(i);
+    }
   }
 
 private:
-  Task task_;
+  ParallelForJobTask tasks_[cMaxBatches];
+  size_t task_count_;
+};
+
+template<typename Functor>
+class ParallelForLambdaJob : public ParallelForJob<ParallelForLambdaJob<Functor>>
+{
+public:
+  ParallelForLambdaJob(Functor functor, size_t amount, size_t batches)
+    : ParallelForJob<ParallelForLambdaJob<Functor>>(amount, batches), functor_(std::move(functor))
+  {}
+
+  ParallelForLambdaJob(Functor functor, size_t amount)
+    : ParallelForJob<ParallelForLambdaJob<Functor>>(amount), functor_(std::move(functor))
+  {}
+
+  void operator()(size_t index)
+  {
+    functor_(index);
+  }
+
+private:
+  Functor functor_;
 };
 
 inline void JobHandle::Combine(JobHandle handle)
