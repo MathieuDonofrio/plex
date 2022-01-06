@@ -129,12 +129,16 @@ public:
   ///
   /// Sets the state of the task to finished and notifies all waiting threads.
   ///
+  /// @tparam Notify Whether or not notifications can be sent.
+  ///
+  template<bool Notify = true>
   void Finish()
   {
     ASSERT(!flag_.load(std::memory_order_relaxed), "Task already finished");
 
     flag_.store(true, std::memory_order_relaxed);
-    flag_.notify_all();
+
+    if constexpr (Notify) flag_.notify_all();
   }
 
   ///
@@ -157,7 +161,7 @@ public:
     return flag_.load(std::memory_order_relaxed);
   }
 
-private:
+protected:
   friend class TaskQueue;
 
   TaskExecutor executor_;

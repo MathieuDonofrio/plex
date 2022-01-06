@@ -63,6 +63,8 @@ public:
   {
     mutex_.lock();
 
+    ASSERT(running_, "Cannot enqueue task when thread pool not running");
+
     while (first != last)
     {
       tasks_.Push(first++);
@@ -84,6 +86,8 @@ public:
   void Enqueue(Task* task)
   {
     mutex_.lock();
+
+    ASSERT(running_, "Cannot enqueue task when thread pool not running");
 
     tasks_.Push(task);
 
@@ -211,7 +215,13 @@ private:
       threads_[i].join();
     }
 
+#ifndef NDEBUG
+    mutex_.lock();
+
     ASSERT(tasks_.Empty(), "There are still tasks");
+
+    mutex_.unlock();
+#endif
 
     delete[] threads_;
   }
