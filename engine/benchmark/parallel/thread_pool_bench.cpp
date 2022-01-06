@@ -7,42 +7,28 @@
 
 #include "genebits/engine/util/fast_vector.h"
 
+#include "fake_work.h"
+
 namespace genebits::engine::bench
 {
-void Work(const int amount)
-{
-  uint64_t seed = static_cast<uint64_t>(time(nullptr));
 
-  benchmark::DoNotOptimize(seed);
-
-  benchmark::ClobberMemory();
-
-  uint64_t state = seed;
-
-  for (size_t i = 0; i < amount; i++)
-  {
-    auto old = state;
-
-    state = old * 1664525 + 1013904223;
-
-    state ^= old;
-
-    benchmark::DoNotOptimize(state);
-  }
-
-  benchmark::DoNotOptimize(state);
-
-  benchmark::ClobberMemory();
-}
-
-static void ThreadPool_Schedule_Wait_NoWorkOverhead(benchmark::State& state)
+static void ThreadPool_Schedule_Wait_NoWork(benchmark::State& state)
 {
   ThreadPool pool;
+
+  time_t t = std::time(nullptr);
 
   for (auto _ : state)
   {
     Task task;
-    task.Executor().Bind([]() { benchmark::ClobberMemory(); });
+    task.Executor().Bind(
+      [&t]()
+      {
+        std::this_thread::yield();
+        t++;
+        benchmark::DoNotOptimize(t);
+        benchmark::ClobberMemory();
+      });
     pool.Enqueue(&task);
 
     task.Wait();
@@ -51,16 +37,25 @@ static void ThreadPool_Schedule_Wait_NoWorkOverhead(benchmark::State& state)
   }
 }
 
-BENCHMARK(ThreadPool_Schedule_Wait_NoWorkOverhead);
+BENCHMARK(ThreadPool_Schedule_Wait_NoWork);
 
-static void ThreadPool_Schedule_Poll_NoWorkOverhead(benchmark::State& state)
+static void ThreadPool_Schedule_Poll_NoWork(benchmark::State& state)
 {
   ThreadPool pool;
+
+  time_t t = std::time(nullptr);
 
   for (auto _ : state)
   {
     Task task;
-    task.Executor().Bind([]() { benchmark::ClobberMemory(); });
+    task.Executor().Bind(
+      [&t]()
+      {
+        std::this_thread::yield();
+        t++;
+        benchmark::DoNotOptimize(t);
+        benchmark::ClobberMemory();
+      });
     pool.Enqueue(&task);
 
     task.Poll();
@@ -69,7 +64,7 @@ static void ThreadPool_Schedule_Poll_NoWorkOverhead(benchmark::State& state)
   }
 }
 
-BENCHMARK(ThreadPool_Schedule_Poll_NoWorkOverhead);
+BENCHMARK(ThreadPool_Schedule_Poll_NoWork);
 
 static void ThreadPool_STD_ThreadCreation(benchmark::State& state)
 {
@@ -85,7 +80,7 @@ static void ThreadPool_STD_ThreadCreation(benchmark::State& state)
 
 BENCHMARK(ThreadPool_STD_ThreadCreation);
 
-static void ThreadPool_STD_Async_NoWorkOverhead(benchmark::State& state)
+static void ThreadPool_STD_Async_NoWork(benchmark::State& state)
 {
   for (auto _ : state)
   {
@@ -97,7 +92,7 @@ static void ThreadPool_STD_Async_NoWorkOverhead(benchmark::State& state)
   }
 }
 
-BENCHMARK(ThreadPool_STD_Async_NoWorkOverhead);
+BENCHMARK(ThreadPool_STD_Async_NoWork);
 
 static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state)
 {

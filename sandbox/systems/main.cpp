@@ -17,7 +17,7 @@ public:
   {
     LOG_INFO("System {}: dependencies={}", id_, dependencies ? dependencies.Count() : 0);
 
-    auto job = new BasicJob([&]() { LOG_INFO("Running System Job {}", id_); });
+    auto job = new BasicLambdaJob([&]() { LOG_INFO("Running System Job: {}", id_); });
 
     JobHandle handle = this->GetScheduler().Schedule(job, dependencies);
 
