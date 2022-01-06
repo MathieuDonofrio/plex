@@ -4,6 +4,82 @@
 
 namespace genebits::engine::tests
 {
+TEST(BasicJob_Tests, Wait_SingleExecute_Compleated)
+{
+  ThreadPool pool;
+
+  std::atomic<int> counter = 0;
+
+  LambdaJob<BasicJob> job { [&counter]()
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      counter++;
+    } };
+
+  TaskList tasks = job.GetTasks();
+
+  pool.EnqueueAll(tasks.first, tasks.last);
+
+  job.Wait();
+
+  EXPECT_EQ(counter.load(), 1);
+}
+
+TEST(BasicJob_Tests, Wait_IndirectExecute_Compleated)
+{
+  ThreadPool pool;
+
+  std::atomic<int> counter = 0;
+
+  void* dummy = nullptr; // Makes the lambda bigger in order to trigger second constructor.
+
+  BasicLambdaJob job { [&counter, dummy]()
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      counter++;
+    } };
+
+  TaskList tasks = job.GetTasks();
+
+  pool.EnqueueAll(tasks.first, tasks.last);
+
+  job.Wait();
+
+  EXPECT_EQ(counter.load(), 1);
+}
+
+TEST(ParallelForJob_Tests, Wait_Execute_Compleated)
+{
+  ThreadPool pool;
+
+  static constexpr size_t amount = 100;
+
+  std::array<std::atomic<int>, amount> access {};
+  std::atomic<int> counter = 0;
+
+  ParallelForLambdaJob job { [&counter, &access](size_t index)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+      access[index]++;
+      counter++;
+    },
+    amount };
+
+  TaskList tasks = job.GetTasks();
+
+  pool.EnqueueAll(tasks.first, tasks.last);
+
+  job.Wait();
+
+  EXPECT_EQ(counter.load(), amount);
+
+  for (size_t i = 0; i < amount; i++)
+  {
+    EXPECT_EQ(access[i].load(), 1);
+  }
+}
+
 TEST(JobScheduler_Tests, Schedule_SingleBasicJob_Executed)
 {
   ThreadPool pool;
@@ -12,7 +88,7 @@ TEST(JobScheduler_Tests, Schedule_SingleBasicJob_Executed)
 
   std::atomic<bool> flag = false;
 
-  BasicJob job { [&flag]()
+  BasicLambdaJob job { [&flag]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       flag = true;
@@ -33,13 +109,13 @@ TEST(JobScheduler_Tests, Schedule_WithDependency_ExecutedInOrder)
 
   std::atomic<int> test_value = 0;
 
-  BasicJob job1 { [&test_value]()
+  BasicLambdaJob job1 { [&test_value]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       test_value = 99;
     } };
 
-  BasicJob job2 { [&test_value]() { test_value = 10; } };
+  BasicLambdaJob job2 { [&test_value]() { test_value = 10; } };
 
   JobHandle handle1 = scheduler.Schedule(&job1);
 
@@ -59,13 +135,13 @@ TEST(JobScheduler_Tests, CombineJobHandles_TwoJobs_BothCompleted)
   std::atomic<int> test_value1 = 0;
   std::atomic<int> test_value2 = 0;
 
-  BasicJob job1 { [&test_value1]()
+  BasicLambdaJob job1 { [&test_value1]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       test_value1 = 99;
     } };
 
-  BasicJob job2 { [&test_value2]() { test_value2 = 10; } };
+  BasicLambdaJob job2 { [&test_value2]() { test_value2 = 10; } };
 
   JobHandle handle = scheduler.CombineJobHandles(scheduler.Schedule(&job2), scheduler.Schedule(&job1));
 
