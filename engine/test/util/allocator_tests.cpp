@@ -657,4 +657,199 @@ TEST(Allocator_Tests, Segregator_Owns_Large)
 
   allocator.Deallocate(block);
 }
+
+TEST(Allocator_Tests, Freelist_Allocate_NothingRecycled)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  allocate_call[1] = false;
+
+  Block block = allocator.Allocate(256);
+
+  EXPECT_TRUE(allocate_call[1]);
+
+  allocator.Deallocate(block);
+}
+
+TEST(Allocator_Tests, Freelist_Deallocate_MaxSize)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  deallocate_call[1] = false;
+
+  Block block = allocator.Allocate(256);
+
+  allocator.Deallocate(block);
+
+  EXPECT_FALSE(deallocate_call[1]);
+}
+
+TEST(Allocator_Tests, Freelist_Deallocate_MinSize)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  deallocate_call[1] = false;
+
+  Block block = allocator.Allocate(128);
+
+  allocator.Deallocate(block);
+
+  EXPECT_TRUE(deallocate_call[1]);
+}
+
+TEST(Allocator_Tests, Freelist_Deallocate_Large)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  deallocate_call[1] = false;
+
+  Block block = allocator.Allocate(512);
+
+  allocator.Deallocate(block);
+
+  EXPECT_TRUE(deallocate_call[1]);
+}
+
+TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycled)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  allocator.Deallocate(allocator.Allocate(256));
+
+  allocate_call[1] = false;
+
+  Block block = allocator.Allocate(256);
+
+  EXPECT_FALSE(allocate_call[1]);
+}
+
+TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycledMinSize)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  allocator.Deallocate(allocator.Allocate(256));
+
+  allocate_call[1] = false;
+
+  Block block = allocator.Allocate(128);
+
+  EXPECT_FALSE(allocate_call[1]);
+}
+
+TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycledButToBigSize)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  allocator.Deallocate(allocator.Allocate(256));
+
+  allocate_call[1] = false;
+
+  Block block = allocator.Allocate(512);
+
+  EXPECT_TRUE(allocate_call[1]);
+
+  allocator.Deallocate(block);
+}
+
+TEST(Allocator_Tests, Freelist_Reallocate_NothingRecycled)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  reallocate_call[1] = false;
+
+  Block block = allocator.Allocate(128);
+  allocator.Reallocate(block, 256);
+
+  EXPECT_TRUE(reallocate_call[1]);
+
+  allocator.Deallocate(block);
+}
+
+TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycled)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  Block t1 = allocator.Allocate(256);
+  Block t2 = allocator.Allocate(256);
+
+  allocator.Deallocate(t1);
+  allocator.Deallocate(t2);
+
+  reallocate_call[1] = false;
+
+  Block block = allocator.Allocate(128);
+  allocator.Reallocate(block, 256);
+
+  EXPECT_FALSE(reallocate_call[1]);
+
+  allocator.Deallocate(block);
+}
+
+TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycledLargeSize)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  Block t1 = allocator.Allocate(256);
+  Block t2 = allocator.Allocate(256);
+
+  allocator.Deallocate(t1);
+  allocator.Deallocate(t2);
+
+  reallocate_call[1] = false;
+
+  Block block = allocator.Allocate(128);
+  allocator.Reallocate(block, 512);
+
+  EXPECT_TRUE(reallocate_call[1]);
+
+  allocator.Deallocate(block);
+}
+
+TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycledSmallSize)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  Block t1 = allocator.Allocate(256);
+  Block t2 = allocator.Allocate(256);
+
+  allocator.Deallocate(t1);
+  allocator.Deallocate(t2);
+
+  reallocate_call[1] = false;
+
+  Block block = allocator.Allocate(128);
+  allocator.Reallocate(block, 64);
+
+  EXPECT_TRUE(reallocate_call[1]);
+
+  allocator.Deallocate(block);
+}
+
+TEST(Allocator_Tests, Freelist_Owns_MaxSize)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  owns_call[1] = false;
+
+  Block block = allocator.Allocate(256);
+
+  EXPECT_TRUE(allocator.Owns(block));
+  EXPECT_FALSE(owns_call[1]);
+
+  allocator.Deallocate(block);
+}
+
+TEST(Allocator_Tests, Freelist_Owns_MinSize)
+{
+  Freelist<MockAllocator<1>, 128, 256> allocator;
+
+  owns_call[1] = false;
+
+  Block block = allocator.Allocate(128);
+
+  EXPECT_TRUE(allocator.Owns(block));
+  EXPECT_TRUE(owns_call[1]);
+
+  allocator.Deallocate(block);
+}
 } // namespace genebits::engine::tests

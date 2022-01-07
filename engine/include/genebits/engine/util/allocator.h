@@ -464,14 +464,178 @@ public:
 
   ///
   /// Returns whether or not the allocator has ownership on this block of memory. Checks
+  /// if the parent correct parent allocator owns this block.
+  ///
+  /// @return True if allocator owns block, false otherwise.
+  ///
+  [[nodiscard]] constexpr bool Owns(const Block block)
+  {
+    if (block.size <= Threshold) return SmallAllocator::Owns(block);
+    else
+    {
+      return LargeAllocator::Owns(block);
+    }
+  }
+};
+
+///
+/// Allocator that constructs a list of blocks of memory for reuse. If the block of memory does not fall
+/// within the size range, this allocator will fallback to parent allocator.
+///
+/// @tparam Parent  The parent allocator
+/// @tparam MinSize The minimum size of allocation for this allocator.
+/// @tparam MaxSize The maximum size of allocation for this allocator.
+///
+template<Allocator Parent, size_t MinSize, size_t MaxSize>
+requires(MaxSize != 0 && MinSize <= MaxSize) class Freelist : private Parent
+{
+public:
+  ///
+  /// Default constructor.
+  ///
+  constexpr Freelist() : root_(nullptr) {};
+
+  ~Freelist()
+  {
+    while (root_)
+    {
+      Block block = Obtain(MaxSize);
+
+      Parent::Deallocate(block);
+    }
+  }
+
+  ///
+  /// Allocates and returns a block of memory for the size. Returns nullptr in block if allocation
+  /// was not successful.
+  ///
+  /// If the size is smaller or equal to the threshold, the small allocator will be used, otherwise
+  /// the large allocator will be used.
+  ///
+  /// @param size[in] Size in bytes to allocate.
+  ///
+  /// @return Allocated block. If failed, block memory pointer will be nullptr.
+  ///
+  [[nodiscard]] Block Allocate(const size_t size)
+  {
+    if (root_ && IsSizeTolerated(size)) return Obtain(size);
+
+    return Parent::Allocate(size);
+  }
+
+  ///
+  /// Deallocates a block of memory previously allocated by this allocator.
+  ///
+  /// If the block size is smaller than the threshold, the small allocator will be used, otherwise
+  /// the large allocator will be used.
+  ///
+  /// @param[in] block Allocated block to deallocate
+  ///
+  void Deallocate(const Block block)
+  {
+    if (block.size == MaxSize) Recycle(block);
+    else
+    {
+      Parent::Deallocate(block);
+    }
+  }
+
+  ///
+  /// Reallocates a block of memory for the size. If allocation failed, does not change old block and
+  /// returns false.
+  ///
+  /// If the size is tolerated will try to use a block from the freelist, otherwise will use the parent reallocate.
+  ///
+  /// @param[in, out] block Allocated block to reallocate
+  /// @param[in]      size Size to reallocate to.
+  ///
+  /// @return True if reallocation is successful, false otherwise.
+  ///
+  bool Reallocate(Block& block, const size_t size)
+  {
+    if (root_ && IsSizeTolerated(size))
+    {
+      Block new_block = Obtain(size);
+
+      const size_t copy_size = block.size < size ? block.size : size;
+
+      std::memcpy(new_block.ptr, block.ptr, copy_size);
+
+      Deallocate(block);
+
+      block = new_block;
+
+      return true;
+    }
+
+    return Parent::Reallocate(block, size);
+  }
+
+  ///
+  /// Returns whether or not the allocator has ownership on this block of memory. Checks
   /// if any of the two allocators owns this block.
   ///
   /// @return True if allocator owns block, false otherwise.
   ///
   [[nodiscard]] bool Owns(const Block block)
   {
-    return SmallAllocator::Owns(block) || LargeAllocator::Owns(block);
+    return block.size == MaxSize || Parent::Owns(block);
   }
+
+private:
+  ///
+  /// Returns whether or not the size is tolerated for this freelist.
+  ///
+  /// @param[in] size Size to check.
+  ///
+  /// @return True if size is tolerated, false otherwise.
+  ///
+  [[nodiscard]] constexpr bool IsSizeTolerated(const size_t size) noexcept
+  {
+    if constexpr (MinSize == MaxSize) return size == MaxSize;
+    else
+    {
+      return size >= MinSize && size <= MaxSize;
+    }
+  }
+
+  ///
+  /// Pop's the first node in the freelist and creates a block.
+  ///
+  /// Freelist must not be empty and size must be within tolerance.
+  ///
+  /// @param[in] size Size of the block.
+  ///
+  /// @return Block with last node and specified size.
+  ///
+  [[nodiscard]] constexpr Block Obtain(const size_t size) noexcept
+  {
+    Block block { reinterpret_cast<char*>(root_), size };
+    root_ = root_->next;
+    return block;
+  }
+
+  ///
+  /// Add the the block of memory to the beginning of the freelist.
+  ///
+  /// Block size must be same at MaxSize.
+  ///
+  /// @param[in] block Block to recyle.
+  ///
+  [[nodiscard]] constexpr void Recycle(const Block block) noexcept
+  {
+    auto node = reinterpret_cast<Node*>(block.ptr);
+    node->next = root_;
+    root_ = node;
+  }
+
+private:
+  struct Node
+  {
+    Node* next;
+  };
+
+  Node* root_;
 };
 } // namespace genebits::engine
 
