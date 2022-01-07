@@ -64,28 +64,31 @@ public:
   using const_pointer = const Type*;
 
   // Forward iterator creation methods.
-  [[nodiscard]] iterator begin() { return array_; }
-  [[nodiscard]] const_iterator begin() const { return array_; }
-  [[nodiscard]] iterator end() { return array_ + size_; }
-  [[nodiscard]] const_iterator end() const { return array_ + size_; }
+  [[nodiscard]] constexpr iterator begin() { return array_; }
+  [[nodiscard]] constexpr const_iterator begin() const { return array_; }
+  [[nodiscard]] constexpr iterator end() { return array_ + size_; }
+  [[nodiscard]] constexpr const_iterator end() const { return array_ + size_; }
 
   // Explicit const forward iterator creation methods.
-  [[nodiscard]] const_iterator cbegin() const { return array_; }
-  [[nodiscard]] const_iterator cend() const { return array_ + size_; }
+  [[nodiscard]] constexpr const_iterator cbegin() const { return array_; }
+  [[nodiscard]] constexpr const_iterator cend() const { return array_ + size_; }
 
   // Reverse iterator creation methods.
-  [[nodiscard]] reverse_iterator rbegin() { return reverse_iterator(end()); }
-  [[nodiscard]] const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-  [[nodiscard]] reverse_iterator rend() { return reverse_iterator(begin()); }
-  [[nodiscard]] const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+  [[nodiscard]] constexpr reverse_iterator rbegin() { return reverse_iterator(end()); }
+  [[nodiscard]] constexpr const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+  [[nodiscard]] constexpr reverse_iterator rend() { return reverse_iterator(begin()); }
+  [[nodiscard]] constexpr const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
 
   // Internal array accessors
-  [[nodiscard]] pointer data() { return pointer(begin()); }
-  [[nodiscard]] const_pointer data() const { return const_pointer(begin()); }
-  [[nodiscard]] reference front() { return begin()[0]; }
-  [[nodiscard]] const_reference front() const { return begin()[0]; }
-  [[nodiscard]] reference back() { return end()[-1]; }
-  [[nodiscard]] const_reference back() const { return end()[-1]; }
+  [[nodiscard]] constexpr pointer data() { return pointer(begin()); }
+  [[nodiscard]] constexpr const_pointer data() const { return const_pointer(begin()); }
+  [[nodiscard]] constexpr reference front() { return begin()[0]; }
+  [[nodiscard]] constexpr const_reference front() const { return begin()[0]; }
+  [[nodiscard]] constexpr reference back() { return end()[-1]; }
+  [[nodiscard]] constexpr const_reference back() const { return end()[-1]; }
+
+  // Size
+  [[nodiscard]] constexpr size_t size() const { return size_; }
 
   // clang-format on
 
