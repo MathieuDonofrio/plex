@@ -53,14 +53,13 @@ public:
   ///
   /// Enqueues a range of tasks to be executed on worker threads of this pool.
   ///
-  /// @tparam Iterator Type of iterator.
+  /// @param[in] tasks All tasks to enqueue.
   ///
-  /// @param[in] first Iterator start.
-  /// @param[in] last Iterator end.
-  ///
-  template<typename Iterator>
-  void EnqueueAll(Iterator first, Iterator last)
+  void EnqueueAll(TaskList tasks)
   {
+    Task* first = tasks.data();
+    const Task* last = first + tasks.size();
+
     mutex_.lock();
 
     ASSERT(running_, "Cannot enqueue task when thread pool not running");

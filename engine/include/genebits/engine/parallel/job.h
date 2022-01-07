@@ -173,9 +173,7 @@ private:
 
   void SumbitJobTasks(JobBase* job)
   {
-    TaskList tasks = job->GetTasks();
-
-    pool_.EnqueueAll(tasks.first, tasks.last);
+    pool_.EnqueueAll(job->GetTasks());
   }
 
   void DestroyJobGroups()
@@ -196,6 +194,9 @@ template<typename Functor>
 class BasicJob : public JobBase, private Task
 {
 public:
+  // We can inherit from Task since there is never more than one task to iterate on, so
+  // we don't care about the size of the job.
+
   constexpr BasicJob() : Task()
   {
     static_assert(std::is_base_of_v<BasicJob, Functor>);
@@ -210,7 +211,7 @@ public:
 
   constexpr TaskList GetTasks() noexcept final
   {
-    return { static_cast<Task*>(this), static_cast<Task*>(this) + 1 };
+    return { static_cast<Task*>(this), 1 };
   }
 };
 
@@ -257,7 +258,7 @@ public:
 
   constexpr TaskList GetTasks() noexcept final
   {
-    return { tasks_, tasks_ + task_count_ };
+    return { static_cast<Task*>(tasks_), task_count_ };
   }
 
 private:
@@ -268,6 +269,10 @@ private:
     size_t start;
     size_t end;
   };
+
+  // Since we cast to Task for TaskList this is necessary for iteration.
+  // Reminder: Task is cache line aligned, so there is free space when inheriting it.
+  static_assert(sizeof(ParallelForJobTask) == sizeof(Task), "ParallelForJobTask to large.");
 
   template<int N>
   struct BatchTaskBuilder

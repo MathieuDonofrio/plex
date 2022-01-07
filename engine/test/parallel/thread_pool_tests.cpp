@@ -176,7 +176,7 @@ TEST(ThreadPool_Tests, EnqueueAll_OneThreadOneTask_CorrectExecution)
 
   task.Executor().Bind([&count]() { count++; });
 
-  pool.EnqueueAll(&task, &task + 1);
+  pool.EnqueueAll({ &task, 1 });
 
   task.Wait();
 
@@ -198,7 +198,7 @@ TEST(ThreadPool_Tests, EnqueueAll_OneThreadMultipleTasks_CorrectExecution)
     tasks[i].Executor().Bind([&count]() { count++; });
   }
 
-  pool.EnqueueAll(&tasks[0], &tasks[amount]);
+  pool.EnqueueAll(tasks);
 
   for (size_t i = 0; i < amount; i++)
   {
@@ -223,7 +223,7 @@ TEST(ThreadPool_Tests, EnqueueAll_16ThreadsMultipleTasks_CorrectExecution)
     tasks[i].Executor().Bind([&count]() { count++; });
   }
 
-  pool.EnqueueAll(&tasks[0], &tasks[amount]);
+  pool.EnqueueAll(tasks);
 
   for (size_t i = 0; i < amount; i++)
   {
@@ -248,7 +248,7 @@ TEST(ThreadPool_Tests, EnqueueAll_OneThreadPerCoreMultipleTasks_CorrectExecution
     tasks[i].Executor().Bind([&count]() { count++; });
   }
 
-  pool.EnqueueAll(&tasks[0], &tasks[amount]);
+  pool.EnqueueAll(tasks);
 
   for (size_t i = 0; i < amount; i++)
   {

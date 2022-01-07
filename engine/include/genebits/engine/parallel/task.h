@@ -4,16 +4,10 @@
 #include "genebits/engine/parallel/threading.h"
 #include "genebits/engine/util/delegate.h"
 
+#include <span>
+
 namespace genebits::engine
 {
-class Task;
-
-struct TaskList
-{
-  Task* first;
-  Task* last;
-};
-
 ///
 /// Delegate alias for executing tasks.
 ///
@@ -168,6 +162,11 @@ protected:
   Task* next_;
   std::atomic_bool flag_;
 };
+
+///
+/// Span of tasks from contagious memory.
+///
+using TaskList = std::span<Task>;
 
 ///
 /// Very low overhead task queue.

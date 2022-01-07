@@ -10,15 +10,13 @@ TEST(BasicJob_Tests, Wait_SingleExecute_Compleated)
 
   std::atomic<int> counter = 0;
 
-  LambdaJob<BasicJob> job { [&counter]()
+  BasicLambdaJob job { [&counter]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       counter++;
     } };
 
-  TaskList tasks = job.GetTasks();
-
-  pool.EnqueueAll(tasks.first, tasks.last);
+  pool.EnqueueAll(job.GetTasks());
 
   job.Wait();
 
@@ -39,9 +37,7 @@ TEST(BasicJob_Tests, Wait_IndirectExecute_Compleated)
       counter++;
     } };
 
-  TaskList tasks = job.GetTasks();
-
-  pool.EnqueueAll(tasks.first, tasks.last);
+  pool.EnqueueAll(job.GetTasks());
 
   job.Wait();
 
@@ -66,9 +62,7 @@ TEST(ParallelForJob_Tests, Wait_Execute_Compleated)
     },
     amount };
 
-  TaskList tasks = job.GetTasks();
-
-  pool.EnqueueAll(tasks.first, tasks.last);
+  pool.EnqueueAll(job.GetTasks());
 
   job.Wait();
 
