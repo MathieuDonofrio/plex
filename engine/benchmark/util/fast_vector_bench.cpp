@@ -28,7 +28,7 @@ static void FastVector_STD_Vector_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_STD_Vector_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(FastVector_STD_Vector_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void FastVector_STD_Vector_NonTrivial_Iterate(benchmark::State& state)
 {
@@ -54,7 +54,7 @@ static void FastVector_STD_Vector_NonTrivial_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_STD_Vector_NonTrivial_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(FastVector_STD_Vector_NonTrivial_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void FastVector_STD_Vector_PushBack(benchmark::State& state)
 {
@@ -79,7 +79,7 @@ static void FastVector_STD_Vector_PushBack(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_STD_Vector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(FastVector_STD_Vector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void FastVector_STD_Vector_NonTrivial_PushBack(benchmark::State& state)
 {
@@ -104,7 +104,7 @@ static void FastVector_STD_Vector_NonTrivial_PushBack(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_STD_Vector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(FastVector_STD_Vector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void FastVector_Iterate(benchmark::State& state)
 {
@@ -130,7 +130,7 @@ static void FastVector_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(FastVector_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void FastVector_NonTrivial_Iterate(benchmark::State& state)
 {
@@ -156,7 +156,7 @@ static void FastVector_NonTrivial_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_NonTrivial_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(FastVector_NonTrivial_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void FastVector_PushBack(benchmark::State& state)
 {
@@ -181,7 +181,7 @@ static void FastVector_PushBack(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(FastVector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void FastVector_NonTrivial_PushBack(benchmark::State& state)
 {
@@ -206,6 +206,6 @@ static void FastVector_NonTrivial_PushBack(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(FastVector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 } // namespace genebits::engine::bench

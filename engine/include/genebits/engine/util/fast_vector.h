@@ -20,12 +20,23 @@ template<typename Type>
 concept FastVectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
 
 ///
+/// We approximate std::is_trivially_copyable with trivial move/copy construction and trivial destruction.
+/// This is allows us to safely capture important cases such as std::pair<POD, POD>, which is not trivially
+/// assignable. Inspired by llvm small vector: https://llvm.org/doxygen/SmallVector_8h_source.html
+///
+/// @tparam Type Type to approximate.
+///
+template<typename Type>
+constexpr bool FastVectorDefaultTriviallyCopyable = std::is_trivially_copy_constructible_v<Type>&&
+  std::is_trivially_move_constructible_v<Type>&& std::is_trivially_destructible_v<Type>;
+
+///
 /// Fast unordered vector optimized for performance.
 ///
 /// Order is never guaranteed. This allows us to optimize certain operations such
 /// as erasing.
 ///
-/// Optimizes for POD types. Uses reallocation when possible to optimize growing.
+/// Optimized for small trivially copyable types. Uses reallocation when possible to optimize growing.
 ///
 /// Uses custom allocators to allow for better allocation strategies.
 ///
@@ -34,17 +45,14 @@ concept FastVectorType = std::is_copy_constructible_v<Type> || std::is_move_cons
 ///     that can benefit from it.
 ///
 /// @tparam Type The type the vector contains.
-/// @tparam AllocatorImpl The allocator to use for allocating memory.
+/// @tparam AllocatorType The allocator to use for allocating memory.
+/// @tparam TriviallyCopyable Whether or not the type is trivially copyable.
 ///
-template<FastVectorType Type, Allocator AllocatorImpl = Mallocator>
-class FastVector : private AllocatorImpl
+template<FastVectorType Type,
+  Allocator AllocatorType = Mallocator,
+  bool TriviallyCopyable = FastVectorDefaultTriviallyCopyable<Type>>
+class FastVector : private AllocatorType
 {
-private:
-  // If the type is small and trivially copyable we don't need to pass it by reference
-  // in certain cases. This is sometimes an optimization.
-  static constexpr bool cSmallType = sizeof(Type) <= 2 * sizeof(void*);
-  static constexpr bool cTypePassedByValue = cSmallType && std::is_trivially_copy_constructible_v<Type>;
-
 public:
   // Style Exception: STL
   // clang-format off
@@ -320,7 +328,7 @@ public:
   ///
   /// @param[in] other Vector to copy from.
   ///
-  FastVector(const FastVector<Type, AllocatorImpl>& other) noexcept
+  FastVector(const FastVector<Type, AllocatorType>& other) noexcept
   {
     CopyFrom(other);
   }
@@ -330,7 +338,7 @@ public:
   ///
   /// @param[in] other Vector to move into this one.
   ///
-  constexpr FastVector(FastVector<Type, AllocatorImpl>&& other) noexcept
+  constexpr FastVector(FastVector<Type, AllocatorType>&& other) noexcept
     : array_(other.array_), size_(other.size_), capacity_(other.capacity_)
   {
     other.array_ = nullptr;
@@ -345,7 +353,7 @@ public:
   ///
   /// @return Reference to this vector.
   ///
-  FastVector& operator=(const FastVector<Type, AllocatorImpl>& other) noexcept
+  FastVector& operator=(const FastVector<Type, AllocatorType>& other) noexcept
   {
     // Avoid self-assignment
     if (other.array_ == array_) return *this;
@@ -368,7 +376,7 @@ public:
   ///
   /// @return Reference to this vector.
   ///
-  constexpr FastVector& operator=(FastVector<Type, AllocatorImpl>&& other) noexcept
+  constexpr FastVector& operator=(FastVector<Type, AllocatorType>&& other) noexcept
   {
     // Avoid self-move
     if (other.array_ == array_) return *this;
@@ -390,7 +398,7 @@ public:
   ///
   /// @return True if vectors are equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator==(const FastVector<Type, AllocatorImpl>& other) const noexcept
+  [[nodiscard]] constexpr bool operator==(const FastVector<Type, AllocatorType>& other) const noexcept
   {
     if (array_ == other.array_) return true; // Checks for same instance or two empty vectors.
     if (size_ != other.size_) return false;
@@ -405,7 +413,7 @@ public:
   ///
   /// @return True if vectors are not equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator!=(const FastVector<Type, AllocatorImpl>& other) const noexcept
+  [[nodiscard]] constexpr bool operator!=(const FastVector<Type, AllocatorType>& other) const noexcept
   {
     return !(*this == other);
   }
@@ -414,55 +422,45 @@ protected:
   ///
   /// Grows the internal array to at least fit the specified amount of elements.
   ///
-  /// @param[in] min_capacity Minimum capacity to grow to.
+  /// @param[in] new_capacity Minimum capacity to grow to.
   ///
-  void Grow(const uint32_t min_capacity) noexcept
+  void Grow(const uint32_t new_capacity) noexcept
   {
     const size_t current_capacity_bytes = sizeof(Type) * capacity_;
-    const size_t min_capacity_bytes = sizeof(Type) * min_capacity;
+    const size_t new_capacity_bytes = sizeof(Type) * new_capacity;
 
-    if constexpr (!std::is_trivially_copy_constructible_v<Type> && !std::is_trivially_move_constructible_v<Type>)
-    {
-      Block block = AllocatorImpl::Allocate(min_capacity_bytes);
-
-      if (array_) [[likely]]
-      {
-        if constexpr ((cTypePassedByValue && std::is_copy_constructible_v<Type>) || !std::is_move_constructible_v<Type>)
-        {
-          std::uninitialized_copy(cbegin(), cend(), reinterpret_cast<Type*>(block.ptr));
-          std::destroy(begin(), end());
-        }
-        else
-        {
-          std::uninitialized_move(begin(), end(), reinterpret_cast<Type*>(block.ptr));
-        }
-
-        AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), current_capacity_bytes });
-      }
-
-      array_ = reinterpret_cast<Type*>(block.ptr);
-      capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
-    }
-    else
+    if constexpr (TriviallyCopyable)
     {
       Block block { reinterpret_cast<char*>(array_), current_capacity_bytes };
 
-      AllocatorImpl::Reallocate(block, min_capacity_bytes);
+      AllocatorType::Reallocate(block, new_capacity_bytes);
 
       array_ = reinterpret_cast<Type*>(block.ptr);
-      capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
     }
+    else
+    {
+      Block block = AllocatorType::Allocate(new_capacity_bytes);
+
+      if (array_) [[likely]]
+      {
+        std::uninitialized_move(begin(), end(), reinterpret_cast<Type*>(block.ptr));
+        std::destroy(begin(), end());
+
+        AllocatorType::Deallocate(Block { reinterpret_cast<char*>(array_), current_capacity_bytes });
+      }
+
+      array_ = reinterpret_cast<Type*>(block.ptr);
+    }
+
+    capacity_ = new_capacity;
   }
 
   ///
-  /// Grows internal array using pseudo-golden ratio growth.
+  /// Grows internal array by at least a factor of two.
   ///
-  void GoldenGrow() noexcept
+  void Grow() noexcept
   {
-    // We want the growth rate to be close to the golden ratio (~1.618). The golden ration
-    // maximizes reuse and is the optimal reallocation size. For simplicity and calculation
-    // speed we use 1.5 and small constant amount.
-    const uint32_t new_capacity = capacity_ + (capacity_ >> 1) + 8; // capacity * 1.5 + 8
+    const uint32_t new_capacity = ((capacity_ << 1) | 0xF);
 
     Grow(new_capacity);
   }
@@ -473,7 +471,7 @@ protected:
   void PrepareInsertion() noexcept
   {
     if (size_ == capacity_) [[unlikely]]
-      GoldenGrow();
+      Grow();
   }
 
   ///
@@ -492,7 +490,7 @@ protected:
   ///
   void Deallocate() noexcept
   {
-    AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), capacity_ });
+    AllocatorType::Deallocate(Block { reinterpret_cast<char*>(array_), capacity_ });
     array_ = nullptr;
   }
 
@@ -507,7 +505,7 @@ protected:
   requires std::is_copy_constructible_v<Type>
   void CopyFrom(const FastVector<Type, OtherAllocator>& other) noexcept
   {
-    const Block block = AllocatorImpl::Allocate(sizeof(Type) * other.size_);
+    const Block block = AllocatorType::Allocate(sizeof(Type) * other.size_);
 
     array_ = reinterpret_cast<Type*>(block.ptr);
     size_ = other.size_;
