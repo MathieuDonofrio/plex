@@ -454,7 +454,7 @@ public:
 
     const auto last = tasks_ - 1;
 
-    for (auto first = last + task_count_; first != last; --first)
+    for (auto first = last + tasks_->task_count; first != last; --first)
     {
       first->Wait();
     }
@@ -467,7 +467,7 @@ public:
   ///
   constexpr TaskList GetTasks() noexcept final
   {
-    return { static_cast<Task*>(tasks_), task_count_ };
+    return { static_cast<Task*>(tasks_), tasks_->task_count };
   }
 
 private:
@@ -480,8 +480,9 @@ private:
   ///
   struct ParallelForJobTask : public Task
   {
-    size_t start;
-    size_t end;
+    uint32_t start;
+    uint32_t end;
+    uint32_t task_count;
   };
 
   // Since we cast to Task for TaskList this is necessary for iteration.
@@ -537,7 +538,7 @@ private:
     const size_t batch_size = amount_iterations / batches;
     const size_t batch_remainder = amount_iterations % batches;
 
-    task_count_ = batches;
+    tasks_->task_count = static_cast<uint32_t>(batches);
 
     BatchTaskBuilder<cMaxBatches>().BuildAll(this, batches, batch_size, batch_remainder);
   }
@@ -560,13 +561,13 @@ private:
     {
       if (TaskIndex < batch_remainder)
       {
-        task_.start = TaskIndex * batch_size + TaskIndex;
-        task_.end = task_.start + batch_size + 1;
+        task_.start = static_cast<uint32_t>(TaskIndex * batch_size + TaskIndex);
+        task_.end = static_cast<uint32_t>(task_.start + batch_size + 1);
       }
       else
       {
-        task_.start = TaskIndex * batch_size + batch_remainder;
-        task_.end = task_.start + batch_size;
+        task_.start = static_cast<uint32_t>(TaskIndex * batch_size + batch_remainder);
+        task_.end = static_cast<uint32_t>(task_.start + batch_size);
       }
 
       task_.Executor().template Bind<ParallelForJob, &ParallelForJob::TaskExecute<TaskIndex>>(this);
@@ -597,7 +598,6 @@ private:
 
 private:
   ParallelForJobTask tasks_[cMaxBatches];
-  size_t task_count_;
 };
 
 ///

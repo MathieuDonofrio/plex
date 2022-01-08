@@ -57,7 +57,7 @@ TEST(ParallelForJob_Tests, Wait_Execute_Compleated)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-      access[index]++;
+      access[index] = static_cast<int>(index);
       counter++;
     },
     amount };
@@ -70,7 +70,7 @@ TEST(ParallelForJob_Tests, Wait_Execute_Compleated)
 
   for (size_t i = 0; i < amount; i++)
   {
-    EXPECT_EQ(access[i].load(), 1);
+    EXPECT_EQ(access[i].load(), i);
   }
 }
 
