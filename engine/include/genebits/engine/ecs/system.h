@@ -135,7 +135,7 @@ private:
 
       if (dependencies)
       {
-        if (other) dependencies.Combine(other);
+        if (other) dependencies = job_scheduler_->CombineJobHandles(dependencies, other);
       }
       else
       {
