@@ -33,7 +33,7 @@ int main()
 {
   using namespace genebits::engine;
 
-  Registry<Entity> registry;
+  Registry registry;
 
   registry.Create();
   registry.Create();

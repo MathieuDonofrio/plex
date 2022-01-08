@@ -57,7 +57,7 @@ private:
   template<typename... Components>
   friend class System;
 
-  Registry<Entity>* registry_;
+  Registry* registry_;
   JobScheduler* scheduler_;
 
   JobHandle handle_;
@@ -66,9 +66,7 @@ private:
 class SystemGroup
 {
 public:
-  SystemGroup(JobScheduler* job_scheduler, Registry<Entity>* registry)
-    : job_scheduler_(job_scheduler), registry_(registry)
-  {}
+  SystemGroup(JobScheduler* job_scheduler, Registry* registry) : job_scheduler_(job_scheduler), registry_(registry) {}
 
   void Run()
   {
@@ -158,7 +156,7 @@ private:
 
 private:
   JobScheduler* job_scheduler_;
-  Registry<Entity>* registry_;
+  Registry* registry_;
 
   std::vector<SystemInfo> systems_;
 };
@@ -184,12 +182,12 @@ public:
 
 // JOBS
 
-template<typename Update, typename Entity, typename... Components>
-requires EntitiesFunction<Update, Entity, Components...>
+template<typename Update, typename... Components>
+requires EntityFunctor<Update, Components...>
 class EntitiesJob : public JobBase
 {
 public:
-  constexpr EntitiesJob(Update update, PolyView<Entity, Components...> view) noexcept : task_(view, std::move(update))
+  constexpr EntitiesJob(Update update, PolyView<Components...> view) noexcept : task_(view, std::move(update))
   {
     task_.Executor().template Bind<EntitiesJob, &EntitiesJob::UpdateAll>(this);
   }
@@ -204,7 +202,7 @@ public:
     return { &task_, &task_ + 1 };
   }
 
-  PolyView<Entity, Components...> GetView()
+  PolyView<Components...> GetView()
   {
     return task_.view;
   }
@@ -212,11 +210,11 @@ public:
 private:
   struct DataTask : public Task
   {
-    constexpr DataTask(PolyView<Entity, Components...> other_view, Update&& other_update) noexcept
+    constexpr DataTask(PolyView<Components...> other_view, Update&& other_update) noexcept
       : view(other_view), update(std::forward<Update>(other_update))
     {}
 
-    PolyView<Entity, Components...> view;
+    PolyView<Components...> view;
     Update update;
   };
 
@@ -226,7 +224,7 @@ private:
     {
       for (auto& data : mono_view)
       {
-        EntityApply<Update, Entity, Components...>(task_.update, data);
+        EntityApply<Update, Components...>(task_.update, data);
       }
     }
   }
