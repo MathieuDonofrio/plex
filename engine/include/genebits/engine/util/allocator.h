@@ -26,7 +26,7 @@ struct Block
 constexpr size_t cMaxAlignment = alignof(std::max_align_t);
 
 ///
-/// Rounds a size to an aligned size with and alignment of 8 bytes.
+/// Rounds a size to the aligned size.
 ///
 /// Can be used for compulsive alignment for allocators.
 ///
@@ -63,6 +63,9 @@ concept Allocator = requires(AllocatorImpl allocator, Block block)
 
   // Deallocates a block of memory
   allocator.Deallocate(Block {});
+
+  // Deallocates all memory if necessary
+  allocator.DeallocateAll();
 
   // Reallocates a block of memory for the size. If allocation failed, does not change old block and
   // returns false.
@@ -150,6 +153,14 @@ public:
   }
 
   ///
+  /// Does nothing. Mallocator has not state.
+  ///
+  void DeallocateAll() const noexcept
+  {
+    // Does nothing
+  }
+
+  ///
   /// Reallocates a block of memory for the size. If allocation failed, does not change old block and
   /// returns false.
   ///
@@ -182,9 +193,17 @@ public:
 };
 
 ///
-/// Allocator that uses a pre-allocated stack array for allocation.
+/// Allocator that pre-allocates a single contiguous block of memory on the stack.
 ///
-/// @tparam Size The size in bytes of the stack memory.
+/// Has a fixed amount of memory and leaks memory depending on allocation order. Good for temporary allocation, for
+/// instance, allocator for a single frame.
+///
+/// Should be used in combination with a fallback allocator to avoid running out of memory.
+///
+/// Fastest allocation strategy.
+///
+/// @tparam Parent The parent allocator to allocate block of memory from.
+/// @tparam Size The size in bytes of the memory.
 ///
 template<size_t Size>
 class StackAllocator
@@ -207,7 +226,7 @@ public:
   {
     const size_t aligned_size = RoundToAligned(size);
 
-    if (aligned_size > static_cast<size_t>((data_ + Size) - ptr_)) { return { nullptr, 0 }; }
+    if (aligned_size > static_cast<size_t>((data_ + Size) - ptr_)) { return { nullptr, 0u }; }
 
     Block block { ptr_, size };
     ptr_ += aligned_size;
@@ -227,6 +246,16 @@ public:
   constexpr void Deallocate(const Block block) noexcept
   {
     if (LastAllocation(block)) { ptr_ = block.ptr; }
+  }
+
+  ///
+  /// Free's all space at once.
+  ///
+  /// Cheap O(1) operation.
+  ///
+  void DeallocateAll() noexcept
+  {
+    ptr_ = data_;
   }
 
   ///
@@ -268,7 +297,7 @@ public:
     return block.ptr >= data_ && block.ptr < data_ + Size;
   }
 
-private:
+protected:
   ///
   /// Returns whether or not the block was the previous allocation of the allocator.
   ///
@@ -276,14 +305,50 @@ private:
   ///
   /// @return True if the block was the last allocation of the allocator.
   ///
-  constexpr bool LastAllocation(const Block block) const noexcept
+  [[nodiscard]] constexpr bool LastAllocation(const Block block) const noexcept
   {
     return block.ptr + RoundToAligned(block.size) == ptr_;
   }
 
-private:
-  char data_[Size];
+protected:
   char* ptr_;
+  std::conditional_t<Size == 0, char*, char[Size]> data_;
+};
+
+///
+/// Allocator that pre-allocates a single contiguous block of memory.
+///
+/// Has a fixed amount of memory and leaks memory depending on allocation order. Good for temporary allocation, for
+/// instance, allocator for a single frame.
+///
+/// Should be used in combination with a fallback allocator to avoid running out of memory.
+///
+/// Fastest allocation strategy.
+///
+/// @tparam Parent The parent allocator to allocate block of memory from.
+/// @tparam Size The size in bytes of the memory.
+///
+template<Allocator Parent, size_t Size>
+class LinearAllocator : public StackAllocator<0>, private Parent
+{
+public:
+  ///
+  /// Default constructor.
+  ///
+  LinearAllocator()
+  {
+    Block block = Parent::Allocate(Size);
+
+    this->data_ = block.ptr;
+  }
+
+  ///
+  /// Destructor.
+  ///
+  ~LinearAllocator()
+  {
+    Parent::Deallocate({ this->data_, Size });
+  }
 };
 
 ///
@@ -330,6 +395,15 @@ public:
     {
       Fallback::Deallocate(block);
     }
+  }
+
+  ///
+  /// Delegates calls to primary and fallback allocators.
+  ///
+  void DeallocateAll()
+  {
+    Primary::DeallocateAll();
+    Fallback::DeallocateAll();
   }
 
   ///
@@ -427,6 +501,15 @@ public:
   }
 
   ///
+  /// Delegates calls to small and large allocators.
+  ///
+  void DeallocateAll()
+  {
+    SmallAllocator::DeallocateAll();
+    LargeAllocator::DeallocateAll();
+  }
+
+  ///
   /// Reallocates a block of memory for the size. If allocation failed, does not change old block and
   /// returns false.
   ///
@@ -497,12 +580,7 @@ public:
 
   ~Freelist()
   {
-    while (root_)
-    {
-      Block block = Obtain(MaxSize);
-
-      Parent::Deallocate(block);
-    }
+    DeallocateAll();
   }
 
   ///
@@ -537,6 +615,17 @@ public:
     else
     {
       Parent::Deallocate(block);
+    }
+  }
+
+  ///
+  /// Deallocates all blocks of memory stored in the freelist.
+  ///
+  void DeallocateAll()
+  {
+    while (root_)
+    {
+      Parent::Deallocate(Obtain(MaxSize));
     }
   }
 
