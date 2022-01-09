@@ -38,6 +38,16 @@ struct CacheInfo
   uint32_t line_size;
 };
 
+// Cache line size.
+// Sometimes the standard for this is not implemented, so we default to 64 bytes. (64 bytes on x86-64)
+#ifdef __cpp_lib_hardware_interference_size
+using std::hardware_constructive_interference_size;
+using std::hardware_destructive_interference_size;
+#else
+constexpr size_t hardware_constructive_interference_size = 64;
+constexpr size_t hardware_destructive_interference_size = 64;
+#endif
+
 ///
 /// Holds information about a physical processor.
 ///
