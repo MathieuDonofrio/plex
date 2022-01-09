@@ -10,7 +10,9 @@ High priority!
 
 These tasks may be minor bug fixes or optimizations. They do not change the interface.
 
-- [x] None
+- [ ] Fix alignment related stuff
+- [ ] Fix cache line related stuff
+- [ ] Check Meta utility (unreliable sequences from type (Tag and AllocatorImpl))
 
 ## Minor
 
@@ -20,7 +22,8 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Implement stack tracing for Clang
 - [ ] Automatic ToString() generation for enums and enum flags
 - [x] Simplify ring buffer (Or remove)
-- [ ] Verify logging functionality for linux (gcc and clang)
+- [x] Verify logging functionality for linux (gcc)
+- [ ] Verify logging functionality for linux (clang)
 - [ ] Debate on macro prefixes (ex: GENEBITS_ASSERT vs ASSERT)
 - [ ] Find window closing protocol
 - [ ] Add LOD icons for the window (small, med, big)
@@ -29,7 +32,9 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Archetype swapping
 - [ ] Verify if registry should have built-in thread safety
 - [ ] Build sandboxes/examples cmake option
-- [ ] Verify thread functionality on linux
+- [x] Verify thread functionality on linux
+- [ ] CLion terminal's color (linux)
+- [ ] Correct implementation of threading utilities on Linux
 
 ## Major
 
