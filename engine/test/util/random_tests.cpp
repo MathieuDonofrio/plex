@@ -69,8 +69,8 @@ TEST(Random_Tests, NextFloat_01_InRange)
     {
       float value = random.NextFloat();
 
-      EXPECT_GE(value, 0);
-      EXPECT_LE(value, 1);
+      EXPECT_GE(value, 0.0f);
+      EXPECT_LE(value, 1.0f);
     }
   }
 }
@@ -87,7 +87,7 @@ TEST(Random_Tests, NextFloat_UpperBound_InRange)
 
       float value = random.NextFloat(upper_bound);
 
-      EXPECT_GE(value, 0);
+      EXPECT_GE(value, 0.0f);
       EXPECT_LE(value, upper_bound);
     }
   }

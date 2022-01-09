@@ -9,13 +9,13 @@ TEST(Threading_Tests, GetCPUInfo_NormalExecution_HasProcessors)
 {
   auto info = GetCPUInfo();
 
-  EXPECT_GT(info.processors.size(), 0);
+  EXPECT_GT(info.processors.size(), 0u);
 }
 
 TEST(Threading_Tests, GetCPUInfo_NormalExecution_HasCaches)
 {
   auto info = GetCPUInfo();
 
-  EXPECT_GT(info.caches.size(), 0);
+  EXPECT_GT(info.caches.size(), 0u);
 }
 } // namespace genebits::engine::tests

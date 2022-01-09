@@ -8,7 +8,7 @@ TEST(ThreadPool_Tests, Constructor_CustomAmountThreads_CorrectCount)
 {
   ThreadPool pool(4);
 
-  EXPECT_EQ(pool.ThreadCount(), 4);
+  EXPECT_EQ(pool.ThreadCount(), 4u);
 }
 
 TEST(ThreadPool_Tests, Enqueue_OneThreadOneTask_Wait_CorrectExecution)
@@ -118,7 +118,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Wait_CorrectExecution)
 {
   ThreadPool pool(16);
 
-  constexpr size_t amount = 2000;
+  constexpr int32_t amount = 2000;
 
   // If the amount is to big the stack array will be too big.
   Task tasks[amount];
@@ -145,7 +145,7 @@ TEST(ThreadPool_Tests, Enqueue_16ThreadsMultipleTasks_Poll_CorrectExecution)
   ThreadPool pool(16);
 
   // If the amount is to big the stack array will be too big.
-  constexpr size_t amount = 2000;
+  constexpr int32_t amount = 2000;
 
   Task tasks[amount];
 
@@ -187,7 +187,7 @@ TEST(ThreadPool_Tests, EnqueueAll_OneThreadMultipleTasks_CorrectExecution)
 {
   ThreadPool pool(1);
 
-  constexpr size_t amount = 10;
+  constexpr int32_t amount = 10;
 
   Task tasks[amount];
 
@@ -212,7 +212,7 @@ TEST(ThreadPool_Tests, EnqueueAll_16ThreadsMultipleTasks_CorrectExecution)
 {
   ThreadPool pool(16);
 
-  constexpr size_t amount = 100;
+  constexpr int32_t amount = 100;
 
   Task tasks[amount];
 

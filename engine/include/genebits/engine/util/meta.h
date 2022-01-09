@@ -101,7 +101,7 @@ public:
       hash *= prime;
     }
 
-    return static_cast<size_t>(hash);
+    return hash;
   }
 
   ///

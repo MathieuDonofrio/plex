@@ -16,11 +16,13 @@ namespace
   struct Test1Base
   {
     virtual size_t Test1() const = 0;
+    virtual ~Test1Base() = default;
   };
 
   struct Test2Base
   {
     virtual size_t Test2() const = 0;
+    virtual ~Test2Base() = default;
   };
 
   struct TestType : Test1Base, Test2Base, TestBase

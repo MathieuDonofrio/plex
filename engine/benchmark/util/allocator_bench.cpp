@@ -10,7 +10,7 @@ static void Allocator_STD_Allocator_Allocate(benchmark::State& state)
 {
   std::allocator<char> allocator;
 
-  const size_t amount = state.range(0);
+  const auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -25,7 +25,7 @@ static void Allocator_STD_Allocator_Allocate(benchmark::State& state)
     state.ResumeTiming();
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(Allocator_STD_Allocator_Allocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
@@ -34,7 +34,7 @@ static void Allocator_STD_Allocator_Deallocate(benchmark::State& state)
 {
   std::allocator<char> allocator;
 
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -49,14 +49,14 @@ static void Allocator_STD_Allocator_Deallocate(benchmark::State& state)
     allocator.deallocate(ptr, amount);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(Allocator_STD_Allocator_Deallocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Allocator_Mallocator_Allocate(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  const auto amount = static_cast<size_t>(state.range(0));
 
   Mallocator allocator;
 
@@ -73,14 +73,14 @@ static void Allocator_Mallocator_Allocate(benchmark::State& state)
     state.ResumeTiming();
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(Allocator_Mallocator_Allocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Allocator_Mallocator_Deallocate(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   Mallocator allocator;
 
@@ -97,7 +97,7 @@ static void Allocator_Mallocator_Deallocate(benchmark::State& state)
     allocator.Deallocate(block);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(Allocator_Mallocator_Deallocate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();

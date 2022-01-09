@@ -19,7 +19,7 @@ void Work(const int amount)
 
   uint64_t state = seed;
 
-  for (size_t i = 0; i < amount; i++)
+  for (int32_t i = 0; i < amount; i++)
   {
     auto old = state;
 
@@ -40,7 +40,7 @@ static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state
   // This is to be used as a reference of single thread performance with no schedule overhead
   // Conclusion: For small loads it is better to no use the thread pool because scheduling is expensive.
 
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -50,7 +50,7 @@ static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state
     }
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(ThreadPool_NoSchedule_SingleThread_Reference)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
@@ -97,7 +97,7 @@ static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
 
   ThreadPool pool(threads);
 
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   auto work_per_thread = static_cast<unsigned int>(amount / threads);
 
@@ -139,7 +139,7 @@ static void ThreadPool_Schedule_4Threads_TaskSize(benchmark::State& state)
 
   benchmark::DoNotOptimize(executor);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(ThreadPool_Schedule_4Threads_TaskSize)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
@@ -148,7 +148,7 @@ static void ThreadPool_Schedule_TaskQuantity(benchmark::State& state)
 {
   ThreadPool pool;
 
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   auto executor = []() { Work(100); };
 
@@ -178,7 +178,7 @@ static void ThreadPool_Schedule_TaskQuantity(benchmark::State& state)
 
   benchmark::DoNotOptimize(executor);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(ThreadPool_Schedule_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
@@ -220,7 +220,7 @@ static void ThreadPool_STD_Async_4Threads_TaskSize(benchmark::State& state)
 
   constexpr size_t threads = 4;
 
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   auto work_per_thread = static_cast<unsigned int>(amount / threads);
 
@@ -252,14 +252,14 @@ static void ThreadPool_STD_Async_4Threads_TaskSize(benchmark::State& state)
 
   benchmark::DoNotOptimize(executor);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(ThreadPool_STD_Async_4Threads_TaskSize)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void ThreadPool_STD_Async_TaskQuantity(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   auto executor = []() { Work(100); };
 
@@ -287,7 +287,7 @@ static void ThreadPool_STD_Async_TaskQuantity(benchmark::State& state)
 
   benchmark::DoNotOptimize(executor);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(ThreadPool_STD_Async_TaskQuantity)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);

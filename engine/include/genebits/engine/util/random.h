@@ -212,7 +212,7 @@ consteval uint64_t CompileTimeSeed(const std::source_location location = std::so
 
   while (*file_name != '\0')
   {
-    location_seed ^= static_cast<uint8_t>(*file_name) << ((rot++ << 3) & 31u);
+    location_seed ^= static_cast<uint64_t>(*file_name) << ((rot++ << 3) & 31u);
     ++file_name;
   }
 

@@ -11,10 +11,54 @@
 #elif PLATFORM_LINUX
 #include <pthread.h>
 #include <unistd.h>
+#include <fstream>
 #endif
 
 namespace genebits::engine
 {
+#ifdef PLATFORM_LINUX
+uint32_t GetProcCPUKeyValue(std::string key)
+{
+  int NumCPUs = 0;
+  int MaxID = -1;
+  std::ifstream f("/proc/cpuinfo");
+
+  ASSERT(f.is_open(), "failed to open /proc/cpuinfo");
+
+
+  std::string ln;
+  while (std::getline(f, ln))
+  {
+    if (ln.empty()) continue;
+    size_t SplitIdx = ln.find(':');
+    std::string value;
+#if defined(__s390__)
+    // s390 has another format in /proc/cpuinfo
+    // it needs to be parsed differently
+    if (SplitIdx != std::string::npos) value = ln.substr(Key.size() + 1, SplitIdx - Key.size() - 1);
+#else
+    if (SplitIdx != std::string::npos) value = ln.substr(SplitIdx + 1);
+#endif
+    if (ln.size() >= key.size() && ln.compare(0, key.size(), key) == 0)
+    {
+      NumCPUs++;
+      if (!value.empty())
+      {
+        int CurID = std::stoi(value);
+        MaxID = std::max(CurID, MaxID);
+      }
+    }
+  }
+
+  ASSERT(!f.bad(), "Failure reading /proc/cpuinfo");
+
+  ASSERT(f.eof(), "Failed to read to end of /proc/cpuinfo");
+  f.close();
+
+  return NumCPUs;
+}
+#endif
+
 CPUInfo GetCPUInfo()
 {
   CPUInfo cpu_info;
@@ -75,6 +119,18 @@ CPUInfo GetCPUInfo()
     offset += current->Size;
   }
   while (offset < length);
+#elif PLATFORM_LINUX
+  uint32_t num_physical_cores = GetProcCPUKeyValue("processor");
+
+
+  for (uint32_t i = 0; i < num_physical_cores/2; ++i)
+  {
+    ProcessorInfo proc_info;
+    proc_info.mask = 0b11 << i;
+    cpu_info.processors.push_back(proc_info);
+    cpu_info.caches.push_back(CacheInfo{});
+  }
+
 #endif
 
   return cpu_info;
@@ -90,7 +146,7 @@ bool SetThreadAffinity([[maybe_unused]] std::thread::native_handle_type handle, 
 
   for (size_t i = 0; i < 64; i++)
   {
-    if (mask & (1 << i)) CPU_SET(i, &cpuset)
+    if (mask & (1 << i)) CPU_SET(i, &cpuset);
   }
 
   return !pthread_setaffinity_np(handle, sizeof(cpu_set_t), &cpuset);
@@ -113,7 +169,7 @@ size_t GetAmountLogicalProcessors()
   GetSystemInfo(&info);
   return static_cast<size_t>(info.dwNumberOfProcessors);
 #elif PLATFORM_LINUX
-  return static_cast<size_t>(sysconf(_SC_NPROCESSORS_ONLN));
+  return GetProcCPUKeyValue("processor");
 #else
   return std::thread::hardware_concurrency(); // Should be considered a hint according to standard
 #endif

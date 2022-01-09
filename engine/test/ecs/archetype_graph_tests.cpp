@@ -102,17 +102,17 @@ TEST(ArchetypeGraph_Tests, ViewArchetypes_Multiple_CorrectSize)
   graph.AssureArchetype<int, float, double>();
   graph.AssureArchetype<bool, double, int>();
 
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<>()).Size(), 8);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int>()).Size(), 4);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<float>()).Size(), 4);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<double>()).Size(), 4);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<bool>()).Size(), 2);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<bool>()).Size(), 2);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int, float>()).Size(), 2);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<double, int>()).Size(), 2);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int, double>()).Size(), 2);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<float, double, int>()).Size(), 1);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<double, float, int>()).Size(), 1);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<>()).Size(), 8u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int>()).Size(), 4u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<float>()).Size(), 4u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<double>()).Size(), 4u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<bool>()).Size(), 2u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<bool>()).Size(), 2u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int, float>()).Size(), 2u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<double, int>()).Size(), 2u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int, double>()).Size(), 2u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<float, double, int>()).Size(), 1u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<double, float, int>()).Size(), 1u);
 }
 
 TEST(ArchetypeGraph_Tests, ViewArchetypes_AfterView_CorrectSize)
@@ -124,16 +124,16 @@ TEST(ArchetypeGraph_Tests, ViewArchetypes_AfterView_CorrectSize)
   graph.AssureArchetype<bool>();
   graph.AssureArchetype<double>();
 
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<>()).Size(), 4);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int>()).Size(), 1);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<>()).Size(), 4u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int>()).Size(), 1u);
 
   graph.AssureArchetype<int, float>();
   graph.AssureArchetype<double, float>();
   graph.AssureArchetype<float, double, int>();
   graph.AssureArchetype<bool, double, int>();
 
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<>()).Size(), 8);
-  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int>()).Size(), 4);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<>()).Size(), 8u);
+  EXPECT_EQ(graph.ViewArchetypes(graph.AssureView<int>()).Size(), 4u);
 }
 
 TEST(ArchetypeGraph_Tests, ViewArchetypes_Multiple_CorrectArchetypes)

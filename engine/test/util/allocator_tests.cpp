@@ -63,26 +63,20 @@ public:
 TEST(Allocator_Tests, RoundToAlign_Aligned)
 {
   EXPECT_EQ(RoundToAligned(0), 0u);
-  EXPECT_EQ(RoundToAligned(8), 8u);
+  EXPECT_EQ(RoundToAligned(8), cMaxAlignment);
 }
 
 TEST(Allocator_Tests, RoundToAlign_NotAligned)
 {
   for (size_t i = 1; i < 8; i++)
   {
-    EXPECT_EQ(RoundToAligned(i), 8u);
+    EXPECT_EQ(RoundToAligned(i), cMaxAlignment);
   }
 
   for (size_t i = 9; i < 16; i++)
   {
     EXPECT_EQ(RoundToAligned(i), 16u);
   }
-}
-
-TEST(Allocator_Tests, RoundToAlign_VeryLargeNumberNotAligned)
-{
-  EXPECT_EQ(RoundToAligned(8001), 8008u);
-  EXPECT_EQ(RoundToAligned(1600009), 1600016u);
 }
 
 TEST(Allocator_Tests, Mallocator_Allocate_AlwaysValid)
@@ -236,16 +230,11 @@ TEST(Allocator_Tests, StackAllocate_Reallocate_NotLast)
   EXPECT_FALSE(result);
   EXPECT_EQ(block1.ptr, old_ptr);
   EXPECT_EQ(block1.size, 200u);
-
-  Block block3 = allocator.Allocate(200);
-
-  EXPECT_NE(block3.ptr, nullptr);
-  EXPECT_EQ(block3.size, 200u);
 }
 
 TEST(Allocator_Tests, StackAllocate_Owns_Valid)
 {
-  StackAllocator<800> allocator;
+  StackAllocator<1600> allocator;
 
   Block block1 = allocator.Allocate(400);
   Block block2 = allocator.Allocate(400);
@@ -256,7 +245,7 @@ TEST(Allocator_Tests, StackAllocate_Owns_Valid)
 
 TEST(Allocator_Tests, StackAllocate_Owns_NotValid)
 {
-  StackAllocator<800> allocator;
+  StackAllocator<1600> allocator;
 
   char c = 'c';
 

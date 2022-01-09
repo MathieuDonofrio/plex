@@ -18,7 +18,7 @@ static void Registry_Iterate_OneArchetype(benchmark::State& state)
 {
   Registry<size_t> registry;
 
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (size_t i = 0; i < amount; i++)
   {
@@ -32,7 +32,8 @@ static void Registry_Iterate_OneArchetype(benchmark::State& state)
 
   benchmark::DoNotOptimize(registry);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Iterate_OneArchetype)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
@@ -41,7 +42,7 @@ static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
 {
   Registry<size_t> registry;
 
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (size_t i = 0; i < amount; i++)
   {
@@ -60,7 +61,8 @@ static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
 
   benchmark::DoNotOptimize(registry);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Iterate_OneArchetype_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
@@ -69,7 +71,7 @@ static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
 {
   Registry<size_t> registry;
 
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (size_t i = 0; i < amount; i++)
   {
@@ -89,7 +91,8 @@ static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
 
   benchmark::DoNotOptimize(registry);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Iterate_OneArchetype_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
@@ -98,7 +101,7 @@ static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
 {
   Registry<size_t> registry;
 
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (size_t i = 0; i < amount / 2; i++)
   {
@@ -123,7 +126,8 @@ static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
 
   benchmark::DoNotOptimize(registry);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Iterate_TwoArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
@@ -132,7 +136,7 @@ static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
 {
   Registry<size_t> registry;
 
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (size_t i = 0; i < amount / 10; i++)
   {
@@ -197,14 +201,15 @@ static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
 
   benchmark::DoNotOptimize(registry);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Iterate_TenArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Registry_Create_NoComponents(benchmark::State& state)
 {
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -222,14 +227,15 @@ static void Registry_Create_NoComponents(benchmark::State& state)
     benchmark::DoNotOptimize(registry);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Create_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Registry_Create_OneComponent(benchmark::State& state)
 {
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -247,14 +253,15 @@ static void Registry_Create_OneComponent(benchmark::State& state)
     benchmark::DoNotOptimize(registry);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Create_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Registry_Create_TwoComponents(benchmark::State& state)
 {
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -272,14 +279,15 @@ static void Registry_Create_TwoComponents(benchmark::State& state)
     benchmark::DoNotOptimize(registry);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Create_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Registry_Destroy_NoComponents(benchmark::State& state)
 {
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -302,14 +310,15 @@ static void Registry_Destroy_NoComponents(benchmark::State& state)
     benchmark::DoNotOptimize(registry);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Destroy_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Registry_Destroy_OneComponent(benchmark::State& state)
 {
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -332,14 +341,14 @@ static void Registry_Destroy_OneComponent(benchmark::State& state)
     benchmark::DoNotOptimize(registry);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(Registry_Destroy_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Registry_Destroy_TwoComponents(benchmark::State& state)
 {
-  size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   for (auto _ : state)
   {
@@ -362,7 +371,8 @@ static void Registry_Destroy_TwoComponents(benchmark::State& state)
     benchmark::DoNotOptimize(registry);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Registry_Destroy_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();

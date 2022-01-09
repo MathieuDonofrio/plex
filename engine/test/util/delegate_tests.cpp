@@ -281,7 +281,7 @@ TEST(Delegate_Tests, Equality_Lambda_NotEqual)
   handler1.Bind(
     [](const TestArg& arg)
     {
-      static volatile size_t sum = 0;
+      static size_t sum = 0;
       sum += arg.value;
     });
 
@@ -289,7 +289,7 @@ TEST(Delegate_Tests, Equality_Lambda_NotEqual)
   handler2.Bind(
     [](const TestArg& arg)
     {
-      static volatile size_t sum = 0;
+      static size_t sum = 0;
       sum += arg.value;
     });
 
@@ -336,7 +336,7 @@ TEST(Delegate_Tests, CopyAssignment_Lambda_Equal)
   handler1.Bind(
     [](const TestArg& arg)
     {
-      static volatile size_t sum = 0;
+      static size_t sum = 0;
       sum += arg.value;
     });
 

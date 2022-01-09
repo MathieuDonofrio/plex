@@ -8,9 +8,9 @@ TEST(Registry_Tests, Size_AfterInitialization_Zero)
 {
   Registry<size_t> registry;
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ(registry.Size(), 0u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
+  EXPECT_EQ(registry.Size<double>(), 0u);
 }
 
 TEST(Registry_Tests, Create_AfterInitialization_IncreaseSize)
@@ -19,10 +19,10 @@ TEST(Registry_Tests, Create_AfterInitialization_IncreaseSize)
 
   auto entity = registry.Create<int>(10);
 
-  EXPECT_EQ(registry.Size(), 1);
-  EXPECT_EQ(registry.Size<int>(), 1);
-  EXPECT_EQ(registry.Size<double>(), 0);
-  EXPECT_EQ(entity, 0);
+  EXPECT_EQ(registry.Size(), 1u);
+  EXPECT_EQ(registry.Size<int>(), 1u);
+  EXPECT_EQ(registry.Size<double>(), 0u);
+  EXPECT_EQ(entity, 0u);
 }
 
 TEST(Registry_Tests, Create_Multiple_IncreaseSize)
@@ -31,12 +31,12 @@ TEST(Registry_Tests, Create_Multiple_IncreaseSize)
 
   for (size_t i = 0; i < 10; i++)
   {
-    EXPECT_EQ(registry.Create<size_t>(size_t(i)), i);
+    EXPECT_EQ(registry.Create<size_t>(i+0), i);
   }
 
-  EXPECT_EQ(registry.Size(), 10);
-  EXPECT_EQ(registry.Size<size_t>(), 10);
-  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ(registry.Size(), 10u);
+  EXPECT_EQ(registry.Size<size_t>(), 10u);
+  EXPECT_EQ(registry.Size<double>(), 0u);
 }
 
 TEST(Registry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseSize)
@@ -46,16 +46,16 @@ TEST(Registry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseSize)
   auto entity1 = registry.Create<int, double, float>(10, 0.5, 0.2f);
   auto entity2 = registry.Create<int, float>(11, 0.8f);
 
-  EXPECT_EQ(registry.Size(), 2);
-  EXPECT_EQ(registry.Size<int>(), 2);
-  EXPECT_EQ(registry.Size<double>(), 1);
-  EXPECT_EQ(registry.Size<float>(), 2);
-  EXPECT_EQ((registry.Size<int, float>()), 2);
-  EXPECT_EQ((registry.Size<int, double>()), 1);
-  EXPECT_EQ((registry.Size<int, double, float>()), 1);
-  EXPECT_EQ((registry.Size<bool>()), 0);
-  EXPECT_EQ(entity1, 0);
-  EXPECT_EQ(entity2, 1);
+  EXPECT_EQ(registry.Size(), 2u);
+  EXPECT_EQ(registry.Size<int>(), 2u);
+  EXPECT_EQ(registry.Size<double>(), 1u);
+  EXPECT_EQ(registry.Size<float>(), 2u);
+  EXPECT_EQ((registry.Size<int, float>()), 2u);
+  EXPECT_EQ((registry.Size<int, double>()), 1u);
+  EXPECT_EQ((registry.Size<int, double, float>()), 1u);
+  EXPECT_EQ((registry.Size<bool>()), 0u);
+  EXPECT_EQ(entity1, 0u);
+  EXPECT_EQ(entity2, 1u);
 }
 
 TEST(Registry_Tests, Destroy_Single_DecreaseSize)
@@ -66,8 +66,8 @@ TEST(Registry_Tests, Destroy_Single_DecreaseSize)
 
   registry.Destroy(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size(), 0u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
 }
 
 TEST(Registry_Tests, Destroy_WithView_DecreaseSize)
@@ -78,8 +78,8 @@ TEST(Registry_Tests, Destroy_WithView_DecreaseSize)
 
   registry.Destroy<int>(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.Size(), 0u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
 }
 
 TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseSize)
@@ -90,10 +90,10 @@ TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseSize)
 
   registry.Destroy(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<double>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.Size(), 0u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
+  EXPECT_EQ(registry.Size<double>(), 0u);
+  EXPECT_EQ((registry.Size<double, int>()), 0u);
 }
 
 TEST(Registry_Tests, Destroy_WithPartialView_DecreaseSize)
@@ -104,10 +104,10 @@ TEST(Registry_Tests, Destroy_WithPartialView_DecreaseSize)
 
   registry.Destroy<double>(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<double>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.Size(), 0u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
+  EXPECT_EQ(registry.Size<double>(), 0u);
+  EXPECT_EQ((registry.Size<double, int>()), 0u);
 }
 
 TEST(Registry_Tests, Destroy_WithExactView_DecreaseSize)
@@ -118,10 +118,10 @@ TEST(Registry_Tests, Destroy_WithExactView_DecreaseSize)
 
   registry.Destroy<int, double>(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<double>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.Size(), 0u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
+  EXPECT_EQ(registry.Size<double>(), 0u);
+  EXPECT_EQ((registry.Size<double, int>()), 0u);
 }
 
 TEST(Registry_Tests, Create_AfterDestroy_Restore)
@@ -134,11 +134,11 @@ TEST(Registry_Tests, Create_AfterDestroy_Restore)
 
   auto entity2 = registry.Create<int, double>(10, 0.5);
 
-  EXPECT_EQ(registry.Size(), 1);
-  EXPECT_EQ(registry.Size<int>(), 1);
-  EXPECT_EQ(registry.Size<double>(), 1);
-  EXPECT_EQ((registry.Size<double, int>()), 1);
-  EXPECT_EQ(registry.Size<float>(), 0);
+  EXPECT_EQ(registry.Size(), 1u);
+  EXPECT_EQ(registry.Size<int>(), 1u);
+  EXPECT_EQ(registry.Size<double>(), 1u);
+  EXPECT_EQ((registry.Size<double, int>()), 1u);
+  EXPECT_EQ(registry.Size<float>(), 0u);
 
   EXPECT_EQ(entity1, entity2);
 }
@@ -152,19 +152,19 @@ TEST(Registry_Tests, DestroyAll_MultipleEntities_DecreaseSize)
   registry.Create<double>(0.5);
   registry.Create<float>(0.5);
 
-  EXPECT_EQ(registry.Size(), 4);
-  EXPECT_EQ(registry.Size<int>(), 2);
-  EXPECT_EQ((registry.Size<double, int>()), 1);
-  EXPECT_EQ((registry.Size<double>()), 2);
-  EXPECT_EQ((registry.Size<float>()), 1);
+  EXPECT_EQ(registry.Size(), 4u);
+  EXPECT_EQ(registry.Size<int>(), 2u);
+  EXPECT_EQ((registry.Size<double, int>()), 1u);
+  EXPECT_EQ((registry.Size<double>()), 2u);
+  EXPECT_EQ((registry.Size<float>()), 1u);
 
   registry.DestroyAll();
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
-  EXPECT_EQ((registry.Size<double>()), 0);
-  EXPECT_EQ((registry.Size<float>()), 0);
+  EXPECT_EQ(registry.Size(), 0u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
+  EXPECT_EQ((registry.Size<double, int>()), 0u);
+  EXPECT_EQ((registry.Size<double>()), 0u);
+  EXPECT_EQ((registry.Size<float>()), 0u);
 }
 
 TEST(Registry_Tests, DestroyAll_WithView_DecreaseSizeCorrectly)
@@ -178,27 +178,27 @@ TEST(Registry_Tests, DestroyAll_WithView_DecreaseSizeCorrectly)
 
   registry.DestroyAll<double>();
 
-  EXPECT_EQ(registry.Size(), 2);
-  EXPECT_EQ(registry.Size<int>(), 1);
-  EXPECT_EQ(registry.Size<float>(), 1);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
-  EXPECT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ(registry.Size(), 2u);
+  EXPECT_EQ(registry.Size<int>(), 1u);
+  EXPECT_EQ(registry.Size<float>(), 1u);
+  EXPECT_EQ((registry.Size<double, int>()), 0u);
+  EXPECT_EQ((registry.Size<double>()), 0u);
 
   registry.DestroyAll<int>();
 
-  EXPECT_EQ(registry.Size(), 1);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<float>(), 1);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
-  EXPECT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ(registry.Size(), 1u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
+  EXPECT_EQ(registry.Size<float>(), 1u);
+  EXPECT_EQ((registry.Size<double, int>()), 0u);
+  EXPECT_EQ((registry.Size<double>()), 0u);
 
   registry.DestroyAll<float>();
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<float>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
-  EXPECT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ(registry.Size(), 0u);
+  EXPECT_EQ(registry.Size<int>(), 0u);
+  EXPECT_EQ(registry.Size<float>(), 0u);
+  EXPECT_EQ((registry.Size<double, int>()), 0u);
+  EXPECT_EQ((registry.Size<double>()), 0u);
 }
 
 TEST(Registry_Tests, ForEach_EntireRegistrySingleEntity_CorrectEntity)
@@ -410,43 +410,43 @@ TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectAmountIterations)
 
   registry.ForEach<int>([&](int) { iterations++; });
 
-  EXPECT_EQ(iterations, 3);
+  EXPECT_EQ(iterations, 3u);
 
   iterations = 0;
 
   registry.ForEach<int, double>([&](int, double) { iterations++; });
 
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2u);
 
   iterations = 0;
 
   registry.ForEach<int, float>([&](int, float) { iterations++; });
 
-  EXPECT_EQ(iterations, 1);
+  EXPECT_EQ(iterations, 1u);
 
   iterations = 0;
 
   registry.ForEach<float>([&](float) { iterations++; });
 
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2u);
 
   iterations = 0;
 
   registry.ForEach<float>([&](float) { iterations++; });
 
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2u);
 
   iterations = 0;
 
   registry.ForEach<double>([&](double) { iterations++; });
 
-  EXPECT_EQ(iterations, 3);
+  EXPECT_EQ(iterations, 3u);
 
   iterations = 0;
 
   registry.ForEach<double, float>([&](double, float) { iterations++; });
 
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2u);
 }
 
 TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectUnpackedValues)
@@ -471,7 +471,7 @@ TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectUnpackedValues)
       iterations++;
     });
 
-  EXPECT_EQ(iterations, 3);
+  EXPECT_EQ(iterations, 3u);
 }
 
 TEST(PolyViewIterator_Tests, PreIncrement_Empty_NoIterations)
@@ -487,7 +487,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_Empty_NoIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 0);
+  EXPECT_EQ(iterations, 0u);
 }
 
 TEST(PolyViewIterator_Tests, PreIncrement_Single_OneIteration)
@@ -505,7 +505,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_Single_OneIteration)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 1);
+  EXPECT_EQ(iterations, 1u);
 }
 
 TEST(PolyViewIterator_Tests, PreIncrement_Double_CorrectIterations)
@@ -524,7 +524,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_Double_CorrectIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2u);
 }
 
 TEST(PolyViewIterator_Tests, PreIncrement_Multiple_CorrectIterations)
@@ -545,7 +545,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_Multiple_CorrectIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 4);
+  EXPECT_EQ(iterations, 4u);
 }
 
 TEST(PolyViewIterator_Tests, PreIncrement_WithMultipleEntities_CorrectIterations)
@@ -567,7 +567,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_WithMultipleEntities_CorrectIterations
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2u);
 }
 
 TEST(PolyViewIterator_Tests, PostIncrement_Single_OneIteration)
@@ -585,7 +585,7 @@ TEST(PolyViewIterator_Tests, PostIncrement_Single_OneIteration)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 1);
+  EXPECT_EQ(iterations, 1u);
 }
 
 TEST(PolyViewIterator_Tests, PostIncrement_Multiple_CorrectIterations)
@@ -606,7 +606,7 @@ TEST(PolyViewIterator_Tests, PostIncrement_Multiple_CorrectIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 4);
+  EXPECT_EQ(iterations, 4u);
 }
 
 TEST(PolyViewIterator_Tests, PreDecrement_Single_OneIteration)
@@ -624,7 +624,7 @@ TEST(PolyViewIterator_Tests, PreDecrement_Single_OneIteration)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 1);
+  EXPECT_EQ(iterations, 1u);
 }
 
 TEST(PolyViewIterator_Tests, PostDecrement_Multiple_CorrectIterations)
@@ -645,7 +645,7 @@ TEST(PolyViewIterator_Tests, PostDecrement_Multiple_CorrectIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 4);
+  EXPECT_EQ(iterations, 4u);
 }
 
 TEST(PolyViewIterator_Tests, AddAssign_Multiple_CorrectIterations)
@@ -669,7 +669,7 @@ TEST(PolyViewIterator_Tests, AddAssign_Multiple_CorrectIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 1);
+  EXPECT_EQ(iterations, 1u);
 }
 
 TEST(PolyViewIterator_Tests, SubtractAssign_Multiple_CorrectIterations)
@@ -694,7 +694,7 @@ TEST(PolyViewIterator_Tests, SubtractAssign_Multiple_CorrectIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 3);
+  EXPECT_EQ(iterations, 3u);
 }
 
 TEST(PolyViewIterator_Tests, Add_Multiple_CorrectIterations)
@@ -717,7 +717,7 @@ TEST(PolyViewIterator_Tests, Add_Multiple_CorrectIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 1);
+  EXPECT_EQ(iterations, 1u);
 }
 
 TEST(PolyViewIterator_Tests, Subtract_Multiple_CorrectIterations)
@@ -740,7 +740,7 @@ TEST(PolyViewIterator_Tests, Subtract_Multiple_CorrectIterations)
     iterations++;
   }
 
-  EXPECT_EQ(iterations, 3);
+  EXPECT_EQ(iterations, 3u);
 }
 
 TEST(MonoView_Tests, Contains_SingleExact_True)
@@ -776,7 +776,7 @@ TEST(MonoView_Tests, Size_Multiple_CorrectSize)
 
   MonoView mono_view = *registry.View<int>().begin();
 
-  EXPECT_EQ(mono_view.Size(), 3);
+  EXPECT_EQ(mono_view.Size(), 3u);
 }
 
 TEST(MonoView_Tests, Unpack_Single_CorrectValue)
@@ -804,7 +804,7 @@ TEST(MonoView_Tests, ForEach_None_NoIteration)
 
   mono_view.ForEach([&iterations](int) { iterations++; });
 
-  EXPECT_EQ(iterations, 0);
+  EXPECT_EQ(iterations, 0u);
 }
 
 TEST(MonoView_Tests, ForEach_Single_OneIteration)
@@ -822,11 +822,11 @@ TEST(MonoView_Tests, ForEach_Single_OneIteration)
   mono_view.ForEach(
     [&](int e)
     {
-      EXPECT_EQ(entity, e);
+      EXPECT_EQ(entity, static_cast<unsigned long>(e));
       iterations++;
     });
 
-  EXPECT_EQ(iterations, 1);
+  EXPECT_EQ(iterations, 1u);
 }
 
 TEST(MonoView_Tests, ForEach_Double_TwoIterations)
@@ -844,7 +844,7 @@ TEST(MonoView_Tests, ForEach_Double_TwoIterations)
 
   mono_view.ForEach([&](int) { iterations++; });
 
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2u);
 }
 
 TEST(MonoView_Tests, ForEach_Multiple_CorrectIterations)
@@ -868,13 +868,13 @@ TEST(MonoView_Tests, ForEach_Multiple_CorrectIterations)
 
   mono_view1.ForEach([&](int) { iterations++; });
 
-  EXPECT_EQ(iterations, 6);
+  EXPECT_EQ(iterations, 6u);
 
   iterations = 0;
 
   mono_view2.ForEach([&](double) { iterations++; });
 
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(iterations, 2u);
 }
 
 TEST(MonoViewIterator_Tests, Dereference_Single_CorrectEntity)

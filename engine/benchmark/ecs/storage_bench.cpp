@@ -48,7 +48,7 @@ BENCHMARK(Storage_Contains);
 
 static void Storage_Iterate(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
   Storage<size_t> storage(&sparse);
@@ -69,14 +69,15 @@ static void Storage_Iterate(benchmark::State& state)
 
   benchmark::DoNotOptimize(storage);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Iterate_Unpack1(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
   Storage<size_t> storage(&sparse);
@@ -100,14 +101,15 @@ static void Storage_Iterate_Unpack1(benchmark::State& state)
 
   benchmark::DoNotOptimize(storage);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Iterate_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Iterate_Unpack2(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
   Storage<size_t> storage(&sparse);
@@ -133,14 +135,15 @@ static void Storage_Iterate_Unpack2(benchmark::State& state)
 
   benchmark::DoNotOptimize(storage);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Iterate_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Insert_NoComponents(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
 
@@ -161,14 +164,15 @@ static void Storage_Insert_NoComponents(benchmark::State& state)
     benchmark::DoNotOptimize(storage);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Insert_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Insert_OneComponent(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
 
@@ -189,14 +193,15 @@ static void Storage_Insert_OneComponent(benchmark::State& state)
     benchmark::DoNotOptimize(storage);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Insert_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Insert_OneComponentNonTrivial(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
 
@@ -217,14 +222,15 @@ static void Storage_Insert_OneComponentNonTrivial(benchmark::State& state)
     benchmark::DoNotOptimize(storage);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Insert_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Insert_TwoComponents(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
 
@@ -245,14 +251,15 @@ static void Storage_Insert_TwoComponents(benchmark::State& state)
     benchmark::DoNotOptimize(storage);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Insert_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Erase_NoComponents(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
 
@@ -278,14 +285,15 @@ static void Storage_Erase_NoComponents(benchmark::State& state)
     benchmark::DoNotOptimize(storage);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Erase_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Erase_OneComponent(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
 
@@ -311,14 +319,15 @@ static void Storage_Erase_OneComponent(benchmark::State& state)
     benchmark::DoNotOptimize(storage);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Erase_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Erase_OneComponentNonTrivial(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
 
@@ -344,14 +353,14 @@ static void Storage_Erase_OneComponentNonTrivial(benchmark::State& state)
     benchmark::DoNotOptimize(storage);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(Storage_Erase_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Storage_Erase_TwoComponents(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   SharedSparseArray<size_t> sparse;
 
@@ -377,7 +386,8 @@ static void Storage_Erase_TwoComponents(benchmark::State& state)
     benchmark::DoNotOptimize(storage);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
+
 }
 
 BENCHMARK(Storage_Erase_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();

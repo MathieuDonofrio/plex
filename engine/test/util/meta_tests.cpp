@@ -61,24 +61,24 @@ TEST(Meta_Tests, UniqueId_SameTypeDifferentTags_NotEqual)
 
 TEST(Meta_Tests, UniqueId_MultipleTypesSameTag_Increment)
 {
-  EXPECT_EQ(Meta<TestType<11>>::UniqueId<STS<10>>(), 0);
-  EXPECT_EQ(Meta<TestType<12>>::UniqueId<STS<10>>(), 1);
-  EXPECT_EQ(Meta<TestType<13>>::UniqueId<STS<10>>(), 2);
-  EXPECT_EQ(Meta<TestType<14>>::UniqueId<STS<10>>(), 3);
-  EXPECT_EQ(Meta<TestType<15>>::UniqueId<STS<10>>(), 4);
-  EXPECT_EQ(Meta<TestType<16>>::UniqueId<STS<10>>(), 5);
-  EXPECT_EQ(Meta<TestType<17>>::UniqueId<STS<10>>(), 6);
-  EXPECT_EQ(Meta<TestType<18>>::UniqueId<STS<10>>(), 7);
-  EXPECT_EQ(Meta<TestType<19>>::UniqueId<STS<10>>(), 8);
+  EXPECT_EQ(Meta<TestType<11>>::UniqueId<STS<10>>(), 0u);
+  EXPECT_EQ(Meta<TestType<12>>::UniqueId<STS<10>>(), 1u);
+  EXPECT_EQ(Meta<TestType<13>>::UniqueId<STS<10>>(), 2u);
+  EXPECT_EQ(Meta<TestType<14>>::UniqueId<STS<10>>(), 3u);
+  EXPECT_EQ(Meta<TestType<15>>::UniqueId<STS<10>>(), 4u);
+  EXPECT_EQ(Meta<TestType<16>>::UniqueId<STS<10>>(), 5u);
+  EXPECT_EQ(Meta<TestType<17>>::UniqueId<STS<10>>(), 6u);
+  EXPECT_EQ(Meta<TestType<18>>::UniqueId<STS<10>>(), 7u);
+  EXPECT_EQ(Meta<TestType<19>>::UniqueId<STS<10>>(), 8u);
 }
 
 TEST(Meta_Tests, UniqueId_MultipleTypesTwoTags_Increment)
 {
-  EXPECT_EQ(Meta<TestType<21>>::UniqueId<STS<20>>(), 0);
-  EXPECT_EQ(Meta<TestType<22>>::UniqueId<STS<20>>(), 1);
+  EXPECT_EQ(Meta<TestType<21>>::UniqueId<STS<20>>(), 0u);
+  EXPECT_EQ(Meta<TestType<22>>::UniqueId<STS<20>>(), 1u);
 
-  EXPECT_EQ(Meta<TestType<31>>::UniqueId<STS<30>>(), 0);
-  EXPECT_EQ(Meta<TestType<32>>::UniqueId<STS<30>>(), 1);
+  EXPECT_EQ(Meta<TestType<31>>::UniqueId<STS<30>>(), 0u);
+  EXPECT_EQ(Meta<TestType<32>>::UniqueId<STS<30>>(), 1u);
 }
 
 } // namespace genebits::engine::tests

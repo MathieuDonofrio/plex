@@ -12,7 +12,7 @@ TEST(Storage_Tests, Empty_AfterInitialization_True)
   Storage<size_t> storage(&sparse);
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 }
 
 TEST(Storage_Tests, Insert_Single_SizeIncrease)
@@ -24,7 +24,7 @@ TEST(Storage_Tests, Insert_Single_SizeIncrease)
   storage.Insert(0);
 
   EXPECT_FALSE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 1);
+  EXPECT_EQ(storage.Size(), 1u);
 }
 
 TEST(Storage_Tests, Contains_WithoutValue_False)
@@ -78,7 +78,7 @@ TEST(Storage_Tests, Clear_Empty_Empty)
   storage.Clear();
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 }
 
 TEST(Storage_Tests, Clear_NotEmpty_Empty)
@@ -91,7 +91,7 @@ TEST(Storage_Tests, Clear_NotEmpty_Empty)
   storage.Clear();
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 }
 
 TEST(Storage_Tests, Insert_Double_IncreaseSize)
@@ -104,7 +104,7 @@ TEST(Storage_Tests, Insert_Double_IncreaseSize)
   storage.Insert(1);
 
   EXPECT_FALSE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 2);
+  EXPECT_EQ(storage.Size(), 2u);
 }
 
 TEST(Storage_Tests, Erase_Double_DecreaseSize)
@@ -119,12 +119,12 @@ TEST(Storage_Tests, Erase_Double_DecreaseSize)
   storage.Erase(1);
 
   EXPECT_FALSE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 1);
+  EXPECT_EQ(storage.Size(), 1u);
 
   storage.Erase(0);
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 }
 
 TEST(Storage_Tests, Insert_ReinsertionAfterClear_RestoredState)
@@ -138,7 +138,7 @@ TEST(Storage_Tests, Insert_ReinsertionAfterClear_RestoredState)
   storage.Insert(0);
 
   EXPECT_FALSE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 1);
+  EXPECT_EQ(storage.Size(), 1u);
 }
 
 TEST(Storage_Tests, Insert_TriggerSparseGrowth_CorrectState)
@@ -152,7 +152,7 @@ TEST(Storage_Tests, Insert_TriggerSparseGrowth_CorrectState)
   storage.Insert(big_value);
 
   EXPECT_FALSE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 1);
+  EXPECT_EQ(storage.Size(), 1u);
   EXPECT_TRUE(storage.Contains(big_value));
   EXPECT_FALSE(storage.Contains(0));
 }
@@ -188,12 +188,12 @@ TEST(Storage_Tests, Insert_WithComponent_SizeIncrease)
   storage.Initialize<int>();
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 
   storage.Insert(0, 10);
 
   EXPECT_FALSE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 1);
+  EXPECT_EQ(storage.Size(), 1u);
 }
 
 TEST(Storage_Tests, Insert_WithComponentNonTrivial_SizeIncrease)
@@ -203,12 +203,12 @@ TEST(Storage_Tests, Insert_WithComponentNonTrivial_SizeIncrease)
   storage.Initialize<std::string>();
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 
   storage.Insert(0, std::string { "10" });
 
   EXPECT_FALSE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 1);
+  EXPECT_EQ(storage.Size(), 1u);
 }
 
 TEST(Storage_Tests, Insert_WithComponent_CorrectValue)
@@ -268,7 +268,7 @@ TEST(Storage_Tests, Erase_WithComponent_SizeDecrease)
   storage.Erase(0);
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 }
 
 TEST(Storage_Tests, Erase_WithComponentNonTrivial_SizeDecrease)
@@ -281,7 +281,7 @@ TEST(Storage_Tests, Erase_WithComponentNonTrivial_SizeDecrease)
   storage.Erase(0);
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 }
 
 TEST(Storage_Tests, Insert_WithMultipleComponents_SizeDecrease)
@@ -294,7 +294,7 @@ TEST(Storage_Tests, Insert_WithMultipleComponents_SizeDecrease)
   storage.Erase(0);
 
   EXPECT_TRUE(storage.Empty());
-  EXPECT_EQ(storage.Size(), 0);
+  EXPECT_EQ(storage.Size(), 0u);
 }
 
 TEST(Storage_Tests, Erase_MultipleEraseAfterMultipleInsert_CorrectState)
@@ -307,13 +307,13 @@ TEST(Storage_Tests, Erase_MultipleEraseAfterMultipleInsert_CorrectState)
   storage.Insert<int>(1, 10);
   storage.Insert<int>(2, 20);
 
-  EXPECT_EQ(storage.Size(), 3);
+  EXPECT_EQ(storage.Size(), 3u);
   EXPECT_FALSE(storage.Contains(1000));
 
   storage.Erase(0);
   storage.Erase(1);
 
-  EXPECT_EQ(storage.Size(), 1);
+  EXPECT_EQ(storage.Size(), 1u);
 
   EXPECT_TRUE(storage.Contains(2));
   EXPECT_EQ(storage.Unpack<int>(2), 20);

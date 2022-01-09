@@ -24,7 +24,7 @@ namespace
 
 static void EventBus_Subscribe(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   std::vector<EventHandler<TestEvent>> handlers;
 
@@ -59,14 +59,14 @@ static void EventBus_Subscribe(benchmark::State& state)
     benchmark::DoNotOptimize(handlers[i]);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(EventBus_Subscribe)->Arg(10)->Arg(100)->Arg(1000)->Complexity();
 
 static void EventBus_Unsubscribe(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   std::vector<EventHandler<TestEvent>> handlers;
 
@@ -106,14 +106,14 @@ static void EventBus_Unsubscribe(benchmark::State& state)
     benchmark::DoNotOptimize(handlers[i]);
   }
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(EventBus_Unsubscribe)->Arg(10)->Arg(100)->Arg(1000)->Complexity();
 
 static void EventBus_Publish(benchmark::State& state)
 {
-  const size_t amount = state.range(0);
+  auto amount = static_cast<size_t>(state.range(0));
 
   EventBus bus;
 
@@ -137,7 +137,7 @@ static void EventBus_Publish(benchmark::State& state)
   benchmark::DoNotOptimize(event);
   benchmark::DoNotOptimize(bus);
 
-  state.SetComplexityN(amount);
+  state.SetComplexityN(static_cast<int64_t>(amount));
 }
 
 BENCHMARK(EventBus_Publish)->Arg(10)->Arg(100)->Arg(1000)->Complexity();

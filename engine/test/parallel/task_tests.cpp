@@ -34,7 +34,7 @@ TEST(Task_Tests, Executor_AssignAndInvoke_CalledOnce)
 
   task.Executor().Invoke();
 
-  EXPECT_EQ(amount, 1);
+  EXPECT_EQ(amount, 1u);
 
   task.Finish();
 }
@@ -56,7 +56,7 @@ TEST(Task_Tests, TryPoll_WhenReturnsTrue_Finished)
 
   if (task.TryPoll<1 << 16>())
   {
-    EXPECT_EQ(amount, 1);
+    EXPECT_EQ(amount, 1u);
     EXPECT_TRUE(task.Finished());
   }
 
@@ -82,7 +82,7 @@ TEST(Task_Tests, Poll_FewMilliseconds_BlockedCorrectly)
 
   task.Poll();
 
-  EXPECT_EQ(amount, 1);
+  EXPECT_EQ(amount, 1u);
   EXPECT_TRUE(task.Finished());
 
   thread.join();
@@ -107,7 +107,7 @@ TEST(Task_Tests, Wait_FewMilliseconds_BlockedCorrectly)
 
   task.Wait();
 
-  EXPECT_EQ(amount, 1);
+  EXPECT_EQ(amount, 1u);
   EXPECT_TRUE(task.Finished());
 
   thread.join();
