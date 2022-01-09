@@ -71,6 +71,7 @@ function(set_project_warnings project_name)
     elseif (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
         set(PROJECT_WARNINGS ${CLANG_WARNINGS})
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(-m64) #TODO to be removed in the future
         set(PROJECT_WARNINGS ${GCC_WARNINGS})
     else ()
         message(AUTHOR_WARNING "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler.")
