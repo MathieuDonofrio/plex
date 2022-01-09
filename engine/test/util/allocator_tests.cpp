@@ -10,6 +10,8 @@ namespace genebits::engine::tests
 static_assert(
   sizeof(Block) == sizeof(char*) + sizeof(size_t), "The  size of a block cannot excede that of a char* and size_t");
 
+static_assert(cMaxAlignment > 1, "Max alignment should be bigger than 1");
+
 static_assert((cMaxAlignment & (cMaxAlignment - 1)) == 0, "Max alignment should be a power of two");
 
 template<typename Type>
@@ -21,6 +23,7 @@ static_assert(std::is_same_v<MallocatorVector<int>, MallocatorVector<int>>);
 // These maps are used in the mock allocator
 static std::map<size_t, bool> allocate_call;
 static std::map<size_t, bool> deallocate_call;
+static std::map<size_t, bool> deallocateall_call;
 static std::map<size_t, bool> reallocate_call;
 static std::map<size_t, bool> owns_call;
 
@@ -42,6 +45,11 @@ public:
     std::free(block.ptr);
   }
 
+  void DeallocateAll() const
+  {
+    deallocateall_call[Id] = true;
+  }
+
   bool Reallocate(Block& block, size_t size)
   {
     reallocate_call[Id] = true;
@@ -60,32 +68,40 @@ public:
   }
 };
 
-TEST(Allocator_Tests, RoundToAlign_Aligned)
+TEST(Allocator_Tests, RoundToAlign_Extremities_AlreadyAligned)
 {
   EXPECT_EQ(RoundToAligned(0), 0u);
-  EXPECT_EQ(RoundToAligned(8), 8u);
+  EXPECT_EQ(RoundToAligned(cMaxAlignment), cMaxAlignment);
 }
 
-TEST(Allocator_Tests, RoundToAlign_NotAligned)
+TEST(Allocator_Tests, RoundToAlign_LargeExtremities_AlreadyAligned)
 {
-  for (size_t i = 1; i < 8; i++)
+  EXPECT_EQ(RoundToAligned(cMaxAlignment * 10), cMaxAlignment * 10);
+  EXPECT_EQ(RoundToAligned(cMaxAlignment * 1000), cMaxAlignment * 1000);
+}
+
+TEST(Allocator_Tests, RoundToAlign_AllValuesInBetween_NotAligned)
+{
+  for (size_t i = 1; i <= cMaxAlignment; i++)
   {
-    EXPECT_EQ(RoundToAligned(i), 8u);
+    EXPECT_EQ(RoundToAligned(i), cMaxAlignment);
   }
 
-  for (size_t i = 9; i < 16; i++)
+  for (size_t i = cMaxAlignment + 1; i <= cMaxAlignment * 2; i++)
   {
-    EXPECT_EQ(RoundToAligned(i), 16u);
+    EXPECT_EQ(RoundToAligned(i), cMaxAlignment * 2);
   }
 }
 
-TEST(Allocator_Tests, RoundToAlign_VeryLargeNumberNotAligned)
+TEST(Allocator_Tests, RoundToAlign_LargeNumberInBetween_NotAligned)
 {
-  EXPECT_EQ(RoundToAligned(8001), 8008u);
-  EXPECT_EQ(RoundToAligned(1600009), 1600016u);
+  EXPECT_EQ(RoundToAligned(cMaxAlignment * 10 + 1), cMaxAlignment * 11);
+  EXPECT_EQ(RoundToAligned(cMaxAlignment * 10 + cMaxAlignment - 1), cMaxAlignment * 11);
+  EXPECT_EQ(RoundToAligned(cMaxAlignment * 1000 + 1), cMaxAlignment * 1001);
+  EXPECT_EQ(RoundToAligned(cMaxAlignment * 1000 + cMaxAlignment - 1), cMaxAlignment * 1001);
 }
 
-TEST(Allocator_Tests, Mallocator_Allocate_AlwaysValid)
+TEST(Mallocator_Tests, Allocate_MultipleAllocations_AlwaysValid)
 {
   Mallocator allocator;
 
@@ -103,7 +119,7 @@ TEST(Allocator_Tests, Mallocator_Allocate_AlwaysValid)
   allocator.Deallocate(block2);
 }
 
-TEST(Allocator_Tests, Mallocator_Reallocate_Works)
+TEST(Mallocator_Tests, Reallocate_ValidBlock_Valid)
 {
   Mallocator allocator;
 
@@ -119,7 +135,7 @@ TEST(Allocator_Tests, Mallocator_Reallocate_Works)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Mallocator_Owns)
+TEST(Mallocator_Tests, Owns_AllocatedBlock_True)
 {
   Mallocator allocator;
 
@@ -130,133 +146,196 @@ TEST(Allocator_Tests, Mallocator_Owns)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, StackAllocate_Allocate_SufficientSpace)
+TEST(StackAllocator_Tests, Allocate_AllocationUseAllSpace_Valid)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block1 = allocator.Allocate(400);
+  StackAllocator<Size> allocator;
+
+  Block block = allocator.Allocate(Size);
+
+  EXPECT_NE(block.ptr, nullptr);
+  EXPECT_EQ(block.size, Size);
+}
+
+TEST(StackAllocator_Tests, Allocate_DoubleAllocationUseSpace_Valid)
+{
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  StackAllocator<Size> allocator;
+
+  Block block1 = allocator.Allocate(Size / 2);
 
   EXPECT_NE(block1.ptr, nullptr);
-  EXPECT_EQ(block1.size, 400u);
+  EXPECT_EQ(block1.size, Size / 2);
 
-  Block block2 = allocator.Allocate(400);
+  Block block2 = allocator.Allocate(Size / 2);
 
   EXPECT_NE(block2.ptr, nullptr);
-  EXPECT_EQ(block2.size, 400u);
+  EXPECT_EQ(block2.size, Size / 2);
 }
 
-TEST(Allocator_Tests, StackAllocate_Allocate_InsufficientSpace)
+TEST(StackAllocator_Tests, Allocate_ToBig_InsufficientSpace)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block1 = allocator.Allocate(801);
+  StackAllocator<Size> allocator;
 
-  EXPECT_EQ(block1.ptr, nullptr);
-  EXPECT_EQ(block1.size, 0u);
+  Block block = allocator.Allocate(Size + 1);
+
+  EXPECT_EQ(block.ptr, nullptr);
+  EXPECT_EQ(block.size, 0u);
 }
 
-TEST(Allocator_Tests, StackAllocate_Deallocate_RegainSpace)
+TEST(StackAllocator_Tests, Allocate_AllocationUseSomeSpace_Aligned)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block = allocator.Allocate(800);
+  StackAllocator<Size> allocator;
+
+  Block block1 = allocator.Allocate(Size / 2 + 1);
+
+  EXPECT_NE(block1.ptr, nullptr);
+  EXPECT_EQ(block1.size, Size / 2 + 1);
+
+  Block block2 = allocator.Allocate(Size / 2 - 1);
+
+  EXPECT_EQ(block2.ptr, nullptr);
+  EXPECT_EQ(block2.size, 0);
+}
+
+TEST(StackAllocator_Tests, Deallocate_LastAllocation_RegainSpace)
+{
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  StackAllocator<Size> allocator;
+
+  Block block = allocator.Allocate(Size);
 
   allocator.Deallocate(block);
 
   block.ptr = nullptr;
   block.size = 0;
 
-  block = allocator.Allocate(800);
+  block = allocator.Allocate(Size);
 
   EXPECT_NE(block.ptr, nullptr);
-  EXPECT_EQ(block.size, 800u);
+  EXPECT_EQ(block.size, Size);
 }
 
-TEST(Allocator_Tests, StackAllocate_Deallocate_NotLast)
+TEST(StackAllocator_Tests, Deallocate_NotLastAllocation_DontRegainSpace)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block1 = allocator.Allocate(400);
-  Block block2 = allocator.Allocate(400);
+  StackAllocator<Size> allocator;
+
+  Block block1 = allocator.Allocate(Size / 2);
+  Block block2 = allocator.Allocate(Size / 2);
 
   (void)block2; // Suppress warning
 
   allocator.Deallocate(block1);
 
-  Block block3 = allocator.Allocate(400);
+  Block block3 = allocator.Allocate(Size / 2);
 
   EXPECT_EQ(block3.ptr, nullptr);
   EXPECT_EQ(block3.size, 0u);
 }
 
-TEST(Allocator_Tests, StackAllocate_Reallocate_SufficientSpace)
+TEST(StackAllocator_Tests, DeallocateAll_UsedMemory_RegainSpace)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block = allocator.Allocate(400);
+  StackAllocator<Size> allocator;
+
+  Block block = allocator.Allocate(Size);
+
+  allocator.DeallocateAll();
+
+  block = allocator.Allocate(Size);
+
+  EXPECT_NE(block.ptr, nullptr);
+  EXPECT_EQ(block.size, Size);
+}
+
+TEST(StackAllocator_Tests, Reallocate_LastAllocation_UseAllSpace)
+{
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  StackAllocator<Size> allocator;
+
+  Block block = allocator.Allocate(Size / 2);
 
   char* old_ptr = block.ptr;
 
-  bool result = allocator.Reallocate(block, 800);
+  bool result = allocator.Reallocate(block, Size);
 
   EXPECT_TRUE(result);
   EXPECT_EQ(block.ptr, old_ptr);
-  EXPECT_EQ(block.size, 800u);
+  EXPECT_EQ(block.size, Size);
 }
 
-TEST(Allocator_Tests, StackAllocate_Reallocate_InsufficientSpace)
+TEST(StackAllocator_Tests, Reallocate_LastAllocationButToBig_InsufficientSpace)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block = allocator.Allocate(400);
+  StackAllocator<Size> allocator;
+
+  Block block = allocator.Allocate(Size / 2);
 
   char* old_ptr = block.ptr;
 
-  bool result = allocator.Reallocate(block, 801);
+  bool result = allocator.Reallocate(block, Size + 1);
 
   EXPECT_FALSE(result);
   EXPECT_EQ(block.ptr, old_ptr);
-  EXPECT_EQ(block.size, 400u);
+  EXPECT_EQ(block.size, Size / 2);
 }
 
-TEST(Allocator_Tests, StackAllocate_Reallocate_NotLast)
+TEST(StackAllocator_Tests, Reallocate_SufficientSpaceButNotLast_InsufficientSpace)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block1 = allocator.Allocate(200);
-  Block block2 = allocator.Allocate(400);
+  StackAllocator<Size> allocator;
+
+  Block block1 = allocator.Allocate(Size / 4);
+  Block block2 = allocator.Allocate(Size / 2);
 
   EXPECT_NE(block2.ptr, nullptr);
-  EXPECT_EQ(block2.size, 400u);
+  EXPECT_EQ(block2.size, Size / 2);
 
   char* old_ptr = block1.ptr;
 
-  bool result = allocator.Reallocate(block1, 401u);
+  bool result = allocator.Reallocate(block1, Size / 2 + 1);
 
   EXPECT_FALSE(result);
   EXPECT_EQ(block1.ptr, old_ptr);
-  EXPECT_EQ(block1.size, 200u);
+  EXPECT_EQ(block1.size, Size / 4);
 
-  Block block3 = allocator.Allocate(200);
+  Block block3 = allocator.Allocate(Size / 4);
 
   EXPECT_NE(block3.ptr, nullptr);
-  EXPECT_EQ(block3.size, 200u);
+  EXPECT_EQ(block3.size, Size / 4);
 }
 
-TEST(Allocator_Tests, StackAllocate_Owns_Valid)
+TEST(StackAllocator_Tests, Owns_AllocatedBlock_Valid)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block1 = allocator.Allocate(400);
-  Block block2 = allocator.Allocate(400);
+  StackAllocator<Size> allocator;
+
+  Block block1 = allocator.Allocate(Size / 2);
+  Block block2 = allocator.Allocate(Size / 2);
 
   EXPECT_TRUE(allocator.Owns(block1));
   EXPECT_TRUE(allocator.Owns(block2));
 }
 
-TEST(Allocator_Tests, StackAllocate_Owns_NotValid)
+TEST(StackAllocator_Tests, Owns_NotFromAllocator_NotValid)
 {
-  StackAllocator<800> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  StackAllocator<Size> allocator;
 
   char c = 'c';
 
@@ -265,13 +344,39 @@ TEST(Allocator_Tests, StackAllocate_Owns_NotValid)
   EXPECT_FALSE(allocator.Owns(block));
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Allocate_Primary)
+TEST(LinearAllocator_Tests, Constructor_NoMemory_CallsParent)
 {
-  FallbackAllocator<StackAllocator<800>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
   allocate_call[1] = false;
 
-  Block block = allocator.Allocate(800);
+  LinearAllocator<MockAllocator<1>, Size> allocator;
+
+  EXPECT_TRUE(allocate_call[1]);
+}
+
+TEST(LinearAllocator_Tests, Destructor_AllocatedMemory_CallsParent)
+{
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  deallocate_call[1] = false;
+
+  {
+    LinearAllocator<MockAllocator<1>, Size> allocator;
+  }
+
+  EXPECT_TRUE(deallocate_call[1]);
+}
+
+TEST(FallbackAllocator_Tests, Allocate_DoesNotFail_PrimaryCalled)
+{
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
+
+  allocate_call[1] = false;
+
+  Block block = allocator.Allocate(Size);
 
   (void)block; // Suppress warning
 
@@ -280,13 +385,15 @@ TEST(Allocator_Tests, FallbackAllocator_Allocate_Primary)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Allocate_Fallback)
+TEST(FallbackAllocator_Tests, Allocate_Fails_FallbackCalled)
 {
-  FallbackAllocator<StackAllocator<800>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
 
   allocate_call[1] = false;
 
-  Block block = allocator.Allocate(801);
+  Block block = allocator.Allocate(Size + 1);
 
   (void)block; // Suppress warning
 
@@ -295,41 +402,60 @@ TEST(Allocator_Tests, FallbackAllocator_Allocate_Fallback)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Deallocate_Primary)
+TEST(FallbackAllocator_Tests, Deallocate_BlockFromPrimary_PrimaryCalled)
 {
-  FallbackAllocator<StackAllocator<800>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
 
   deallocate_call[1] = false;
 
-  Block block = allocator.Allocate(800);
+  Block block = allocator.Allocate(Size);
 
   allocator.Deallocate(block);
 
   EXPECT_FALSE(deallocate_call[1]);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Deallocate_Fallback)
+TEST(FallbackAllocator_Tests, Deallocate_BlockFromFallback_FallbackCalled)
 {
-  FallbackAllocator<StackAllocator<800>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
 
   deallocate_call[1] = false;
 
-  Block block = allocator.Allocate(801);
+  Block block = allocator.Allocate(Size + 1);
 
   allocator.Deallocate(block);
 
   EXPECT_TRUE(deallocate_call[1]);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Reallocate_PrimaryOwns)
+TEST(FallbackAllocator_Tests, DeallocateAll_NoState_CallsBoth)
 {
-  FallbackAllocator<StackAllocator<800>, MockAllocator<1>> allocator;
+  FallbackAllocator<MockAllocator<1>, MockAllocator<2>> allocator;
+
+  deallocateall_call[1] = false;
+  deallocateall_call[2] = false;
+
+  allocator.DeallocateAll();
+
+  EXPECT_TRUE(deallocateall_call[1]);
+  EXPECT_TRUE(deallocateall_call[2]);
+}
+
+TEST(FallbackAllocator_Tests, Reallocate_PrimaryBlockAndDontFail_PrimaryCalled)
+{
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
 
   reallocate_call[1] = false;
 
-  Block block = allocator.Allocate(400);
+  Block block = allocator.Allocate(Size / 2);
 
-  bool result = allocator.Reallocate(block, 800);
+  bool result = allocator.Reallocate(block, Size);
 
   EXPECT_TRUE(result);
   EXPECT_FALSE(reallocate_call[1]);
@@ -337,66 +463,83 @@ TEST(Allocator_Tests, FallbackAllocator_Reallocate_PrimaryOwns)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Reallocate_PrimaryOwnsButFails)
+TEST(FallbackAllocator_Tests, Reallocate_PrimaryBlockOwnsAndFails_FallbackCalled)
 {
-  FallbackAllocator<StackAllocator<800>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
 
   allocate_call[1] = false;
   reallocate_call[1] = false;
 
-  Block block1 = allocator.Allocate(400);
+  Block block1 = allocator.Allocate(Size / 2);
 
-  char old_memory[400];
-
-  std::memcpy(old_memory, block1.ptr, 400);
-
-  bool result = allocator.Reallocate(block1, 801);
+  bool result = allocator.Reallocate(block1, Size + 1);
 
   EXPECT_TRUE(result);
   EXPECT_TRUE(allocate_call[1]);
   EXPECT_FALSE(reallocate_call[1]);
   EXPECT_NE(block1.ptr, nullptr);
-  EXPECT_EQ(block1.size, 801u);
-
-  for (auto i = 0; i < 400; i++)
-  {
-    EXPECT_EQ(block1.ptr[i], old_memory[i]);
-  }
+  EXPECT_EQ(block1.size, Size + 1);
 
   allocate_call[1] = false;
 
-  Block block2 = allocator.Allocate(800);
+  Block block2 = allocator.Allocate(Size);
 
   EXPECT_NE(block2.ptr, nullptr);
-  EXPECT_EQ(block2.size, 800u);
+  EXPECT_EQ(block2.size, Size);
   EXPECT_FALSE(allocate_call[1]);
 
   allocator.Deallocate(block1);
   allocator.Deallocate(block2);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Reallocate_BothFail)
+TEST(FallbackAllocator_Tests, Reallocate_PrimaryOwnAndFallbackCalled_BytesCopied)
 {
-  FallbackAllocator<StackAllocator<800>, StackAllocator<200>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block = allocator.Allocate(800);
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
 
-  bool result = allocator.Reallocate(block, 801);
+  Block block1 = allocator.Allocate(Size / 2);
+
+  char old_memory[Size / 2];
+
+  std::memcpy(old_memory, block1.ptr, Size / 2);
+
+  allocator.Reallocate(block1, Size + 1);
+
+  for (auto i = 0; i < 400; i++)
+  {
+    EXPECT_EQ(block1.ptr[i], old_memory[i]);
+  }
+}
+
+TEST(FallbackAllocator_Tests, Reallocate_BothFail_Fails)
+{
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, StackAllocator<Size / 2>> allocator;
+
+  Block block = allocator.Allocate(Size);
+
+  bool result = allocator.Reallocate(block, Size + 1);
 
   EXPECT_FALSE(result);
   EXPECT_NE(block.ptr, nullptr);
-  EXPECT_EQ(block.size, 800u);
+  EXPECT_EQ(block.size, Size);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Reallocate_FallbackOwns)
+TEST(FallbackAllocator_Tests, Reallocate_FallbackOwns_CallsFallback)
 {
-  FallbackAllocator<StackAllocator<800>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
 
   reallocate_call[1] = false;
 
-  Block block = { nullptr, 801 };
+  Block block = { nullptr, Size + 1 };
 
-  bool result = allocator.Reallocate(block, 2000);
+  bool result = allocator.Reallocate(block, Size * 2);
 
   EXPECT_TRUE(result);
   EXPECT_TRUE(reallocate_call[1]);
@@ -404,7 +547,7 @@ TEST(Allocator_Tests, FallbackAllocator_Reallocate_FallbackOwns)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Owns_None)
+TEST(FallbackAllocator_Tests, Owns_NoneOwn_False)
 {
   FallbackAllocator<StackAllocator<800>, StackAllocator<400>> allocator;
 
@@ -415,25 +558,29 @@ TEST(Allocator_Tests, FallbackAllocator_Owns_None)
   EXPECT_FALSE(result);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Owns_Primary)
+TEST(FallbackAllocator_Tests, Owns_PrimaryOwns_True)
 {
-  FallbackAllocator<StackAllocator<800>, StackAllocator<400>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block = allocator.Allocate(800);
+  FallbackAllocator<StackAllocator<Size>, StackAllocator<400>> allocator;
+
+  Block block = allocator.Allocate(Size);
 
   bool result = allocator.Owns(block);
 
   EXPECT_TRUE(result);
 }
 
-TEST(Allocator_Tests, FallbackAllocator_Owns_Fallback)
+TEST(FallbackAllocator_Tests, Owns_FallbackOwns_True)
 {
-  FallbackAllocator<StackAllocator<800>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  FallbackAllocator<StackAllocator<Size>, MockAllocator<1>> allocator;
 
   owns_call[1] = false;
 
-  Block block1 = allocator.Allocate(800);
-  Block block2 = allocator.Allocate(800);
+  Block block1 = allocator.Allocate(Size);
+  Block block2 = allocator.Allocate(Size);
 
   bool result = allocator.Owns(block2);
 
@@ -444,27 +591,29 @@ TEST(Allocator_Tests, FallbackAllocator_Owns_Fallback)
   allocator.Deallocate(block2);
 }
 
-TEST(Allocator_Tests, Segregator_Allocate_Small)
+TEST(Segregator_Tests, Allocate_Small_CallsSmall)
 {
-  Segregator<400, MockAllocator<1>, MockAllocator<2>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, MockAllocator<1>, MockAllocator<2>> allocator;
 
   allocate_call[1] = false;
   allocate_call[2] = false;
 
-  Block block1 = allocator.Allocate(200);
+  Block block1 = allocator.Allocate(Size / 4);
 
   EXPECT_NE(block1.ptr, nullptr);
-  EXPECT_EQ(block1.size, 200u);
+  EXPECT_EQ(block1.size, Size / 4);
   EXPECT_TRUE(allocate_call[1]);
   EXPECT_FALSE(allocate_call[2]);
 
   allocate_call[1] = false;
   allocate_call[2] = false;
 
-  Block block2 = allocator.Allocate(400);
+  Block block2 = allocator.Allocate(Size / 2);
 
   EXPECT_NE(block2.ptr, nullptr);
-  EXPECT_EQ(block2.size, 400u);
+  EXPECT_EQ(block2.size, Size / 2);
   EXPECT_TRUE(allocate_call[1]);
   EXPECT_FALSE(allocate_call[2]);
 
@@ -472,155 +621,174 @@ TEST(Allocator_Tests, Segregator_Allocate_Small)
   allocator.Deallocate(block2);
 }
 
-TEST(Allocator_Tests, Segregator_Allocate_Large)
+TEST(Segregator_Tests, Allocate_Large_CallsLarge)
 {
-  Segregator<400, MockAllocator<1>, MockAllocator<2>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, MockAllocator<1>, MockAllocator<2>> allocator;
 
   allocate_call[1] = false;
   allocate_call[2] = false;
 
-  Block block1 = allocator.Allocate(401);
+  Block block1 = allocator.Allocate(Size + 1);
 
   EXPECT_NE(block1.ptr, nullptr);
-  EXPECT_EQ(block1.size, 401u);
+  EXPECT_EQ(block1.size, Size + 1);
   EXPECT_FALSE(allocate_call[1]);
   EXPECT_TRUE(allocate_call[2]);
 
   allocate_call[1] = false;
   allocate_call[2] = false;
-
-  Block block2 = allocator.Allocate(1000);
-
-  EXPECT_NE(block2.ptr, nullptr);
-  EXPECT_EQ(block2.size, 1000u);
-  EXPECT_FALSE(allocate_call[1]);
-  EXPECT_TRUE(allocate_call[2]);
-
-  allocator.Deallocate(block1);
-  allocator.Deallocate(block2);
 }
 
-TEST(Allocator_Tests, Segregator_Deallocate_Small)
+TEST(Segregator_Tests, Deallocate_Small_CallsSmall)
 {
-  Segregator<400, StackAllocator<400>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, StackAllocator<Size>, MockAllocator<1>> allocator;
 
   deallocate_call[1] = false;
 
-  Block block1 = allocator.Allocate(400);
+  Block block1 = allocator.Allocate(Size);
 
   allocator.Deallocate(block1);
 
-  Block block2 = allocator.Allocate(400);
+  Block block2 = allocator.Allocate(Size);
 
   EXPECT_NE(block2.ptr, nullptr);
-  EXPECT_EQ(block2.size, 400u);
+  EXPECT_EQ(block2.size, Size);
   EXPECT_FALSE(deallocate_call[1]);
 }
 
-TEST(Allocator_Tests, Segregator_Deallocate_Large)
+TEST(Segregator_Tests, Deallocate_Large_CallsLarge)
 {
-  Segregator<400, StackAllocator<400>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, StackAllocator<Size>, MockAllocator<1>> allocator;
 
   deallocate_call[1] = false;
 
-  Block block = allocator.Allocate(401);
+  Block block = allocator.Allocate(Size + 1);
 
   allocator.Deallocate(block);
 
   EXPECT_NE(block.ptr, nullptr);
-  EXPECT_EQ(block.size, 401u);
+  EXPECT_EQ(block.size, Size + 1);
   EXPECT_TRUE(deallocate_call[1]);
 }
 
-TEST(Allocator_Tests, Segregator_Reallocate_Small)
+TEST(Segregator_Tests, DeallocateAll_NoState_CallsBoth)
 {
-  Segregator<400, StackAllocator<400>, MockAllocator<1>> allocator;
+  Segregator<1000, MockAllocator<1>, MockAllocator<2>> allocator;
+
+  deallocateall_call[1] = false;
+  deallocateall_call[2] = false;
+
+  allocator.DeallocateAll();
+
+  EXPECT_TRUE(deallocateall_call[1]);
+  EXPECT_TRUE(deallocateall_call[2]);
+}
+
+TEST(Segregator_Tests, Reallocate_Small_CallsSmall)
+{
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, StackAllocator<Size>, MockAllocator<1>> allocator;
 
   reallocate_call[1] = false;
 
-  Block block = allocator.Allocate(200);
+  Block block = allocator.Allocate(Size / 2);
 
-  bool result = allocator.Reallocate(block, 400);
+  bool result = allocator.Reallocate(block, Size);
 
   EXPECT_TRUE(result);
   EXPECT_NE(block.ptr, nullptr);
-  EXPECT_EQ(block.size, 400u);
+  EXPECT_EQ(block.size, Size);
   EXPECT_FALSE(reallocate_call[1]);
 }
 
-TEST(Allocator_Tests, Segregator_Reallocate_SmallButFails)
+TEST(Segregator_Tests, Reallocate_SmallButFails_Fails)
 {
-  Segregator<400, StackAllocator<400>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, StackAllocator<Size>, MockAllocator<1>> allocator;
 
   reallocate_call[1] = false;
 
-  Block block1 = allocator.Allocate(100);
+  Block block1 = allocator.Allocate(Size / 4);
 
   (void)block1;
 
-  Block block2 = allocator.Allocate(200);
+  Block block2 = allocator.Allocate(Size / 2);
 
   char* old_ptr = block2.ptr;
 
-  bool result = allocator.Reallocate(block2, 400);
+  bool result = allocator.Reallocate(block2, Size);
 
   EXPECT_FALSE(result);
   EXPECT_EQ(block2.ptr, old_ptr);
-  EXPECT_EQ(block2.size, 200u);
+  EXPECT_EQ(block2.size, Size / 2);
   EXPECT_FALSE(reallocate_call[1]);
 }
 
-TEST(Allocator_Tests, Segregator_Reallocate_PreviouslySmallButNowLarge)
+TEST(Segregator_Tests, Reallocate_PreviouslySmallButNowLarge_CallsLarge)
 {
-  Segregator<400, StackAllocator<400>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, StackAllocator<Size>, MockAllocator<1>> allocator;
 
   allocate_call[1] = false;
 
-  Block block = allocator.Allocate(200);
+  Block block = allocator.Allocate(Size / 2);
 
   char* old_ptr = block.ptr;
 
-  bool result = allocator.Reallocate(block, 401);
+  bool result = allocator.Reallocate(block, Size + 1);
 
   EXPECT_TRUE(result);
   EXPECT_NE(block.ptr, old_ptr);
-  EXPECT_EQ(block.size, 401u);
+  EXPECT_EQ(block.size, Size + 1);
   EXPECT_TRUE(allocate_call[1]);
 }
 
-TEST(Allocator_Tests, Segregator_Reallocate_PreviouslySmallButNowLargeButFails)
+TEST(Segregator_Tests, Reallocate_PreviouslySmallButNowLargeButFails_Fails)
 {
-  Segregator<400, StackAllocator<400>, StackAllocator<200>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block = allocator.Allocate(200);
+  Segregator<Size, StackAllocator<Size>, StackAllocator<Size / 2>> allocator;
+
+  Block block = allocator.Allocate(Size / 2);
 
   char* old_ptr = block.ptr;
 
-  bool result = allocator.Reallocate(block, 401);
+  bool result = allocator.Reallocate(block, Size + 1);
 
   EXPECT_FALSE(result);
   EXPECT_EQ(block.ptr, old_ptr);
-  EXPECT_EQ(block.size, 200u);
+  EXPECT_EQ(block.size, Size / 2);
 }
 
-TEST(Allocator_Tests, Segregator_Reallocate_Large)
+TEST(Segregator_Tests, Reallocate_LargeAndLarger_CallsLarge)
 {
-  Segregator<400, StackAllocator<400>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, StackAllocator<Size>, MockAllocator<1>> allocator;
 
   reallocate_call[1] = false;
 
-  Block block = allocator.Allocate(401);
+  Block block = allocator.Allocate(Size + 1);
 
-  EXPECT_EQ(block.size, 401u);
+  EXPECT_EQ(block.size, Size + 1);
 
-  bool result = allocator.Reallocate(block, 800);
+  bool result = allocator.Reallocate(block, Size * 2);
 
   EXPECT_TRUE(result);
-  EXPECT_EQ(block.size, 800u);
+  EXPECT_EQ(block.size, Size * 2);
   EXPECT_TRUE(reallocate_call[1]);
 }
 
-TEST(Allocator_Tests, Segregator_Owns_None)
+TEST(Segregator_Tests, Owns_None)
 {
   Segregator<800, StackAllocator<800>, StackAllocator<400>> allocator;
 
@@ -631,24 +799,28 @@ TEST(Allocator_Tests, Segregator_Owns_None)
   EXPECT_FALSE(result);
 }
 
-TEST(Allocator_Tests, Segregator_Owns_Small)
+TEST(Segregator_Tests, Owns_SmallOwns_True)
 {
-  Segregator<800, StackAllocator<800>, StackAllocator<400>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
 
-  Block block = allocator.Allocate(800);
+  Segregator<Size, StackAllocator<Size>, StackAllocator<Size / 2>> allocator;
+
+  Block block = allocator.Allocate(Size);
 
   bool result = allocator.Owns(block);
 
   EXPECT_TRUE(result);
 }
 
-TEST(Allocator_Tests, Segregator_Owns_Large)
+TEST(Segregator_Tests, Owns_LargeOwns_True)
 {
-  Segregator<800, StackAllocator<800>, MockAllocator<1>> allocator;
+  constexpr size_t Size = cMaxAlignment * 100;
+
+  Segregator<Size, StackAllocator<Size>, MockAllocator<1>> allocator;
 
   owns_call[1] = false;
 
-  Block block = allocator.Allocate(801);
+  Block block = allocator.Allocate(Size + 1);
 
   bool result = allocator.Owns(block);
 
@@ -658,7 +830,7 @@ TEST(Allocator_Tests, Segregator_Owns_Large)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Freelist_Allocate_NothingRecycled)
+TEST(Freelist_Tests, Allocate_NothingRecycled_CallsParent)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -671,7 +843,7 @@ TEST(Allocator_Tests, Freelist_Allocate_NothingRecycled)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Freelist_Deallocate_MaxSize)
+TEST(Freelist_Tests, Deallocate_MaxSize_UsesFreelist)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -684,7 +856,7 @@ TEST(Allocator_Tests, Freelist_Deallocate_MaxSize)
   EXPECT_FALSE(deallocate_call[1]);
 }
 
-TEST(Allocator_Tests, Freelist_Deallocate_MinSize)
+TEST(Freelist_Tests, Deallocate_MinSize_CallsParent)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -697,7 +869,7 @@ TEST(Allocator_Tests, Freelist_Deallocate_MinSize)
   EXPECT_TRUE(deallocate_call[1]);
 }
 
-TEST(Allocator_Tests, Freelist_Deallocate_Large)
+TEST(Freelist_Tests, Deallocate_BlockAllocatedFromParent_CallsParent)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -710,7 +882,33 @@ TEST(Allocator_Tests, Freelist_Deallocate_Large)
   EXPECT_TRUE(deallocate_call[1]);
 }
 
-TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycled)
+TEST(Freelist_Tests, DeallocateAll_NoBlocks_DoesNothing)
+{
+  Freelist<MockAllocator<1>, 256, 256> allocator;
+
+  deallocate_call[1] = false;
+
+  allocator.DeallocateAll();
+
+  EXPECT_FALSE(deallocate_call[1]);
+}
+
+TEST(Freelist_Tests, DeallocateAll_OneBlock_CallsParent)
+{
+  Freelist<MockAllocator<1>, 256, 256> allocator;
+
+  deallocate_call[1] = false;
+
+  Block block = allocator.Allocate(256);
+
+  allocator.Deallocate(block);
+
+  allocator.DeallocateAll();
+
+  EXPECT_TRUE(deallocate_call[1]);
+}
+
+TEST(Freelist_Tests, Allocate_SomethingRecycledAndGoodSize_UseFreelist)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -723,7 +921,7 @@ TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycled)
   EXPECT_FALSE(allocate_call[1]);
 }
 
-TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycledMinSize)
+TEST(Freelist_Tests, Allocate_SomethingRecycledAndMinSize_UsesFreelist)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -736,7 +934,7 @@ TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycledMinSize)
   EXPECT_FALSE(allocate_call[1]);
 }
 
-TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycledButToBigSize)
+TEST(Freelist_Tests, Allocate_SomethingRecycledAndBigSize_CallsParent)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -751,7 +949,7 @@ TEST(Allocator_Tests, Freelist_Allocate_SomethingRecycledButToBigSize)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Freelist_Reallocate_NothingRecycled)
+TEST(Freelist_Tests, Reallocate_NothingRecycled_CallsParent)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -765,7 +963,7 @@ TEST(Allocator_Tests, Freelist_Reallocate_NothingRecycled)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycled)
+TEST(Freelist_Tests, Reallocate_SomethingRecycledGoodSize_UsesFreelist)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -785,7 +983,7 @@ TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycled)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycledLargeSize)
+TEST(Freelist_Tests, Reallocate_SomethingRecycledLargeSize_CallsParent)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -805,7 +1003,7 @@ TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycledLargeSize)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycledSmallSize)
+TEST(Freelist_Tests, Reallocate_SomethingRecycledSmallSize_CallsParent)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -825,7 +1023,7 @@ TEST(Allocator_Tests, Freelist_Reallocate_SomethingRecycledSmallSize)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Freelist_Owns_MaxSize)
+TEST(Freelist_Tests, Owns_MaxSize_True)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -839,7 +1037,7 @@ TEST(Allocator_Tests, Freelist_Owns_MaxSize)
   allocator.Deallocate(block);
 }
 
-TEST(Allocator_Tests, Freelist_Owns_MinSize)
+TEST(Freelist_Tests, Owns_MinSize_True)
 {
   Freelist<MockAllocator<1>, 128, 256> allocator;
 
@@ -851,5 +1049,20 @@ TEST(Allocator_Tests, Freelist_Owns_MinSize)
   EXPECT_TRUE(owns_call[1]);
 
   allocator.Deallocate(block);
+}
+
+TEST(Freelist_Tests, Destructor_WithBlock_DeallocatesAll)
+{
+  {
+    Freelist<MockAllocator<1>, 256, 256> allocator;
+
+    deallocate_call[1] = false;
+
+    Block block = allocator.Allocate(256);
+
+    allocator.Deallocate(block);
+  }
+
+  EXPECT_TRUE(deallocate_call[1]);
 }
 } // namespace genebits::engine::tests
