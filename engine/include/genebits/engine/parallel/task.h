@@ -16,11 +16,20 @@ namespace genebits::engine
 using TaskExecutor = Delegate<void()>;
 
 ///
+/// Alignment for a task.
+///
+/// Size of cache line, with guarantee to be at least 64 bytes. This allows abstractions over tasks to
+/// safely use some free space up to 64 bytes.
+///
+constexpr size_t cTaskAlignment =
+  hardware_destructive_interference_size < 64 ? 64 : hardware_destructive_interference_size;
+
+///
 /// Task to be executed by thread pool.
 ///
 /// @note Aligned on the cache line to avoid cache synchronization.
 ///
-class alignas(std::hardware_destructive_interference_size) Task
+class alignas(cTaskAlignment) Task
 {
 public:
   ///
