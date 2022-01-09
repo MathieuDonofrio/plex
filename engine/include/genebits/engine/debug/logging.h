@@ -1,8 +1,6 @@
 #ifndef GENEBITS_ENGINE_DEBUG_LOGGING_H
 #define GENEBITS_ENGINE_DEBUG_LOGGING_H
 
-#include <format>
-
 #include "genebits/engine/debug/stacktrace.h"
 #include "genebits/engine/events/event_bus.h"
 
@@ -99,7 +97,14 @@ inline void PublishLog(std::string&& message, LogMetadata&& metadata, EventBus& 
 
 #ifndef NDEBUG
 
-#define LOG(level, ...) ::genebits::engine::PublishLog(::std::format(__VA_ARGS__), CREATE_LOG_METADATA(level))
+#ifdef cpp_lib_format
+#include <format>
+#define FORMAT(...) ::std::format(VA_ARGS__)
+#else
+#define FORMAT(string, ...) string
+#endif
+
+#define LOG(level, ...) ::genebits::engine::PublishLog(FORMAT(__VA_ARGS__), CREATE_LOG_METADATA(level))
 
 #define LOG_TRACE(...) LOG(::genebits::engine::LogLevel::Trace, __VA_ARGS__)
 #define LOG_INFO(...) LOG(::genebits::engine::LogLevel::Info, __VA_ARGS__)

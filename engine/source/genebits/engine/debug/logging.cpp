@@ -5,7 +5,7 @@
 #include "genebits/engine/debug/terminal_logger.h"
 
 #include <iostream>
-#include <signal.h>
+#include <csignal>
 
 namespace
 {
@@ -41,7 +41,8 @@ void CrashSignalHandler(int signal)
 TerminalLogger InitializeDebugTerminalLogging()
 {
   signal(SIGSEGV, CrashSignalHandler); // On segmentation fault
-  signal(SIGABRT_COMPAT, CrashSignalHandler); // On abort (assert)
+
+  signal(SIGABRT, CrashSignalHandler); // On abort (assert)
 
   return TerminalLogger(GetLoggingEventBus());
 }
