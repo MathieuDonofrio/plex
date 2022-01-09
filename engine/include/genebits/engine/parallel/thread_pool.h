@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <condition_variable>
 
 #include "genebits/engine/parallel/task.h"
 
