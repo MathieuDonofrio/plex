@@ -13,12 +13,18 @@ namespace genebits::engine
 ///
 using TaskExecutor = Delegate<void()>;
 
+#ifdef __cpp_lib_hardware_interference_size
+#define HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE std::hardware_destructive_interference_size
+#else
+#define HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE 64
+#endif
+
 ///
 /// Task to be executed by thread pool.
 ///
 /// @note Aligned on the cache line to avoid cache synchronization.
 ///
-class alignas(std::hardware_destructive_interference_size) Task
+class alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) Task
 {
 public:
   ///
