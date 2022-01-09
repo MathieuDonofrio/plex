@@ -63,7 +63,7 @@ namespace details
     ///
     void Remove(EventHandler<Event> handler) noexcept
     {
-      handlers_.Erase(std::ranges::find(handlers_, handler));
+      handlers_.Erase(std::find(handlers_.begin(), handlers_.end(), handler));
     }
 
     ///

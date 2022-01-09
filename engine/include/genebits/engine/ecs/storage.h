@@ -445,7 +445,7 @@ private:
   template<typename Component>
   [[nodiscard]] bool HasComponent() const noexcept
   {
-    return std::ranges::find(components_, Meta<Component>::Hash()) != components_.end();
+    return std::find(components_.begin(), components_.end(), Meta<Component>::Hash()) != components_.end();
   }
 #endif
 
