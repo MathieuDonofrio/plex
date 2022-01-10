@@ -15,8 +15,6 @@ public:
 
   void OnUpdate(JobHandle dependencies) override
   {
-    LOG_INFO("System {}: dependencies={}", id_, dependencies ? dependencies.Count() : 0);
-
     auto job = new BasicLambdaJob([&]() { LOG_INFO("Running System Job: {}", id_); });
 
     MySystem::ScheduleDefered(job, dependencies);

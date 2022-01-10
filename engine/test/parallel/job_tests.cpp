@@ -90,7 +90,7 @@ TEST(JobScheduler_Tests, Schedule_SingleBasicJob_Executed)
 
   JobHandle handle = scheduler.Schedule(&job);
 
-  handle.Complete();
+  scheduler.Complete(handle);
 
   EXPECT_TRUE(flag);
 }
@@ -115,7 +115,7 @@ TEST(JobScheduler_Tests, Schedule_WithDependency_ExecutedInOrder)
 
   JobHandle handle2 = scheduler.Schedule(&job2, handle1); // Should complete handle 1
 
-  handle2.Complete();
+  scheduler.Complete(handle2);
 
   EXPECT_EQ(test_value.load(), 10);
 }
@@ -137,9 +137,12 @@ TEST(JobScheduler_Tests, CombineJobHandles_TwoJobs_BothCompleted)
 
   BasicLambdaJob job2 { [&test_value2]() { test_value2 = 10; } };
 
-  JobHandle handle = scheduler.CombineJobHandles(scheduler.Schedule(&job2), scheduler.Schedule(&job1));
+  JobHandle handle1 = scheduler.Schedule(&job2);
+  JobHandle handle2 = scheduler.Schedule(&job1);
 
-  handle.Complete();
+  JobHandle handle = scheduler.CombineJobHandles(handle1, handle2);
+
+  scheduler.Complete(handle);
 
   EXPECT_EQ(test_value1.load(), 99);
   EXPECT_EQ(test_value2.load(), 10);

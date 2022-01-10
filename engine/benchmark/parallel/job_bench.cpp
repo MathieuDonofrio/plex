@@ -25,7 +25,7 @@ void BasicJob_ScheduleAndComplete_NoWork(benchmark::State& state)
 
     JobHandle handle = scheduler.Schedule(&job);
 
-    handle.Complete();
+    scheduler.Complete(handle);
 
     benchmark::DoNotOptimize(handle);
     benchmark::DoNotOptimize(job);
@@ -62,7 +62,7 @@ void BasicJob_ScheduleAndComplete_Work(benchmark::State& state)
 
     JobHandle handle = scheduler.Schedule(&job);
 
-    handle.Complete();
+    scheduler.Complete(handle);
 
     benchmark::DoNotOptimize(handle);
     benchmark::DoNotOptimize(job);
@@ -96,7 +96,7 @@ void ParallelForJob_ScheduleAndComplete_NoWork(benchmark::State& state)
 
     JobHandle handle = scheduler.Schedule(&job);
 
-    handle.Complete();
+    scheduler.Complete(handle);
 
     benchmark::DoNotOptimize(handle);
     benchmark::DoNotOptimize(job);
@@ -134,7 +134,7 @@ void ParallelForJob_ScheduleAndComplete_Work(benchmark::State& state)
 
     JobHandle handle = scheduler.Schedule(&job);
 
-    handle.Complete();
+    scheduler.Complete(handle);
 
     benchmark::DoNotOptimize(handle);
     benchmark::DoNotOptimize(job);

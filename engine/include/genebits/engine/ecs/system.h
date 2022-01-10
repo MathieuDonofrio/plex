@@ -84,7 +84,6 @@ public:
   {
     for (auto it = systems_.rbegin(); it != systems_.rend(); ++it)
     {
-
       job_scheduler_->Complete(it->system->GetJobHandle());
     }
   }
