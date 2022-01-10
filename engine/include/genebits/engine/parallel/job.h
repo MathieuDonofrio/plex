@@ -38,94 +38,12 @@ public:
   virtual void Wait() = 0;
 };
 
-///
-/// Fixed size job array.
-///
-/// Used to group jobs together. The job group never assumes ownership of the jobs. It acts as a container
-/// to operate on (example waiting on all jobs).
-///
-/// @tparam MaxJobs Maximum amount of jobs in this group.
-///
-template<size_t MaxJobs>
-class JobGroup
-{
-public:
-  ///
-  /// Combines two job groups together.
-  ///
-  /// @param[in] other Job group to add jobs from.
-  ///
-  void Combine(const JobGroup* const other)
-  {
-    ASSERT(other, "Job group is nullptr");
-    ASSERT(count_ + other->count_ <= MaxJobs, "Job handles cannot contain more than 64 jobs");
-
-    std::uninitialized_copy(other->jobs_, other->jobs_ + other->count_, jobs_ + count_);
-
-    count_ += other->count_;
-  }
-
-  ///
-  /// Waits for all jobs from this group to finish.
-  ///
-  void Wait()
-  {
-    // Greedy Algorithm. Wait last jobs added first. May decrease wait calls.
-
-    const auto last = jobs_ - 1;
-
-    for (auto first = last + count_; first != last; --first)
-    {
-      (*first)->Wait();
-    }
-  }
-
-  ///
-  /// Adds a job to the group.
-  ///
-  /// @param[in] job Job to add to group.
-  ///
-  constexpr void Add(JobBase* job)
-  {
-    ASSERT(count_ < MaxJobs, "Job group full");
-
-    jobs_[count_++] = job;
-  }
-
-  ///
-  /// Reinitialize the job group with a single job.
-  ///
-  /// @param[in] job Job to initialize group with.
-  ///
-  constexpr void Reset(JobBase* job)
-  {
-    jobs_[0] = job;
-    count_ = 1;
-  }
-
-  ///
-  /// Returns the amount of jobs currently in the group.
-  ///
-  /// @return Amount of jobs in group.
-  ///
-  [[nodiscard]] constexpr size_t Count() const
-  {
-    return count_;
-  }
-
-private:
-  JobBase* jobs_[MaxJobs];
-  size_t count_;
-};
-
 class JobScheduler;
 
 ///
 /// Handle to a group of scheduled jobs.
 ///
-/// Created by a job scheduler and returned to the client in order to operate on scheduled jobs.
-///
-/// @warning Must always be manually completed to avoid memory leak.
+/// Created by a job scheduler and returned to the client.
 ///
 class JobHandle
 {
@@ -135,43 +53,20 @@ public:
   ///
   constexpr JobHandle() noexcept : group_(nullptr) {}
 
-  ///
-  /// Completes all the jobs in this handle.
-  ///
-  /// For each job, if not finished, waits until done.
-  ///
-  void Complete();
-
-  ///
-  /// Returns the amount of jobs handled by this JobHandle.
-  ///
-  /// @return Amount of jobs for this handle.
-  ///
-  [[nodiscard]] constexpr size_t Count() const noexcept
-  {
-    return group_->Count();
-  }
-
-  ///
-  /// Whether or not the job handle has any jobs.
-  ///
-  /// @return True if job handle has atleast one job, false otherwise.
-  ///
-  [[nodiscard]] constexpr operator bool() const noexcept
-  {
-    return group_ != nullptr;
-  }
-
 private:
   friend JobScheduler;
 
-  using JobGroupType = JobGroup<64>;
-
-  constexpr JobHandle(JobGroupType* group, JobScheduler* scheduler) noexcept : group_(group), scheduler_(scheduler) {}
+  ///
+  /// Internal parametric constructor.
+  ///
+  /// @param[in] group Job group for the handle.
+  /// @param[in] version Version number for the handle.
+  ///
+  constexpr JobHandle(void* group, size_t version) noexcept : group_(group), version_(version) {}
 
 private:
-  JobGroupType* group_;
-  JobScheduler* scheduler_;
+  void* group_;
+  size_t version_;
 };
 
 ///
@@ -240,11 +135,21 @@ public:
   ///
   /// @return Combined handle.
   ///
-  JobHandle CombineJobHandles(JobHandle handle, JobHandle other)
+  [[nodiscard]] JobHandle CombineJobHandles(JobHandle& handle, JobHandle& other)
   {
-    handle.group_->Combine(other.group_);
+    if (!other.group_) return handle;
+    if (!handle.group_) return other;
 
-    job_group_pool_.Release(other.group_);
+    auto* group = static_cast<JobGroup*>(handle.group_);
+    auto* other_group = static_cast<JobGroup*>(other.group_);
+
+    ASSERT(group->count + other_group->count <= 64, "Job handles cannot contain more than 64 jobs");
+
+    std::uninitialized_copy(other_group->jobs, other_group->jobs + other_group->count, group->jobs + group->count);
+
+    group->count += other_group->count;
+
+    DestroyJobHandle(other);
 
     return handle;
   }
@@ -254,16 +159,33 @@ public:
   ///
   /// @param[in] handle JobHandle to complete
   ///
-  void Complete(JobHandle handle)
+  void Complete(JobHandle& handle)
   {
-    if (!handle.group_) return;
+    auto* group = static_cast<JobGroup*>(handle.group_);
 
-    handle.group_->Wait();
+    if (!group || handle.version_ != group->version) return;
 
-    job_group_pool_.Release(handle.group_);
+    const auto last = group->jobs - 1;
+
+    for (auto first = last + group->count; first != last; --first)
+    {
+      (*first)->Wait();
+    }
+
+    DestroyJobHandle(handle);
   }
 
 private:
+  ///
+  /// Fixed size job array.
+  ///
+  struct JobGroup
+  {
+    JobBase* jobs[64];
+    size_t count;
+    size_t version;
+  };
+
   ///
   /// Creates a job handle.
   ///
@@ -275,11 +197,29 @@ private:
   ///
   JobHandle CreateJobHandle(JobBase* job)
   {
-    JobHandle::JobGroupType* group = job_group_pool_.AcquireUninitialized();
+    JobGroup* group = job_group_pool_.AcquireUninitialized();
 
-    group->Reset(job); // Will initialize properly
+    group->jobs[0] = job;
+    group->count = 1;
 
-    return JobHandle { group, this };
+    return { group, group->version };
+  }
+
+  ///
+  /// Destroys a job handles.
+  ///
+  /// Increments the group version and recycles it.
+  ///
+  /// @param[in] handle Handle to destroy
+  ///
+  void DestroyJobHandle(JobHandle& handle)
+  {
+    auto* group = static_cast<JobGroup*>(handle.group_);
+    group->version++;
+
+    job_group_pool_.Release(group);
+
+    handle.group_ = nullptr;
   }
 
   ///
@@ -294,16 +234,8 @@ private:
 
 private:
   ThreadPool& thread_pool_;
-  ObjectPool<JobHandle::JobGroupType> job_group_pool_;
+  ObjectPool<JobGroup> job_group_pool_;
 };
-
-// Job handle should not have any behaviour it should delegate calls to scheduler.
-// Therefore, delegated methods must be implemented after scheduler has been declared.
-
-inline void JobHandle::Complete()
-{
-  scheduler_->Complete(*this);
-}
 
 ///
 /// Concept for basic job executor.

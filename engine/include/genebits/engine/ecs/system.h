@@ -16,6 +16,7 @@
 
 namespace genebits::engine
 {
+
 struct SystemDataAccess
 {
   ComponentId id;
@@ -51,12 +52,13 @@ public:
     return *scheduler_;
   }
 
-private:
+protected:
   friend SystemGroup;
 
   template<typename... Components>
   friend class System;
 
+private:
   Registry* registry_;
   JobScheduler* scheduler_;
 
@@ -72,7 +74,7 @@ public:
   {
     for (SystemInfo& info : systems_)
     {
-      JobHandle dependencies = GetDependencies(info);
+      JobHandle dependencies = CombineDependencies(info.sync);
 
       info.system->OnUpdate(dependencies);
     }
@@ -82,7 +84,8 @@ public:
   {
     for (auto it = systems_.rbegin(); it != systems_.rend(); ++it)
     {
-      it->system->GetJobHandle().Complete();
+
+      job_scheduler_->Complete(it->system->GetJobHandle());
     }
   }
 
@@ -123,32 +126,13 @@ private:
     std::vector<SystemBase*> sync;
   };
 
-  JobHandle GetDependencies(SystemInfo& info)
-  {
-    JobHandle dependencies;
-
-    for (auto it = info.sync.begin(); it != info.sync.end(); ++it)
-    {
-      JobHandle other = (*it)->GetJobHandle();
-
-      if (dependencies)
-      {
-        if (other) dependencies = job_scheduler_->CombineJobHandles(dependencies, other);
-      }
-      else
-      {
-        dependencies = other;
-      }
-    }
-
-    return dependencies;
-  }
-
   void InitializeSystem(SystemBase* system)
   {
     system->registry_ = registry_;
     system->scheduler_ = job_scheduler_;
   }
+
+  JobHandle CombineDependencies(const std::vector<SystemBase*>& info);
 
   void ComputeDependencies();
 
@@ -174,13 +158,56 @@ public:
     return access;
   }
 
-  PolyView<Entity, Components...> GetView()
+  JobHandle ScheduleDefered(JobBase* job, JobHandle dependencies, void (*deleter)(JobBase*))
+  {
+    JobHandle handle = GetScheduler().Schedule(job, dependencies);
+
+    scheduled_job_.Reset(job, deleter); // Must be called here because dependencies must be finished
+    SetJobHandle(handle);
+
+    return handle;
+  }
+
+  JobHandle ScheduleDefered(JobBase* job, JobHandle dependencies)
+  {
+    JobHandle handle = GetScheduler().Schedule(job, dependencies);
+
+    scheduled_job_.Reset(job); // Must be called here because dependencies must be finished
+    SetJobHandle(handle);
+
+    return handle;
+  }
+
+  JobHandle ScheduleDefered(JobBase* job, void (*deleter)(JobBase*))
+  {
+    scheduled_job_.Reset(job, deleter);
+
+    JobHandle handle = GetScheduler().Schedule(job);
+    SetJobHandle(handle);
+
+    return handle;
+  }
+
+  JobHandle ScheduleDefered(JobBase* job)
+  {
+    scheduled_job_.Reset(job);
+
+    JobHandle handle = GetScheduler().Schedule(job);
+    SetJobHandle(handle);
+
+    return handle;
+  }
+
+  PolyView<Components...> GetView()
   {
     return registry_->template View<Components...>();
   }
-};
 
-// JOBS
+private:
+  using JobPtr = ErasedPtr<JobBase>;
+
+  JobPtr scheduled_job_;
+};
 
 template<typename Update, typename... Components>
 requires EntityFunctor<Update, Components...>

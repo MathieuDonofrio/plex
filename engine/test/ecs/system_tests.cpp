@@ -17,6 +17,28 @@ namespace
   public:
     MOCK_METHOD(void, OnUpdate, (JobHandle));
   };
+
+  class MockJob : public BasicJob<MockJob>
+  {
+  public:
+    ~MockJob() override
+    {
+      Destroy();
+    }
+
+    void operator()()
+    {
+      Update();
+    }
+
+    MOCK_METHOD(void, Destroy, ());
+    MOCK_METHOD(void, Update, ());
+  };
+
+  void Sleep(size_t ms)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+  }
 } // namespace
 
 TEST(System_Tests, GetDataAccess_ReadWriteComponent_Correct)
@@ -203,16 +225,75 @@ TEST(SystemGroup_Tests, Run_TwoSystemsIndependent_Executed)
   group.ForceComplete();
 }
 
-TEST(SystemGroup_Tests, Run_TwoSystemsDependent_ExecutedInSequence)
+TEST(SystemGroup_Tests, Run_SingleSystemUpdatedOnce_CorrectlyHandled)
 {
   using ::testing::Sequence;
 
   ThreadPool pool;
-
   Registry registry;
-
   JobScheduler scheduler(pool);
+  SystemGroup group(&scheduler, &registry);
 
+  MockSystem<int> system;
+  group.AddSystem(&system);
+
+  group.Compile();
+
+  auto* job1 = new MockJob;
+
+  EXPECT_CALL(system, OnUpdate).Times(1).WillOnce([&](auto deps) { system.ScheduleDefered(job1, deps); });
+
+  EXPECT_CALL(*job1, Update).Times(1).WillOnce([]() { Sleep(10); });
+  EXPECT_CALL(*job1, Destroy).Times(1);
+
+  group.Run();
+
+  group.ForceComplete();
+}
+
+TEST(SystemGroup_Tests, Run_SameSystemUpdatedTwice_InSequence)
+{
+  using ::testing::Sequence;
+
+  ThreadPool pool;
+  Registry registry;
+  JobScheduler scheduler(pool);
+  SystemGroup group(&scheduler, &registry);
+
+  MockSystem<int> system;
+  group.AddSystem(&system);
+
+  group.Compile();
+
+  auto* job1 = new MockJob;
+  auto* job2 = new MockJob;
+
+  Sequence s1, s2;
+
+  EXPECT_CALL(system, OnUpdate)
+    .Times(2)
+    .WillOnce([&](auto deps) { system.ScheduleDefered(job1, deps); })
+    .WillOnce([&](auto deps) { system.ScheduleDefered(job2, deps); });
+
+  EXPECT_CALL(*job1, Update).Times(1).InSequence(s1).WillOnce([]() { Sleep(10); });
+  EXPECT_CALL(*job2, Update).Times(1).InSequence(s1);
+
+  EXPECT_CALL(*job1, Destroy).Times(1).InSequence(s2);
+  EXPECT_CALL(*job2, Destroy).Times(1).InSequence(s2);
+
+  group.Run();
+  group.Run();
+
+  group.ForceComplete();
+}
+
+TEST(SystemGroup_Tests, Run_TwoSystemsDependent_InSequence)
+{
+  using ::testing::Sequence;
+
+  ThreadPool pool;
+  Registry registry;
+  JobScheduler scheduler(pool);
   SystemGroup group(&scheduler, &registry);
 
   MockSystem<int> system1;
@@ -223,14 +304,16 @@ TEST(SystemGroup_Tests, Run_TwoSystemsDependent_ExecutedInSequence)
 
   group.Compile();
 
-  Sequence s1;
+  auto* job1 = new MockJob;
+  auto* job2 = new MockJob;
 
-  EXPECT_CALL(system1, OnUpdate)
-    .Times(1)
-    .InSequence(s1)
-    .WillRepeatedly([](JobHandle) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
+  Sequence s1, s2;
 
-  EXPECT_CALL(system2, OnUpdate).Times(1).InSequence(s1);
+  EXPECT_CALL(system1, OnUpdate).Times(1).WillOnce([&](auto deps) { system1.ScheduleDefered(job1, deps); });
+  EXPECT_CALL(system2, OnUpdate).Times(1).WillOnce([&](auto deps) { system2.ScheduleDefered(job2, deps); });
+
+  EXPECT_CALL(*job1, Update).Times(1).InSequence(s1).WillOnce([]() { Sleep(10); });
+  EXPECT_CALL(*job2, Update).Times(1).InSequence(s1);
 
   group.Run();
 
@@ -242,11 +325,8 @@ TEST(SystemGroup_Tests, Run_MultipleSystemsDependent_ExecutedInSequence)
   using ::testing::Sequence;
 
   ThreadPool pool;
-
   Registry registry;
-
   JobScheduler scheduler(pool);
-
   SystemGroup group(&scheduler, &registry);
 
   MockSystem<const SC<0>, SC<1>> system1; // Dependencies:
@@ -263,32 +343,25 @@ TEST(SystemGroup_Tests, Run_MultipleSystemsDependent_ExecutedInSequence)
 
   group.Compile();
 
+  auto* job1 = new MockJob;
+  auto* job2 = new MockJob;
+  auto* job3 = new MockJob;
+  auto* job4 = new MockJob;
+  auto* job5 = new MockJob;
+
   Sequence s1, s2, s3, s4, s5;
 
-  EXPECT_CALL(system1, OnUpdate)
-    .Times(1)
-    .InSequence(s1)
-    .WillRepeatedly([](JobHandle) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); });
+  EXPECT_CALL(system1, OnUpdate).Times(1).WillOnce([&](auto deps) { system1.ScheduleDefered(job1, deps); });
+  EXPECT_CALL(system2, OnUpdate).Times(1).WillOnce([&](auto deps) { system2.ScheduleDefered(job2, deps); });
+  EXPECT_CALL(system3, OnUpdate).Times(1).WillOnce([&](auto deps) { system3.ScheduleDefered(job3, deps); });
+  EXPECT_CALL(system4, OnUpdate).Times(1).WillOnce([&](auto deps) { system4.ScheduleDefered(job4, deps); });
+  EXPECT_CALL(system5, OnUpdate).Times(1).WillOnce([&](auto deps) { system5.ScheduleDefered(job5, deps); });
 
-  EXPECT_CALL(system2, OnUpdate)
-    .Times(1)
-    .InSequence(s2)
-    .WillRepeatedly([](JobHandle) { std::this_thread::sleep_for(std::chrono::milliseconds(20)); });
-
-  EXPECT_CALL(system3, OnUpdate)
-    .Times(1)
-    .InSequence(s1, s2, s3)
-    .WillRepeatedly([](JobHandle) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); });
-
-  EXPECT_CALL(system4, OnUpdate)
-    .Times(1)
-    .InSequence(s4)
-    .WillRepeatedly([](JobHandle) { std::this_thread::sleep_for(std::chrono::milliseconds(70)); });
-
-  EXPECT_CALL(system5, OnUpdate)
-    .Times(1)
-    .InSequence(s4, s1, s5)
-    .WillRepeatedly([](JobHandle) { std::this_thread::sleep_for(std::chrono::milliseconds(200)); });
+  EXPECT_CALL(*job1, Update).Times(1).InSequence(s1).WillOnce([]() { Sleep(100); });
+  EXPECT_CALL(*job2, Update).Times(1).InSequence(s2).WillOnce([]() { Sleep(20); });
+  EXPECT_CALL(*job3, Update).Times(1).InSequence(s1, s2, s3).WillOnce([]() { Sleep(10); });
+  EXPECT_CALL(*job4, Update).Times(1).InSequence(s4).WillOnce([]() { Sleep(70); });
+  EXPECT_CALL(*job5, Update).Times(1).InSequence(s4, s1, s5).WillOnce([]() { Sleep(200); });
 
   group.Run();
 

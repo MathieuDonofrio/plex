@@ -19,9 +19,7 @@ public:
 
     auto job = new BasicLambdaJob([&]() { LOG_INFO("Running System Job: {}", id_); });
 
-    JobHandle handle = this->GetScheduler().Schedule(job, dependencies);
-
-    this->SetJobHandle(handle);
+    MySystem::ScheduleDefered(job, dependencies);
   }
 
 private:

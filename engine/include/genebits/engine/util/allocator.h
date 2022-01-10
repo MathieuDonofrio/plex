@@ -565,6 +565,8 @@ public:
 /// Allocator that constructs a list of blocks of memory for reuse. If the block of memory does not fall
 /// within the size range, this allocator will fallback to parent allocator.
 ///
+/// @warning The first 8 bytes of objects are overwritten, be careful when using uninitialized memory.
+///
 /// @tparam Parent  The parent allocator
 /// @tparam MinSize The minimum size of allocation for this allocator.
 /// @tparam MaxSize The maximum size of allocation for this allocator.

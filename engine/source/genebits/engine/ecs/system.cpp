@@ -51,6 +51,20 @@ namespace
   }
 } // namespace
 
+JobHandle SystemGroup::CombineDependencies(const std::vector<SystemBase*>& info)
+{
+  JobHandle dependencies;
+
+  for (auto it = info.cbegin(); it != info.cend(); ++it)
+  {
+    JobHandle& other = (*it)->GetJobHandle();
+
+    dependencies = job_scheduler_->CombineJobHandles(dependencies, other);
+  }
+
+  return dependencies;
+}
+
 void SystemGroup::ComputeDependencies()
 {
   for (auto it = systems_.rbegin(); it != systems_.rend(); ++it)
@@ -61,7 +75,7 @@ void SystemGroup::ComputeDependencies()
     for (SystemDataAccess data : it->access)
     {
       FindDependencies(it + 1, systems_.rend(), it->same_frame_dependencies, data);
-      FindDependencies(systems_.rbegin(), it, it->last_frame_dependencies, data);
+      FindDependencies(systems_.rbegin(), it + 1, it->last_frame_dependencies, data);
     }
   }
 }
