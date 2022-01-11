@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_SWAPCHAIN_H
 
 #include "genebits/engine/graphics/vulkan/vulkan_adapter_queries.h"
+#include "genebits/engine/graphics/vulkan/vulkan_present_image.h"
 #include "genebits/engine/graphics/vulkan/vulkan_swap_chain_support_details.h"
 
 namespace genebits::engine
@@ -63,8 +64,7 @@ private:
 
   uint32_t min_image_count_;
 
-  std::vector<VkImage> swapchain_images_;
-  std::vector<VkImageView> swapchain_image_views;
+  std::vector<VulkanPresentImage> swapchain_images_;
   std::vector<VkFramebuffer> swapchain_frame_buffers;
 
   bool Initialize(VkPhysicalDevice adapter_handle)
@@ -80,7 +80,7 @@ private:
 
     if (min_image_count_ == 0) { min_image_count_ = GetRecommendedImageCount(chain_support_details); }
 
-    // TODO use members or stay pure function
+    // TODO use members instead of stay pure function
     swapchain_create_info_ =
       PopulateCreateInfo(surface_->GetHandle(), min_image_count_, surface_format_, swapchain_extent_);
     SetQueueFamilyIndicesInfo(swapchain_create_info_, queue_family_indices);
@@ -99,9 +99,17 @@ private:
 
   void GetSwapchainImages()
   {
+    // Get the number of allocated images by the vulkan implementation by using nullptr
     vkGetSwapchainImagesKHR(device_->GetHandle(), swapchain_handle_, &min_image_count_, nullptr);
-    swapchain_images_.resize(min_image_count_);
-    vkGetSwapchainImagesKHR(device_->GetHandle(), swapchain_handle_, &min_image_count_, swapchain_images_.data());
+
+    // Get the pointer to the images
+    std::vector<VkImage> image_ptrs(min_image_count_);
+    vkGetSwapchainImagesKHR(device_->GetHandle(), swapchain_handle_, &min_image_count_, image_ptrs.data());
+
+    for (const auto image_ptr : image_ptrs)
+    {
+      swapchain_images_.emplace_back(image_ptr, surface_format_.format, VK_IMAGE_ASPECT_COLOR_BIT, device_);
+    }
   }
 
   VkSwapchainCreateInfoKHR PopulateCreateInfo(
