@@ -16,47 +16,61 @@
 
 namespace genebits::engine
 {
-
 struct SystemDataAccess
 {
   ComponentId id;
   bool read_only;
 };
 
+using SystemDataAccessList = FastVector<SystemDataAccess>;
+
 template<typename... Components>
 class System;
 
 class SystemGroup;
 
+class Phase;
+
 class SystemBase
 {
 public:
+  SystemBase() : registry_(nullptr), scheduler_(nullptr) {};
+
   virtual ~SystemBase() = default;
+
+  SystemBase(const SystemBase&) = delete;
+  SystemBase& operator=(const SystemBase&) = delete;
+  SystemBase(SystemBase&&) = delete;
+  SystemBase& operator=(SystemBase&&) = delete;
+
+  void Run(JobHandle dependencies)
+  {
+    ASSERT(Initialized(), "System not initialized");
+
+    OnUpdate(dependencies);
+  }
+
+  void ForceComplete()
+  {
+    ASSERT(Initialized(), "System not initialized");
+
+    scheduler_->Complete(handle_);
+  }
+
+  virtual SystemDataAccessList GetDataAccess() = 0;
+
+protected:
+  template<typename... Components>
+  friend class System;
+  friend SystemGroup;
+  friend Phase;
 
   virtual void OnUpdate(JobHandle dependencies) = 0;
 
-  virtual std::vector<SystemDataAccess> GetDataAccess() = 0;
-
-  constexpr void SetJobHandle(JobHandle handle) noexcept
+  constexpr bool Initialized() const noexcept
   {
-    handle_ = handle;
+    return registry_ && scheduler_;
   }
-
-  [[nodiscard]] constexpr JobHandle& GetJobHandle() noexcept
-  {
-    return handle_;
-  }
-
-  [[nodiscard]] constexpr JobScheduler& GetScheduler() noexcept
-  {
-    return *scheduler_;
-  }
-
-protected:
-  friend SystemGroup;
-
-  template<typename... Components>
-  friend class System;
 
 private:
   Registry* registry_;
@@ -65,147 +79,178 @@ private:
   JobHandle handle_;
 };
 
-class SystemGroup
-{
-public:
-  SystemGroup(JobScheduler* job_scheduler, Registry* registry) : job_scheduler_(job_scheduler), registry_(registry) {}
-
-  void Run()
-  {
-    for (SystemInfo& info : systems_)
-    {
-      JobHandle dependencies = CombineDependencies(info.sync);
-
-      info.system->OnUpdate(dependencies);
-    }
-  }
-
-  void ForceComplete()
-  {
-    for (auto it = systems_.rbegin(); it != systems_.rend(); ++it)
-    {
-      job_scheduler_->Complete(it->system->GetJobHandle());
-    }
-  }
-
-  void Compile()
-  {
-    ComputeDependencies();
-
-    ComputeSynchronizations();
-  }
-
-  void AddSystem(SystemBase* system)
-  {
-    SystemInfo info;
-
-    info.system = system;
-    info.access = system->GetDataAccess();
-
-    InitializeSystem(system);
-
-    systems_.push_back(std::move(info));
-  }
-
-  [[nodiscard]] constexpr size_t Count() noexcept
-  {
-    return systems_.size();
-  }
-
-private:
-  struct SystemInfo
-  {
-    SystemBase* system;
-
-    std::vector<SystemDataAccess> access;
-
-    std::set<SystemBase*> same_frame_dependencies;
-    std::set<SystemBase*> last_frame_dependencies;
-
-    std::vector<SystemBase*> sync;
-  };
-
-  void InitializeSystem(SystemBase* system)
-  {
-    system->registry_ = registry_;
-    system->scheduler_ = job_scheduler_;
-  }
-
-  JobHandle CombineDependencies(const std::vector<SystemBase*>& info);
-
-  void ComputeDependencies();
-
-  void ComputeSynchronizations();
-
-private:
-  JobScheduler* job_scheduler_;
-  Registry* registry_;
-
-  std::vector<SystemInfo> systems_;
-};
-
 template<typename... Components>
 class System : public SystemBase
 {
 public:
-  std::vector<SystemDataAccess> GetDataAccess() final
+  SystemDataAccessList GetDataAccess() final
   {
-    std::vector<SystemDataAccess> access;
+    SystemDataAccessList access;
 
-    (access.push_back({ GetComponentId<std::remove_cvref_t<Components>>(), std::is_const_v<Components> }), ...);
+    access.Reserve(sizeof...(Components));
+
+    (access.PushBack({ GetComponentId<std::remove_cvref_t<Components>>(), std::is_const_v<Components> }), ...);
 
     return access;
   }
 
   JobHandle ScheduleDefered(JobBase* job, JobHandle dependencies, void (*deleter)(JobBase*))
   {
-    JobHandle handle = GetScheduler().Schedule(job, dependencies);
+    ASSERT(Initialized(), "System not initialized");
 
-    scheduled_job_.Reset(job, deleter); // Must be called here because dependencies must be finished
-    SetJobHandle(handle);
+    JobHandle handle = scheduler_->Schedule(job, dependencies);
+
+    scheduled_job_.Reset(job, deleter);
+    handle_ = handle;
 
     return handle;
   }
 
   JobHandle ScheduleDefered(JobBase* job, JobHandle dependencies)
   {
-    JobHandle handle = GetScheduler().Schedule(job, dependencies);
+    ASSERT(Initialized(), "System not initialized");
 
-    scheduled_job_.Reset(job); // Must be called here because dependencies must be finished
-    SetJobHandle(handle);
+    JobHandle handle = scheduler_->Schedule(job, dependencies);
 
-    return handle;
-  }
-
-  JobHandle ScheduleDefered(JobBase* job, void (*deleter)(JobBase*))
-  {
-    scheduled_job_.Reset(job, deleter);
-
-    JobHandle handle = GetScheduler().Schedule(job);
-    SetJobHandle(handle);
-
-    return handle;
-  }
-
-  JobHandle ScheduleDefered(JobBase* job)
-  {
     scheduled_job_.Reset(job);
-
-    JobHandle handle = GetScheduler().Schedule(job);
-    SetJobHandle(handle);
+    handle_ = handle;
 
     return handle;
   }
 
   PolyView<Components...> GetView()
   {
+    ASSERT(Initialized(), "System not initialized");
+
     return registry_->template View<Components...>();
+  }
+
+  [[nodiscard]] constexpr const JobScheduler& GetScheduler() noexcept
+  {
+    ASSERT(Initialized(), "System not initialized");
+
+    return *scheduler_;
   }
 
 private:
   using JobPtr = ErasedPtr<JobBase>;
 
+private:
   JobPtr scheduled_job_;
+};
+
+class SystemGroup
+{
+public:
+  SystemGroup() = default;
+
+  SystemGroup(const SystemGroup&) = delete;
+  SystemGroup& operator=(const SystemGroup&) = delete;
+  SystemGroup(SystemGroup&&) = delete;
+  SystemGroup& operator=(SystemGroup&&) = delete;
+
+  void InitializeSystems(Registry& registry, JobScheduler& job_scheduler)
+  {
+    for (SystemBase* system : registered_systems_)
+    {
+      system->registry_ = &registry;
+      system->scheduler_ = &job_scheduler;
+    }
+  }
+
+  void Add(SystemBase* system)
+  {
+    registered_systems_.PushBack(system);
+  }
+
+  [[nodiscard]] constexpr size_t Count() const noexcept
+  {
+    return registered_systems_.Size();
+  }
+
+  [[nodiscard]] constexpr SystemBase** RawSystems() noexcept
+  {
+    return registered_systems_.data();
+  }
+
+private:
+  FastVector<SystemBase*> registered_systems_;
+};
+
+class Phase
+{
+public:
+  ~Phase()
+  {
+    Destroy();
+  }
+
+  Phase(const Phase&) = delete;
+  Phase& operator=(const Phase&) = delete;
+
+  Phase(Phase&& other) noexcept : begin_(other.begin_), end_(other.end_)
+  {
+    other.begin_ = nullptr;
+    other.end_ = nullptr;
+  }
+
+  void Run()
+  {
+    for (auto it = begin_; it != end_; ++it)
+    {
+      SystemBase& system = *(it->system);
+
+      ASSERT(system.Initialized(), "System not initialized");
+
+      JobHandle dependencies;
+
+      for (auto sync_it = it->sync.begin; sync_it != it->sync.end; ++sync_it)
+      {
+        dependencies = system.scheduler_->CombineJobHandles(dependencies, (*sync_it)->handle_);
+      }
+
+      system.Run(dependencies);
+
+      // TODO Assert dependencies where completed ?
+    }
+  }
+
+  void ForceComplete()
+  {
+    for (auto it = begin_; it != end_; ++it)
+    {
+      ASSERT(it->system->Initialized(), "System not initialized");
+
+      it->system->ForceComplete();
+    }
+  }
+
+  static Phase Compile(SystemBase** systems, size_t dependencies, size_t total);
+
+  static Phase Compile(SystemGroup& group, std::initializer_list<SystemGroup*> dependencies);
+
+  static Phase Compile(SystemGroup& group);
+
+private:
+  struct Sync
+  {
+    SystemBase** begin;
+    SystemBase** end;
+  };
+
+  struct CompiledSystem
+  {
+    SystemBase* system;
+    Sync sync;
+  };
+
+  constexpr Phase(CompiledSystem* begin, CompiledSystem* end) : begin_(begin), end_(end) {}
+
+  void Destroy();
+
+private:
+  CompiledSystem* begin_;
+  CompiledSystem* end_;
 };
 
 template<typename Update, typename... Components>

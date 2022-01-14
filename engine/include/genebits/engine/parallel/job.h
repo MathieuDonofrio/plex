@@ -215,11 +215,15 @@ private:
   void DestroyJobHandle(JobHandle& handle)
   {
     auto* group = static_cast<JobGroup*>(handle.group_);
-    group->version++;
 
-    job_group_pool_.Release(group);
+    if (group)
+    {
+      group->version++;
 
-    handle.group_ = nullptr;
+      job_group_pool_.Release(group);
+
+      handle.group_ = nullptr;
+    }
   }
 
   ///

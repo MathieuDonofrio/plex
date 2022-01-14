@@ -35,24 +35,25 @@ int main()
   registry.Create();
 
   ThreadPool pool;
-
   JobScheduler scheduler(pool);
 
-  SystemGroup group(&scheduler, &registry);
+  SystemGroup group;
 
   MySystem<int> system1(1);
   MySystem<const int, const float, double> system2(2);
   MySystem<float, const int> system3(3);
   MySystem<const int, const float, bool> system4(4);
 
-  group.AddSystem(&system1);
-  group.AddSystem(&system2);
-  group.AddSystem(&system3);
-  group.AddSystem(&system4);
+  group.Add(&system1);
+  group.Add(&system2);
+  group.Add(&system3);
+  group.Add(&system4);
 
-  group.Compile();
+  group.InitializeSystems(registry, scheduler);
 
-  group.Run();
+  Phase phase = Phase::Compile(group);
+
+  phase.Run();
 
   return 0;
 }
