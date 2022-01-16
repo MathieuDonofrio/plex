@@ -67,7 +67,7 @@ protected:
 
   virtual void OnUpdate(JobHandle dependencies) = 0;
 
-  constexpr bool Initialized() const noexcept
+  [[nodiscard]] constexpr bool Initialized() const noexcept
   {
     return registry_ && scheduler_;
   }
@@ -94,25 +94,23 @@ public:
     return access;
   }
 
-  JobHandle ScheduleDefered(JobBase* job, JobHandle dependencies, void (*deleter)(JobBase*))
+  JobHandle ScheduleDefered(std::shared_ptr<JobBase> job, JobHandle dependencies, void (*deleter)(JobBase*))
   {
     ASSERT(Initialized(), "System not initialized");
 
     JobHandle handle = scheduler_->Schedule(job, dependencies);
 
-    scheduled_job_.Reset(job, deleter);
     handle_ = handle;
 
     return handle;
   }
 
-  JobHandle ScheduleDefered(JobBase* job, JobHandle dependencies)
+  JobHandle ScheduleDefered(std::shared_ptr<JobBase> job, JobHandle dependencies)
   {
     ASSERT(Initialized(), "System not initialized");
 
     JobHandle handle = scheduler_->Schedule(job, dependencies);
 
-    scheduled_job_.Reset(job);
     handle_ = handle;
 
     return handle;
@@ -131,12 +129,6 @@ public:
 
     return *scheduler_;
   }
-
-private:
-  using JobPtr = ErasedPtr<JobBase>;
-
-private:
-  JobPtr scheduled_job_;
 };
 
 class SystemGroup
@@ -180,23 +172,9 @@ private:
 class Phase
 {
 public:
-  ~Phase()
-  {
-    Destroy();
-  }
-
-  Phase(const Phase&) = delete;
-  Phase& operator=(const Phase&) = delete;
-
-  Phase(Phase&& other) noexcept : begin_(other.begin_), end_(other.end_)
-  {
-    other.begin_ = nullptr;
-    other.end_ = nullptr;
-  }
-
   void Run()
   {
-    for (auto it = begin_; it != end_; ++it)
+    for (auto it = compiled_.begin(); it != compiled_.end(); ++it)
     {
       SystemBase& system = *(it->system);
 
@@ -204,9 +182,9 @@ public:
 
       JobHandle dependencies;
 
-      for (auto sync_it = it->sync.begin; sync_it != it->sync.end; ++sync_it)
+      for (SystemBase* dependency : it->sync)
       {
-        dependencies = system.scheduler_->CombineJobHandles(dependencies, (*sync_it)->handle_);
+        dependencies = system.scheduler_->CombineJobHandles(dependencies, dependency->handle_);
       }
 
       system.Run(dependencies);
@@ -217,7 +195,7 @@ public:
 
   void ForceComplete()
   {
-    for (auto it = begin_; it != end_; ++it)
+    for (auto it = compiled_.begin(); it != compiled_.end(); ++it)
     {
       ASSERT(it->system->Initialized(), "System not initialized");
 
@@ -231,26 +209,28 @@ public:
 
   static Phase Compile(SystemGroup& group);
 
-private:
-  struct Sync
-  {
-    SystemBase** begin;
-    SystemBase** end;
-  };
-
+public:
   struct CompiledSystem
   {
     SystemBase* system;
-    Sync sync;
+    FastVector<SystemBase*> sync;
   };
 
-  constexpr Phase(CompiledSystem* begin, CompiledSystem* end) : begin_(begin), end_(end) {}
+  [[nodiscard]] constexpr CompiledSystem* begin() noexcept
+  {
+    return compiled_.begin();
+  }
 
-  void Destroy();
+  [[nodiscard]] constexpr CompiledSystem* end() noexcept
+  {
+    return compiled_.end();
+  }
 
 private:
-  CompiledSystem* begin_;
-  CompiledSystem* end_;
+  constexpr Phase(FastVector<CompiledSystem>&& compiled) : compiled_(std::move(compiled)) {}
+
+private:
+  FastVector<CompiledSystem> compiled_;
 };
 
 template<typename Update, typename... Components>
