@@ -1,6 +1,8 @@
 #ifndef GENEBITS_ENGINE_PARALLEL_JOB_H
 #define GENEBITS_ENGINE_PARALLEL_JOB_H
 
+#include <utility>
+
 #include "genebits/engine/parallel/task.h"
 #include "genebits/engine/parallel/thread_pool.h"
 #include "genebits/engine/util/fast_vector.h"
@@ -98,13 +100,15 @@ public:
   ///
   /// @return JobHandle with scheduled job.
   ///
-  [[nodiscard]] JobHandle Schedule(JobBase* job, JobHandle dependencies)
+  [[nodiscard]] JobHandle Schedule(std::shared_ptr<JobBase> job, JobHandle dependencies)
   {
-    JobHandle handle = CreateJobHandle(job);
+    TaskList tasks = job->GetTasks();
+
+    JobHandle handle = CreateJobHandle(std::move(job));
 
     Complete(dependencies);
 
-    SumbitJobTasks(job);
+    thread_pool_.EnqueueAll(tasks);
 
     return handle;
   }
@@ -118,11 +122,13 @@ public:
   ///
   /// @return JobHandle with scheduled job.
   ///
-  [[nodiscard]] JobHandle Schedule(JobBase* job)
+  [[nodiscard]] JobHandle Schedule(std::shared_ptr<JobBase> job)
   {
-    JobHandle handle = CreateJobHandle(job);
+    TaskList tasks = job->GetTasks();
 
-    SumbitJobTasks(job);
+    JobHandle handle = CreateJobHandle(std::move(job));
+
+    thread_pool_.EnqueueAll(tasks);
 
     return handle;
   }
@@ -145,7 +151,7 @@ public:
 
     ASSERT(group->count + other_group->count <= 64, "Job handles cannot contain more than 64 jobs");
 
-    std::uninitialized_copy(other_group->jobs, other_group->jobs + other_group->count, group->jobs + group->count);
+    std::uninitialized_move(other_group->jobs, other_group->jobs + other_group->count, group->jobs + group->count);
 
     group->count += other_group->count;
 
@@ -181,7 +187,7 @@ private:
   ///
   struct JobGroup
   {
-    JobBase* jobs[64];
+    std::shared_ptr<JobBase> jobs[64];
     size_t count;
     size_t version;
   };
@@ -195,14 +201,14 @@ private:
   ///
   /// @return Handle with job.
   ///
-  JobHandle CreateJobHandle(JobBase* job)
+  JobHandle CreateJobHandle(std::shared_ptr<JobBase>&& job)
   {
     JobGroup* group = job_group_pool_.AcquireUninitialized();
 
-    group->jobs[0] = job;
+    new (group->jobs) std::shared_ptr(std::move(job));
     group->count = 1;
 
-    return { group, group->version };
+    return JobHandle { group, group->version };
   }
 
   ///
@@ -218,22 +224,14 @@ private:
 
     if (group)
     {
+      handle.group_ = nullptr;
+
       group->version++;
 
+      std::destroy(group->jobs, group->jobs + group->count);
+
       job_group_pool_.Release(group);
-
-      handle.group_ = nullptr;
     }
-  }
-
-  ///
-  /// Submits all the tasks for the job.
-  ///
-  /// @param[in] job Job to sumbit tasks for.
-  ///
-  void SumbitJobTasks(JobBase* job)
-  {
-    thread_pool_.EnqueueAll(job->GetTasks());
   }
 
 private:
@@ -299,34 +297,6 @@ public:
   {
     return { static_cast<Task*>(this), 1 };
   }
-};
-
-///
-/// Lambda adapter for a basic job.
-///
-/// @tparam[in] Functor Functor type to make basic job with.
-///
-template<typename Functor>
-class BasicLambdaJob : public BasicJob<BasicLambdaJob<Functor>>
-{
-public:
-  ///
-  /// Constructor.
-  ///
-  /// @param[in] functor Functor for job.
-  ///
-  BasicLambdaJob(Functor functor) : BasicJob<BasicLambdaJob<Functor>>(), functor_(std::move(functor)) {}
-
-  ///
-  /// Delegates calls to functor.
-  ///
-  void operator()()
-  {
-    functor_();
-  }
-
-private:
-  Functor functor_;
 };
 
 ///
@@ -534,52 +504,6 @@ private:
 
 private:
   ParallelForJobTask tasks_[cMaxBatches];
-};
-
-///
-/// Lambda adapter for a parallel for job.
-///
-/// @tparam[in] Functor Functor type to make parallel for job with.
-///
-template<typename Functor>
-class ParallelForLambdaJob : public ParallelForJob<ParallelForLambdaJob<Functor>>
-{
-public:
-  ///
-  /// Constructor.
-  ///
-  /// @param[in] functor Functor for job.
-  /// @param[in] amount Amount of iterations of work.
-  /// @param[in] batches Preferred amount of batches (1 batch = 1 task).
-  ///
-  ParallelForLambdaJob(Functor functor, size_t amount, size_t batches)
-    : ParallelForJob<ParallelForLambdaJob<Functor>>(amount, batches), functor_(std::move(functor))
-  {}
-
-  ///
-  /// Constructor.
-  ///
-  /// Uses maximum amount of batches.
-  ///
-  /// @param[in] functor Functor for job.
-  /// @param[in] amount Amount of iterations of work.
-  ///
-  ParallelForLambdaJob(Functor functor, size_t amount)
-    : ParallelForJob<ParallelForLambdaJob<Functor>>(amount), functor_(std::move(functor))
-  {}
-
-  ///
-  /// Delegates call to functor.
-  ///
-  /// @param[in] index Iteration index.
-  ///
-  void operator()(size_t index)
-  {
-    functor_(index);
-  }
-
-private:
-  Functor functor_;
 };
 
 } // namespace genebits::engine

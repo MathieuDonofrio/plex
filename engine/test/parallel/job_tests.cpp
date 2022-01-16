@@ -4,21 +4,55 @@
 
 namespace genebits::engine::tests
 {
+namespace
+{
+  class MockBasicJob : public BasicJob<MockBasicJob>
+  {
+  public:
+    MockBasicJob(std::function<void()> function) : function_(function) {}
+
+    void operator()()
+    {
+      function_();
+    }
+
+  private:
+    std::function<void()> function_;
+  };
+
+  class MockParallelForJob : public ParallelForJob<MockParallelForJob>
+  {
+  public:
+    MockParallelForJob(std::function<void(size_t)> function, size_t amount)
+      : ParallelForJob<MockParallelForJob>(amount), function_(function)
+    {}
+
+    void operator()(size_t index)
+    {
+      function_(index);
+    }
+
+  private:
+    std::function<void(size_t index)> function_;
+  };
+} // namespace
+
 TEST(BasicJob_Tests, Wait_SingleExecute_Compleated)
 {
   ThreadPool pool;
 
   std::atomic<int> counter = 0;
 
-  BasicLambdaJob job { [&counter]()
+  auto job = std::make_shared<MockBasicJob>(
+    [&counter]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       counter++;
-    } };
+    });
 
-  pool.EnqueueAll(job.GetTasks());
+  pool.EnqueueAll(job->GetTasks());
 
-  job.Wait();
+  job->Wait();
 
   EXPECT_EQ(counter.load(), 1);
 }
@@ -31,15 +65,16 @@ TEST(BasicJob_Tests, Wait_IndirectExecute_Compleated)
 
   void* dummy = nullptr; // Makes the lambda bigger in order to trigger second constructor.
 
-  BasicLambdaJob job { [&counter, dummy]()
+  auto job = std::make_shared<MockBasicJob>(
+    [&counter, dummy]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       counter++;
-    } };
+    });
 
-  pool.EnqueueAll(job.GetTasks());
+  pool.EnqueueAll(job->GetTasks());
 
-  job.Wait();
+  job->Wait();
 
   EXPECT_EQ(counter.load(), 1);
 }
@@ -53,18 +88,19 @@ TEST(ParallelForJob_Tests, Wait_Execute_Compleated)
   std::array<std::atomic<int>, amount> access {};
   std::atomic<int> counter = 0;
 
-  ParallelForLambdaJob job { [&counter, &access](size_t index)
+  auto job = std::make_shared<MockParallelForJob>(
+    [&counter, &access](size_t index)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
       access[index] = static_cast<int>(index);
       counter++;
     },
-    amount };
+    amount);
 
-  pool.EnqueueAll(job.GetTasks());
+  pool.EnqueueAll(job->GetTasks());
 
-  job.Wait();
+  job->Wait();
 
   EXPECT_EQ(counter.load(), amount);
 
@@ -82,13 +118,14 @@ TEST(JobScheduler_Tests, Schedule_SingleBasicJob_Executed)
 
   std::atomic<bool> flag = false;
 
-  BasicLambdaJob job { [&flag]()
+  auto job = std::make_shared<MockBasicJob>(
+    [&flag]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       flag = true;
-    } };
+    });
 
-  JobHandle handle = scheduler.Schedule(&job);
+  JobHandle handle = scheduler.Schedule(job);
 
   scheduler.Complete(handle);
 
@@ -103,17 +140,18 @@ TEST(JobScheduler_Tests, Schedule_WithDependency_ExecutedInOrder)
 
   std::atomic<int> test_value = 0;
 
-  BasicLambdaJob job1 { [&test_value]()
+  auto job1 = std::make_shared<MockBasicJob>(
+    [&test_value]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       test_value = 99;
-    } };
+    });
 
-  BasicLambdaJob job2 { [&test_value]() { test_value = 10; } };
+  auto job2 = std::make_shared<MockBasicJob>([&test_value]() { test_value = 10; });
 
-  JobHandle handle1 = scheduler.Schedule(&job1);
+  JobHandle handle1 = scheduler.Schedule(job1);
 
-  JobHandle handle2 = scheduler.Schedule(&job2, handle1); // Should complete handle 1
+  JobHandle handle2 = scheduler.Schedule(job2, handle1); // Should complete handle 1
 
   scheduler.Complete(handle2);
 
@@ -129,16 +167,17 @@ TEST(JobScheduler_Tests, CombineJobHandles_TwoJobs_BothCompleted)
   std::atomic<int> test_value1 = 0;
   std::atomic<int> test_value2 = 0;
 
-  BasicLambdaJob job1 { [&test_value1]()
+  auto job1 = std::make_shared<MockBasicJob>(
+    [&test_value1]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       test_value1 = 99;
-    } };
+    });
 
-  BasicLambdaJob job2 { [&test_value2]() { test_value2 = 10; } };
+  auto job2 = std::make_shared<MockBasicJob>([&test_value2]() { test_value2 = 10; });
 
-  JobHandle handle1 = scheduler.Schedule(&job2);
-  JobHandle handle2 = scheduler.Schedule(&job1);
+  JobHandle handle1 = scheduler.Schedule(job2);
+  JobHandle handle2 = scheduler.Schedule(job1);
 
   JobHandle handle = scheduler.CombineJobHandles(handle1, handle2);
 

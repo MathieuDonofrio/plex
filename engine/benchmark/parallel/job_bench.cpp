@@ -4,8 +4,43 @@
 
 #include "fake_work.h"
 
+#include <functional>
+
 namespace genebits::engine::bench
 {
+namespace
+{
+  class BenchBasicJob : public BasicJob<BenchBasicJob>
+  {
+  public:
+    BenchBasicJob(std::function<void()> function) : function_(function) {}
+
+    void operator()()
+    {
+      function_();
+    }
+
+  private:
+    std::function<void()> function_;
+  };
+
+  class BenchParallelForJob : public ParallelForJob<BenchParallelForJob>
+  {
+  public:
+    BenchParallelForJob(std::function<void(size_t)> function, size_t amount)
+      : ParallelForJob<BenchParallelForJob>(amount), function_(function)
+    {}
+
+    void operator()(size_t index)
+    {
+      function_(index);
+    }
+
+  private:
+    std::function<void(size_t index)> function_;
+  };
+} // namespace
+
 void BasicJob_ScheduleAndComplete_NoWork(benchmark::State& state)
 {
   ThreadPool pool;
@@ -16,14 +51,14 @@ void BasicJob_ScheduleAndComplete_NoWork(benchmark::State& state)
 
   for (auto _ : state)
   {
-    BasicLambdaJob job(
+    auto job = std::make_shared<BenchBasicJob>(
       [&t]()
       {
         t++;
         benchmark::ClobberMemory();
       });
 
-    JobHandle handle = scheduler.Schedule(&job);
+    JobHandle handle = scheduler.Schedule(job);
 
     scheduler.Complete(handle);
 
@@ -52,7 +87,7 @@ void BasicJob_ScheduleAndComplete_Work(benchmark::State& state)
 
   for (auto _ : state)
   {
-    BasicLambdaJob job(
+    auto job = std::make_shared<BenchBasicJob>(
       [&t, work_per_iteration]()
       {
         Work(work_per_iteration);
@@ -60,7 +95,7 @@ void BasicJob_ScheduleAndComplete_Work(benchmark::State& state)
         benchmark::ClobberMemory();
       });
 
-    JobHandle handle = scheduler.Schedule(&job);
+    JobHandle handle = scheduler.Schedule(job);
 
     scheduler.Complete(handle);
 
@@ -86,7 +121,7 @@ void ParallelForJob_ScheduleAndComplete_NoWork(benchmark::State& state)
 
   for (auto _ : state)
   {
-    ParallelForLambdaJob job(
+    auto job = std::make_shared<BenchParallelForJob>(
       [&t](size_t index)
       {
         t += index;
@@ -94,7 +129,7 @@ void ParallelForJob_ScheduleAndComplete_NoWork(benchmark::State& state)
       },
       16);
 
-    JobHandle handle = scheduler.Schedule(&job);
+    JobHandle handle = scheduler.Schedule(job);
 
     scheduler.Complete(handle);
 
@@ -123,7 +158,7 @@ void ParallelForJob_ScheduleAndComplete_Work(benchmark::State& state)
 
   for (auto _ : state)
   {
-    ParallelForLambdaJob job(
+    auto job = std::make_shared<BenchParallelForJob>(
       [&t, work_per_iteration](size_t index)
       {
         Work(work_per_iteration);
@@ -132,7 +167,7 @@ void ParallelForJob_ScheduleAndComplete_Work(benchmark::State& state)
       },
       iterations);
 
-    JobHandle handle = scheduler.Schedule(&job);
+    JobHandle handle = scheduler.Schedule(job);
 
     scheduler.Complete(handle);
 
