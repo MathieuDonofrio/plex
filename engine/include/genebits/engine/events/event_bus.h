@@ -166,7 +166,7 @@ private:
   }
 
 private:
-  TypeMap<ErasedPtr<void>, EventBus> pools_;
+  TypeMap<ErasedPtr<void>> pools_;
 };
 
 } // namespace genebits::engine

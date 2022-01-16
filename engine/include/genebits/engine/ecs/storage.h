@@ -458,7 +458,7 @@ private:
   SharedSparseArray<Entity, SparseAllocator>* sparse_;
 
   FastVector<Entity, DenseAllocator> dense_;
-  TypeMap<ErasedPtr<void>, StorageType> pools_;
+  TypeMap<ErasedPtr<void>> pools_;
 
   // Functions
   EraseFunction erase_function_;

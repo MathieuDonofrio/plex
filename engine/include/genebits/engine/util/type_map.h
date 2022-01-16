@@ -23,10 +23,9 @@ concept TypeMapValueType = FastVectorType<Type>;
 /// This map is extremely low overhead and performance oriented.
 ///
 /// @tparam Value Value to map types with.
-/// @tparam Tag Optional extra tag to make unique id sequence more unique.
 /// @tparam AllocatorImpl Allocator to use to allocate memory.
 ///
-template<TypeMapValueType Value, typename Tag = void, Allocator AllocatorImpl = Mallocator>
+template<TypeMapValueType Value, Allocator AllocatorImpl = Mallocator>
 class TypeMap
 {
 public:
@@ -112,7 +111,7 @@ private:
   template<typename Type>
   [[nodiscard]] static size_t Key() noexcept
   {
-    return Meta<Type>::template UniqueId<TypeMap<Value, Tag, AllocatorImpl>>();
+    return Meta<Type>::template UniqueId<TypeMap<Value>>();
   }
 
 private:
