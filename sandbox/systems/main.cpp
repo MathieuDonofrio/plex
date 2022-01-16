@@ -11,11 +11,25 @@ template<typename... Components>
 class MySystem : public System<Components...>
 {
 public:
+  class MySystemJob : public BasicJob<MySystemJob>
+  {
+  public:
+    MySystemJob(size_t id) : id_(id) {}
+
+    void operator()()
+    {
+      LOG_INFO("Running System Job: {}", id_);
+    }
+
+  private:
+    size_t id_;
+  };
+
   MySystem(size_t id) : id_(id) {}
 
   void OnUpdate(JobHandle dependencies) override
   {
-    auto job = new BasicLambdaJob([&]() { LOG_INFO("Running System Job: {}", id_); });
+    auto job = std::make_shared<MySystemJob>(id_);
 
     MySystem::ScheduleDefered(job, dependencies);
   }
