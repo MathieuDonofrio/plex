@@ -132,6 +132,8 @@ public:
   ///
   constexpr FastVector() noexcept : array_(nullptr), size_(0), capacity_(0) {}
 
+  // TODO constructor with initializer list
+
   ///
   /// Destructor
   ///
@@ -173,6 +175,8 @@ public:
     new (array_ + size_) Type(std::forward<Type>(value));
     ++size_;
   }
+
+  // TODO emplace back
 
   ///
   /// Remove the element at the back of the vector.
@@ -460,6 +464,9 @@ protected:
   ///
   void Grow() noexcept
   {
+    // TODO find better strategies?
+    // Maybe specialize for sizeof(Type) & AllocatorType
+
     const uint32_t new_capacity = ((capacity_ << 1) | 0xF);
 
     Grow(new_capacity);
@@ -517,7 +524,7 @@ protected:
 private:
   Type* array_;
 
-  // We use 32 bit size & capacity to reduce the size of the vector.
+  // We use 32 bit size & capacity to reduce the size of the vector on 64 bit.
   uint32_t size_;
   uint32_t capacity_;
 };
