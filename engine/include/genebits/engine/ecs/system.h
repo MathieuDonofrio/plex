@@ -233,57 +233,80 @@ private:
   FastVector<CompiledSystem> compiled_;
 };
 
-template<typename Update, typename... Components>
-requires EntityFunctor<Update, Components...>
-class EntitiesJob : public JobBase
+///
+/// Simple entities job that only has one task.
+///
+/// This job barely has any overhead over a task.
+///
+/// Inherit this job and implement EntitiesJob concept.
+///
+/// @tparam[in] Job Implementation type.
+///
+template<typename Job, typename... Components>
+class EntitiesJob : public JobBase, private Task
 {
 public:
-  constexpr EntitiesJob(Update update, PolyView<Components...> view) noexcept : task_(view, std::move(update))
+  // We can inherit from Task since there is never more than one task to iterate on, so
+  // we don't care about the size of the job.
+
+  ///
+  /// Default constructor.
+  ///
+  EntitiesJob(PolyView<Components...> view) : Task(), view_(view)
   {
-    task_.Executor().template Bind<EntitiesJob, &EntitiesJob::UpdateAll>(this);
+    static_assert(std::is_base_of_v<EntitiesJob, Job>);
+
+    Executor().template Bind<Job, &Job::operator()>(static_cast<Job*>(this));
   }
 
+  ///
+  /// Waits for job to finish.
+  ///
   void Wait() noexcept final
   {
-    task_.Wait();
+    Task::Wait();
   }
 
+  ///
+  /// Returns the task list for this job.
+  ///
+  /// Always one job.
+  ///
+  /// @return List of tasks for this job.
+  ///
   constexpr TaskList GetTasks() noexcept final
   {
-    return { &task_, &task_ + 1 };
+    return { static_cast<Task*>(this), 1 };
   }
 
-  PolyView<Components...> GetView()
+  ///
+  /// Returns the view for this job.
+  ///
+  /// @return Entities view.
+  ///
+  PolyView<Components...> GetView() noexcept
   {
-    return task_.view;
+    return view_;
   }
 
 private:
-  struct DataTask : public Task
-  {
-    constexpr DataTask(PolyView<Components...> other_view, Update&& other_update) noexcept
-      : view(other_view), update(std::forward<Update>(other_update))
-    {}
-
-    PolyView<Components...> view;
-    Update update;
-  };
-
+  ///
+  /// Iterates every entity in the view, unpacks and calls the job operator.
+  ///
   void UpdateAll()
   {
-    for (auto mono_view : GetView())
+    for (auto mono_view : view_)
     {
       for (auto& data : mono_view)
       {
-        EntityApply<Update, Components...>(task_.update, data);
+        EntityApply<Job, Components...>(&Job::operator(), data);
       }
     }
   }
 
 private:
-  DataTask task_;
+  PolyView<Components...> view_;
 };
-
 } // namespace genebits::engine
 
 #endif
