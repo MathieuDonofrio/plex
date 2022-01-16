@@ -158,10 +158,23 @@ TEST(SystemGroup_Tests, AddSystem_MultipleSystems_IncreasesCount)
   EXPECT_EQ(group.Count(), 4);
 }
 
-// TODO system group initialize test
-// TODO Other system good tests?
+TEST(SystemGroup_Tests, Run_SingleSystem_UpdatesSystem)
+{
+  ThreadPool pool;
+  Registry registry;
+  JobScheduler scheduler(pool);
 
-// TODO CompilePhase & DestroyPhase tests
+  SystemGroup group;
+
+  MockSystem<int> system1;
+  group.Add(&system1);
+
+  group.InitializeSystems(registry, scheduler);
+
+  EXPECT_CALL(system1, OnUpdate).Times(1);
+
+  system1.Run({});
+}
 
 TEST(Phase_Tests, Compile_SingleSystem_CorrectDependencies)
 {
@@ -174,9 +187,26 @@ TEST(Phase_Tests, Compile_SingleSystem_CorrectDependencies)
 
   Phase phase = Phase::Compile(group);
 
-  EXPECT_FALSE(TestExistence(phase, &system2, {}));
-
   EXPECT_TRUE(TestExistence(phase, &system1, { &system1 }));
+
+  EXPECT_FALSE(TestExistence(phase, &system2, {}));
+}
+
+TEST(Phase_Tests, Compile_SingleReadonlySystem_CorrectDependencies)
+{
+  SystemGroup group;
+
+  MockSystem<const int> system1;
+  group.Add(&system1);
+
+  MockSystem<int> system2; // Not compiled
+
+  Phase phase = Phase::Compile(group);
+
+  EXPECT_TRUE(TestExistence(phase, &system1, {}));
+
+  EXPECT_FALSE(TestExistence(phase, &system1, { &system1 }));
+  EXPECT_FALSE(TestExistence(phase, &system2, {}));
 }
 
 TEST(Phase_Tests, Compile_TwoSystemsDependent_CorrectDependencies)
@@ -196,6 +226,117 @@ TEST(Phase_Tests, Compile_TwoSystemsDependent_CorrectDependencies)
 
   EXPECT_FALSE(TestExistence(phase, &system1, { &system1 }));
   EXPECT_FALSE(TestExistence(phase, &system2, { &system2 }));
+}
+
+TEST(Phase_Tests, Compile_TwoSystemsIndependent_CorrectDependencies)
+{
+  SystemGroup group;
+
+  MockSystem<int> system1;
+  MockSystem<float> system2;
+
+  group.Add(&system1);
+  group.Add(&system2);
+
+  Phase phase = Phase::Compile(group);
+
+  EXPECT_TRUE(TestExistence(phase, &system1, { &system1 }));
+  EXPECT_TRUE(TestExistence(phase, &system2, { &system2 }));
+
+  EXPECT_FALSE(TestExistence(phase, &system1, { &system2 }));
+  EXPECT_FALSE(TestExistence(phase, &system2, { &system1 }));
+}
+
+TEST(Phase_Tests, Compile_TwoSystemsReadonlyIndependent_CorrectDependencies)
+{
+  SystemGroup group;
+
+  MockSystem<const int> system1;
+  MockSystem<const float> system2;
+
+  group.Add(&system1);
+  group.Add(&system2);
+
+  Phase phase = Phase::Compile(group);
+
+  EXPECT_TRUE(TestExistence(phase, &system1, {}));
+  EXPECT_TRUE(TestExistence(phase, &system2, {}));
+
+  EXPECT_FALSE(TestExistence(phase, &system1, { &system2 }));
+  EXPECT_FALSE(TestExistence(phase, &system2, { &system1 }));
+}
+
+TEST(Phase_Tests, Compile_ExternalDependency_CorrectDependencies)
+{
+  SystemGroup group;
+
+  MockSystem<const int> system1;
+  MockSystem<const float> system2;
+
+  group.Add(&system1);
+  group.Add(&system2);
+
+  SystemGroup dep1;
+
+  MockSystem<int> dep1_system1;
+
+  dep1.Add(&dep1_system1);
+
+  Phase phase = Phase::Compile(group, { &dep1 });
+
+  EXPECT_FALSE(TestExistence(phase, &dep1_system1, {}));
+  EXPECT_TRUE(TestExistence(phase, &system1, { &dep1_system1 }));
+  EXPECT_TRUE(TestExistence(phase, &system2, {}));
+}
+
+TEST(Phase_Tests, Compile_Complex3Systems_CorrectDependencies)
+{
+  SystemGroup group;
+
+  MockSystem<const int, float> system1;
+  MockSystem<int, bool> system2;
+  MockSystem<float, const bool, const int> system3;
+
+  group.Add(&system1);
+  group.Add(&system2);
+  group.Add(&system3);
+
+  Phase phase = Phase::Compile(group);
+
+  EXPECT_TRUE(TestExistence(phase, &system1, { &system3 }));
+  EXPECT_TRUE(TestExistence(phase, &system2, { &system1 }));
+  EXPECT_TRUE(TestExistence(phase, &system3, { &system2 }));
+}
+
+TEST(Phase_Tests, Compile_Complex5Systems_CorrectDependencies)
+{
+  SystemGroup group;
+
+  MockSystem<const int, float> system1;
+  MockSystem<int, bool> system2;
+  MockSystem<const float, const double> system3;
+  MockSystem<float, const bool, const int> system4;
+  MockSystem<const bool, double> system5;
+
+  group.Add(&system1);
+  group.Add(&system2);
+  group.Add(&system3);
+  group.Add(&system4);
+  group.Add(&system5);
+
+  Phase phase = Phase::Compile(group);
+
+  EXPECT_TRUE(TestExistence(phase, &system1, { &system4 }));
+  EXPECT_TRUE(TestExistence(phase, &system2, { &system1, &system5 }));
+  EXPECT_TRUE(TestExistence(phase, &system3, {}));
+  EXPECT_TRUE(TestExistence(phase, &system4, { &system2, &system3 }));
+  EXPECT_TRUE(TestExistence(phase, &system5, {}));
+
+  EXPECT_FALSE(TestExistence(phase, &system1, { &system1 }));
+  EXPECT_FALSE(TestExistence(phase, &system2, { &system2 }));
+  EXPECT_FALSE(TestExistence(phase, &system3, { &system1, &system5 }));
+  EXPECT_FALSE(TestExistence(phase, &system4, { &system4 }));
+  EXPECT_FALSE(TestExistence(phase, &system5, { &system5 }));
 }
 
 TEST(Phase_Tests, Run_SingleSystem_Executed)
