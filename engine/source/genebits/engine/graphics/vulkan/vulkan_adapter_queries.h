@@ -120,6 +120,26 @@ public:
     return swap_chain_support_details;
   }
 
+  static VkFormat FindSupportedFormat(VkPhysicalDevice adapter_handle,
+    const std::vector<VkFormat>& format_candidates,
+    VkImageTiling tiling,
+    VkFormatFeatureFlags features)
+  {
+    for (VkFormat format : format_candidates)
+    {
+      VkFormatProperties format_properties;
+      vkGetPhysicalDeviceFormatProperties(adapter_handle, format, &format_properties);
+
+      if (tiling == VK_IMAGE_TILING_LINEAR && (format_properties.linearTilingFeatures & features) == features
+          || tiling == VK_IMAGE_TILING_OPTIMAL && (format_properties.optimalTilingFeatures & features) == features)
+      {
+        return format;
+      }
+    }
+
+    LOG_ERROR("Failed to find supported format");
+  }
+
 private:
   static std::vector<VkPhysicalDevice> GetPhysicalDevices(VkInstance instance_handle)
   {
