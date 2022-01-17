@@ -106,6 +106,7 @@ private:
     std::vector<VkImage> image_ptrs(min_image_count_);
     vkGetSwapchainImagesKHR(device_->GetHandle(), swapchain_handle_, &min_image_count_, image_ptrs.data());
 
+    swapchain_images_.reserve(image_ptrs.size());
     for (const auto image_ptr : image_ptrs)
     {
       swapchain_images_.emplace_back(image_ptr, surface_format_.format, VK_IMAGE_ASPECT_COLOR_BIT, device_);
