@@ -47,7 +47,7 @@ public:
     return swapchain_handle_;
   }
 
-  bool UpdateSwapchainImageSize(uint32_t, uint32_t)
+  bool UpdateSwapchainSize(uint32_t, uint32_t)
   {
     return false;
   }
