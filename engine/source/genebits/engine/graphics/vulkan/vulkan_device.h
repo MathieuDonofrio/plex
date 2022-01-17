@@ -47,7 +47,7 @@ public:
     return queue_family_indices_;
   }
 
-  [[nodiscard]] const VkDevice GetHandle() const noexcept
+  [[nodiscard]] VkDevice GetHandle() const noexcept
   {
     return device_handle_;
   }
