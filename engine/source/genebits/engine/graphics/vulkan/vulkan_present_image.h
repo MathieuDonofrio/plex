@@ -15,21 +15,34 @@ namespace genebits::engine
 
 // TODO find a hierarchy with VulkanImage
 
-class VulkanPresentImage
+class VulkanPresentImage : VulkanImage
 {
 public:
 
   VulkanPresentImage() = default;
 
-  VulkanPresentImage(VulkanPresentImage&& other) = default;
-  VulkanPresentImage& operator=(VulkanPresentImage&&) = default;
+  VulkanPresentImage(VulkanPresentImage&& other) noexcept {
+    device_ = std::move(other.device_);
+
+    image_view_handle_ = other.image_view_handle_;
+    other.image_view_handle_ = VK_NULL_HANDLE;
+  };
+
+  VulkanPresentImage& operator=(VulkanPresentImage&& other) noexcept {
+    device_ = std::move(other.device_);
+
+    image_view_handle_ = other.image_view_handle_;
+    other.image_view_handle_ = VK_NULL_HANDLE;
+    return *this;
+  };
+
   VulkanPresentImage(const VulkanPresentImage&) = delete;
   VulkanPresentImage& operator=(const VulkanPresentImage&) = delete;
 
 
   VulkanPresentImage(
     VkImage image_handle, VkFormat format, VkImageAspectFlags aspect_flags, std::shared_ptr<VulkanDevice> device)
-    : image_handle_(image_handle), image_view_handle_(VK_NULL_HANDLE), device_(std::move(device))
+    : VulkanImage(image_handle, std::move(device))
   {
     if (!Initialize(format, aspect_flags)) { LOG_ERROR("Failed to create vulkan image"); }
     else
@@ -38,9 +51,9 @@ public:
     }
   };
 
-  ~VulkanPresentImage()
+  ~VulkanPresentImage() override
   {
-    if(device_)
+    if(image_view_handle_)
     {
       vkDestroyImageView(device_->GetHandle(), image_view_handle_, nullptr);
       image_view_handle_ = VK_NULL_HANDLE;
@@ -49,9 +62,7 @@ public:
   }
 
 protected:
-  VkImage image_handle_;
-  VkImageView image_view_handle_;
-  std::shared_ptr<VulkanDevice> device_;
+
 
   bool Initialize(VkFormat format, VkImageAspectFlags aspect_flags)
   {
