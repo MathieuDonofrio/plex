@@ -55,11 +55,12 @@ constexpr size_t RoundToAligned(size_t size)
 template<typename AllocatorImpl>
 concept Allocator = requires(AllocatorImpl allocator, Block block)
 {
+  // Style Exception: STL
+  // clang-format off
+
   // Allocates and returns a block of memory for the size. Returns nullptr in block if allocation
   // was not successful.
-  {
-    allocator.Allocate(size_t {})
-    } -> std::convertible_to<Block>;
+  { allocator.Allocate(size_t {}) } -> std::convertible_to<Block>;
 
   // Deallocates a block of memory
   allocator.Deallocate(Block {});
@@ -69,14 +70,12 @@ concept Allocator = requires(AllocatorImpl allocator, Block block)
 
   // Reallocates a block of memory for the size. If allocation failed, does not change old block and
   // returns false.
-  {
-    allocator.Reallocate(block, size_t {})
-    } -> std::convertible_to<bool>;
+  { allocator.Reallocate(block, size_t {}) } -> std::convertible_to<bool>;
 
   // Checks if the allocator has ownership of the block.
-  {
-    allocator.Owns(Block {})
-    } -> std::convertible_to<bool>;
+  { allocator.Owns(Block {}) } -> std::convertible_to<bool>;
+
+  // clang-format on
 };
 
 ///
