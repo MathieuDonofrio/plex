@@ -51,39 +51,55 @@ BENCHMARK(Ref_STD_SharedPtr_Ref1);
 
 static void Ref_STD_SharedPtr_Ref2(benchmark::State& state)
 {
+  std::shared_ptr<Object> main { new Object };
+
   for (auto _ : state)
   {
-    std::shared_ptr<Object> main { new Object };
     std::shared_ptr<Object> cpy1 { main };
 
-    benchmark::DoNotOptimize(main);
     benchmark::DoNotOptimize(cpy1);
   }
+
+  benchmark::DoNotOptimize(main);
 }
 
 BENCHMARK(Ref_STD_SharedPtr_Ref2);
 
 static void Ref_STD_SharedPtr_Ref3(benchmark::State& state)
 {
+  std::shared_ptr<Object> main { new Object };
+  std::shared_ptr<Object> cpy1 { main };
+
   for (auto _ : state)
   {
-    std::shared_ptr<Object> main { new Object };
-    std::shared_ptr<Object> cpy1 { main };
     std::shared_ptr<Object> cpy2 { cpy1 };
 
-    benchmark::DoNotOptimize(main);
-    benchmark::DoNotOptimize(cpy1);
     benchmark::DoNotOptimize(cpy2);
   }
+
+  benchmark::DoNotOptimize(main);
+  benchmark::DoNotOptimize(cpy1);
 }
 
 BENCHMARK(Ref_STD_SharedPtr_Ref3);
+
+static void Ref_MakeRef_Ref1(benchmark::State& state)
+{
+  for (auto _ : state)
+  {
+    Ref<Object> main = MakeRef<Object>();
+
+    benchmark::DoNotOptimize(main);
+  }
+}
+
+BENCHMARK(Ref_MakeRef_Ref1);
 
 static void Ref_Ref1(benchmark::State& state)
 {
   for (auto _ : state)
   {
-    std::shared_ptr<Object> main { new Object };
+    Ref<Object> main { new Object };
 
     benchmark::DoNotOptimize(main);
   }
@@ -93,30 +109,34 @@ BENCHMARK(Ref_Ref1);
 
 static void Ref_Ref2(benchmark::State& state)
 {
+  Ref<Object> main { new Object };
+
   for (auto _ : state)
   {
-    std::shared_ptr<Object> main { new Object };
-    std::shared_ptr<Object> cpy1 { main };
+    Ref<Object> cpy1 { main };
 
-    benchmark::DoNotOptimize(main);
     benchmark::DoNotOptimize(cpy1);
   }
+
+  benchmark::DoNotOptimize(main);
 }
 
 BENCHMARK(Ref_Ref2);
 
 static void Ref_Ref3(benchmark::State& state)
 {
+  Ref<Object> main { new Object };
+  Ref<Object> cpy1 { main };
+
   for (auto _ : state)
   {
-    Ref<Object> main { new Object };
-    Ref<Object> cpy1 { main };
     Ref<Object> cpy2 { cpy1 };
 
-    benchmark::DoNotOptimize(main);
-    benchmark::DoNotOptimize(cpy1);
     benchmark::DoNotOptimize(cpy2);
   }
+
+  benchmark::DoNotOptimize(main);
+  benchmark::DoNotOptimize(cpy1);
 }
 
 BENCHMARK(Ref_Ref3);
@@ -135,30 +155,34 @@ BENCHMARK(Ref_Intrusive_Ref1);
 
 static void Ref_Intrusive_Ref2(benchmark::State& state)
 {
+  Ref<RefCountedObject> main { new RefCountedObject };
+
   for (auto _ : state)
   {
-    Ref<RefCountedObject> main { new RefCountedObject };
     Ref<RefCountedObject> cpy1 { main };
 
-    benchmark::DoNotOptimize(main);
     benchmark::DoNotOptimize(cpy1);
   }
+
+  benchmark::DoNotOptimize(main);
 }
 
 BENCHMARK(Ref_Intrusive_Ref2);
 
 static void Ref_Intrusive_Ref3(benchmark::State& state)
 {
+  Ref<RefCountedObject> main { new RefCountedObject };
+  Ref<RefCountedObject> cpy1 { main };
+
   for (auto _ : state)
   {
-    Ref<RefCountedObject> main { new RefCountedObject };
-    Ref<RefCountedObject> cpy1 { main };
     Ref<RefCountedObject> cpy2 { cpy1 };
 
-    benchmark::DoNotOptimize(main);
-    benchmark::DoNotOptimize(cpy1);
     benchmark::DoNotOptimize(cpy2);
   }
+
+  benchmark::DoNotOptimize(main);
+  benchmark::DoNotOptimize(cpy1);
 }
 
 BENCHMARK(Ref_Intrusive_Ref3);
@@ -177,30 +201,34 @@ BENCHMARK(Ref_AtomicIntrusive_Ref1);
 
 static void Ref_AtomicIntrusive_Ref2(benchmark::State& state)
 {
+  Ref<AtomicRefCountedObject> main { new AtomicRefCountedObject };
+
   for (auto _ : state)
   {
-    Ref<AtomicRefCountedObject> main { new AtomicRefCountedObject };
     Ref<AtomicRefCountedObject> cpy1 { main };
 
-    benchmark::DoNotOptimize(main);
     benchmark::DoNotOptimize(cpy1);
   }
+
+  benchmark::DoNotOptimize(main);
 }
 
 BENCHMARK(Ref_AtomicIntrusive_Ref2);
 
 static void Ref_AtomicIntrusive_Ref3(benchmark::State& state)
 {
+  Ref<AtomicRefCountedObject> main { new AtomicRefCountedObject };
+  Ref<AtomicRefCountedObject> cpy1 { main };
+
   for (auto _ : state)
   {
-    Ref<AtomicRefCountedObject> main { new AtomicRefCountedObject };
-    Ref<AtomicRefCountedObject> cpy1 { main };
     Ref<AtomicRefCountedObject> cpy2 { cpy1 };
 
-    benchmark::DoNotOptimize(main);
-    benchmark::DoNotOptimize(cpy1);
     benchmark::DoNotOptimize(cpy2);
   }
+
+  benchmark::DoNotOptimize(main);
+  benchmark::DoNotOptimize(cpy1);
 }
 
 BENCHMARK(Ref_AtomicIntrusive_Ref3);

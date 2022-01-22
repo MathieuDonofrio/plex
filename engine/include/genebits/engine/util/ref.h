@@ -45,17 +45,13 @@ concept IntrusiveRefType = requires(const Type instance, size_t amount)
 };
 
 ///
-/// Default deleter for references, simply calls delete.
+/// Concept used to determine whether or not two references can be implicitly casted.
 ///
-/// @tparam Type Type of the reference.
+/// @tparam From Type casted from.
+/// @tparam To Type to cast to.
 ///
-/// @param[in] instance Instance to be deleted.
-///
-template<typename Type>
-inline void RefDefaultDeleter(Type* instance)
-{
-  delete instance;
-}
+template<typename From, typename To>
+concept AssignableRef = std::is_base_of_v<To, From> &&(IntrusiveRefType<To> == IntrusiveRefType<From>);
 
 ///
 /// Base class for atomic intrusively referenced types. References created on AtomicRefCounted type will be intrusive.
@@ -66,6 +62,9 @@ inline void RefDefaultDeleter(Type* instance)
 class AtomicRefCounted
 {
 public:
+  template<typename Type>
+  friend class Ref;
+
   ///
   /// Default constructor.
   ///
@@ -140,6 +139,9 @@ private:
 class RefCounted
 {
 public:
+  template<typename Type>
+  friend class Ref;
+
   ///
   /// Default constructor.
   ///
@@ -218,6 +220,24 @@ private:
   LOCAL_THREAD_VALIDATOR_INIT;
 };
 
+namespace details
+{
+  ///
+  /// Holds shared information about the reference.
+  ///
+  /// This block is shared between all ref's that manage the same instance.
+  ///
+  struct RefControlBlock
+  {
+    FastRefCounter counter;
+    void (*deleter)(void*, RefControlBlock*);
+    void (*indirect_deleter)(void*); // Used to store custom ptr deleter
+
+    // Validator initialized here for Ref to have same size in debug and release.
+    LOCAL_THREAD_VALIDATOR_INIT;
+  };
+} // namespace details
+
 ///
 /// Reference.
 ///
@@ -227,15 +247,38 @@ private:
 /// @tparam Type Type to hold instance of.
 /// @tparam Deleter Deleter used to delete the instance.
 ///
-template<typename Type, void (*Deleter)(Type*) = RefDefaultDeleter<Type>>
+template<typename Type>
 class Ref
 {
 public:
   ///
   /// Default constructor.
   ///
-  constexpr Ref() noexcept : ptr_(nullptr), control_(nullptr)
+  constexpr Ref() noexcept : ptr_(nullptr), control_(nullptr) {}
+
+  ///
+  /// Constructor.
+  ///
+  /// Constructs the reference with a managed instance and a custom deleter.
+  ///
+  /// @tparam T The type to store, must be same or derived from ref type.
+  ///
+  /// @param[in] instance The instance to construct the reference with.
+  /// @param[in] deleter The custom deleter to delete the managed instance with.
+  ///
+  template<typename T>
+  requires(std::is_base_of_v<Type, T>) Ref(T* instance, void (*deleter)(void*))
+  noexcept : ptr_(static_cast<Type*>(instance)), control_(new details::RefControlBlock)
   {
+    control_->counter = 0;
+    control_->indirect_deleter = deleter;
+
+    control_->deleter = [](void* ptr, details::RefControlBlock* control)
+    {
+      control->indirect_deleter(ptr);
+      delete control;
+    };
+
     LOCAL_THREAD_ASSERT(control_);
   }
 
@@ -244,15 +287,34 @@ public:
   ///
   /// Constructs the reference with a managed instance.
   ///
+  /// @tparam T The type to store, must be same or derived from ref type.
+  ///
   /// @param[in] instance The instance to construct the reference with.
   ///
-  explicit Ref(Type* instance) noexcept : ptr_(instance), control_(nullptr)
+  template<typename T>
+  requires(std::is_base_of_v<Type, T>) explicit Ref(T* instance) noexcept
+    : ptr_(static_cast<Type*>(instance)), control_(new details::RefControlBlock)
   {
+    control_->counter = 0;
+
+    control_->deleter = [](void* ptr, details::RefControlBlock* control)
+    {
+      delete static_cast<T*>(ptr);
+      delete control;
+    };
+
     LOCAL_THREAD_ASSERT(control_);
   }
 
   ///
-  /// Nullptr constructor. Delegates to default constructor.
+  /// Nullptr constructor with custom deleter
+  ///
+  /// @param[in] deleter The custom deleter to delete the managed instance with.
+  ///
+  Ref(std::nullptr_t, void (*deleter)(void*)) noexcept : Ref(static_cast<Type*>(nullptr), deleter) {}
+
+  ///
+  /// Nullptr constructor.
   ///
   constexpr Ref(std::nullptr_t) noexcept : Ref() {}
 
@@ -261,23 +323,19 @@ public:
   ///
   ~Ref()
   {
-    LOCAL_THREAD_ASSERT(control_);
-
-    auto ptr = ptr_; // Make sure ptr is in register
+    auto ptr = ptr_;
 
     if (!ptr) return;
 
-    if (!control_) // Never referenced
+    auto control = control_;
+
+    LOCAL_THREAD_ASSERT(control_);
+
+    if (control->counter == 0) // Counter shifted down to test against zero.
     {
-PtrDelete: // Reduces code size
-      Deleter(ptr);
+      control->deleter(ptr, control);
     }
-    else if (control_->counter == 0) // Counter shifted down to test against zero.
-    {
-      delete control_;
-      goto PtrDelete;
-    }
-    else [[likely]] // When referenced at least once, enters this case at least 50% of the time
+    else
     {
       // Decrement has its own case to avoid indirect write when deleting.
       --control_->counter;
@@ -289,9 +347,25 @@ PtrDelete: // Reduces code size
   ///
   /// @param[in] other Reference to move.
   ///
-  constexpr Ref(Ref<Type, Deleter>&& other) noexcept : ptr_(other.ptr_), control_(other.control_)
+  constexpr Ref(Ref<Type>&& other) noexcept : ptr_(other.ptr_), control_(other.control_)
   {
-    LOCAL_THREAD_ASSERT(control_);
+    LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
+
+    other.ptr_ = nullptr;
+    // Let control dangle
+  }
+
+  ///
+  /// Move constructor.
+  ///
+  /// @tparam T Other type, must be same or derived from ref type and not intrusive.
+  ///
+  /// @param[in] other Reference to move.
+  ///
+  template<AssignableRef<Type> T>
+  constexpr Ref(Ref<T>&& other) noexcept : ptr_(static_cast<Type*>(other.ptr_)), control_(other.control_)
+  {
+    LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
 
     other.ptr_ = nullptr;
     // Let control dangle
@@ -302,14 +376,32 @@ PtrDelete: // Reduces code size
   ///
   /// @param other Reference to copy
   ///
-  Ref(const Ref<Type, Deleter>& other) : ptr_(other.ptr_), control_(other.control_)
+  constexpr Ref(const Ref<Type>& other) : ptr_(other.ptr_), control_(other.control_)
   {
-    LOCAL_THREAD_ASSERT(control_);
+    if (ptr_) [[likely]]
+    {
+      LOCAL_THREAD_ASSERT(control_);
 
-    if (!ptr_) [[unlikely]]
-      return;
+      ++control_->counter;
+    }
+  }
 
-    AddRef(other);
+  ///
+  /// Copy Constructor.
+  ///
+  /// @tparam T Other type, must be same or derived from ref type and not intrusive.
+  ///
+  /// @param other Reference to copy
+  ///
+  template<AssignableRef<Type> T>
+  constexpr Ref(const Ref<T>& other) : ptr_(static_cast<Type*>(other.ptr_)), control_(other.control_)
+  {
+    if (ptr_) [[likely]]
+    {
+      LOCAL_THREAD_ASSERT(control_);
+
+      ++control_->counter;
+    }
   }
 
   ///
@@ -319,18 +411,25 @@ PtrDelete: // Reduces code size
   ///
   /// @return This reference.
   ///
-  constexpr Ref<Type, Deleter>& operator=(Ref<Type, Deleter>&& other) noexcept
+  constexpr Ref<Type>& operator=(Ref<Type>&& other)
   {
-    LOCAL_THREAD_ASSERT(control_);
+    Ref<Type>(std::move(other)).Swap(*this);
+    return *this;
+  }
 
-    if (other.ptr_ != ptr_) [[likely]]
-    {
-      ptr_ = other.ptr_;
-      control_ = other.control_;
-
-      other.ptr_ = nullptr;
-    }
-
+  ///
+  /// Move assignment operator.
+  ///
+  /// @tparam T Other type, must be same or derived from ref type and intrusive.
+  ///
+  /// @param[in] other Reference to move.
+  ///
+  /// @return This reference.
+  ///
+  template<AssignableRef<Type> T>
+  constexpr Ref<Type>& operator=(Ref<T>&& other)
+  {
+    Ref<Type>(std::move(other)).Swap(*this);
     return *this;
   }
 
@@ -341,34 +440,38 @@ PtrDelete: // Reduces code size
   ///
   /// @return This reference.
   ///
-  Ref<Type, Deleter>& operator=(const Ref<Type, Deleter>& other) noexcept
+  constexpr Ref<Type>& operator=(const Ref<Type>& other)
   {
-    LOCAL_THREAD_ASSERT(control_);
+    Ref<Type>(other).Swap(*this);
+    return *this;
+  }
 
-    if (ptr_ != other.ptr_) [[likely]]
-    {
-      ptr_ = other.ptr_;
-
-      if (ptr_) [[likely]]
-        AddRef(other);
-    }
-
+  ///
+  /// Copy assignment operator.
+  ///
+  /// @tparam T Other type, must be same or derived from ref type and intrusive.
+  ///
+  /// @param[in] other Reference to copy
+  ///
+  /// @return This reference.
+  ///
+  template<AssignableRef<Type> T>
+  constexpr Ref<Type>& operator=(const Ref<T>& other)
+  {
+    Ref<Type>(other).Swap(*this);
     return *this;
   }
 
   ///
   /// Exchanges the stored pointer values and ownerships.
   ///
-  constexpr void Swap(Ref<Type, Deleter>& other) noexcept
+  constexpr void Swap(Ref<Type>& other) noexcept
   {
-    LOCAL_THREAD_ASSERT(control_);
+    LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
+    LOCAL_THREAD_ASSERT((other.ptr_ ? other.control_ : nullptr));
 
-    void* tmp = other.ptr_;
-    other.ptr_ = ptr_;
-    ptr_ = static_cast<Type*>(tmp);
-    tmp = other.control_;
-    other.control_ = control_;
-    control_ = static_cast<ControlBlock*>(tmp);
+    std::swap(ptr_, other.ptr_);
+    std::swap(control_, other.control_);
   }
 
   ///
@@ -378,13 +481,12 @@ PtrDelete: // Reduces code size
   ///
   [[nodiscard]] constexpr size_t UseCount() const noexcept
   {
-    LOCAL_THREAD_ASSERT(control_);
+    LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
 
     if (ptr_) [[likely]]
     {
       // Counter is shifted down so 0 is 1
-
-      return control_ ? control_->counter + 1 : 1;
+      return control_->counter + 1;
     }
 
     return 0;
@@ -397,9 +499,9 @@ PtrDelete: // Reduces code size
   ///
   [[nodiscard]] constexpr bool Unique() const noexcept
   {
-    LOCAL_THREAD_ASSERT(control_);
+    LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
 
-    return ptr_ && (!control_ || control_->counter == 0);
+    return ptr_ && control_->counter == 0;
   }
 
   ///
@@ -409,7 +511,7 @@ PtrDelete: // Reduces code size
   ///
   [[nodiscard]] constexpr Type& operator*() const noexcept
   {
-    LOCAL_THREAD_ASSERT(control_);
+    LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
 
     return *ptr_;
   }
@@ -421,7 +523,7 @@ PtrDelete: // Reduces code size
   ///
   [[nodiscard]] constexpr Type* operator->() const noexcept
   {
-    LOCAL_THREAD_ASSERT(control_);
+    LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
 
     return ptr_;
   }
@@ -433,7 +535,7 @@ PtrDelete: // Reduces code size
   ///
   [[nodiscard]] constexpr Type* Get() const noexcept
   {
-    LOCAL_THREAD_ASSERT(control_);
+    LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
 
     return ptr_;
   }
@@ -459,42 +561,14 @@ PtrDelete: // Reduces code size
   }
 
 private:
-  ///
-  /// Increments the internal reference count.
-  ///
-  /// @param other Reference that was added.
-  ///
-  void AddRef(const Ref<Type, Deleter>& other)
-  {
-    if (!control_) [[likely]] // 1 references is more likely than 2+ references
-    {
-      // Lazy ref counter allocation. Saves on allocation when never referenced.
-      control_ = other.control_ = new ControlBlock;
-      control_->counter = 1;
-    }
-    else
-    {
-      ++control_->counter;
-    }
-  }
+  template<typename T>
+  friend class Ref;
 
-private:
-  ///
-  /// Holds shared information about the reference.
-  ///
-  /// This block is shared between all ref's that manage the same instance.
-  ///
-  struct ControlBlock
-  {
-    FastRefCounter counter;
+  template<typename T, typename... Args>
+  friend Ref<T> MakeRef(Args&&... args);
 
-    // Validator initialized here for Ref to have same size in debug and release.
-    LOCAL_THREAD_VALIDATOR_INIT;
-  };
-
-private:
   Type* ptr_;
-  mutable ControlBlock* control_;
+  mutable details::RefControlBlock* control_;
 };
 
 ///
@@ -509,29 +583,59 @@ private:
 /// @tparam Type Type to hold instance of.
 /// @tparam Deleter Deleter used to delete the instance.
 ///
-template<IntrusiveRefType Type, void (*Deleter)(Type*)>
-class Ref<Type, Deleter>
+template<IntrusiveRefType Type>
+class Ref<Type>
 {
 public:
   ///
   /// Default constructor.
   ///
-  constexpr Ref() noexcept : ptr_(nullptr) {}
+  constexpr Ref() noexcept : ptr_(nullptr), deleter_(nullptr) {}
 
   ///
   /// Constructor.
   ///
-  /// Constructs the reference with a managed instance.
+  /// Constructs the reference with a managed instance and a custom deleter
+  ///
+  /// @tparam T The type to store, must be same or derived from ref type.
   ///
   /// @param[in] instance The instance to construct the reference with.
+  /// @param[in] deleter The custom deleter to delete the managed instance with.
   ///
-  explicit Ref(Type* instance) noexcept : ptr_(instance)
+  template<typename T>
+  requires(std::is_base_of_v<Type, T>) constexpr Ref(T* instance, void (*deleter)(void*)) noexcept
+    : ptr_(static_cast<Type*>(instance)), deleter_(deleter)
   {
-    ASSERT(!instance || instance->IntrusiveUniqueRef(), "Instance already referenced, possible double delete");
+#ifndef NDEBUG
+    if (!std::is_constant_evaluated())
+    {
+      ASSERT(!instance || instance->IntrusiveUniqueRef(), "Instance already referenced, possible double delete");
+    }
+#endif
   }
 
   ///
-  /// Nullptr constructor. Delegates to default constructor.
+  /// Constructor.
+  ///
+  /// Constructs the reference with a managed instance
+  ///
+  /// @tparam T The type to store, must be same or derived from ref type.
+  ///
+  /// @param[in] instance The instance to construct the reference with.
+  ///
+  template<typename T>
+  constexpr explicit Ref(T* instance) noexcept : Ref(instance, [](void* ptr) { delete static_cast<T*>(ptr); })
+  {}
+
+  ///
+  /// Nullptr constructor with custom deleter
+  ///
+  /// @param[in] deleter The custom deleter to delete the managed instance with.
+  ///
+  constexpr Ref(std::nullptr_t, void (*deleter)(void*)) noexcept : Ref(static_cast<Type*>(nullptr), deleter) {}
+
+  ///
+  /// Nullptr constructor.
   ///
   constexpr Ref(std::nullptr_t) noexcept : Ref() {}
 
@@ -543,7 +647,7 @@ public:
     const auto ptr = ptr_;
 
     if (ptr && ptr->IntrusiveDropRef()) [[unlikely]]
-      Deleter(ptr);
+      deleter_(ptr);
   }
 
   ///
@@ -551,9 +655,24 @@ public:
   ///
   /// @param[in] other Reference to move.
   ///
-  constexpr Ref(Ref<Type, Deleter>&& other) noexcept : ptr_(other.ptr_)
+  constexpr Ref(Ref<Type>&& other) noexcept : ptr_(other.ptr_), deleter_(other.deleter_)
   {
     other.ptr_ = nullptr;
+    // Let deleter dangle
+  }
+
+  ///
+  /// Move constructor.
+  ///
+  /// @tparam T Other type, must be same or derived from ref type and intrusive.
+  ///
+  /// @param[in] other Reference to move.
+  ///
+  template<AssignableRef<Type> T>
+  constexpr Ref(Ref<T>&& other) noexcept : ptr_(static_cast<Type*>(other.ptr_)), deleter_(other.deleter_)
+  {
+    other.ptr_ = nullptr;
+    // Let deleter dangle
   }
 
   ///
@@ -561,11 +680,22 @@ public:
   ///
   /// @param other Reference to copy
   ///
-  Ref(const Ref<Type, Deleter>& other) : ptr_(other.ptr_)
+  constexpr Ref(const Ref<Type>& other) : ptr_(other.ptr_), deleter_(other.deleter_)
   {
-    if (!ptr_) return;
+    if (ptr_) ptr_->IntrusiveAddRef();
+  }
 
-    ptr_->IntrusiveAddRef();
+  ///
+  /// Copy Constructor.
+  ///
+  /// @tparam T Other type, must be same or derived from ref type and intrusive.
+  ///
+  /// @param other Reference to copy
+  ///
+  template<AssignableRef<Type> T>
+  constexpr Ref(const Ref<T>& other) : ptr_(static_cast<Type*>(other.ptr_)), deleter_(other.deleter_)
+  {
+    if (ptr_) ptr_->IntrusiveAddRef();
   }
 
   ///
@@ -575,14 +705,25 @@ public:
   ///
   /// @return This reference.
   ///
-  Ref<Type, Deleter>& operator=(Ref<Type, Deleter>&& other) noexcept
+  constexpr Ref<Type>& operator=(Ref<Type>&& other) noexcept
   {
-    if (ptr_ != other.ptr_) [[likely]]
-    {
-      ptr_ = other.ptr_;
-      other.ptr_ = nullptr;
-    }
+    Ref<Type>(std::move(other)).Swap(*this);
+    return *this;
+  }
 
+  ///
+  /// Move assignment operator.
+  ///
+  /// @tparam T Other type, must be same or derived from ref type and intrusive.
+  ///
+  /// @param[in] other Reference to move.
+  ///
+  /// @return This reference.
+  ///
+  template<AssignableRef<Type> T>
+  constexpr Ref<Type>& operator=(Ref<T>&& other) noexcept
+  {
+    Ref<Type>(std::move(other)).Swap(*this);
     return *this;
   }
 
@@ -593,27 +734,35 @@ public:
   ///
   /// @return This reference.
   ///
-  Ref<Type, Deleter>& operator=(const Ref<Type, Deleter>& other)
+  constexpr Ref<Type>& operator=(const Ref<Type>& other)
   {
-    if (ptr_ != other.ptr_) [[likely]]
-    {
-      ptr_ = other.ptr_;
+    Ref<Type>(other).Swap(*this);
+    return *this;
+  }
 
-      if (ptr_) [[likely]]
-        ptr_->IntrusiveAddRef();
-    }
-
+  ///
+  /// Copy assignment operator.
+  ///
+  /// @tparam T Other type, must be same or derived from ref type and intrusive.
+  ///
+  /// @param[in] other Reference to copy
+  ///
+  /// @return This reference.
+  ///
+  template<AssignableRef<Type> T>
+  constexpr Ref<Type>& operator=(const Ref<T>& other)
+  {
+    Ref<Type>(other).Swap(*this);
     return *this;
   }
 
   ///
   /// Exchanges the stored pointer values and ownerships.
   ///
-  constexpr void Swap(Ref<Type, Deleter>& other) noexcept
+  constexpr void Swap(Ref<Type>& other) noexcept
   {
-    Type* tmp = other.ptr_;
-    other.ptr_ = ptr_;
-    ptr_ = tmp;
+    std::swap(ptr_, other.ptr_);
+    std::swap(deleter_, other.deleter_);
   }
 
   ///
@@ -687,7 +836,11 @@ public:
   }
 
 private:
+  template<typename T>
+  friend class Ref;
+
   Type* ptr_;
+  void (*deleter_)(void*);
 };
 
 ///
@@ -695,16 +848,14 @@ private:
 ///
 /// @tparam T Type of lhs reference
 /// @tparam U Type of rhs reference
-/// @tparam TDeleter Deleter type of lhs reference
-/// @tparam UDeleter Deleter type of rhs reference
 ///
 /// @param[in] lhs Lhs reference to compare.
 /// @param[in] rhs Rhs reference to compare.
 ///
 /// @return True if both ref's are equal, false otherwise.
 ///
-template<typename T, typename U, void (*TDeleter)(T*), void (*UDeleter)(U*)>
-constexpr bool operator==(const Ref<T, TDeleter>& lhs, const Ref<U, UDeleter>& rhs) noexcept
+template<typename T, typename U>
+constexpr bool operator==(const Ref<T>& lhs, const Ref<U>& rhs) noexcept
 {
   return lhs.Get() == rhs.Get();
 }
@@ -714,16 +865,14 @@ constexpr bool operator==(const Ref<T, TDeleter>& lhs, const Ref<U, UDeleter>& r
 ///
 /// @tparam T Type of lhs reference
 /// @tparam U Type of rhs reference
-/// @tparam TDeleter Deleter type of lhs reference
-/// @tparam UDeleter Deleter type of rhs reference
 ///
 /// @param[in] lhs Lhs reference to compare.
 /// @param[in] rhs Rhs reference to compare.
 ///
 /// @return Strong ordering.
 ///
-template<typename T, typename U, void (*TDeleter)(T*), void (*UDeleter)(U*)>
-constexpr std::strong_ordering operator<=>(const Ref<T, TDeleter>& lhs, const Ref<U, UDeleter>& rhs) noexcept
+template<typename T, typename U>
+constexpr std::strong_ordering operator<=>(const Ref<T>& lhs, const Ref<U>& rhs) noexcept
 {
   return std::compare_three_way()(lhs.Get(), rhs.Get());
 }
@@ -732,14 +881,13 @@ constexpr std::strong_ordering operator<=>(const Ref<T, TDeleter>& lhs, const Re
 /// Equality operator. Compare against nullptr.
 ///
 /// @tparam T Type of lhs reference
-/// @tparam TDeleter Deleter type of lhs reference
 ///
 /// @param lhs Lhs reference to compare.
 ///
 /// @return True ref's managed pointer is equal to nullptr.
 ///
-template<typename T, void (*TDeleter)(T*)>
-constexpr bool operator==(const Ref<T, TDeleter>& lhs, nullptr_t) noexcept
+template<typename T>
+constexpr bool operator==(const Ref<T>& lhs, std::nullptr_t) noexcept
 {
   return !lhs;
 }
@@ -748,14 +896,13 @@ constexpr bool operator==(const Ref<T, TDeleter>& lhs, nullptr_t) noexcept
 /// Three Way Compare Operator. Compare against nullptr.
 ///
 /// @tparam T Type of lhs reference
-/// @tparam TDeleter Deleter type of lhs reference
 ///
 /// @param[in] lhs Lhs reference to compare.
 ///
 /// @return Strong ordering.
 ///
-template<typename T, void (*TDeleter)(T*)>
-constexpr std::strong_ordering operator<=>(const Ref<T, TDeleter>& lhs, nullptr_t) noexcept
+template<typename T>
+constexpr std::strong_ordering operator<=>(const Ref<T>& lhs, std::nullptr_t) noexcept
 {
   return std::compare_three_way()(lhs.Get(), static_cast<T*>(nullptr));
 }
@@ -763,6 +910,8 @@ constexpr std::strong_ordering operator<=>(const Ref<T, TDeleter>& lhs, nullptr_
 ///
 /// Constructs an instance of Type and wraps it in a reference using the args
 /// as the parameter list of the constructor.
+///
+/// Recommended to always use MakeRef for optimal construction.
 ///
 /// @tparam Type Type of reference
 /// @tparam Args Constructor argument types.
@@ -774,18 +923,55 @@ constexpr std::strong_ordering operator<=>(const Ref<T, TDeleter>& lhs, nullptr_
 template<typename Type, typename... Args>
 Ref<Type> MakeRef(Args&&... args)
 {
-  return Ref<Type, RefDefaultDeleter>(new Type(std::forward<Args>(args)...));
+  if constexpr (!IntrusiveRefType<Type>)
+  {
+    char* memory = static_cast<char*>(std::malloc(sizeof(Type) + sizeof(details::RefControlBlock)));
+
+    new (memory) Type(std::forward<Args>(args)...);
+
+    Ref<Type> ref;
+
+    ref.ptr_ = reinterpret_cast<Type*>(memory);
+    ref.control_ = reinterpret_cast<details::RefControlBlock*>(memory + sizeof(Type));
+
+#ifndef NDEBUG
+    new (ref.control_) details::RefControlBlock(); // For thread validator init
+    LOCAL_THREAD_ASSERT(ref.control_);
+#endif
+
+    ref.control_->counter = 0;
+    ref.control_->deleter = [](void* ptr, details::RefControlBlock*) { std::free(ptr); };
+
+    return ref;
+  }
+  else
+  {
+    Type* memory = static_cast<Type*>(std::malloc(sizeof(Type)));
+
+    new (memory) Type(std::forward<Args>(args)...);
+
+    return Ref<Type>(memory, [](void* ptr) { std::free(ptr); });
+  }
 }
 
 } // namespace genebits::engine
 
 namespace std
 {
-template<typename T, void (*TDeleter)(T*)>
-constexpr void swap(genebits::engine::Ref<T, TDeleter>& lhs, genebits::engine::Ref<T, TDeleter>& rhs) noexcept
+template<typename T>
+constexpr void swap(genebits::engine::Ref<T>& lhs, genebits::engine::Ref<T>& rhs) noexcept
 {
   lhs.Swap(rhs);
 }
+
+template<typename T>
+struct hash<genebits::engine::Ref<T>>
+{
+  constexpr size_t operator()(const genebits::engine::Ref<T>& obj) const noexcept
+  {
+    return std::hash<T*>()(obj.Get());
+  }
+};
 } // namespace std
 
 #endif

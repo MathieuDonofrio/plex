@@ -18,20 +18,21 @@
 ///
 /// Context is the pointer where thread validator was initialized.
 ///
-#define LOCAL_THREAD_ASSERT(context)                                                                       \
-  if (!::std::is_constant_evaluated())                                                                     \
-  {                                                                                                        \
-    if (context)                                                                                           \
-    {                                                                                                      \
-      if (!context->__local_thread__) [[unlikely]]                                                         \
-      {                                                                                                    \
-        context->__local_thread__ = ::std::make_optional<::std::thread::id>(::std::this_thread::get_id()); \
-      }                                                                                                    \
-      else                                                                                                 \
-      {                                                                                                    \
-        ASSERT(::std::this_thread::get_id() == context->__local_thread__, "Called on different thread");   \
-      }                                                                                                    \
-    }                                                                                                      \
+#define LOCAL_THREAD_ASSERT(context)                                                                   \
+  if (!::std::is_constant_evaluated())                                                                 \
+  {                                                                                                    \
+    auto ctx = context;                                                                                \
+    if (ctx)                                                                                           \
+    {                                                                                                  \
+      if (!ctx->__local_thread__) [[unlikely]]                                                         \
+      {                                                                                                \
+        ctx->__local_thread__ = ::std::make_optional<::std::thread::id>(::std::this_thread::get_id()); \
+      }                                                                                                \
+      else                                                                                             \
+      {                                                                                                \
+        ASSERT(::std::this_thread::get_id() == ctx->__local_thread__, "Called on different thread");   \
+      }                                                                                                \
+    }                                                                                                  \
   }
 
 #else
