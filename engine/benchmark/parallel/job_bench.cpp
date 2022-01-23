@@ -51,7 +51,7 @@ void BasicJob_ScheduleAndComplete_NoWork(benchmark::State& state)
 
   for (auto _ : state)
   {
-    auto job = std::make_shared<BenchBasicJob>(
+    auto job = MakeRef<BenchBasicJob>(
       [&t]()
       {
         t++;
@@ -87,7 +87,7 @@ void BasicJob_ScheduleAndComplete_Work(benchmark::State& state)
 
   for (auto _ : state)
   {
-    auto job = std::make_shared<BenchBasicJob>(
+    auto job = MakeRef<BenchBasicJob>(
       [&t, work_per_iteration]()
       {
         Work(work_per_iteration);
@@ -121,7 +121,7 @@ void ParallelForJob_ScheduleAndComplete_NoWork(benchmark::State& state)
 
   for (auto _ : state)
   {
-    auto job = std::make_shared<BenchParallelForJob>(
+    auto job = MakeRef<BenchParallelForJob>(
       [&t](size_t index)
       {
         t += index;
@@ -158,7 +158,7 @@ void ParallelForJob_ScheduleAndComplete_Work(benchmark::State& state)
 
   for (auto _ : state)
   {
-    auto job = std::make_shared<BenchParallelForJob>(
+    auto job = MakeRef<BenchParallelForJob>(
       [&t, work_per_iteration](size_t index)
       {
         Work(work_per_iteration);

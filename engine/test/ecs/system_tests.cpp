@@ -430,7 +430,7 @@ TEST(Phase_Tests, Run_SingleSystemUpdatedOnce_CorrectlyHandled)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
 
   EXPECT_CALL(system, OnUpdate).Times(1).WillOnce([&](auto deps) { system.ScheduleDefered(job1, deps); });
 
@@ -460,8 +460,8 @@ TEST(Phase_Tests, Run_SameSystemUpdatedTwice_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
 
   Sequence s1;
 
@@ -481,8 +481,8 @@ TEST(Phase_Tests, Run_SameSystemUpdatedTwice_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_TwoSystemsDependent_InSequence)
@@ -505,8 +505,8 @@ TEST(Phase_Tests, Run_TwoSystemsDependent_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
 
   Sequence s1;
 
@@ -523,8 +523,8 @@ TEST(Phase_Tests, Run_TwoSystemsDependent_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_TwoSystemsDependentTwice_InSequence)
@@ -547,10 +547,10 @@ TEST(Phase_Tests, Run_TwoSystemsDependentTwice_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
-  auto job3 = std::make_shared<MockJob>();
-  auto job4 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
+  auto job3 = MakeRef<MockJob>();
+  auto job4 = MakeRef<MockJob>();
 
   Sequence s1;
 
@@ -578,10 +578,10 @@ TEST(Phase_Tests, Run_TwoSystemsDependentTwice_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
-  ::testing::Mock::AllowLeak(job3.get()); // Safe
-  ::testing::Mock::AllowLeak(job4.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
+  ::testing::Mock::AllowLeak(job3.Get()); // Safe
+  ::testing::Mock::AllowLeak(job4.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_TwoSystemsParallel_InSequence)
@@ -604,8 +604,8 @@ TEST(Phase_Tests, Run_TwoSystemsParallel_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
 
   Sequence s1, s2;
 
@@ -622,8 +622,8 @@ TEST(Phase_Tests, Run_TwoSystemsParallel_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_TwoSystemsParallelTwice_InSequence)
@@ -646,10 +646,10 @@ TEST(Phase_Tests, Run_TwoSystemsParallelTwice_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
-  auto job3 = std::make_shared<MockJob>();
-  auto job4 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
+  auto job3 = MakeRef<MockJob>();
+  auto job4 = MakeRef<MockJob>();
 
   Sequence s1, s2;
 
@@ -677,10 +677,10 @@ TEST(Phase_Tests, Run_TwoSystemsParallelTwice_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
-  ::testing::Mock::AllowLeak(job3.get()); // Safe
-  ::testing::Mock::AllowLeak(job4.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
+  ::testing::Mock::AllowLeak(job3.Get()); // Safe
+  ::testing::Mock::AllowLeak(job4.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_WriteRead_InSequence)
@@ -703,8 +703,8 @@ TEST(Phase_Tests, Run_WriteRead_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
 
   Sequence s1;
 
@@ -721,8 +721,8 @@ TEST(Phase_Tests, Run_WriteRead_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_WriteReadTwice_InSequence)
@@ -745,10 +745,10 @@ TEST(Phase_Tests, Run_WriteReadTwice_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
-  auto job3 = std::make_shared<MockJob>();
-  auto job4 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
+  auto job3 = MakeRef<MockJob>();
+  auto job4 = MakeRef<MockJob>();
 
   Sequence s1;
 
@@ -776,8 +776,8 @@ TEST(Phase_Tests, Run_WriteReadTwice_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_ReadReadWrite_InSequence)
@@ -802,9 +802,9 @@ TEST(Phase_Tests, Run_ReadReadWrite_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
-  auto job3 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
+  auto job3 = MakeRef<MockJob>();
 
   Sequence s1, s2;
 
@@ -824,9 +824,9 @@ TEST(Phase_Tests, Run_ReadReadWrite_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
-  ::testing::Mock::AllowLeak(job3.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
+  ::testing::Mock::AllowLeak(job3.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_ReadReadWriteTwice_InSequence)
@@ -851,12 +851,12 @@ TEST(Phase_Tests, Run_ReadReadWriteTwice_InSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
-  auto job3 = std::make_shared<MockJob>();
-  auto job4 = std::make_shared<MockJob>();
-  auto job5 = std::make_shared<MockJob>();
-  auto job6 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
+  auto job3 = MakeRef<MockJob>();
+  auto job4 = MakeRef<MockJob>();
+  auto job5 = MakeRef<MockJob>();
+  auto job6 = MakeRef<MockJob>();
 
   Sequence s1, s2, s3, s4, s5, s6;
 
@@ -892,12 +892,12 @@ TEST(Phase_Tests, Run_ReadReadWriteTwice_InSequence)
 
   phase.ForceComplete();
 
-  ::testing::Mock::AllowLeak(job1.get()); // Safe
-  ::testing::Mock::AllowLeak(job2.get()); // Safe
-  ::testing::Mock::AllowLeak(job3.get()); // Safe
-  ::testing::Mock::AllowLeak(job4.get()); // Safe
-  ::testing::Mock::AllowLeak(job5.get()); // Safe
-  ::testing::Mock::AllowLeak(job6.get()); // Safe
+  ::testing::Mock::AllowLeak(job1.Get()); // Safe
+  ::testing::Mock::AllowLeak(job2.Get()); // Safe
+  ::testing::Mock::AllowLeak(job3.Get()); // Safe
+  ::testing::Mock::AllowLeak(job4.Get()); // Safe
+  ::testing::Mock::AllowLeak(job5.Get()); // Safe
+  ::testing::Mock::AllowLeak(job6.Get()); // Safe
 }
 
 TEST(Phase_Tests, Run_Complex5SystemsTwice_ExecutedInSequence)
@@ -926,16 +926,16 @@ TEST(Phase_Tests, Run_Complex5SystemsTwice_ExecutedInSequence)
 
   Phase phase = Phase::Compile(group);
 
-  auto job1 = std::make_shared<MockJob>();
-  auto job2 = std::make_shared<MockJob>();
-  auto job3 = std::make_shared<MockJob>();
-  auto job4 = std::make_shared<MockJob>();
-  auto job5 = std::make_shared<MockJob>();
-  auto job6 = std::make_shared<MockJob>();
-  auto job7 = std::make_shared<MockJob>();
-  auto job8 = std::make_shared<MockJob>();
-  auto job9 = std::make_shared<MockJob>();
-  auto job10 = std::make_shared<MockJob>();
+  auto job1 = MakeRef<MockJob>();
+  auto job2 = MakeRef<MockJob>();
+  auto job3 = MakeRef<MockJob>();
+  auto job4 = MakeRef<MockJob>();
+  auto job5 = MakeRef<MockJob>();
+  auto job6 = MakeRef<MockJob>();
+  auto job7 = MakeRef<MockJob>();
+  auto job8 = MakeRef<MockJob>();
+  auto job9 = MakeRef<MockJob>();
+  auto job10 = MakeRef<MockJob>();
 
   Sequence s1, s2, s3, s4, s5;
 

@@ -88,7 +88,7 @@ TEST(ParallelForJob_Tests, Wait_Execute_Compleated)
   std::array<std::atomic<int>, amount> access {};
   std::atomic<int> counter = 0;
 
-  auto job = std::make_shared<MockParallelForJob>(
+  auto job = MakeRef<MockParallelForJob>(
     [&counter, &access](size_t index)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -118,7 +118,7 @@ TEST(JobScheduler_Tests, Schedule_SingleBasicJob_Executed)
 
   std::atomic<bool> flag = false;
 
-  auto job = std::make_shared<MockBasicJob>(
+  auto job = MakeRef<MockBasicJob>(
     [&flag]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -140,14 +140,14 @@ TEST(JobScheduler_Tests, Schedule_WithDependency_ExecutedInOrder)
 
   std::atomic<int> test_value = 0;
 
-  auto job1 = std::make_shared<MockBasicJob>(
+  auto job1 = MakeRef<MockBasicJob>(
     [&test_value]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       test_value = 99;
     });
 
-  auto job2 = std::make_shared<MockBasicJob>([&test_value]() { test_value = 10; });
+  auto job2 = MakeRef<MockBasicJob>([&test_value]() { test_value = 10; });
 
   JobHandle handle1 = scheduler.Schedule(job1);
 
@@ -167,14 +167,14 @@ TEST(JobScheduler_Tests, CombineJobHandles_TwoJobs_BothCompleted)
   std::atomic<int> test_value1 = 0;
   std::atomic<int> test_value2 = 0;
 
-  auto job1 = std::make_shared<MockBasicJob>(
+  auto job1 = MakeRef<MockBasicJob>(
     [&test_value1]()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       test_value1 = 99;
     });
 
-  auto job2 = std::make_shared<MockBasicJob>([&test_value2]() { test_value2 = 10; });
+  auto job2 = MakeRef<MockBasicJob>([&test_value2]() { test_value2 = 10; });
 
   JobHandle handle1 = scheduler.Schedule(job2);
   JobHandle handle2 = scheduler.Schedule(job1);

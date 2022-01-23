@@ -94,26 +94,14 @@ public:
     return access;
   }
 
-  JobHandle ScheduleDefered(std::shared_ptr<JobBase> job, JobHandle dependencies, void (*deleter)(JobBase*))
+  template<typename JobType>
+  JobHandle ScheduleDefered(JobType&& job, JobHandle dependencies)
   {
     ASSERT(Initialized(), "System not initialized");
 
-    JobHandle handle = scheduler_->Schedule(job, dependencies);
+    handle_ = scheduler_->Schedule(std::forward<JobType>(job), dependencies);
 
-    handle_ = handle;
-
-    return handle;
-  }
-
-  JobHandle ScheduleDefered(std::shared_ptr<JobBase> job, JobHandle dependencies)
-  {
-    ASSERT(Initialized(), "System not initialized");
-
-    JobHandle handle = scheduler_->Schedule(job, dependencies);
-
-    handle_ = handle;
-
-    return handle;
+    return handle_;
   }
 
   PolyView<Components...> GetView()

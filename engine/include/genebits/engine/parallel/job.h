@@ -7,6 +7,7 @@
 #include "genebits/engine/parallel/thread_pool.h"
 #include "genebits/engine/util/fast_vector.h"
 #include "genebits/engine/util/object_pool.h"
+#include "genebits/engine/util/ref.h"
 
 namespace genebits::engine
 {
@@ -100,11 +101,12 @@ public:
   ///
   /// @return JobHandle with scheduled job.
   ///
-  [[nodiscard]] JobHandle Schedule(std::shared_ptr<JobBase> job, JobHandle dependencies)
+  template<typename JobType>
+  [[nodiscard]] JobHandle Schedule(JobType&& job, JobHandle dependencies)
   {
     TaskList tasks = job->GetTasks();
 
-    JobHandle handle = CreateJobHandle(std::move(job));
+    JobHandle handle = CreateJobHandle(std::forward<JobType>(job));
 
     Complete(dependencies);
 
@@ -122,11 +124,12 @@ public:
   ///
   /// @return JobHandle with scheduled job.
   ///
-  [[nodiscard]] JobHandle Schedule(std::shared_ptr<JobBase> job)
+  template<typename JobType>
+  [[nodiscard]] JobHandle Schedule(JobType&& job)
   {
     TaskList tasks = job->GetTasks();
 
-    JobHandle handle = CreateJobHandle(std::move(job));
+    JobHandle handle = CreateJobHandle(std::forward<JobType>(job));
 
     thread_pool_.EnqueueAll(tasks);
 
@@ -136,6 +139,8 @@ public:
   ///
   /// Combines two job handles together. All jobs from both handles will be merged into one.
   ///
+  /// @warning Provided job handles and no longer valid.
+  ///
   /// @param[in] handle Main handle.
   /// @param[in] other Other handle.
   ///
@@ -143,21 +148,23 @@ public:
   ///
   [[nodiscard]] JobHandle CombineJobHandles(JobHandle& handle, JobHandle& other)
   {
-    if (!other.group_) return handle;
-    if (!handle.group_) return other;
-
     auto* group = static_cast<JobGroup*>(handle.group_);
     auto* other_group = static_cast<JobGroup*>(other.group_);
 
+    if (!other_group) return handle;
+    if (!group) return other;
+
     ASSERT(group->count + other_group->count <= 64, "Job handles cannot contain more than 64 jobs");
 
-    std::uninitialized_move(other_group->jobs, other_group->jobs + other_group->count, group->jobs + group->count);
-
+    memcpy(group->jobs + group->count, other_group->jobs, other_group->count * sizeof(Ref<JobBase>));
     group->count += other_group->count;
 
-    DestroyJobHandle(other);
+    handle.group_ = nullptr;
+    other.group_ = nullptr;
 
-    return handle;
+    RecycleJobGroup(other_group);
+
+    return JobHandle { group, ++group->version };
   }
 
   ///
@@ -187,7 +194,7 @@ private:
   ///
   struct JobGroup
   {
-    std::shared_ptr<JobBase> jobs[64];
+    Ref<JobBase> jobs[64];
     size_t count;
     size_t version;
   };
@@ -201,11 +208,11 @@ private:
   ///
   /// @return Handle with job.
   ///
-  JobHandle CreateJobHandle(std::shared_ptr<JobBase>&& job)
+  JobHandle CreateJobHandle(Ref<JobBase>&& job)
   {
     JobGroup* group = job_group_pool_.AcquireUninitialized();
 
-    new (group->jobs) std::shared_ptr(std::move(job));
+    new (group->jobs) Ref<JobBase>(std::move(job));
     group->count = 1;
 
     return JobHandle { group, group->version };
@@ -226,12 +233,24 @@ private:
     {
       handle.group_ = nullptr;
 
-      group->version++;
-
       std::destroy(group->jobs, group->jobs + group->count);
 
-      job_group_pool_.Release(group);
+      RecycleJobGroup(group);
     }
+  }
+
+  ///
+  /// Recycles a job group.
+  ///
+  /// Increments the group version and recycles it.
+  ///
+  /// @param[in] group Job group to recycle.
+  ///
+  void RecycleJobGroup(JobGroup* group)
+  {
+    group->version++;
+
+    job_group_pool_.Release(group);
   }
 
 private:
@@ -339,6 +358,10 @@ public:
     static_assert(std::is_base_of_v<ParallelForJob<Job>, Job> && ParallelForJobExecutor<Job>);
 
     CreateBatchTasks(amount, batches);
+
+    tasks_->ref_count = 0;
+
+    LOCAL_THREAD_INIT(this);
   }
 
   ///
@@ -376,6 +399,8 @@ public:
     return { static_cast<Task*>(tasks_), tasks_->task_count };
   }
 
+  INTRUSIVE_REF_METHODS(tasks_->ref_count, this);
+
 private:
   static constexpr size_t cMaxBatches = 8;
 
@@ -388,7 +413,8 @@ private:
   {
     uint32_t start;
     uint32_t end;
-    uint32_t task_count;
+    uint16_t task_count;
+    uint16_t ref_count;
   };
 
   // Since we cast to Task for TaskList this is necessary for iteration.
@@ -504,6 +530,8 @@ private:
 
 private:
   ParallelForJobTask tasks_[cMaxBatches];
+
+  LOCAL_THREAD_DECLARE;
 };
 
 } // namespace genebits::engine

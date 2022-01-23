@@ -29,7 +29,7 @@ public:
 
   void OnUpdate(JobHandle dependencies) override
   {
-    auto job = std::make_shared<MySystemJob>(id_);
+    auto job = MakeRef<MySystemJob>(id_);
 
     MySystem::ScheduleDefered(job, dependencies);
   }
