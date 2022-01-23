@@ -30,6 +30,15 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 - [ ] Verify if registry should have built-in thread safety
 - [ ] Build sandboxes/examples cmake option
 - [ ] Verify thread functionality on linux
+- [ ] Implement system reordering? Can maybe be dynamic?
+- [ ] Contiguous batch allocation for ObjectPool
+- [ ] Investigate Meta Unique Id sequences (linux and windows)
+- [ ] Systems parallelization statistics (Calculated from dependencies)
+- [ ] Improve random & make run unit tests faster
+- [ ] Smart pointer casting
+- [ ] STL-like allocator for Ref
+- [ ] STL-like allocators for Containers.
+- [ ] AllocateRef, AllocateRefWithDeleter and MakeRefWithDeleter
 
 ## Major
 
