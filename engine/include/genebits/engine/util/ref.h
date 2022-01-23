@@ -54,6 +54,68 @@ template<typename From, typename To>
 concept AssignableRef = std::is_base_of_v<To, From> &&(IntrusiveRefType<To> == IntrusiveRefType<From>);
 
 ///
+/// Correctly defines methods for an atomic intrusive ref.
+///
+/// The provided atomic counter will be used to define methods.
+///
+#define ATOMIC_INTRUSIVE_REF_METHODS(_counter)                                                        \
+  void IntrusiveAddRef() const volatile noexcept                                                      \
+  {                                                                                                   \
+    ASSERT((_counter).load(std::memory_order_relaxed) < static_cast<decltype((counter_).load())>(-1), \
+      "Ref counter invalid");                                                                         \
+    (_counter).fetch_add(1, std::memory_order_relaxed);                                               \
+  }                                                                                                   \
+                                                                                                      \
+  bool IntrusiveDropRef() const volatile noexcept                                                     \
+  {                                                                                                   \
+    ASSERT((_counter).load(std::memory_order_relaxed) < static_cast<decltype((counter_).load())>(-1), \
+      "Ref counter invalid");                                                                         \
+    return (_counter).fetch_sub(1, std::memory_order_acq_rel) == 0;                                   \
+  }                                                                                                   \
+                                                                                                      \
+  bool IntrusiveUniqueRef() const volatile noexcept                                                   \
+  {                                                                                                   \
+    return (_counter).load(std::memory_order_relaxed) == 0;                                           \
+  }                                                                                                   \
+                                                                                                      \
+  size_t IntrusiveRefCount() const volatile noexcept                                                  \
+  {                                                                                                   \
+    return (_counter).load(std::memory_order_relaxed) + 1;                                            \
+  }
+
+///
+/// Correctly defines methods for an intrusive ref.
+///
+/// The provided counter will be used to define methods.
+///
+#define INTRUSIVE_REF_METHODS(_counter, _context)                                    \
+  constexpr void IntrusiveAddRef() const noexcept                                    \
+  {                                                                                  \
+    LOCAL_THREAD_ASSERT(_context);                                                   \
+    ASSERT((_counter) < static_cast<decltype(_counter)>(-1), "Ref counter invalid"); \
+    ++(_counter);                                                                    \
+  }                                                                                  \
+                                                                                     \
+  constexpr bool IntrusiveDropRef() const noexcept                                   \
+  {                                                                                  \
+    LOCAL_THREAD_ASSERT(_context);                                                   \
+    ASSERT((_counter) < static_cast<decltype(_counter)>(-1), "Ref counter invalid"); \
+    return (_counter)-- == 0;                                                        \
+  }                                                                                  \
+                                                                                     \
+  constexpr bool IntrusiveUniqueRef() const noexcept                                 \
+  {                                                                                  \
+    LOCAL_THREAD_ASSERT(_context);                                                   \
+    return (_counter) == 0;                                                          \
+  }                                                                                  \
+                                                                                     \
+  constexpr size_t IntrusiveRefCount() const noexcept                                \
+  {                                                                                  \
+    LOCAL_THREAD_ASSERT(_context);                                                   \
+    return (_counter) + 1;                                                           \
+  }
+
+///
 /// Base class for atomic intrusively referenced types. References created on AtomicRefCounted type will be intrusive.
 ///
 /// Using atomic ref counting is thread safe and works in a similar way as std::shared_ptr. This comes at the cost
@@ -65,6 +127,7 @@ public:
   template<typename Type>
   friend class Ref;
 
+public:
   ///
   /// Default constructor.
   ///
@@ -85,47 +148,7 @@ public:
     return *this;
   }
 
-  ///
-  /// Adds a reference.
-  ///
-  void IntrusiveAddRef() const volatile noexcept
-  {
-    ASSERT(counter_.load(std::memory_order_relaxed) < static_cast<FastRefCounter>(-1), "Ref counter invalid");
-
-    counter_.fetch_add(1, std::memory_order_relaxed);
-  }
-
-  ///
-  /// Drops a reference and returns whether or not there are no more references.
-  ///
-  /// @return True if there are no more references, false otherwise.
-  ///
-  bool IntrusiveDropRef() const volatile noexcept
-  {
-    ASSERT(counter_.load(std::memory_order_relaxed) < static_cast<FastRefCounter>(-1), "Ref counter invalid");
-
-    return counter_.fetch_sub(1, std::memory_order_acq_rel) == 0;
-  }
-
-  ///
-  /// Whether or not there is only 1 reference.
-  ///
-  /// @return True if there is only 1 reference, false otherwise.
-  ///
-  bool IntrusiveUniqueRef() const volatile noexcept
-  {
-    return counter_.load(std::memory_order_relaxed) == 0;
-  }
-
-  ///
-  /// Returns the amount of references.
-  ///
-  /// @return Amount of references.
-  ///
-  size_t IntrusiveRefCount() const volatile noexcept
-  {
-    return counter_.load(std::memory_order_relaxed) + 1;
-  }
+  ATOMIC_INTRUSIVE_REF_METHODS(counter_);
 
 private:
   mutable std::atomic<FastRefCounter> counter_;
@@ -145,10 +168,7 @@ public:
   ///
   /// Default constructor.
   ///
-  constexpr RefCounted() noexcept : counter_(0)
-  {
-    LOCAL_THREAD_ASSERT(this);
-  }
+  constexpr RefCounted() noexcept : counter_(0) {}
 
   ///
   /// Copy constructor.
@@ -162,62 +182,15 @@ public:
   ///
   constexpr RefCounted& operator=(const RefCounted&) noexcept
   {
-    LOCAL_THREAD_ASSERT(this);
     return *this;
   }
 
-  ///
-  /// Adds a reference.
-  ///
-  constexpr void IntrusiveAddRef() const noexcept
-  {
-    LOCAL_THREAD_ASSERT(this);
-    ASSERT(counter_ < static_cast<FastRefCounter>(-1), "Ref counter invalid");
-
-    ++counter_;
-  }
-
-  ///
-  /// Drops a reference and returns whether or not there are no more references.
-  ///
-  /// @return True if there are no more references, false otherwise.
-  ///
-  constexpr bool IntrusiveDropRef() const noexcept
-  {
-    LOCAL_THREAD_ASSERT(this);
-    ASSERT(counter_ < static_cast<FastRefCounter>(-1), "Ref counter invalid");
-
-    return counter_-- == 0;
-  }
-
-  ///
-  /// Whether or not there is only 1 reference.
-  ///
-  /// @return True if there is only 1 reference, false otherwise.
-  ///
-  constexpr bool IntrusiveUniqueRef() const noexcept
-  {
-    LOCAL_THREAD_ASSERT(this);
-
-    return counter_ == 0;
-  }
-
-  ///
-  /// Returns the amount of references.
-  ///
-  /// @return Amount of references.
-  ///
-  constexpr size_t IntrusiveRefCount() const noexcept
-  {
-    LOCAL_THREAD_ASSERT(this);
-
-    return counter_ + 1;
-  }
+  INTRUSIVE_REF_METHODS(counter_, this);
 
 private:
   mutable FastRefCounter counter_;
 
-  LOCAL_THREAD_VALIDATOR_INIT;
+  LOCAL_THREAD_DECLARE;
 };
 
 namespace details
@@ -231,11 +204,11 @@ namespace details
   {
     FastRefCounter counter;
     void (*deleter)(void*, RefControlBlock*);
-    void (*indirect_deleter)(void*); // Used to store custom ptr deleter
 
     // Validator initialized here for Ref to have same size in debug and release.
-    LOCAL_THREAD_VALIDATOR_INIT;
+    LOCAL_THREAD_DECLARE;
   };
+
 } // namespace details
 
 ///
@@ -266,20 +239,26 @@ public:
   /// @param[in] instance The instance to construct the reference with.
   /// @param[in] deleter The custom deleter to delete the managed instance with.
   ///
-  template<typename T>
-  requires(std::is_base_of_v<Type, T>) Ref(T* instance, void (*deleter)(void*))
-  noexcept : ptr_(static_cast<Type*>(instance)), control_(new details::RefControlBlock)
+  template<typename T, typename Deleter>
+  requires(std::is_base_of_v<Type, T>) Ref(T* instance, Deleter&& deleter)
+  noexcept : ptr_(static_cast<Type*>(instance))
   {
-    control_->counter = 0;
-    control_->indirect_deleter = deleter;
-
-    control_->deleter = [](void* ptr, details::RefControlBlock* control)
+    struct RefControlBlockWithDeleter : public details::RefControlBlock
     {
-      control->indirect_deleter(ptr);
-      delete control;
+      Deleter custom_deleter;
     };
 
-    LOCAL_THREAD_ASSERT(control_);
+    control_ = static_cast<details::RefControlBlock*>(std::malloc(sizeof(RefControlBlockWithDeleter)));
+    control_->counter = 0;
+    control_->deleter = [](void* ptr, details::RefControlBlock* control)
+    {
+      static_cast<RefControlBlockWithDeleter*>(control)->custom_deleter(static_cast<T*>(ptr));
+      std::free(control);
+    };
+
+    new (control_ + 1) Deleter(std::move(deleter));
+
+    LOCAL_THREAD_INIT(control_);
   }
 
   ///
@@ -292,18 +271,18 @@ public:
   /// @param[in] instance The instance to construct the reference with.
   ///
   template<typename T>
-  requires(std::is_base_of_v<Type, T>) explicit Ref(T* instance) noexcept
-    : ptr_(static_cast<Type*>(instance)), control_(new details::RefControlBlock)
+  requires(std::is_base_of_v<Type, T>) explicit Ref(T* instance) noexcept : ptr_(static_cast<Type*>(instance))
   {
+    control_ = static_cast<details::RefControlBlock*>(std::malloc(sizeof(details::RefControlBlock)));
     control_->counter = 0;
 
     control_->deleter = [](void* ptr, details::RefControlBlock* control)
     {
       delete static_cast<T*>(ptr);
-      delete control;
+      std::free(control);
     };
 
-    LOCAL_THREAD_ASSERT(control_);
+    LOCAL_THREAD_INIT(control_);
   }
 
   ///
@@ -311,7 +290,9 @@ public:
   ///
   /// @param[in] deleter The custom deleter to delete the managed instance with.
   ///
-  Ref(std::nullptr_t, void (*deleter)(void*)) noexcept : Ref(static_cast<Type*>(nullptr), deleter) {}
+  template<typename Deleter>
+  Ref(std::nullptr_t, Deleter&& deleter) noexcept : Ref(static_cast<Type*>(nullptr), std::forward<Deleter>(deleter))
+  {}
 
   ///
   /// Nullptr constructor.
@@ -908,7 +889,9 @@ constexpr std::strong_ordering operator<=>(const Ref<T>& lhs, std::nullptr_t) no
 }
 
 ///
-/// Constructs an instance of Type and wraps it in a reference using the args
+/// Factory method for ref.
+///
+/// Creates an instance of Type and wraps it in a reference using the args
 /// as the parameter list of the constructor.
 ///
 /// Recommended to always use MakeRef for optimal construction.
@@ -925,32 +908,27 @@ Ref<Type> MakeRef(Args&&... args)
 {
   if constexpr (!IntrusiveRefType<Type>)
   {
-    char* memory = static_cast<char*>(std::malloc(sizeof(Type) + sizeof(details::RefControlBlock)));
-
-    new (memory) Type(std::forward<Args>(args)...);
+    struct RefControlBlockAndType : public details::RefControlBlock
+    {
+      Type instance;
+    };
 
     Ref<Type> ref;
+    ref.control_ = static_cast<details::RefControlBlock*>(std::malloc(sizeof(RefControlBlockAndType)));
+    ref.ptr_ = reinterpret_cast<Type*>(ref.control_ + 1);
 
-    ref.ptr_ = reinterpret_cast<Type*>(memory);
-    ref.control_ = reinterpret_cast<details::RefControlBlock*>(memory + sizeof(Type));
-
-#ifndef NDEBUG
-    new (ref.control_) details::RefControlBlock(); // For thread validator init
-    LOCAL_THREAD_ASSERT(ref.control_);
-#endif
+    new (ref.ptr_) Type(std::forward<Args>(args)...);
 
     ref.control_->counter = 0;
-    ref.control_->deleter = [](void* ptr, details::RefControlBlock*) { std::free(ptr); };
+    ref.control_->deleter = [](void*, details::RefControlBlock* control) { std::free(control); };
+
+    LOCAL_THREAD_INIT(ref.control_);
 
     return ref;
   }
   else
   {
-    Type* memory = static_cast<Type*>(std::malloc(sizeof(Type)));
-
-    new (memory) Type(std::forward<Args>(args)...);
-
-    return Ref<Type>(memory, [](void* ptr) { std::free(ptr); });
+    return Ref<Type>(new Type(std::forward<Args>(args)...));
   }
 }
 

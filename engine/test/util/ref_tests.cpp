@@ -53,6 +53,9 @@ static_assert(IntrusiveRefType<RefCountedObject>, "RefCountedObject should be in
 static_assert(IntrusiveRefType<AtomicRefCountedObject>, "RefCountedObject should be intrusive");
 static_assert(IntrusiveRefType<MockRefCountedObject>, "RefCountedObject should be intrusive");
 
+static_assert(sizeof(Ref<Object>) == sizeof(void*) * 2, "Non intrusive ref should be size of two pointers");
+static_assert(sizeof(Ref<RefCountedObject>) == sizeof(void*) * 2, "Intrusive ref should be size of two pointers");
+
 template<class T>
 class Ref_Tests : public testing::Test
 {};
