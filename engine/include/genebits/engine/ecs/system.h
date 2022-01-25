@@ -5,7 +5,6 @@
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/registry.h"
-#include "genebits/engine/parallel/job.h"
 #include "genebits/engine/parallel/task.h"
 #include "genebits/engine/parallel/thread_pool.h"
 #include "genebits/engine/util/allocator.h"
@@ -34,7 +33,7 @@ class Phase;
 class SystemBase
 {
 public:
-  SystemBase() : registry_(nullptr), scheduler_(nullptr) {};
+  SystemBase() : registry_(nullptr) {};
 
   virtual ~SystemBase() = default;
 
@@ -43,18 +42,18 @@ public:
   SystemBase(SystemBase&&) = delete;
   SystemBase& operator=(SystemBase&&) = delete;
 
-  void Run(JobHandle dependencies)
+  void Run()
   {
     ASSERT(Initialized(), "System not initialized");
 
-    OnUpdate(dependencies);
+    OnUpdate();
   }
 
   void ForceComplete()
   {
     ASSERT(Initialized(), "System not initialized");
 
-    scheduler_->Complete(handle_);
+    // TODO
   }
 
   virtual SystemDataAccessList GetDataAccess() = 0;
@@ -65,18 +64,15 @@ protected:
   friend SystemGroup;
   friend Phase;
 
-  virtual void OnUpdate(JobHandle dependencies) = 0;
+  virtual void OnUpdate() = 0;
 
   [[nodiscard]] constexpr bool Initialized() const noexcept
   {
-    return registry_ && scheduler_;
+    return registry_;
   }
 
 private:
   Registry* registry_;
-  JobScheduler* scheduler_;
-
-  JobHandle handle_;
 };
 
 template<typename... Components>
@@ -94,28 +90,11 @@ public:
     return access;
   }
 
-  template<typename JobType>
-  JobHandle ScheduleDefered(JobType&& job, JobHandle dependencies)
-  {
-    ASSERT(Initialized(), "System not initialized");
-
-    handle_ = scheduler_->Schedule(std::forward<JobType>(job), dependencies);
-
-    return handle_;
-  }
-
   PolyView<Components...> GetView()
   {
     ASSERT(Initialized(), "System not initialized");
 
     return registry_->template View<Components...>();
-  }
-
-  [[nodiscard]] constexpr const JobScheduler& GetScheduler() noexcept
-  {
-    ASSERT(Initialized(), "System not initialized");
-
-    return *scheduler_;
   }
 };
 
@@ -129,12 +108,11 @@ public:
   SystemGroup(SystemGroup&&) = delete;
   SystemGroup& operator=(SystemGroup&&) = delete;
 
-  void InitializeSystems(Registry& registry, JobScheduler& job_scheduler)
+  void InitializeSystems(Registry& registry)
   {
     for (SystemBase* system : registered_systems_)
     {
       system->registry_ = &registry;
-      system->scheduler_ = &job_scheduler;
     }
   }
 
@@ -168,14 +146,9 @@ public:
 
       ASSERT(system.Initialized(), "System not initialized");
 
-      JobHandle dependencies;
+      // TODO depedencies
 
-      for (SystemBase* dependency : it->sync)
-      {
-        dependencies = system.scheduler_->CombineJobHandles(dependencies, dependency->handle_);
-      }
-
-      system.Run(dependencies);
+      // TODO execute system
 
       // TODO Assert dependencies where completed ?
     }
@@ -221,80 +194,6 @@ private:
   FastVector<CompiledSystem> compiled_;
 };
 
-///
-/// Simple entities job that only has one task.
-///
-/// This job barely has any overhead over a task.
-///
-/// Inherit this job and implement EntitiesJob concept.
-///
-/// @tparam[in] Job Implementation type.
-///
-template<typename Job, typename... Components>
-class EntitiesJob : public JobBase, private Task
-{
-public:
-  // We can inherit from Task since there is never more than one task to iterate on, so
-  // we don't care about the size of the job.
-
-  ///
-  /// Default constructor.
-  ///
-  EntitiesJob(PolyView<Components...> view) : Task(), view_(view)
-  {
-    static_assert(std::is_base_of_v<EntitiesJob, Job>);
-
-    Executor().template Bind<Job, &Job::operator()>(static_cast<Job*>(this));
-  }
-
-  ///
-  /// Waits for job to finish.
-  ///
-  void Wait() noexcept final
-  {
-    Task::Wait();
-  }
-
-  ///
-  /// Returns the task list for this job.
-  ///
-  /// Always one job.
-  ///
-  /// @return List of tasks for this job.
-  ///
-  constexpr TaskList GetTasks() noexcept final
-  {
-    return { static_cast<Task*>(this), 1 };
-  }
-
-  ///
-  /// Returns the view for this job.
-  ///
-  /// @return Entities view.
-  ///
-  PolyView<Components...> GetView() noexcept
-  {
-    return view_;
-  }
-
-private:
-  ///
-  /// Iterates every entity in the view, unpacks and calls the job operator.
-  ///
-  void UpdateAll()
-  {
-    for (auto mono_view : view_)
-    {
-      for (auto& data : mono_view)
-      {
-        EntityApply<Job, Components...>(&Job::operator(), data);
-      }
-    }
-  }
-
-private:
-  PolyView<Components...> view_;
-};
 } // namespace genebits::engine
 
 #endif

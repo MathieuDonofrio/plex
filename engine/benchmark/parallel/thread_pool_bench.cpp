@@ -5,72 +5,55 @@
 
 #include <benchmark/benchmark.h>
 
+#include "genebits/engine/parallel/task.h"
 #include "genebits/engine/util/fast_vector.h"
 
 #include "fake_work.h"
 
 namespace genebits::engine::bench
 {
+namespace
+{
+  struct TaskSyncData
+  {
+    Task task;
+    Sync<SyncCounter> sync;
+  };
+
+  Task CreateTask(ThreadPool& pool, size_t work)
+  {
+    co_await pool.Schedule();
+
+    Work(work);
+  }
+} // namespace
 
 static void ThreadPool_Schedule_Wait_NoWork(benchmark::State& state)
 {
   ThreadPool pool;
 
-  time_t t = std::time(nullptr);
-
   for (auto _ : state)
   {
-    Task task;
-    task.Executor().Bind(
-      [&t]()
-      {
-        std::this_thread::yield();
-        t++;
-        benchmark::DoNotOptimize(t);
-        benchmark::ClobberMemory();
-      });
-    pool.Enqueue(&task);
+    SyncFlag flag;
 
-    task.Wait();
+    auto task = CreateTask(pool, 0);
+    auto sync = MakeSync<SyncFlag>(task);
+
+    sync.Start(flag);
 
     benchmark::DoNotOptimize(task);
+
+    flag.Wait();
   }
 }
 
 BENCHMARK(ThreadPool_Schedule_Wait_NoWork);
 
-static void ThreadPool_Schedule_Poll_NoWork(benchmark::State& state)
-{
-  ThreadPool pool;
-
-  time_t t = std::time(nullptr);
-
-  for (auto _ : state)
-  {
-    Task task;
-    task.Executor().Bind(
-      [&t]()
-      {
-        std::this_thread::yield();
-        t++;
-        benchmark::DoNotOptimize(t);
-        benchmark::ClobberMemory();
-      });
-    pool.Enqueue(&task);
-
-    task.Poll();
-
-    benchmark::DoNotOptimize(task);
-  }
-}
-
-BENCHMARK(ThreadPool_Schedule_Poll_NoWork);
-
 static void ThreadPool_STD_ThreadCreation(benchmark::State& state)
 {
   for (auto _ : state)
   {
-    std::thread thread { []() { benchmark::ClobberMemory(); } };
+    std::thread thread { [&]() { Work(0); } };
 
     thread.join();
 
@@ -84,7 +67,7 @@ static void ThreadPool_STD_Async_NoWork(benchmark::State& state)
 {
   for (auto _ : state)
   {
-    auto future = std::async(std::launch::async, []() { benchmark::ClobberMemory(); });
+    auto future = std::async(std::launch::async, [&]() { Work(0); });
 
     future.wait();
 
@@ -103,10 +86,7 @@ static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state
 
   for (auto _ : state)
   {
-    for (size_t i = 0; i < amount; i++)
-    {
-      Work(1000);
-    }
+    Work(1000 * amount);
   }
 
   state.SetComplexityN(amount);
@@ -124,43 +104,32 @@ static void ThreadPool_Schedule_FewLargeTasks(benchmark::State& state)
 
   auto work_per_thread = static_cast<unsigned int>(amount / threads);
 
-  auto executor = [work_per_thread]()
-  {
-    for (size_t i = 0; i < work_per_thread; i++)
-    {
-      Work(1000);
-    }
-  };
-
   for (auto _ : state)
   {
-    Task task1;
-    task1.Executor().Bind(executor);
-    pool.Enqueue(&task1);
-    Task task2;
-    task2.Executor().Bind(executor);
-    pool.Enqueue(&task2);
-    Task task3;
-    task3.Executor().Bind(executor);
-    pool.Enqueue(&task3);
-    Task task4;
-    task4.Executor().Bind(executor);
-    pool.Enqueue(&task4);
+    SyncCounter counter(4);
 
-    task1.Wait();
+    auto task1 = CreateTask(pool, 1000 * work_per_thread);
+    auto task2 = CreateTask(pool, 1000 * work_per_thread);
+    auto task3 = CreateTask(pool, 1000 * work_per_thread);
+    auto task4 = CreateTask(pool, 1000 * work_per_thread);
 
-    // After first wait we might have a chance of avoiding other waiting by spinning a little
-    if (!task2.TryPoll()) task2.Wait();
-    if (!task3.TryPoll()) task3.Wait();
-    if (!task4.TryPoll()) task4.Wait();
+    auto sync1 = MakeSync<SyncCounter>(task1);
+    auto sync2 = MakeSync<SyncCounter>(task2);
+    auto sync3 = MakeSync<SyncCounter>(task3);
+    auto sync4 = MakeSync<SyncCounter>(task4);
+
+    sync1.Start(counter);
+    sync2.Start(counter);
+    sync3.Start(counter);
+    sync4.Start(counter);
 
     benchmark::DoNotOptimize(task1);
     benchmark::DoNotOptimize(task2);
     benchmark::DoNotOptimize(task3);
     benchmark::DoNotOptimize(task4);
-  }
 
-  benchmark::DoNotOptimize(executor);
+    counter.Wait();
+  }
 
   state.SetComplexityN(amount);
 }
@@ -173,14 +142,14 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
 
   const size_t amount = state.range(0);
 
-  auto executor = []() { Work(1000); };
-
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    FastVector<Task> tasks;
-    tasks.Resize(amount);
+    SyncCounter counter(amount);
+
+    FastVector<TaskSyncData> tasks;
+    tasks.Reserve(amount);
 
     benchmark::DoNotOptimize(tasks);
 
@@ -188,18 +157,15 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
 
     for (size_t i = 0; i < amount; i++)
     {
-      tasks[i].Executor().Bind(executor);
-      pool.Enqueue(&tasks[i]);
+      TaskSyncData data { CreateTask(pool, 1000), MakeSync<SyncCounter>(data.task) };
+
+      data.sync.Start(counter);
+
+      tasks.PushBack(std::move(data));
     }
 
-    for (size_t i = 0; i < amount; i++)
-    {
-      if (!tasks[i].TryPoll()) // We might just need to poll a little for small tasks
-        tasks[i].Wait();
-    }
+    counter.Wait();
   }
-
-  benchmark::DoNotOptimize(executor);
 
   state.SetComplexityN(amount);
 }
@@ -219,13 +185,7 @@ static void ThreadPool_STD_Async_LewLargeTasks(benchmark::State& state)
 
   auto work_per_thread = static_cast<unsigned int>(amount / threads);
 
-  auto executor = [work_per_thread]()
-  {
-    for (size_t i = 0; i < work_per_thread; i++)
-    {
-      Work(1000);
-    }
-  };
+  auto executor = [work_per_thread]() { Work(1000 * work_per_thread); };
 
   for (auto _ : state)
   {

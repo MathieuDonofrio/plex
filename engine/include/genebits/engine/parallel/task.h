@@ -4,123 +4,170 @@
 #include "genebits/engine/parallel/threading.h"
 #include "genebits/engine/util/delegate.h"
 
+#include <coroutine>
+#include <iostream>
 #include <span>
 
 namespace genebits::engine
 {
-///
-/// Delegate alias for executing tasks.
-///
-/// @see Delegate
-///
-using TaskExecutor = Delegate<void()>;
-
-///
-/// Alignment for a task.
-///
-/// Size of cache line, with guarantee to be at least 64 bytes. This allows abstractions over tasks to
-/// safely use some free space up to 64 bytes.
-///
-constexpr size_t cTaskAlignment =
-  hardware_destructive_interference_size < 64 ? 64 : hardware_destructive_interference_size;
-
-///
-/// Task to be executed by thread pool.
-///
-/// @note Aligned on the cache line to avoid cache synchronization.
-///
-class alignas(cTaskAlignment) Task
+class Task
 {
 public:
-  ///
-  /// Default constructor.
-  ///
-  constexpr Task() noexcept : next_(nullptr), flag_(false) {}
+  class TaskPromise;
 
-  ///
-  /// Copy constructor.
-  ///
-  /// @param[in] other Task to copy.
-  ///
-  Task(const Task& other)
-    : executor_(other.executor_), next_(other.next_), flag_(other.flag_.load(std::memory_order_relaxed))
-  {}
+  using promise_type = TaskPromise;
+  using handle_type = std::coroutine_handle<TaskPromise>;
 
-#ifndef NDEBUG
-  ///
-  /// Destructor.
-  ///
+  explicit Task(handle_type handle) : handle_(handle) {}
+
   ~Task()
   {
-    ASSERT(Finished(), "Task was destroyed but not finished");
+    if (handle_) handle_.destroy();
   }
-#endif
 
-  ///
-  /// Copy assignment operator.
-  ///
-  /// @param[in] other Task to copy.
-  ///
-  /// @return Reference to this task.
-  ///
-  Task& operator=(const Task& other)
+  Task(Task&& other) noexcept : handle_(other.handle_)
   {
-    if (&other != this)
+    other.handle_ = nullptr;
+  }
+
+  Task& operator=(Task&& other) noexcept
+  {
+    if (std::addressof(other) != this) // TODO copy-swap?
     {
-      executor_ = other.executor_;
-      next_ = other.next_;
-      flag_ = other.flag_.load(std::memory_order_relaxed);
+      if (handle_) handle_.destroy();
+
+      handle_ = other.handle_;
+      other.handle_ = nullptr;
     }
 
     return *this;
   }
 
+  Task(const Task&) = delete;
+  Task& operator=(const Task&) = delete;
+
   ///
-  /// Spins for a fixed amount of specified spins.
+  /// co_await operator.
   ///
-  /// It may be an optimization to spin a little before waiting in certain cases such
-  /// as small tasks.
+  /// Sets the caller coroutine as the continuation of this task and starts the task.
   ///
-  /// @tparam Spins Maximum amount of spins.
-  ///
-  /// @return True if the attempt to poll worked, false otherwise.
-  ///
-  template<size_t Spins = 512>
-  bool TryPoll() const noexcept
+  auto operator co_await() noexcept
   {
-    for (size_t i = 0; i < Spins; i++)
+    class TaskAwaiter
     {
-      if (Finished()) return true;
+    public:
+      TaskAwaiter(handle_type handle) : handle_(handle) {}
 
-      std::this_thread::yield();
-    }
+      bool await_ready() const noexcept
+      {
+        return !handle_ || handle_.done();
+      }
 
-    return Finished();
+      std::coroutine_handle<> await_suspend(std::coroutine_handle<> awaiting_coroutine) noexcept
+      {
+        handle_.promise().SetContinuation(awaiting_coroutine);
+        return handle_;
+      }
+
+      void await_resume() const noexcept {}
+
+    private:
+      handle_type handle_;
+    };
+
+    return TaskAwaiter { handle_ };
   }
 
-  ///
-  /// Spins until task is finished.
-  ///
-  /// @note Always prefer waiting to polling. Polling is considered dubious by many, however is
-  /// can still be an optimization in certain cases.
-  ///
-  /// @warning High CPU usage when using this.
-  ///
-  void Poll() const noexcept
+public:
+  class TaskPromise
   {
-    while (!Finished())
+  public:
+    TaskPromise() noexcept : continuation_(std::noop_coroutine()) {}
+
+    Task get_return_object() noexcept
     {
-      std::this_thread::yield();
+      return Task { handle_type::from_promise(*this) };
+    };
+
+    std::suspend_always initial_suspend() const noexcept
+    {
+      return {};
+    }
+
+    auto final_suspend() const noexcept
+    {
+      struct FinalAwaitable
+      {
+        bool await_ready() const noexcept
+        {
+          return false;
+        }
+
+        std::coroutine_handle<> await_suspend(handle_type handle) noexcept
+        {
+          return handle.promise().continuation_;
+        }
+
+        void await_resume() noexcept {}
+      };
+
+      return FinalAwaitable {};
+    }
+
+    void return_void() noexcept {}
+
+    void unhandled_exception() noexcept
+    {
+      std::terminate();
+    }
+
+    void SetContinuation(std::coroutine_handle<> continuation) noexcept
+    {
+      continuation_ = continuation;
+    }
+
+  private:
+    std::coroutine_handle<> continuation_;
+  };
+
+private:
+  handle_type handle_;
+};
+
+class SyncCounter
+{
+public:
+  constexpr SyncCounter(size_t amount) : counter_(amount) {}
+
+  void Wait() const noexcept
+  {
+    size_t last;
+
+    while ((last = counter_.load(std::memory_order_relaxed)) != 0)
+    {
+      counter_.wait(last, std::memory_order_relaxed);
     }
   }
 
-  ///
-  /// Wait until the task is finished.
-  ///
-  /// If the task is not finished, this will block until notified.
-  ///
-  /// @note Does not use up CPU when waiting.
-  ///
+  void Set()
+  {
+    if (counter_.fetch_sub(1, std::memory_order_acq_rel) == 1) { counter_.notify_all(); }
+  }
+
+  [[nodiscard]] bool Finished() const noexcept
+  {
+    return counter_.load(std::memory_order_relaxed) == 0;
+  }
+
+private:
+  std::atomic_size_t counter_;
+};
+
+class SyncFlag
+{
+public:
+  constexpr SyncFlag() : flag_(false) {}
+
   void Wait() const noexcept
   {
     while (!Finished())
@@ -129,122 +176,128 @@ public:
     }
   }
 
-  ///
-  /// Sets the state of the task to finished and notifies all waiting threads.
-  ///
-  /// @tparam Notify Whether or not notifications can be sent.
-  ///
-  template<bool Notify = true>
-  void Finish()
+  void Set()
   {
-    ASSERT(!flag_.load(std::memory_order_relaxed), "Task already finished");
-
     flag_.store(true, std::memory_order_relaxed);
-
-    if constexpr (Notify) flag_.notify_all();
+    flag_.notify_all();
   }
 
-  ///
-  /// Returns a reference to the task executor.
-  ///
-  /// @return Task executor reference.
-  ///
-  [[nodiscard]] TaskExecutor& Executor() noexcept
-  {
-    return executor_;
-  }
-
-  ///
-  /// Returns whether or not this task is finished.
-  ///
-  /// @return True if task is finished, false otherwise.
-  ///
   [[nodiscard]] bool Finished() const noexcept
   {
     return flag_.load(std::memory_order_relaxed);
   }
 
-protected:
-  friend class TaskQueue;
-
-  TaskExecutor executor_;
-  Task* next_;
+private:
   std::atomic_bool flag_;
 };
 
-///
-/// Span of tasks from contagious memory.
-///
-using TaskList = std::span<Task>;
-
-///
-/// Very low overhead task queue.
-///
-/// @note Not thread safe.
-///
-/// @note Does not perform any heap allocations.
-///
-class TaskQueue
+template<typename SyncType>
+class Sync
 {
 public:
-  ///
-  /// Default constructor.
-  ///
-  constexpr TaskQueue() : front_(nullptr), back_(nullptr) {}
+  class SyncPromise;
 
-  TaskQueue(TaskQueue& other) = delete;
-  TaskQueue& operator=(TaskQueue& other) = delete;
+  using promise_type = SyncPromise;
+  using handle_type = std::coroutine_handle<SyncPromise>;
 
-  ///
-  /// Adds a task to the back of the queue.
-  ///
-  /// @param[in] task Task to add.
-  ///
-  constexpr void Push(Task* task) noexcept
+  Sync(handle_type handle) : handle_(handle) {}
+
+  ~Sync()
   {
-    ASSERT(!task->next_, "New task cannot have next task");
+    if (handle_) { handle_.destroy(); }
+  }
 
-    if (front_) back_ = back_->next_ = task;
-    else
+  Sync(Sync&& other) noexcept : handle_(other.handle_)
+  {
+    other.handle_ = nullptr;
+  }
+
+  Sync& operator=(Sync&& other) noexcept
+  {
+    if (std::addressof(other) != this) // TODO copy-swap?
     {
-      front_ = back_ = task;
+      if (handle_) handle_.destroy();
+
+      handle_ = other.handle_;
+      other.handle_ = nullptr;
     }
+
+    return *this;
   }
 
-  ///
-  /// Removes the task from the front of the queue.
-  ///
-  constexpr void Pop() noexcept
+  Sync(const Sync&) = delete;
+  Sync& operator=(const Sync&) = delete;
+
+  void Start(SyncType& flag)
   {
-    ASSERT(front_, "Queue cannot be empty");
-
-    front_ = front_->next_;
+    handle_.promise().SetEvent(&flag);
+    handle_.resume();
   }
 
-  ///
-  /// Returns the task at the front of the queue.
-  ///
-  /// @return Task at the front of the queue, nullptr if the task is empty.
-  ///
-  [[nodiscard]] constexpr Task* Front() noexcept
+public:
+  class SyncPromise
   {
-    return front_;
-  }
+  public:
+    SyncPromise() : event_(nullptr) {}
 
-  ///
-  /// Returns whether or not the queue is empty.
-  ///
-  /// @return True if the queue is empty, false otherwise.
-  ///
-  [[nodiscard]] constexpr bool Empty() const noexcept
-  {
-    return !front_;
-  }
+    struct FinalAwaitable
+    {
+      bool await_ready() const noexcept
+      {
+        return false;
+      }
+
+      void await_suspend(handle_type handle) const noexcept
+      {
+        auto* const event = handle.promise().event_;
+
+        if (event) event->Set();
+      }
+
+      constexpr void await_resume() const noexcept {}
+    };
+
+    std::suspend_always initial_suspend() const noexcept
+    {
+      return {};
+    }
+
+    FinalAwaitable final_suspend() const noexcept
+    {
+      return {};
+    }
+
+    Sync get_return_object() noexcept
+    {
+      return { handle_type::from_promise(*this) };
+    }
+
+    void return_void() noexcept {}
+
+    void unhandled_exception() noexcept
+    {
+      std::terminate();
+    }
+
+    void SetEvent(SyncType* event)
+    {
+      event_ = event;
+    }
+
+  private:
+    SyncType* event_;
+  };
 
 private:
-  Task* front_;
-  Task* back_;
+  handle_type handle_;
 };
+
+template<typename SyncType>
+Sync<SyncType> MakeSync(Task& task)
+{
+  co_await task;
+}
+
 } // namespace genebits::engine
 
 #endif

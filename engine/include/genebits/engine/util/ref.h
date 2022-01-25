@@ -842,7 +842,7 @@ constexpr bool operator==(const Ref<T>& lhs, const Ref<U>& rhs) noexcept
 }
 
 ///
-/// Three War Compare Operator.
+/// Three Way Compare Operator.
 ///
 /// @tparam T Type of lhs reference
 /// @tparam U Type of rhs reference

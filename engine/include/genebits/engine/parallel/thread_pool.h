@@ -2,9 +2,12 @@
 #define GENEBITS_ENGINE_PARALLEL_THREAD_POOL_H
 
 #include <atomic>
+#include <coroutine>
+#include <deque>
 #include <mutex>
 
-#include "genebits/engine/parallel/task.h"
+#include "genebits/engine/debug/assertion.h"
+#include "genebits/engine/parallel/threading.h"
 
 namespace genebits::engine
 {
@@ -50,31 +53,26 @@ public:
     DestroyWorkers();
   }
 
-  ///
-  /// Enqueues a range of tasks to be executed on worker threads of this pool.
-  ///
-  /// @param[in] tasks All tasks to enqueue.
-  ///
-  void EnqueueAll(TaskList tasks)
+  auto Schedule()
   {
-    Task* first = tasks.data();
-    const Task* last = first + tasks.size();
-
-    mutex_.lock();
-
-    ASSERT(running_, "Cannot enqueue task when thread pool not running");
-
-    while (first != last)
+    struct ThreadPoolAwaiter
     {
-      tasks_.Push(first++);
-    }
+      ThreadPool* pool;
 
-    // Manual unlocking is done before notifying, to avoid waking up
-    // the waiting thread only to block again (see notify_one for details)
-    // Source: https://en.cppreference.com/w/cpp/thread/condition_variable
-    mutex_.unlock();
+      bool await_ready() const noexcept
+      {
+        return false;
+      }
 
-    condition_.notify_all();
+      void await_resume() const noexcept {}
+
+      void await_suspend(std::coroutine_handle<> coro) const noexcept
+      {
+        pool->Enqueue(coro);
+      }
+    };
+
+    return ThreadPoolAwaiter { this };
   }
 
   ///
@@ -82,13 +80,13 @@ public:
   ///
   /// @param[in] task Task to enqueue.
   ///
-  void Enqueue(Task* task)
+  void Enqueue(std::coroutine_handle<> task)
   {
     mutex_.lock();
 
     ASSERT(running_, "Cannot enqueue task when thread pool not running");
 
-    tasks_.Push(task);
+    tasks_.push_front(task);
 
     mutex_.unlock();
 
@@ -119,28 +117,28 @@ private:
 
     std::unique_lock lock(mutex_);
 
-    while (running_) // Always locked when doing an iteration
+    while (running_ || !tasks_.empty()) // Always locked when doing an iteration
     {
-      Task* task = tasks_.Front();
 
-      if (task)
+      // TODO make better when dequeue replaced
+
+      if (!tasks_.empty())
       {
         do
         {
-          tasks_.Pop();
+          std::coroutine_handle<> task = tasks_.back();
+
+          tasks_.pop_back();
 
           // Make sure we are unlocked for task execution
           lock.unlock();
 
-          task->Executor().Invoke();
-          task->Finish();
+          task.resume();
 
           // Lock before running another iteration
           lock.lock();
-
-          task = tasks_.Front();
         }
-        while (task);
+        while (!tasks_.empty());
       }
       else
       {
@@ -217,7 +215,7 @@ private:
 #ifndef NDEBUG
     mutex_.lock();
 
-    ASSERT(tasks_.Empty(), "There are still tasks");
+    ASSERT(tasks_.empty(), "There are still tasks");
 
     mutex_.unlock();
 #endif
@@ -231,7 +229,7 @@ private:
   bool running_;
   std::condition_variable condition_;
 
-  TaskQueue tasks_;
+  std::deque<std::coroutine_handle<>> tasks_; // Replace with more efficient
 
   std::thread* threads_;
   size_t thread_count_;

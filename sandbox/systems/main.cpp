@@ -2,72 +2,50 @@
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/ecs/system.h"
 
+#include <iostream>
+
 using namespace genebits::engine;
 
 namespace genebits::engine
 {
-
-template<typename... Components>
-class MySystem : public System<Components...>
+Task AsyncPrint(ThreadPool& pool, std::string string)
 {
-public:
-  class MySystemJob : public BasicJob<MySystemJob>
-  {
-  public:
-    MySystemJob(size_t id) : id_(id) {}
+  co_await pool.Schedule();
 
-    void operator()()
-    {
-      LOG_INFO("Running System Job: {}", id_);
-    }
+  std::cout << string << std::endl;
+  std::cout << "Task Thread Id: " << std::this_thread::get_id() << std::endl;
 
-  private:
-    size_t id_;
-  };
+  std::this_thread::sleep_for(std::chrono::milliseconds { 100 });
+}
 
-  MySystem(size_t id) : id_(id) {}
-
-  void OnUpdate(JobHandle dependencies) override
-  {
-    auto job = MakeRef<MySystemJob>(id_);
-
-    MySystem::ScheduleDefered(job, dependencies);
-  }
-
-private:
-  size_t id_;
-};
 } // namespace genebits::engine
 
 int main()
 {
   using namespace genebits::engine;
 
-  Registry registry;
-
-  registry.Create();
-  registry.Create();
+  std::cout << "Main Thread Id: " << std::this_thread::get_id() << std::endl;
 
   ThreadPool pool;
-  JobScheduler scheduler(pool);
 
-  SystemGroup group;
+  SyncCounter counter(2);
 
-  MySystem<int> system1(1);
-  MySystem<const int, const float, double> system2(2);
-  MySystem<float, const int> system3(3);
-  MySystem<const int, const float, bool> system4(4);
+  // Create tasks
+  auto task1 = AsyncPrint(pool, "Hello world 1!");
+  auto task2 = AsyncPrint(pool, "Hello world 2!");
 
-  group.Add(&system1);
-  group.Add(&system2);
-  group.Add(&system3);
-  group.Add(&system4);
+  // Create syncs
+  auto sync1 = MakeSync<SyncCounter>(task1);
+  auto sync2 = MakeSync<SyncCounter>(task2);
 
-  group.InitializeSystems(registry, scheduler);
+  // Start tasks with sync
+  sync1.Start(counter);
+  sync2.Start(counter);
 
-  Phase phase = Phase::Compile(group);
+  // Wait for tasks
+  counter.Wait();
 
-  phase.Run();
+  std::cout << "End" << std::endl;
 
   return 0;
 }
