@@ -2,17 +2,19 @@
 #define GENEBITS_ENGINE_PARALLEL_THREAD_POOL_H
 
 #include <atomic>
-#include <coroutine>
 #include <deque>
 #include <mutex>
 
 #include "genebits/engine/debug/assertion.h"
+#include "genebits/engine/parallel/task.h"
 #include "genebits/engine/parallel/threading.h"
 
 namespace genebits::engine
 {
 ///
 /// Pool of threads to execute tasks on.
+///
+/// This kind of thread pool may not be ideal for io tasks. It is designed to work well for compute parallelization.
 ///
 /// @note Idle threads contained by a thread pool do no use up CPU.
 ///
@@ -53,6 +55,11 @@ public:
     DestroyWorkers();
   }
 
+  ///
+  /// Returns an awaiter that will schedule the awaiting coroutine to be later resumed by the thread pool.
+  ///
+  /// @return Thread pool awaiter.
+  ///
   auto Schedule()
   {
     struct ThreadPoolAwaiter

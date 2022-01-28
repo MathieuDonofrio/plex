@@ -5,6 +5,7 @@
 namespace genebits::engine::tests
 {
 static_assert(sizeof(FastVector<size_t>) == 16, "The size of FastVector should not need to be bigger than 16 bytes");
+static_assert(std::contiguous_iterator<FastVector<size_t>::iterator>, "FastVector should have contiguous iterator");
 
 TEST(FastVector_Tests, Empty_Trivial_AfterDefaultConstruction_True)
 {

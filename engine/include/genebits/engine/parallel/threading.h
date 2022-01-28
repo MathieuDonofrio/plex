@@ -39,7 +39,7 @@ struct CacheInfo
 };
 
 // Cache line size.
-// Sometimes the standard for this is not implemented, so we default to 64 bytes. (64 bytes on x86-64)
+// Sometimes this is not implemented, so we assume 64 bytes. (64 bytes on x86-64)
 #ifdef __cpp_lib_hardware_interference_size
 using std::hardware_constructive_interference_size;
 using std::hardware_destructive_interference_size;

@@ -1,302 +1,467 @@
 #ifndef GENEBITS_ENGINE_PARALLEL_TASK_H
 #define GENEBITS_ENGINE_PARALLEL_TASK_H
 
-#include "genebits/engine/parallel/threading.h"
-#include "genebits/engine/util/delegate.h"
-
-#include <coroutine>
-#include <iostream>
-#include <span>
+#include "genebits/engine/debug/assertion.h"
+#include "genebits/engine/parallel/awaitable.h"
 
 namespace genebits::engine
 {
-class Task
+#ifndef NDEBUG
+///
+/// Used to define the default unhandled_exception for coroutine promises.
+///
+#define COROUTINE_UNHANDLED_EXCEPTION                 \
+  void unhandled_exception() noexcept                 \
+  {                                                   \
+    ERROR("Unhandled exception thrown in coroutine"); \
+  }
+#else
+#define COROUTINE_UNHANDLED_EXCEPTION
+#endif
+
+template<typename Type>
+class Task;
+
+///
+/// Used as a base class for coroutine tasks.
+///
+/// Manages a coroutine handle.
+///
+class TaskBase
 {
 public:
-  class TaskPromise;
+  ///
+  /// Constructor.
+  ///
+  /// @param[in] handle The coroutine handle for the task.
+  ///
+  explicit TaskBase(std::coroutine_handle<> handle) : handle_(handle) {}
 
-  using promise_type = TaskPromise;
-  using handle_type = std::coroutine_handle<TaskPromise>;
-
-  explicit Task(handle_type handle) : handle_(handle) {}
-
-  ~Task()
+  ///
+  /// Destructor.
+  ///
+  ~TaskBase()
   {
     if (handle_) handle_.destroy();
   }
 
-  Task(Task&& other) noexcept : handle_(other.handle_)
+  TaskBase(const TaskBase&) = delete;
+  TaskBase& operator=(const TaskBase&) = delete;
+
+  ///
+  /// Move constructor.
+  ///
+  /// @param[in] other Other task base to move.
+  ///
+  TaskBase(TaskBase&& other) noexcept : handle_(other.handle_)
   {
     other.handle_ = nullptr;
   }
 
-  Task& operator=(Task&& other) noexcept
+  ///
+  /// Move assignment operator.
+  ///
+  /// @param[in] other Other task base to move.
+  ///
+  /// @return Reference of this.
+  ///
+  TaskBase& operator=(TaskBase&& other) noexcept
   {
-    if (std::addressof(other) != this) // TODO copy-swap?
-    {
-      if (handle_) handle_.destroy();
-
-      handle_ = other.handle_;
-      other.handle_ = nullptr;
-    }
-
+    TaskBase(std::move(other)).Swap(*this);
     return *this;
   }
 
-  Task(const Task&) = delete;
-  Task& operator=(const Task&) = delete;
-
+protected:
   ///
-  /// co_await operator.
+  /// Swaps handles with another task base.
   ///
-  /// Sets the caller coroutine as the continuation of this task and starts the task.
+  /// @param[in] task Other task base.
   ///
-  auto operator co_await() noexcept
+  void Swap(TaskBase& task)
   {
-    class TaskAwaiter
-    {
-    public:
-      TaskAwaiter(handle_type handle) : handle_(handle) {}
-
-      bool await_ready() const noexcept
-      {
-        return !handle_ || handle_.done();
-      }
-
-      std::coroutine_handle<> await_suspend(std::coroutine_handle<> awaiting_coroutine) noexcept
-      {
-        handle_.promise().SetContinuation(awaiting_coroutine);
-        return handle_;
-      }
-
-      void await_resume() const noexcept {}
-
-    private:
-      handle_type handle_;
-    };
-
-    return TaskAwaiter { handle_ };
+    std::swap(handle_, task.handle_);
   }
 
-public:
-  class TaskPromise
+  ///
+  /// Returns the void coroutine handle.
+  ///
+  /// @return Void coroutine handle.
+  ///
+  std::coroutine_handle<> Handle() const
+  {
+    return handle_;
+  }
+
+  ///
+  /// Returns the typed coroutine handle.
+  ///
+  /// @warning Undefined behaviour if the promise is not correct.
+  ///
+  /// @tparam PromiseType The type of the promise.
+  ///
+  /// @return The typed coroutine handle.
+  ///
+  template<typename PromiseType>
+  std::coroutine_handle<PromiseType> Handle() const
+  {
+    return std::coroutine_handle<PromiseType>::from_address(handle_.address());
+  }
+
+private:
+  std::coroutine_handle<> handle_;
+};
+
+namespace details
+{
+  ///
+  /// Base for the task promise.
+  ///
+  class TaskPromiseBase
   {
   public:
-    TaskPromise() noexcept : continuation_(std::noop_coroutine()) {}
-
-    Task get_return_object() noexcept
+    ///
+    /// Final awaiter. Used to resume continuation.
+    ///
+    struct FinalAwaiter
     {
-      return Task { handle_type::from_promise(*this) };
-    };
-
-    std::suspend_always initial_suspend() const noexcept
-    {
-      return {};
-    }
-
-    auto final_suspend() const noexcept
-    {
-      struct FinalAwaitable
-      {
-        bool await_ready() const noexcept
-        {
-          return false;
-        }
-
-        std::coroutine_handle<> await_suspend(handle_type handle) noexcept
-        {
-          return handle.promise().continuation_;
-        }
-
-        void await_resume() noexcept {}
-      };
-
-      return FinalAwaitable {};
-    }
-
-    void return_void() noexcept {}
-
-    void unhandled_exception() noexcept
-    {
-      std::terminate();
-    }
-
-    void SetContinuation(std::coroutine_handle<> continuation) noexcept
-    {
-      continuation_ = continuation;
-    }
-
-  private:
-    std::coroutine_handle<> continuation_;
-  };
-
-private:
-  handle_type handle_;
-};
-
-class SyncCounter
-{
-public:
-  constexpr SyncCounter(size_t amount) : counter_(amount) {}
-
-  void Wait() const noexcept
-  {
-    size_t last;
-
-    while ((last = counter_.load(std::memory_order_relaxed)) != 0)
-    {
-      counter_.wait(last, std::memory_order_relaxed);
-    }
-  }
-
-  void Set()
-  {
-    if (counter_.fetch_sub(1, std::memory_order_acq_rel) == 1) { counter_.notify_all(); }
-  }
-
-  [[nodiscard]] bool Finished() const noexcept
-  {
-    return counter_.load(std::memory_order_relaxed) == 0;
-  }
-
-private:
-  std::atomic_size_t counter_;
-};
-
-class SyncFlag
-{
-public:
-  constexpr SyncFlag() : flag_(false) {}
-
-  void Wait() const noexcept
-  {
-    while (!Finished())
-    {
-      flag_.wait(false, std::memory_order_relaxed);
-    }
-  }
-
-  void Set()
-  {
-    flag_.store(true, std::memory_order_relaxed);
-    flag_.notify_all();
-  }
-
-  [[nodiscard]] bool Finished() const noexcept
-  {
-    return flag_.load(std::memory_order_relaxed);
-  }
-
-private:
-  std::atomic_bool flag_;
-};
-
-template<typename SyncType>
-class Sync
-{
-public:
-  class SyncPromise;
-
-  using promise_type = SyncPromise;
-  using handle_type = std::coroutine_handle<SyncPromise>;
-
-  Sync(handle_type handle) : handle_(handle) {}
-
-  ~Sync()
-  {
-    if (handle_) { handle_.destroy(); }
-  }
-
-  Sync(Sync&& other) noexcept : handle_(other.handle_)
-  {
-    other.handle_ = nullptr;
-  }
-
-  Sync& operator=(Sync&& other) noexcept
-  {
-    if (std::addressof(other) != this) // TODO copy-swap?
-    {
-      if (handle_) handle_.destroy();
-
-      handle_ = other.handle_;
-      other.handle_ = nullptr;
-    }
-
-    return *this;
-  }
-
-  Sync(const Sync&) = delete;
-  Sync& operator=(const Sync&) = delete;
-
-  void Start(SyncType& flag)
-  {
-    handle_.promise().SetEvent(&flag);
-    handle_.resume();
-  }
-
-public:
-  class SyncPromise
-  {
-  public:
-    SyncPromise() : event_(nullptr) {}
-
-    struct FinalAwaitable
-    {
+      ///
+      /// Called before suspending to check if we should avoid suspending.
+      ///
+      /// @return Always false.
+      ///
       bool await_ready() const noexcept
       {
         return false;
       }
 
-      void await_suspend(handle_type handle) const noexcept
+      ///
+      /// Called after suspension. Resumes the continuation of the task.
+      ///
+      /// @tparam Promise Must be TaskPromise.
+      ///
+      /// @param[in] handle
+      ///
+      /// @return Continuation handle to resume.
+      ///
+      template<typename Promise>
+      std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise> handle) noexcept
       {
-        auto* const event = handle.promise().event_;
-
-        if (event) event->Set();
+        return handle.promise().continuation_;
       }
 
-      constexpr void await_resume() const noexcept {}
+      ///
+      /// Does nothing.
+      ///
+      void await_resume() noexcept {}
     };
 
+    ///
+    /// Constructor
+    ///
+    constexpr TaskPromiseBase() noexcept = default;
+
+    ///
+    /// Initially suspended to make tasks lazily executed. Task must resume from its initial suspension
+    /// to be executed.
+    ///
+    /// @return Always suspend.
+    ///
     std::suspend_always initial_suspend() const noexcept
     {
       return {};
     }
 
-    FinalAwaitable final_suspend() const noexcept
+    ///
+    /// Returns final awaiter to resume continuation.
+    ///
+    /// @return Final awaiter.
+    ///
+    FinalAwaiter final_suspend() const noexcept
     {
       return {};
     }
 
-    Sync get_return_object() noexcept
+    ///
+    /// Sets the continuation for the task.
+    ///
+    /// @param[in] continuation Task continuation coroutine.
+    ///
+    void SetContinuation(std::coroutine_handle<> continuation) noexcept
     {
-      return { handle_type::from_promise(*this) };
+      continuation_ = continuation;
     }
 
-    void return_void() noexcept {}
+    COROUTINE_UNHANDLED_EXCEPTION
 
-    void unhandled_exception() noexcept
+  private:
+    std::coroutine_handle<> continuation_;
+  };
+
+  ///
+  /// Task promise.
+  ///
+  /// @tparam Type Result type of the task.
+  ///
+  template<typename Type>
+  class TaskPromise final : public TaskPromiseBase
+  {
+  public:
+    ///
+    /// Constructor.
+    ///
+    TaskPromise() noexcept = default;
+
+    ///
+    /// Obtains the task from the promise.
+    ///
+    /// @return Task for the promise.
+    ///
+    Task<Type> get_return_object() noexcept;
+
+    ///
+    /// Called by co_return to set the return value.
+    ///
+    /// @param[in] value Value to set.
+    ///
+    template<std::convertible_to<Type> T>
+    void return_value(T&& value) noexcept(std::is_nothrow_constructible_v<T, T&&>)
     {
-      std::terminate();
+      new (std::addressof(value_)) T(std::forward<T>(value));
     }
 
-    void SetEvent(SyncType* event)
+    ///
+    /// Returns the result that was set by return_value.
+    ///
+    /// @warning Undefined behaviour if the result is accessed before the value was set.
+    ///
+    /// @return Result value (lvalue).
+    ///
+    Type& result() &
     {
-      event_ = event;
+      return value_;
+    }
+
+    ///
+    /// Returns the result that was set by return_value.
+    ///
+    /// @warning Undefined behaviour if the result is accessed before the value was set.
+    ///
+    /// @return Result value (rvalue).
+    ///
+    Type&& result() &&
+    {
+      return std::move(value_);
     }
 
   private:
-    SyncType* event_;
+    Type value_; // Uninitialized memory
   };
 
-private:
-  handle_type handle_;
+  ///
+  /// Task promise specialization for reference types.
+  ///
+  /// @tparam Type Task result type.
+  ///
+  template<typename Type>
+  class TaskPromise<Type&> final : public TaskPromiseBase
+  {
+  public:
+    ///
+    /// Constructor.
+    ///
+    TaskPromise() noexcept = default;
+
+    ///
+    /// Obtains the task from the promise.
+    ///
+    /// @return Task for the promise.
+    ///
+    Task<Type&> get_return_object() noexcept;
+
+    ///
+    /// Called by co_return to set the return value.
+    ///
+    /// @param[in] value Value to set.
+    ///
+    void return_value(Type& value) noexcept
+    {
+      value_ = std::addressof(value);
+    }
+
+    ///
+    /// Returns the result that was set by return_value.
+    ///
+    /// @warning Undefined behaviour if the result is accessed before the value was set.
+    ///
+    /// @return Result value.
+    ///
+    Type& result() noexcept
+    {
+      return *value_;
+    }
+
+  private:
+    Type* value_;
+  };
+
+  ///
+  /// Task promise specialization for void.
+  ///
+  template<>
+  class TaskPromise<void> final : public TaskPromiseBase
+  {
+  public:
+    ///
+    /// Constructor.
+    ///
+    TaskPromise() noexcept = default;
+
+    ///
+    /// Obtains the task from the promise.
+    ///
+    /// @return Task for the promise.
+    ///
+    Task<void> get_return_object() noexcept;
+
+    ///
+    /// Called by co_return. Does nothing.
+    ///
+    void return_void() noexcept {}
+
+    ///
+    /// Does nothing.
+    ///
+    void result() noexcept {}
+  };
+
+  ///
+  /// Task awaiter base.
+  ///
+  /// @tparam Type Task result type.
+  ///
+  template<typename Type>
+  class TaskAwaiterBase
+  {
+  public:
+    ///
+    /// Constructor.
+    ///
+    /// @param handle Task coroutine handle.
+    ///
+    TaskAwaiterBase(std::coroutine_handle<TaskPromise<Type>> handle) : handle_(handle) {}
+
+    ///
+    /// Called before suspending to check if we should avoid suspending. If the coroutine is already done, then we dont
+    /// need to suspend.
+    ///
+    /// @return True if the coroutine is done, false otherwise.
+    ///
+    bool await_ready() const noexcept
+    {
+      return !handle_ || handle_.done();
+    }
+
+    ///
+    /// Called after suspension. Sets the continuation of the task to the awaiting coroutine and resumes the task
+    /// coroutine.
+    ///
+    /// @param[in] awaiting The awaiting coroutine.
+    ///
+    /// @return Continuation handle to resume.
+    ///
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> awaiting) noexcept
+    {
+      handle_.promise().SetContinuation(awaiting);
+      return handle_;
+    }
+
+  protected:
+    std::coroutine_handle<TaskPromise<Type>> handle_;
+  };
+} // namespace details
+
+///
+/// A task represents an asynchronous computation. The basic building block of the async coroutine workflow.
+///
+/// Tasks are lazily executed. The execution of the coroutine does not start until the task is awaited.
+///
+/// @note Inspired by cppcoro implementation: https://github.com/lewissbaker/cppcoro
+///
+/// @tparam Type The result/return type of the task.
+///
+template<typename Type = void>
+class Task : public TaskBase
+{
+public:
+  using promise_type = details::TaskPromise<Type>;
+  using handle_type = std::coroutine_handle<promise_type>;
+  using value_type = Type;
+
+  ///
+  /// Constructor.
+  ///
+  /// @param[in] handle Coroutine handle managed by the task.
+  ///
+  explicit Task(handle_type handle) : TaskBase(handle) {}
+
+  ///
+  /// Starts the task and awaits it. The current coroutine will be resumed when the task is done.
+  ///
+  /// @warning The coroutine will be resumed on the thread that executed the task.
+  ///
+  auto operator co_await() const& noexcept
+  {
+    struct TaskAwaiter final : public details::TaskAwaiterBase<Type>
+    {
+      decltype(auto) await_resume() noexcept
+      {
+        return this->handle_.promise().result();
+      }
+    };
+
+    return TaskAwaiter { Handle<promise_type>() };
+  }
+
+  ///
+  /// Starts the task and awaits it. The current coroutine will be resumed when the task is done.
+  ///
+  /// @warning The coroutine will be resumed on the thread that executed the task.
+  ///
+  auto operator co_await() const&& noexcept
+  {
+    struct TaskAwaiter : public details::TaskAwaiterBase<Type>
+    {
+      decltype(auto) await_resume() noexcept
+      {
+        return std::move(this->handle_.promise()).result();
+      }
+    };
+
+    return TaskAwaiter { Handle<promise_type>() };
+  }
 };
 
-template<typename SyncType>
-Sync<SyncType> MakeSync(Task& task)
+namespace details
 {
-  co_await task;
-}
+  // Out of line definitions
+
+  template<typename Type>
+  Task<Type> TaskPromise<Type>::get_return_object() noexcept
+  {
+    return Task<Type> { std::coroutine_handle<TaskPromise<Type>>::from_promise(*this) };
+  }
+
+  template<typename Type>
+  Task<Type&> TaskPromise<Type&>::get_return_object() noexcept
+  {
+    return Task<Type&> { std::coroutine_handle<TaskPromise<Type&>>::from_promise(*this) };
+  }
+
+  inline Task<void> TaskPromise<void>::get_return_object() noexcept
+  {
+    return Task<void> { std::coroutine_handle<TaskPromise<void>>::from_promise(*this) };
+  }
+} // namespace details
 
 } // namespace genebits::engine
 

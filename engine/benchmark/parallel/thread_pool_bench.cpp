@@ -5,7 +5,6 @@
 
 #include <benchmark/benchmark.h>
 
-#include "genebits/engine/parallel/task.h"
 #include "genebits/engine/util/fast_vector.h"
 
 #include "fake_work.h"
@@ -14,12 +13,6 @@ namespace genebits::engine::bench
 {
 namespace
 {
-  struct TaskSyncData
-  {
-    Task task;
-    Sync<SyncCounter> sync;
-  };
-
   Task CreateTask(ThreadPool& pool, size_t work)
   {
     co_await pool.Schedule();
@@ -34,16 +27,11 @@ static void ThreadPool_Schedule_Wait_NoWork(benchmark::State& state)
 
   for (auto _ : state)
   {
-    SyncFlag flag;
-
     auto task = CreateTask(pool, 0);
-    auto sync = MakeSync<SyncFlag>(task);
-
-    sync.Start(flag);
 
     benchmark::DoNotOptimize(task);
 
-    flag.Wait();
+    SyncWait(task);
   }
 }
 
@@ -106,29 +94,15 @@ static void ThreadPool_Schedule_FewLargeTasks(benchmark::State& state)
 
   for (auto _ : state)
   {
-    SyncCounter counter(4);
+    auto task = [&]() -> Task
+    {
+      co_await WhenAll(CreateTask(pool, 1000 * work_per_thread),
+        CreateTask(pool, 1000 * work_per_thread),
+        CreateTask(pool, 1000 * work_per_thread),
+        CreateTask(pool, 1000 * work_per_thread));
+    }();
 
-    auto task1 = CreateTask(pool, 1000 * work_per_thread);
-    auto task2 = CreateTask(pool, 1000 * work_per_thread);
-    auto task3 = CreateTask(pool, 1000 * work_per_thread);
-    auto task4 = CreateTask(pool, 1000 * work_per_thread);
-
-    auto sync1 = MakeSync<SyncCounter>(task1);
-    auto sync2 = MakeSync<SyncCounter>(task2);
-    auto sync3 = MakeSync<SyncCounter>(task3);
-    auto sync4 = MakeSync<SyncCounter>(task4);
-
-    sync1.Start(counter);
-    sync2.Start(counter);
-    sync3.Start(counter);
-    sync4.Start(counter);
-
-    benchmark::DoNotOptimize(task1);
-    benchmark::DoNotOptimize(task2);
-    benchmark::DoNotOptimize(task3);
-    benchmark::DoNotOptimize(task4);
-
-    counter.Wait();
+    SyncWait(task);
   }
 
   state.SetComplexityN(amount);
@@ -146,9 +120,7 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
   {
     state.PauseTiming();
 
-    SyncCounter counter(amount);
-
-    FastVector<TaskSyncData> tasks;
+    FastVector<Task> tasks;
     tasks.Reserve(amount);
 
     benchmark::DoNotOptimize(tasks);
@@ -157,14 +129,12 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
 
     for (size_t i = 0; i < amount; i++)
     {
-      TaskSyncData data { CreateTask(pool, 1000), MakeSync<SyncCounter>(data.task) };
-
-      data.sync.Start(counter);
-
-      tasks.PushBack(std::move(data));
+      tasks.PushBack(CreateTask(pool, 1000));
     }
 
-    counter.Wait();
+    Task task = WhenAll(tasks);
+
+    SyncWait(task);
   }
 
   state.SetComplexityN(amount);
