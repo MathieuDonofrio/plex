@@ -174,7 +174,7 @@ private:
 
     for (size_t i = 0; i < thread_count_; i++)
     {
-      threads_[i] = std::thread(&ThreadPool::Run, this);
+      new (threads_ + i) std::thread(&ThreadPool::Run, this);
     }
   }
 

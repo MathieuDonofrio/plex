@@ -4,11 +4,14 @@
 
 #include <iostream>
 
+#include "genebits/engine/parallel/sync_wait.h"
+#include "genebits/engine/parallel/task.h"
+
 using namespace genebits::engine;
 
 namespace genebits::engine
 {
-Task AsyncPrint(ThreadPool& pool, std::string string)
+Task<> AsyncPrint(ThreadPool& pool, std::string string)
 {
   co_await pool.Schedule();
 
@@ -28,22 +31,8 @@ int main()
 
   ThreadPool pool;
 
-  SyncCounter counter(2);
-
-  // Create tasks
-  auto task1 = AsyncPrint(pool, "Hello world 1!");
-  auto task2 = AsyncPrint(pool, "Hello world 2!");
-
-  // Create syncs
-  auto sync1 = MakeSync<SyncCounter>(task1);
-  auto sync2 = MakeSync<SyncCounter>(task2);
-
-  // Start tasks with sync
-  sync1.Start(counter);
-  sync2.Start(counter);
-
-  // Wait for tasks
-  counter.Wait();
+  SyncWait(AsyncPrint(pool, "Hello world 1!"));
+  SyncWait(AsyncPrint(pool, "Hello world 2!"));
 
   std::cout << "End" << std::endl;
 

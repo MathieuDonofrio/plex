@@ -31,9 +31,9 @@ concept Awaiter = requires(T awaiter, std::coroutine_handle<> handle)
 
   awaiter.await_suspend(handle);
 
-  requires std::is_void_v<decltype(awaiter.await_suspend(handle))> || std::same_as<decltype(awaiter.await_suspend(
-                                                                                     handle)),
-    bool> || std::same_as<decltype(awaiter.await_suspend(handle)), std::coroutine_handle<>>;
+  requires std::is_void_v<decltype(std::declval<T>().await_suspend(
+    handle))> || std::same_as<decltype(std::declval<T>().await_suspend(handle)),
+    bool> || std::same_as<decltype(std::declval<T>().await_suspend(handle)), std::coroutine_handle<>>;
 };
 
 ///
@@ -46,6 +46,32 @@ template<typename T>
 concept Awaitable = Awaiter<T> || requires(T awaitable)
 {
   awaitable.operator co_await();
+};
+
+///
+/// Holds type traits of an awaitable
+///
+/// @tparam T Awaitable type.
+///
+template<Awaitable T>
+struct AwaitableTraits
+{
+  using AwaiterType = decltype(std::declval<T>().operator co_await());
+  using AwaitResultType = decltype(std::declval<AwaiterType>().await_resume());
+};
+
+///
+/// Holds type traits of an awaitable.
+///
+/// Specialization for awaiters.
+///
+/// @tparam T Awaitable type.
+///
+template<Awaiter T>
+struct AwaitableTraits<T>
+{
+  using AwaiterType = T;
+  using AwaitResultType = decltype(std::declval<AwaiterType>().await_resume());
 };
 
 } // namespace genebits::engine

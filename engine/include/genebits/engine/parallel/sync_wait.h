@@ -34,7 +34,7 @@ public:
   ///
   /// @param amount Amount of events needed to be fired to notify waiters.
   ///
-  constexpr SyncWaitCounter(size_t amount) : counter_(amount) {}
+  constexpr SyncWaitCounter(size_t amount) noexcept : counter_(amount) {}
 
   ///
   /// Blocks and waits until the required amount of events have been fired.
@@ -52,7 +52,7 @@ public:
   ///
   /// Fires an invent. Will notify all waiters, if there are no more events needed to be fired.
   ///
-  void Fire()
+  void Fire() noexcept
   {
     if (counter_.fetch_sub(1, std::memory_order_acq_rel) == 1) counter_.notify_all();
   }
@@ -82,7 +82,7 @@ public:
   ///
   /// Constructor.
   ///
-  constexpr SyncWaitFlag() : flag_(false) {}
+  constexpr SyncWaitFlag() noexcept : flag_(false) {}
 
   ///
   /// Blocks and waits until the awaitable fires the event.
@@ -98,7 +98,7 @@ public:
   ///
   /// Fires the invent. Will notify all waiters.
   ///
-  void Fire()
+  void Fire() noexcept
   {
     flag_.store(true, std::memory_order_release);
     flag_.notify_all();
@@ -118,30 +118,27 @@ private:
   std::atomic_bool flag_;
 };
 
-///
-/// Task used to allow of possibility of a blocking wait. Used to synchronize with a thread, normally the root caller.
-///
-/// @tparam Trigger Trigger used to fire events and wait on.
-///
-template<SyncWaitTrigger Trigger>
-class SyncWaitTask : public TaskBase
+template<typename Type, SyncWaitTrigger Trigger>
+class SyncWaitTask;
+
+namespace details
 {
-public:
+  template<typename Type, SyncWaitTrigger Trigger>
   class SyncWaitTaskPromise;
 
-  using promise_type = SyncWaitTaskPromise;
-  using handle_type = std::coroutine_handle<SyncWaitTaskPromise>;
-
   ///
-  /// SyncWaitTask promise.
+  /// Base for sync wait task promise.
   ///
-  class SyncWaitTaskPromise
+  /// @tparam Trigger Trigger used to fire events and wait on.
+  ///
+  template<SyncWaitTrigger Trigger>
+  class SyncWaitTaskPromiseBase
   {
   public:
     ///
     /// Constructor.
     ///
-    SyncWaitTaskPromise() : trigger_(nullptr) {}
+    SyncWaitTaskPromiseBase() noexcept : trigger_(nullptr) {}
 
     ///
     /// Final awaiter. Used to fire event on trigger.
@@ -163,7 +160,8 @@ public:
       ///
       /// @param[in] handle
       ///
-      void await_suspend(handle_type handle) const noexcept
+      template<typename Type>
+      void await_suspend(std::coroutine_handle<SyncWaitTaskPromise<Type, Trigger>> handle) const noexcept
       {
         ASSERT(handle.promise().trigger_, "Trigger should not be nullptr here");
         handle.promise().trigger_->Fire();
@@ -174,16 +172,6 @@ public:
       ///
       void await_resume() const noexcept {}
     };
-
-    ///
-    /// Obtains the task from the promise.
-    ///
-    /// @return Task for the promise.
-    ///
-    SyncWaitTask get_return_object() noexcept
-    {
-      return SyncWaitTask { handle_type::from_promise(*this) };
-    }
 
     ///
     /// Initially suspended to allow setting the trigger before manually resuming.
@@ -206,11 +194,6 @@ public:
     }
 
     ///
-    /// Called by co_return. Does nothing.
-    ///
-    void return_void() noexcept {}
-
-    ///
     /// Sets the trigger for this sync wait task.
     ///
     /// @param[in] trigger Trigger to set.
@@ -227,38 +210,182 @@ public:
   };
 
   ///
+  /// SyncWaitTask promise.
+  ///
+  /// @tparam Type The return type of the task.
+  /// @tparam Trigger Trigger used to fire events and wait on.
+  ///
+  template<typename Type, SyncWaitTrigger Trigger>
+  class SyncWaitTaskPromise final : public SyncWaitTaskPromiseBase<Trigger>
+  {
+  public:
+    ///
+    /// Constructor.
+    ///
+    SyncWaitTaskPromise() noexcept = default;
+
+    ///
+    /// Obtains the task from the promise.
+    ///
+    /// @return Task for the promise.
+    ///
+    SyncWaitTask<Type, Trigger> get_return_object() noexcept;
+
+    ///
+    /// Returns final awaiter to fire event on trigger.
+    ///
+    /// @param[in] result
+    ///
+    /// @return Final awaiter
+    ///
+    auto yield_value(Type&& result) noexcept
+    {
+      value_ = std::addressof(result);
+      return SyncWaitTaskPromiseBase<Trigger>::final_suspend();
+    }
+
+    ///
+    /// Does nothing.
+    ///
+    /// Should never be called. Is there is a result value the coroutine should have been yielded.
+    ///
+    void return_void() const noexcept
+    {
+      ASSERT(false, "Coroutine should have been yielded");
+    }
+
+    ///
+    /// Returns the result that was set by yield_value.
+    ///
+    /// @warning Undefined behaviour if the result is accessed before the value was set.
+    ///
+    /// @return Result value
+    ///
+    Type&& Result() const noexcept
+    {
+      return static_cast<Type&&>(*value_);
+    }
+
+  private:
+    std::remove_reference_t<Type>* value_;
+  };
+
+  ///
+  /// SyncWaitTask promise.
+  ///
+  /// @tparam Type The return type of the task.
+  /// @tparam Trigger Trigger used to fire events and wait on.
+  ///
+  template<SyncWaitTrigger Trigger>
+  class SyncWaitTaskPromise<void, Trigger> final : public SyncWaitTaskPromiseBase<Trigger>
+  {
+  public:
+    ///
+    /// Constructor.
+    ///
+    SyncWaitTaskPromise() noexcept = default;
+
+    ///
+    /// Obtains the task from the promise.
+    ///
+    /// @return Task for the promise.
+    ///
+    SyncWaitTask<void, Trigger> get_return_object() noexcept;
+
+    ///
+    /// Does nothing.
+    ///
+    void return_void() const noexcept {}
+
+    ///
+    /// Does nothing
+    ///
+    void Result() const noexcept {}
+  };
+} // namespace details
+
+///
+/// Task used to allow of possibility of a blocking wait. Used to synchronize with a thread, normally the root caller.
+///
+/// @tparam Type The return type of the task.
+/// @tparam Trigger Trigger used to fire events and wait on.
+///
+template<typename Type, SyncWaitTrigger Trigger>
+class SyncWaitTask : public TaskBase
+{
+public:
+  using promise_type = details::SyncWaitTaskPromise<Type, Trigger>;
+  using handle_type = std::coroutine_handle<promise_type>;
+
+  ///
   /// Constructor.
   ///
   /// @param[in] handle Coroutine handle managed by the task.
   ///
-  explicit SyncWaitTask(handle_type handle) : TaskBase(handle) {}
+  SyncWaitTask(handle_type handle) noexcept : TaskBase(handle) {}
 
   ///
   /// Manually starts/resumes the task after setting the trigger.
   ///
   /// @param[in] trigger Trigger to set.
   ///
-  void Start(Trigger& trigger)
+  void Start(Trigger& trigger) const noexcept
   {
-    Handle<SyncWaitTaskPromise>().promise().SetTrigger(&trigger);
-    Handle<SyncWaitTaskPromise>().resume();
+    Handle<promise_type>().promise().SetTrigger(&trigger);
+    Handle<promise_type>().resume();
+  }
+
+  ///
+  /// Returns the result of the task. Void if Type is void.
+  ///
+  /// @return Result of the task.
+  ///
+  [[nodiscard]] decltype(auto) Result() const noexcept
+  {
+    return Handle<promise_type>().promise().Result();
   }
 };
+
+namespace details
+{
+  // Out of line definitions
+
+  template<typename Type, SyncWaitTrigger Trigger>
+  SyncWaitTask<Type, Trigger> SyncWaitTaskPromise<Type, Trigger>::get_return_object() noexcept
+  {
+    return SyncWaitTask<Type, Trigger> { std::coroutine_handle<SyncWaitTaskPromise<Type, Trigger>>::from_promise(
+      *this) };
+  }
+
+  template<SyncWaitTrigger Trigger>
+  SyncWaitTask<void, Trigger> SyncWaitTaskPromise<void, Trigger>::get_return_object() noexcept
+  {
+    return SyncWaitTask<void, Trigger> { std::coroutine_handle<SyncWaitTaskPromise<void, Trigger>>::from_promise(
+      *this) };
+  }
+} // namespace details
 
 ///
 /// Creates a SyncWaitTask from an awaitable by co_awaiting it. The sync wait task must be started manually.
 ///
 /// @tparam Trigger Trigger type of the SyncWaitTask.
 /// @tparam Awaitable Awaitable type to create task from.
+/// @tparam Result The result type, defaults to awaitable result type.
 ///
 /// @param[in] awaitable Awaitable to used to create SyncWaitTask.
 ///
 /// @return SyncWaitTask for the awaitable.
 ///
-template<SyncWaitTrigger Trigger, Awaitable Awaitable>
-SyncWaitTask<Trigger> MakeSyncWaitTask(Awaitable&& awaitable)
+template<SyncWaitTrigger Trigger,
+  Awaitable Awaitable,
+  typename Result = typename AwaitableTraits<Awaitable>::AwaitResultType>
+SyncWaitTask<Result, Trigger> MakeSyncWaitTask(Awaitable&& awaitable)
 {
-  co_await awaitable;
+  if constexpr (std::is_void_v<Result>) co_await std::forward<Awaitable>(awaitable);
+  else
+  {
+    co_yield co_await std::forward<Awaitable>(awaitable);
+  }
 }
 
 ///
@@ -271,15 +398,17 @@ SyncWaitTask<Trigger> MakeSyncWaitTask(Awaitable&& awaitable)
 /// @param[in] awaitable To synchronously wait on.
 ///
 template<Awaitable Awaitable>
-void SyncWait(Awaitable&& awaitable)
+auto SyncWait(Awaitable&& awaitable) -> typename AwaitableTraits<Awaitable>::AwaitResultType
 {
   SyncWaitFlag flag;
 
-  auto sync_wait_task = MakeSyncWaitTask<SyncWaitFlag, Awaitable>(std::forward<Awaitable>(awaitable));
+  auto sync_wait_task = MakeSyncWaitTask<SyncWaitFlag>(std::forward<Awaitable>(awaitable));
 
   sync_wait_task.Start(flag);
 
   flag.Wait();
+
+  return sync_wait_task.Result();
 }
 
 } // namespace genebits::engine

@@ -1,25 +1,23 @@
 #ifndef GENEBITS_ENGINE_PARALLEL_TASK_H
 #define GENEBITS_ENGINE_PARALLEL_TASK_H
 
+#include <thread>
+
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/parallel/awaitable.h"
 
 namespace genebits::engine
 {
-#ifndef NDEBUG
 ///
 /// Used to define the default unhandled_exception for coroutine promises.
 ///
-#define COROUTINE_UNHANDLED_EXCEPTION                 \
-  void unhandled_exception() noexcept                 \
-  {                                                   \
-    ERROR("Unhandled exception thrown in coroutine"); \
+#define COROUTINE_UNHANDLED_EXCEPTION                         \
+  void unhandled_exception() const noexcept                   \
+  {                                                           \
+    ASSERT(false, "Unhandled exception thrown in coroutine"); \
   }
-#else
-#define COROUTINE_UNHANDLED_EXCEPTION
-#endif
 
-template<typename Type>
+template<typename Type = void>
 class Task;
 
 ///
@@ -35,12 +33,12 @@ public:
   ///
   /// @param[in] handle The coroutine handle for the task.
   ///
-  explicit TaskBase(std::coroutine_handle<> handle) : handle_(handle) {}
+  explicit TaskBase(std::coroutine_handle<> handle) noexcept : handle_(handle) {}
 
   ///
   /// Destructor.
   ///
-  ~TaskBase()
+  ~TaskBase() noexcept
   {
     if (handle_) handle_.destroy();
   }
@@ -77,19 +75,9 @@ protected:
   ///
   /// @param[in] task Other task base.
   ///
-  void Swap(TaskBase& task)
+  void Swap(TaskBase& task) noexcept
   {
     std::swap(handle_, task.handle_);
-  }
-
-  ///
-  /// Returns the void coroutine handle.
-  ///
-  /// @return Void coroutine handle.
-  ///
-  std::coroutine_handle<> Handle() const
-  {
-    return handle_;
   }
 
   ///
@@ -102,9 +90,19 @@ protected:
   /// @return The typed coroutine handle.
   ///
   template<typename PromiseType>
-  std::coroutine_handle<PromiseType> Handle() const
+  [[nodiscard]] std::coroutine_handle<PromiseType> Handle() const noexcept
   {
     return std::coroutine_handle<PromiseType>::from_address(handle_.address());
+  }
+
+  ///
+  /// Returns the void coroutine handle.
+  ///
+  /// @return Void coroutine handle.
+  ///
+  [[nodiscard]] std::coroutine_handle<> Handle() const noexcept
+  {
+    return handle_;
   }
 
 private:
@@ -113,6 +111,9 @@ private:
 
 namespace details
 {
+  template<typename Type>
+  class TaskPromise;
+
   ///
   /// Base for the task promise.
   ///
@@ -137,14 +138,14 @@ namespace details
       ///
       /// Called after suspension. Resumes the continuation of the task.
       ///
-      /// @tparam Promise Must be TaskPromise.
+      /// @tparam Type Type for task promise.
       ///
       /// @param[in] handle
       ///
       /// @return Continuation handle to resume.
       ///
-      template<typename Promise>
-      std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise> handle) noexcept
+      template<typename Type>
+      std::coroutine_handle<> await_suspend(std::coroutine_handle<TaskPromise<Type>> handle) const noexcept
       {
         return handle.promise().continuation_;
       }
@@ -152,7 +153,7 @@ namespace details
       ///
       /// Does nothing.
       ///
-      void await_resume() noexcept {}
+      void await_resume() const noexcept {}
     };
 
     ///
@@ -223,10 +224,11 @@ namespace details
     ///
     /// @param[in] value Value to set.
     ///
-    template<std::convertible_to<Type> T>
+    template<typename T>
+    requires std::is_convertible_v<T&&, Type>
     void return_value(T&& value) noexcept(std::is_nothrow_constructible_v<T, T&&>)
     {
-      new (std::addressof(value_)) T(std::forward<T>(value));
+      ::new (static_cast<void*>(std::addressof(value_))) Type(std::forward<T>(value));
     }
 
     ///
@@ -236,7 +238,7 @@ namespace details
     ///
     /// @return Result value (lvalue).
     ///
-    Type& result() &
+    Type& Result() & noexcept
     {
       return value_;
     }
@@ -248,7 +250,7 @@ namespace details
     ///
     /// @return Result value (rvalue).
     ///
-    Type&& result() &&
+    Type&& Result() && noexcept
     {
       return std::move(value_);
     }
@@ -295,7 +297,7 @@ namespace details
     ///
     /// @return Result value.
     ///
-    Type& result() noexcept
+    Type& Result() const noexcept
     {
       return *value_;
     }
@@ -324,14 +326,14 @@ namespace details
     Task<void> get_return_object() noexcept;
 
     ///
-    /// Called by co_return. Does nothing.
+    /// Does nothing.
     ///
-    void return_void() noexcept {}
+    void return_void() const noexcept {}
 
     ///
     /// Does nothing.
     ///
-    void result() noexcept {}
+    void Result() const noexcept {}
   };
 
   ///
@@ -348,7 +350,7 @@ namespace details
     ///
     /// @param handle Task coroutine handle.
     ///
-    TaskAwaiterBase(std::coroutine_handle<TaskPromise<Type>> handle) : handle_(handle) {}
+    TaskAwaiterBase(std::coroutine_handle<TaskPromise<Type>> handle) noexcept : handle_(handle) {}
 
     ///
     /// Called before suspending to check if we should avoid suspending. If the coroutine is already done, then we dont
@@ -389,7 +391,7 @@ namespace details
 ///
 /// @tparam Type The result/return type of the task.
 ///
-template<typename Type = void>
+template<typename Type>
 class Task : public TaskBase
 {
 public:
@@ -402,7 +404,7 @@ public:
   ///
   /// @param[in] handle Coroutine handle managed by the task.
   ///
-  explicit Task(handle_type handle) : TaskBase(handle) {}
+  explicit Task(handle_type handle) noexcept : TaskBase(handle) {}
 
   ///
   /// Starts the task and awaits it. The current coroutine will be resumed when the task is done.
@@ -415,7 +417,7 @@ public:
     {
       decltype(auto) await_resume() noexcept
       {
-        return this->handle_.promise().result();
+        return this->handle_.promise().Result();
       }
     };
 
@@ -433,11 +435,69 @@ public:
     {
       decltype(auto) await_resume() noexcept
       {
-        return std::move(this->handle_.promise()).result();
+        return std::move(this->handle_.promise()).Result();
       }
     };
 
     return TaskAwaiter { Handle<promise_type>() };
+  }
+
+  ///
+  /// Returns an awaitable that will await until the task is done and ignore the result.
+  ///
+  /// @warning The coroutine will be resumed on the thread that executed the task.
+  ///
+  auto WhenReady() const noexcept
+  {
+    struct TaskAwaiter : public details::TaskAwaiterBase<Type>
+    {
+      void await_resume() const noexcept {}
+    };
+
+    return TaskAwaiter { Handle<promise_type>() };
+  }
+
+  ///
+  /// Spins until the task is done.
+  ///
+  /// Normally used in combination with ejection.
+  ///
+  /// @note Prefer using proper synchronization for waiting. Polling is considered dubious by many.
+  ///
+  /// @warning May be unsafe in many cases, use carefully. Also has high CPU usage.
+  ///
+  auto Poll()
+  {
+    while (!IsReady())
+    {
+      std::this_thread::yield();
+    }
+
+    return Handle<promise_type>().promise().Result();
+  }
+
+  ///
+  /// Eagerly starts the task (resume) without setting a continuation
+  ///
+  /// @warning There is no way to reattach a continuation safely, so if the task is executed asynchronously, the only
+  /// way to wait for the task to finish is by polling.
+  ///
+  /// @note This is a dangerous feature and should only be used in extremely rare cases or tests.
+  ///
+  void Eject()
+  {
+    Handle<promise_type>().promise().SetContinuation(std::noop_coroutine());
+    Handle().resume();
+  }
+
+  ///
+  /// Returns whether or not the task is done. Tasks that are done will not suspend or block when awaited.
+  ///
+  /// @return True if task is done, false otherwise.
+  ///
+  [[nodiscard]] bool IsReady() const noexcept
+  {
+    return !Handle() || Handle<promise_type>().done();
   }
 };
 

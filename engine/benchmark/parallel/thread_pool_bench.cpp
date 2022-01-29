@@ -5,6 +5,9 @@
 
 #include <benchmark/benchmark.h>
 
+#include "genebits/engine/parallel/sync_wait.h"
+#include "genebits/engine/parallel/task.h"
+#include "genebits/engine/parallel/when_all.h"
 #include "genebits/engine/util/fast_vector.h"
 
 #include "fake_work.h"
@@ -13,7 +16,7 @@ namespace genebits::engine::bench
 {
 namespace
 {
-  Task CreateTask(ThreadPool& pool, size_t work)
+  Task<> CreateTask(ThreadPool& pool, size_t work)
   {
     co_await pool.Schedule();
 
@@ -94,8 +97,7 @@ static void ThreadPool_Schedule_FewLargeTasks(benchmark::State& state)
 
   for (auto _ : state)
   {
-    auto task = [&]() -> Task
-    {
+    auto task = [&]() -> Task<> {
       co_await WhenAll(CreateTask(pool, 1000 * work_per_thread),
         CreateTask(pool, 1000 * work_per_thread),
         CreateTask(pool, 1000 * work_per_thread),
@@ -120,7 +122,7 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
   {
     state.PauseTiming();
 
-    FastVector<Task> tasks;
+    FastVector<Task<>> tasks;
     tasks.Reserve(amount);
 
     benchmark::DoNotOptimize(tasks);
@@ -132,7 +134,7 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
       tasks.PushBack(CreateTask(pool, 1000));
     }
 
-    Task task = WhenAll(tasks);
+    Task<> task = WhenAll(tasks);
 
     SyncWait(task);
   }
