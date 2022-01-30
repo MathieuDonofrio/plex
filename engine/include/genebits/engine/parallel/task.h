@@ -228,7 +228,7 @@ namespace details
     requires std::is_convertible_v<T&&, Type>
     void return_value(T&& value) noexcept(std::is_nothrow_constructible_v<T, T&&>)
     {
-      ::new (static_cast<void*>(std::addressof(value_))) Type(std::forward<T>(value));
+      new (static_cast<void*>(std::addressof(value_))) Type(std::forward<T>(value));
     }
 
     ///
@@ -256,7 +256,7 @@ namespace details
     }
 
   private:
-    Type value_; // Uninitialized memory
+    std::remove_reference_t<Type> value_; // Uninitialized memory
   };
 
   ///

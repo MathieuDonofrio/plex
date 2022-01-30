@@ -18,10 +18,10 @@ namespace genebits::engine
 /// Concept used to determine if a type is an awaiter. Meaning it must comply with the standard requirements of an
 /// awaiter type.
 ///
-/// @tparam T Type to check.
+/// @tparam Type Type to check.
 ///
-template<typename T>
-concept Awaiter = requires(T awaiter, std::coroutine_handle<> handle)
+template<typename Type>
+concept Awaiter = requires(Type awaiter, std::coroutine_handle<> handle)
 {
   {
     awaiter.await_ready()
@@ -31,21 +31,36 @@ concept Awaiter = requires(T awaiter, std::coroutine_handle<> handle)
 
   awaiter.await_suspend(handle);
 
-  requires std::is_void_v<decltype(std::declval<T>().await_suspend(
-    handle))> || std::same_as<decltype(std::declval<T>().await_suspend(handle)),
-    bool> || std::same_as<decltype(std::declval<T>().await_suspend(handle)), std::coroutine_handle<>>;
+  requires std::is_void_v<decltype(std::declval<Type>().await_suspend(
+    handle))> || std::same_as<decltype(std::declval<Type>().await_suspend(handle)),
+    bool> || std::same_as<decltype(std::declval<Type>().await_suspend(handle)), std::coroutine_handle<>>;
 };
 
 ///
 /// Concept used to determine if a type an awaitable. All awaiters are awaitables, and any type that implements the
 /// co_await operator.
 ///
-/// @tparam T Type to check.
+/// @tparam Type Type to check.
 ///
-template<typename T>
-concept Awaitable = Awaiter<T> || requires(T awaitable)
+template<typename Type>
+concept Awaitable = Awaiter<Type> || requires(Type awaitable)
 {
   awaitable.operator co_await();
+};
+
+///
+/// Concept that determines whether or not a type can provide a WhenReady awaitable.
+///
+/// This awaitable is normally used as a shortcut for ignoring the result.
+///
+/// @tparam Type Awaitable to check
+///
+template<typename Type>
+concept WhenReadyAwaitable = requires(Type awaitable)
+{
+  {
+    awaitable.WhenReady()
+    } -> Awaitable;
 };
 
 ///
@@ -53,10 +68,10 @@ concept Awaitable = Awaiter<T> || requires(T awaitable)
 ///
 /// @tparam T Awaitable type.
 ///
-template<Awaitable T>
+template<Awaitable Type>
 struct AwaitableTraits
 {
-  using AwaiterType = decltype(std::declval<T>().operator co_await());
+  using AwaiterType = decltype(std::declval<Type>().operator co_await());
   using AwaitResultType = decltype(std::declval<AwaiterType>().await_resume());
 };
 
@@ -67,12 +82,33 @@ struct AwaitableTraits
 ///
 /// @tparam T Awaitable type.
 ///
-template<Awaiter T>
-struct AwaitableTraits<T>
+template<Awaiter Type>
+struct AwaitableTraits<Type>
 {
-  using AwaiterType = T;
+  using AwaiterType = Type;
   using AwaitResultType = decltype(std::declval<AwaiterType>().await_resume());
 };
+
+///
+/// Used as a tag for void awaitable results in tuples.
+///
+struct VoidAwaitResult
+{};
+
+///
+/// Returns an aggregate of the result types of all awaitable.
+///
+/// Aggregate is a tuple.
+///
+/// @note If an awaitable has a void result, the result type in the tuple will be VoidAwaitResult.
+///
+/// @tparam Awaitables All the awaitables types to aggregate results for.
+///
+template<Awaitable... Awaitables>
+using AgrAwaitResult =
+  std::tuple<std::conditional_t<std::is_void_v<typename AwaitableTraits<Awaitables>::AwaitResultType>,
+    VoidAwaitResult,
+    typename std::remove_reference_t<typename AwaitableTraits<Awaitables>::AwaitResultType>>...>;
 
 } // namespace genebits::engine
 

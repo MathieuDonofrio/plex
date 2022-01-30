@@ -24,39 +24,9 @@ namespace
       new (thread) std::thread([](std::coroutine_handle<> handle) { handle.resume(); }, coro);
     }
   };
-
-  class MockSyncWaitTrigger
-  {
-  public:
-    MOCK_METHOD(void, Wait, (), (const));
-    MOCK_METHOD(void, Fire, (), ());
-    MOCK_METHOD(bool, IsDone, (), (const));
-  };
 } // namespace
 
-TEST(SyncWaitTask_Tests, MakeSyncWaitTask_InSync_FiredEventAndExecuted)
-{
-  size_t count = 0;
-
-  auto task = [&]() -> Task<>
-  {
-    count++;
-    co_return;
-  }();
-
-  MockSyncWaitTrigger trigger;
-
-  EXPECT_CALL(trigger, Fire).Times(1);
-
-  auto sync_wait_task = MakeSyncWaitTask<MockSyncWaitTrigger>(task);
-
-  sync_wait_task.Start(trigger);
-
-  EXPECT_TRUE(task.IsReady());
-  EXPECT_EQ(count, 1);
-}
-
-TEST(SyncWaitTask_Tests, MakeSyncWaitTask_SyncWaitFlag_Executed)
+TEST(SyncWaitTask_Tests, ManualWait_SyncWaitFlag_Executed)
 {
   std::atomic_size_t count = 0;
 
@@ -73,7 +43,7 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_SyncWaitFlag_Executed)
 
   SyncWaitFlag flag;
 
-  auto sync_wait_task = MakeSyncWaitTask<SyncWaitFlag>(task);
+  auto sync_wait_task = MakeTriggerTask<SyncWaitFlag>(task);
 
   sync_wait_task.Start(flag);
 
@@ -85,7 +55,7 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_SyncWaitFlag_Executed)
   if (thread.joinable()) thread.join();
 }
 
-TEST(SyncWaitTask_Tests, MakeSyncWaitTask_ReturnResult_CorrectValue)
+TEST(SyncWaitTask_Tests, ManualWait_ReturnResult_CorrectValue)
 {
   std::atomic_size_t count = 0;
 
@@ -104,7 +74,7 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_ReturnResult_CorrectValue)
 
   SyncWaitFlag flag;
 
-  auto sync_wait_task = MakeSyncWaitTask<SyncWaitFlag>(task);
+  auto sync_wait_task = MakeTriggerTask<SyncWaitFlag>(task);
 
   sync_wait_task.Start(flag);
 
@@ -117,7 +87,7 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_ReturnResult_CorrectValue)
   if (thread.joinable()) thread.join();
 }
 
-TEST(SyncWaitTask_Tests, MakeSyncWaitTask_EmbeddedTasks_CorrectValue)
+TEST(SyncWaitTask_Tests, ManualWait_EmbeddedTasks_CorrectValue)
 {
   std::atomic_size_t count = 0;
 
@@ -150,7 +120,7 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_EmbeddedTasks_CorrectValue)
 
   SyncWaitFlag flag;
 
-  auto sync_wait_task = MakeSyncWaitTask<SyncWaitFlag>(task);
+  auto sync_wait_task = MakeTriggerTask<SyncWaitFlag>(task);
 
   sync_wait_task.Start(flag);
 
@@ -164,7 +134,7 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_EmbeddedTasks_CorrectValue)
   if (thread2.joinable()) thread2.join();
 }
 
-TEST(SyncWaitTask_Tests, MakeSyncWaitTask_SyncWaitCounter_Executed)
+TEST(SyncWaitTask_Tests, ManualWait_SyncWaitCounter_Executed)
 {
   std::atomic_size_t count = 0;
 
@@ -187,9 +157,9 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_SyncWaitCounter_Executed)
 
   SyncWaitCounter counter(3);
 
-  auto sync_wait_task1 = MakeSyncWaitTask<SyncWaitCounter>(task1);
-  auto sync_wait_task2 = MakeSyncWaitTask<SyncWaitCounter>(task2);
-  auto sync_wait_task3 = MakeSyncWaitTask<SyncWaitCounter>(task3);
+  auto sync_wait_task1 = MakeTriggerTask<SyncWaitCounter>(task1);
+  auto sync_wait_task2 = MakeTriggerTask<SyncWaitCounter>(task2);
+  auto sync_wait_task3 = MakeTriggerTask<SyncWaitCounter>(task3);
 
   sync_wait_task1.Start(counter);
   sync_wait_task2.Start(counter);
@@ -208,7 +178,7 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_SyncWaitCounter_Executed)
   if (thread3.joinable()) thread3.join();
 }
 
-TEST(SyncWaitTask_Tests, MakeSyncWaitTask_MultipleReturnResults_CorrectValue)
+TEST(SyncWaitTask_Tests, ManualWait_MultipleReturnResults_CorrectValue)
 {
   std::atomic_size_t count = 0;
 
@@ -233,9 +203,9 @@ TEST(SyncWaitTask_Tests, MakeSyncWaitTask_MultipleReturnResults_CorrectValue)
 
   SyncWaitCounter counter(3);
 
-  auto sync_wait_task1 = MakeSyncWaitTask<SyncWaitCounter>(task1);
-  auto sync_wait_task2 = MakeSyncWaitTask<SyncWaitCounter>(task2);
-  auto sync_wait_task3 = MakeSyncWaitTask<SyncWaitCounter>(task3);
+  auto sync_wait_task1 = MakeTriggerTask<SyncWaitCounter>(task1);
+  auto sync_wait_task2 = MakeTriggerTask<SyncWaitCounter>(task2);
+  auto sync_wait_task3 = MakeTriggerTask<SyncWaitCounter>(task3);
 
   sync_wait_task1.Start(counter);
   sync_wait_task2.Start(counter);
