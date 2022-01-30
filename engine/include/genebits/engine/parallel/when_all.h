@@ -3,69 +3,114 @@
 
 #include <atomic>
 
-#include "genebits/engine/parallel/task.h"
+#include "genebits/engine/parallel/trigger_task.h"
 #include "genebits/engine/util/fast_vector.h"
 
 namespace genebits::engine
 {
-// TODO WhenAllReady
-
-template<typename Impl>
-concept WhenAllTrigger = requires(Impl event, std::coroutine_handle<> awaiting)
+///
+/// Concept required to be a trigger for a when all.
+///
+/// @tparam Type Type to check.
+///
+template<typename Type>
+concept WhenAllTrigger = Trigger<Type> && requires(Type trigger, std::coroutine_handle<> awaiting)
 {
   {
-    event.IsReady()
+    trigger.TryAwait(awaiting)
     } -> std::convertible_to<bool>;
-  {
-    event.TryAwait(awaiting)
-    } -> std::convertible_to<bool>;
-  event.Notify();
 };
 
+///
+/// Awaiter for a when all trigger.
+///
+/// Sets the awaiting coroutine as the callback for the trigger. Will not suspend if the trigger is already ready.
+///
+/// @tparam Trigger Trigger type to await.
+///
 template<WhenAllTrigger Trigger>
 class WhenAllTriggerAwaiter
 {
 public:
+  ///
+  /// Constructor.
+  ///
+  /// @param[in] trigger Trigger to await on.
+  ///
   WhenAllTriggerAwaiter(Trigger& trigger) : trigger_(trigger) {}
 
+  ///
+  /// Called before suspending to check if we should avoid suspending.
+  ///
+  /// @return Always false
+  ///
   bool await_ready() const noexcept
   {
-    return trigger_.IsReady();
+    return false;
   }
 
-  bool await_suspend(std::coroutine_handle<> awaiting_coroutine) noexcept
+  ///
+  /// Called after suspension. Tries to set the awaiting coroutine as the callback. Will suspend only if the trigger is
+  /// not ready.
+  ///
+  /// @param[in] awaiting Awaiting coroutine.
+  ///
+  bool await_suspend(std::coroutine_handle<> awaiting) noexcept
   {
-    return trigger_.TryAwait(awaiting_coroutine);
+    return trigger_.TryAwait(awaiting);
   }
 
+  ///
+  /// Does nothing.
+  ///
   void await_resume() const noexcept {}
 
 private:
   Trigger& trigger_;
 };
 
+///
+/// When all counter trigger that uses an atomic counter to count down the events needed to be fired.
+///
+/// Best for awaiting on multiple awaitable.
+///
 class WhenAllCounter
 {
 public:
+  ///
+  /// Constructor.
+  ///
+  /// @param amount Amount of events needed to be fired.
+  ///
   constexpr WhenAllCounter(size_t amount) : counter_(amount) {}
 
+  ///
+  /// Sets the awaiter as the continuation and awaits until the counter hits zero.
+  ///
+  /// @return Awaiter.
+  ///
   auto operator co_await() noexcept
   {
     return WhenAllTriggerAwaiter<WhenAllCounter> { *this };
   }
 
-  bool IsReady() noexcept
-  {
-    return static_cast<bool>(continuation_);
-  }
-
+  ///
+  /// Sets the awaiting handle as the continuation and returns whether or not the counter is at zero.
+  ///
+  /// @param[in] awaiting Awaiting coroutine.
+  ///
+  /// @return True if trigger already done, false otherwise.
+  ///
   bool TryAwait(std::coroutine_handle<> awaiting) noexcept
   {
     continuation_ = awaiting;
     return counter_.fetch_sub(1, std::memory_order_release) != 0;
   }
 
-  void Notify() noexcept
+  ///
+  /// Decrements the counter and resumes the continuation if the continuation was set and the counter is at zero.
+  ///
+  void Fire() noexcept
   {
     if (counter_.fetch_sub(1, std::memory_order_acquire) == 0) continuation_.resume();
   }
@@ -75,31 +120,47 @@ private:
   std::coroutine_handle<> continuation_;
 };
 
+///
+/// When all trigger that uses an atomic flag.
+///
+/// Best for awaiting on a single awaitable.
+///
 class WhenAllFlag
 {
 public:
+  ///
+  /// Constructor.
+  ///
   constexpr WhenAllFlag() : flag_(false) {}
 
+  ///
+  /// Sets the awaiter as the continuation and awaits until the flag is set.
+  ///
+  /// @return Awaiter.
+  ///
   auto operator co_await() noexcept
   {
     return WhenAllTriggerAwaiter<WhenAllFlag> { *this };
   }
 
-  bool IsReady() noexcept
-  {
-    return static_cast<bool>(continuation_);
-  }
-
+  ///
+  /// Sets the awaiting handle as the continuation and returns whether or not the the flag was set.
+  ///
+  /// @param[in] awaiting Awaiting coroutine.
+  ///
+  /// @return True if trigger already done, false otherwise.
+  ///
   bool TryAwait(std::coroutine_handle<> awaiting) noexcept
   {
     continuation_ = awaiting;
-    // Maybe we can just do a load here?
-    return !flag_.exchange(true, std::memory_order_release);
+    return !flag_.exchange(true, std::memory_order_release); // TODO maybe possible to optimize?
   }
 
-  void Notify()
+  ///
+  /// Sets the flag and resumes the continuation if the continuation was set.
+  ///
+  void Fire()
   {
-    // Maybe we can just do a store here?
     if (flag_.exchange(true, std::memory_order_acquire)) continuation_.resume();
   }
 
@@ -108,156 +169,343 @@ private:
   std::coroutine_handle<> continuation_;
 };
 
-template<WhenAllTrigger Trigger>
-class WhenAllTask : public TaskBase
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete. If the awaitables complete
+/// asynchronously, they will all be executed concurrently.
+///
+/// This overload does nothing because there are no awaitable, but is here for ease of use in certain cases with
+/// variadic templates.
+///
+/// @return Task that does nothing.
+///
+inline Task<> WhenAllReady()
 {
-public:
-  class WhenAllTaskPromise;
-
-  using promise_type = WhenAllTaskPromise;
-  using handle_type = std::coroutine_handle<WhenAllTaskPromise>;
-
-  class WhenAllTaskPromise
-  {
-  public:
-    WhenAllTaskPromise() : trigger_(nullptr) {}
-
-    struct FinalAwaiter
-    {
-      bool await_ready() const noexcept
-      {
-        return false;
-      }
-
-      void await_suspend(handle_type handle) noexcept
-      {
-        // TODO assert trigger non-null
-        handle.promise().trigger_->Notify();
-      }
-
-      void await_resume() const noexcept {}
-    };
-
-    std::suspend_always initial_suspend() const noexcept
-    {
-      return {};
-    }
-
-    FinalAwaiter final_suspend() const noexcept
-    {
-      return {};
-    }
-
-    WhenAllTask get_return_object() noexcept
-    {
-      return WhenAllTask { handle_type::from_promise(*this) };
-    }
-
-    void return_void() noexcept {}
-
-    void SetTrigger(Trigger* trigger)
-    {
-      trigger_ = trigger;
-    }
-
-    COROUTINE_UNHANDLED_EXCEPTION;
-
-  private:
-    Trigger* trigger_;
-  };
-
-  explicit WhenAllTask(handle_type handle) : TaskBase(handle) {}
-
-  void Start(Trigger& trigger)
-  {
-    Handle<WhenAllTaskPromise>().promise().SetTrigger(&trigger);
-    Handle<WhenAllTaskPromise>().resume();
-  }
-};
-
-template<typename Trigger, typename Awaitable>
-WhenAllTask<Trigger> MakeWhenAllTask(Awaitable&& awaitable)
-{
-  co_await awaitable;
+  co_return;
 }
 
-template<std::ranges::range Awaitables>
-Task<> WhenAll(const Awaitables& awaitables)
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete. If the awaitables complete
+/// asynchronously, they will all be executed concurrently.
+///
+/// This overload simply co_awaits the awaitable.
+///
+/// @tparam Awaitable Awaitable type to co_await.
+///
+/// @param[in] awaitable Awaitable to co_await.
+///
+/// @return Task that co_awaits the awaitable.
+///
+template<Awaitable Awaitable>
+Task<> WhenAllReady(Awaitable&& awaitable)
+{
+  if constexpr (WhenReadyAwaitable<Awaitable>) co_await std::forward<Awaitable>(awaitable).WhenReady();
+  else
+  {
+    co_await std::forward<Awaitable>(awaitable);
+  }
+}
+
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete. If the awaitables complete
+/// asynchronously, they will all be executed concurrently.
+///
+/// This overload co_awaits both awaitables and uses a flag instead of a counter for slightly better performance.
+///
+/// @tparam FirstAwaitable First awaitable type to co_await.
+/// @tparam SecondAwaitable Second awaitable type to co_await.
+///
+/// @param[in] first_awaitable First awaitable to co_await.
+/// @param[in] second_awaitable Second awaitable to co_await.
+///
+/// @return Task that co_awaits both awaitables.
+///
+template<Awaitable FirstAwaitable, Awaitable SecondAwaitable>
+Task<> WhenAllReady(FirstAwaitable&& first_awaitable, SecondAwaitable&& second_awaitable)
+{
+  WhenAllFlag when_all_flag;
+
+  auto trigger_task = MakeTriggerTask<WhenAllFlag>(std::forward<FirstAwaitable>(first_awaitable));
+  trigger_task.Start(when_all_flag);
+
+  if constexpr (WhenReadyAwaitable<SecondAwaitable>)
+    co_await std::forward<SecondAwaitable>(second_awaitable).WhenReady();
+  else
+    co_await std::forward<SecondAwaitable>(second_awaitable);
+
+  co_await when_all_flag;
+}
+
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete. If the awaitables complete
+/// asynchronously, they will all be executed concurrently.
+///
+/// @tparam Awaitables All awaitable types to co_await.
+///
+/// @param[in] awaitables All awaitables to co_await.
+///
+/// @return Task that co_awaits all awaitables.
+///
+template<Awaitable... Awaitables>
+Task<> WhenAllReady(Awaitables&&... awaitables)
+{
+  WhenAllCounter when_all_counter(sizeof...(Awaitables));
+
+  // We need to store tasks somewhere to not call the destructor
+  [[maybe_unused]] auto trigger_tasks = std::make_tuple(
+    [&when_all_counter](Awaitables&& awaitable)
+    {
+      auto trigger_task = MakeTriggerTask<WhenAllCounter>(std::forward<Awaitables>(awaitable));
+      trigger_task.Start(when_all_counter);
+      return trigger_task;
+    }(std::forward<Awaitables>(awaitables))...);
+
+  co_await when_all_counter;
+}
+
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete. If the awaitables complete
+/// asynchronously, they will all be executed concurrently.
+///
+/// This overload does may have some iteration and memory allocation overhead. Prefer using the variadic version of this
+/// function when possible.
+///
+/// @tparam Awaitables Container type of awaitables.
+/// @tparam Awaitable Awaitable type contained by the container (defaults to Awaitables::value_type).
+///
+/// @param[in] awaitables Container of awaitables
+///
+/// @return Task that co_awaits all awaitables in container.
+///
+template<std::ranges::range Awaitables, Awaitable Awaitable = typename Awaitables::value_type>
+Task<> WhenAllReady(Awaitables&& awaitables)
 {
   const size_t amount = std::ranges::size(awaitables);
 
   WhenAllCounter when_all_counter(amount);
 
-  FastVector<WhenAllTask<WhenAllCounter>> tasks;
-  tasks.Reserve(amount);
+  // TODO maybe optimize, (put on stack with heap fallback)(or static vector)?
+  FastVector<TriggerTask<void, WhenAllCounter>> trigger_tasks;
+  trigger_tasks.Reserve(amount);
 
-  for (auto& awaitable : awaitables)
+  for (auto&& awaitable : awaitables)
   {
-    tasks.PushBack(MakeWhenAllTask<WhenAllCounter>(awaitable));
-    tasks.back().Start(when_all_counter);
+    trigger_tasks.PushBack(MakeTriggerTask<WhenAllCounter, Awaitable, void>(std::move(awaitable)));
+    trigger_tasks.back().Start(when_all_counter);
   }
 
   co_await when_all_counter;
 }
 
-template<typename Iterator>
-requires(Awaitable<decltype(*Iterator {})>) Task<> WhenAll(Iterator begin, Iterator end)
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete and returns an aggregate of
+/// the results. If the awaitables complete asynchronously, they will all be executed concurrently.
+///
+/// This overload does nothing because there are no awaitable, but is here for ease of use in certain cases with
+/// variadic templates.
+///
+/// @return Task that does nothing and returns empty aggregate results.
+///
+inline Task<AgrAwaitResult<>> WhenAll()
 {
-  const size_t amount = std::distance(begin, end);
-
-  WhenAllCounter when_all_counter(amount);
-
-  FastVector<WhenAllTask<WhenAllCounter>> tasks;
-  tasks.Reserve(amount);
-
-  for (; begin != end; ++begin)
-  {
-    tasks.PushBack(MakeWhenAllTask<WhenAllCounter>(*begin));
-    tasks.back().Start(when_all_counter);
-  }
-
-  co_await when_all_counter;
+  co_return AgrAwaitResult<> {};
 }
 
-inline Task<> WhenAll()
-{
-  co_return;
-}
-
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete and returns an aggregate of the
+/// results. If the awaitables complete asynchronously, they will all be executed concurrently.
+///
+/// This overload simply co_awaits the awaitable.
+///
+/// @note If the result type of the input awaitables are void, the aggregate result will return VoidAwaitResult for that
+/// awaitable.
+///
+/// @tparam Awaitable Awaitable type to co_await.
+///
+/// @param[in] awaitable Awaitable to co_await.
+///
+/// @return Task that co_awaits the awaitable and returns an aggregate of the results.
+///
 template<Awaitable Awaitable>
-Task<> WhenAll(Awaitable&& awaitable)
+Task<AgrAwaitResult<Awaitable>> WhenAll(Awaitable&& awaitable)
 {
-  co_await awaitable;
+  if constexpr (std::is_void_v<typename AwaitableTraits<Awaitable>::AwaitResultType>)
+  {
+    if constexpr (WhenReadyAwaitable<Awaitable>) co_await std::forward<Awaitable>(awaitable).WhenReady();
+    else
+      co_await std::forward<Awaitable>(awaitable);
+
+    co_return AgrAwaitResult<Awaitable>(VoidAwaitResult {});
+  }
+  else
+  {
+    co_return AgrAwaitResult<Awaitable>(co_await std::forward<Awaitable>(awaitable));
+  }
 }
 
-template<Awaitable Awaitable1, Awaitable Awaitable2>
-Task<> WhenAll(Awaitable1&& awaitable1, Awaitable2&& awaitable2)
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete and returns an aggregate of the
+/// results. If the awaitables complete asynchronously, they will all be executed concurrently.
+///
+/// This overload co_awaits both awaitables and uses a flag instead of a counter for slightly better performance.
+///
+/// @note If the result type of the input awaitables are void, the aggregate result will return VoidAwaitResult for that
+/// awaitable.
+///
+/// @tparam FirstAwaitable First awaitable type to co_await.
+/// @tparam SecondAwaitable Second awaitable type to co_await.
+///
+/// @param[in] first_awaitable First awaitable to co_await.
+/// @param[in] second_awaitable Second awaitable to co_await.
+///
+/// @return Task that co_awaits both awaitables and returns an aggregate of the results.
+///
+template<Awaitable FirstAwaitable, Awaitable SecondAwaitable>
+Task<AgrAwaitResult<FirstAwaitable, SecondAwaitable>> WhenAll(
+  FirstAwaitable&& first_awaitable, SecondAwaitable&& second_awaitable)
 {
   WhenAllFlag when_all_flag;
 
-  auto when_all_task = MakeWhenAllTask<WhenAllFlag>(std::forward<Task>(awaitable1));
-  when_all_task.Start(when_all_flag);
+  auto trigger_task = MakeTriggerTask<WhenAllFlag>(std::forward<FirstAwaitable>(first_awaitable));
+  trigger_task.Start(when_all_flag);
 
-  co_await awaitable2;
+  if constexpr (std::is_void_v<typename AwaitableTraits<SecondAwaitable>::AwaitResultType>)
+  {
+    if constexpr (WhenReadyAwaitable<SecondAwaitable>)
+      co_await std::forward<SecondAwaitable>(second_awaitable).WhenReady();
+    else
+      co_await std::forward<SecondAwaitable>(second_awaitable);
 
-  co_await when_all_flag;
+    co_await when_all_flag;
+
+    if constexpr (std::is_void_v<typename AwaitableTraits<FirstAwaitable>::AwaitResultType>)
+      co_return AgrAwaitResult<FirstAwaitable, SecondAwaitable>(VoidAwaitResult {}, VoidAwaitResult {});
+    else
+      co_return AgrAwaitResult<FirstAwaitable, SecondAwaitable>(std::move(trigger_task).Result(), VoidAwaitResult {});
+  }
+  else
+  {
+    auto result = co_await std::forward<SecondAwaitable>(second_awaitable);
+    co_await when_all_flag;
+
+    if constexpr (std::is_void_v<typename AwaitableTraits<FirstAwaitable>::AwaitResultType>)
+      co_return AgrAwaitResult<FirstAwaitable, SecondAwaitable>(VoidAwaitResult {}, std::move(result));
+    else
+      co_return AgrAwaitResult<FirstAwaitable, SecondAwaitable>(std::move(trigger_task).Result(), std::move(result));
+  }
 }
 
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete and returns an aggregate of the
+/// results. If the awaitables complete asynchronously, they will all be executed concurrently.
+///
+/// @note If the result type of the input awaitables are void, the aggregate result will return VoidAwaitResult for that
+/// awaitable.
+///
+/// @tparam Awaitables All awaitable types to co_await.
+///
+/// @param[in] awaitables All awaitables to co_await.
+///
+/// @return Task that co_awaits all awaitables and returns an aggregate of the results.
+///
 template<Awaitable... Awaitables>
-Task<> WhenAll(Awaitables&&... awaitables)
+Task<AgrAwaitResult<Awaitables...>> WhenAll(Awaitables&&... awaitables)
 {
   WhenAllCounter when_all_counter(sizeof...(Awaitables));
 
   // We need to store tasks somewhere to not call the destructor
-  [[maybe_unused]] auto when_all_tasks = std::make_tuple(
+  [[maybe_unused]] auto trigger_tasks = std::make_tuple(
     [&when_all_counter](Awaitables&& awaitable)
     {
-      auto when_all_task = MakeWhenAllTask<WhenAllCounter>(std::forward<Awaitables>(awaitable));
-      when_all_task.Start(when_all_counter);
-      return when_all_task;
+      auto trigger_task = MakeTriggerTask<WhenAllCounter>(std::forward<Awaitables>(awaitable));
+      trigger_task.Start(when_all_counter);
+      return trigger_task;
     }(std::forward<Awaitables>(awaitables))...);
 
   co_await when_all_counter;
+
+  co_return std::apply(
+    [](auto&&... tasks)
+    {
+      return AgrAwaitResult<Awaitables...>(
+        [](auto&& task)
+        {
+          if constexpr (std::is_void_v<decltype(task.Result())>) return VoidAwaitResult {};
+          else
+          {
+            return std::move(task).Result();
+          }
+        }(std::move(tasks))...);
+    },
+    std::move(trigger_tasks));
+}
+
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete and returns an aggregate of the
+/// results. If the awaitables complete asynchronously, they will all be executed concurrently.
+///
+/// This overload does may have some iteration and memory allocation overhead. Prefer using the variadic version of this
+/// function when possible.
+///
+/// @note If the result type of the input awaitables are void, the aggregate result will return VoidAwaitResult for that
+/// awaitable.
+///
+/// @tparam Awaitables Container type of awaitables.
+/// @tparam Awaitable Awaitable type contained by the container (defaults to Awaitables::value_type).
+/// @tparam Result Await result type of the awaitable (defaults to operator result type).
+///
+/// @param[in] awaitables Container of awaitables
+///
+/// @return Task that co_awaits all awaitables in container and returns an aggregate of the results.
+///
+template<std::ranges::range Awaitables,
+  Awaitable Awaitable = typename Awaitables::value_type,
+  typename Result = std::remove_reference_t<typename AwaitableTraits<Awaitable>::AwaitResultType>>
+requires(!std::is_void_v<Result>) Task<FastVector<Result>> WhenAll(Awaitables&& awaitables)
+{
+  const size_t amount = std::ranges::size(awaitables);
+
+  WhenAllCounter when_all_counter(amount);
+
+  // TODO maybe optimize, (put on stack with heap fallback)(or static vector)?
+  FastVector<TriggerTask<Result, WhenAllCounter>> trigger_tasks;
+  trigger_tasks.Reserve(amount);
+
+  for (auto&& awaitable : awaitables)
+  {
+    trigger_tasks.PushBack(MakeTriggerTask<WhenAllCounter, Awaitable, Result>(std::move(awaitable)));
+    trigger_tasks.back().Start(when_all_counter);
+  }
+
+  co_await when_all_counter;
+
+  FastVector<Result> results;
+  results.Reserve(amount);
+
+  for (auto&& task : trigger_tasks)
+  {
+    results.PushBack(std::move(task).Result());
+  }
+
+  co_return results;
+}
+
+///
+/// Creates a new awaitable that completes when all of the input awaitables are complete. If the awaitables complete
+/// asynchronously, they will all be executed concurrently.
+///
+/// @note Same as WhenAllReady.
+///
+/// @tparam Awaitables Container type of awaitables.
+/// @tparam Awaitable Awaitable type contained by the container (defaults to Awaitables::value_type).
+///
+/// @param[in] awaitables Container of awaitables
+///
+/// @return Task that co_awaits all awaitables in container.
+///
+template<std::ranges::range Awaitables, Awaitable Awaitable = typename Awaitables::value_type>
+Task<> WhenAll(Awaitables&& awaitables)
+{
+  return WhenAllReady(std::forward<Awaitables>(awaitables));
 }
 } // namespace genebits::engine
 
