@@ -140,7 +140,7 @@ namespace details
       ///
       /// @tparam Type Type for task promise.
       ///
-      /// @param[in] handle
+      /// @param[in] handle Coroutine of the task.
       ///
       /// @return Continuation handle to resume.
       ///

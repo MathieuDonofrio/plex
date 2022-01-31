@@ -9,8 +9,13 @@
 #ifndef __cpp_lib_coroutine
 #define __cpp_lib_coroutine
 #endif
-
+#if 1
+// Include first
 #include <coroutine>
+#endif
+
+#include <tuple>
+#include <type_traits>
 
 namespace genebits::engine
 {

@@ -56,7 +56,7 @@ namespace details
       ///
       /// Called after suspension. Fires event on trigger.
       ///
-      /// @param[in] handle
+      /// @param[in] handle Coroutine of the task.
       ///
       template<typename Type>
       void await_suspend(std::coroutine_handle<TriggerTaskPromise<Type, Trigger>> handle) const noexcept
