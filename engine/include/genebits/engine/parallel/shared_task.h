@@ -62,15 +62,13 @@ namespace details
       {
         SharedTaskPromise<Type>& promise = handle.promise();
 
-        void* const ready_value = &promise;
+        void* const ready_value = &promise; // The 'this' state
 
         // Needs release so that writes are visible to waiters.
         // Needs acquire to see prior writes to the waiting coroutines state and contents of the list.
         void* list = promise.state_.exchange(ready_value, std::memory_order_acq_rel);
 
-        ASSERT(list != nullptr && list != ready_value, "Already ready");
-
-        ResumeWaiters(static_cast<Node*>(list));
+        if (list != nullptr) ResumeWaiters(static_cast<Node*>(list));
       }
 
       ///
@@ -103,7 +101,7 @@ namespace details
     ///
     /// Constructor
     ///
-    constexpr SharedTaskPromiseBase() noexcept : ref_count_(0), state_(nullptr) {};
+    constexpr SharedTaskPromiseBase() noexcept : ref_count_(0), state_(&this->state_) {};
 
     ///
     /// Initially suspended to make tasks lazily executed. Task must resume from its initial suspension
@@ -136,9 +134,26 @@ namespace details
     ///
     bool TryAwait(Node* awaiter, std::coroutine_handle<> coroutine)
     {
+      constexpr void* started_no_waiters_value = nullptr;
+
       const void* const ready_value = this;
+      const void* const not_started_value = &this->state_;
 
       void* old_list = state_.load(std::memory_order_acquire);
+
+      // Resuming after adding the waiter may lead to stack-overflow if the awaiting coroutine has awaited multiple
+      // synchronously completing tasks in a row. This can be fixed by starting the coroutine before the first awaiter
+      // is added to the list.
+
+      // TODO continue looking into this for potential optimizations.
+
+      if (old_list == not_started_value
+          && state_.compare_exchange_strong(old_list, started_no_waiters_value, std::memory_order_relaxed))
+      {
+        // Coroutine was not started
+        coroutine.resume();
+        old_list = state_.load(std::memory_order_acquire);
+      }
 
       // Try to add the waiter to the list.
       do
@@ -153,20 +168,6 @@ namespace details
       }
       while (!state_.compare_exchange_weak(
         old_list, static_cast<void*>(awaiter), std::memory_order_release, std::memory_order_acquire));
-
-      // Resuming after adding the waiter may lead to stack-overflow if the awaiting coroutine has awaited multiple
-      // synchronously completing tasks in a row. This can be fixed by starting the coroutine before the first awaiter
-      // is added to the list. This implies extra overhead for a use case that should never really happen in the first
-      // place, so we use recursion instead. However, this may change in the future, and if it doesn't there should be
-      // clever debugging guards.
-
-      // Check if we were the first waiter.
-      if (old_list == nullptr)
-      {
-        // We are the first waiter, start task.
-
-        coroutine.resume();
-      }
 
       return true;
     }
@@ -206,11 +207,16 @@ namespace details
   private:
     std::atomic_uint_fast32_t ref_count_;
 
+    // State cannot be the first variable with an address because its address would be the same as 'this'. We need a
+    // different address to
+    //
+
     ///
     /// States:
     /// - Ready: this
-    /// - Not Started: nullptr
-    /// - Started: Other Pointer (Linked-list of waiters)
+    /// - Not Started: &this->state_
+    /// - Started & No waiters: nullptr
+    /// - Started & Waiters: Other Pointer (Linked-list of waiters)
     ///
     std::atomic<void*> state_;
   };

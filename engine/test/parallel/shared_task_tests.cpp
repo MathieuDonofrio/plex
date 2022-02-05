@@ -58,7 +58,7 @@ TEST(SharedTask_Tests, CoAwait_Result_ReadyAndCorrectValue)
 
 TEST(SharedTask_Tests, CoAwait_MultipleSync_NoStackOverflow)
 {
-  const size_t amount = 100; // More than this and we risk getting a stack overflow
+  const size_t amount = 1'000'000; // More than this and we risk getting a stack overflow
 
   auto make_task = [&]() -> SharedTask<int> { co_return 1; };
 
@@ -78,7 +78,7 @@ TEST(SharedTask_Tests, CoAwait_MultipleSync_NoStackOverflow)
 
 TEST(SharedTask_Tests, CoAwait_MultipleAsync_NoStackOverflow)
 {
-  const size_t amount = 10000; // More than this and we risk getting a stack overflow
+  const size_t amount = 100'000;
 
   ThreadPool pool;
 
