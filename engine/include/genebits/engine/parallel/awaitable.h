@@ -17,6 +17,15 @@
 #include <tuple>
 #include <type_traits>
 
+///
+/// Used to define the default unhandled_exception for coroutine promises.
+///
+#define COROUTINE_UNHANDLED_EXCEPTION                         \
+  void unhandled_exception() const noexcept                   \
+  {                                                           \
+    ASSERT(false, "Unhandled exception thrown in coroutine"); \
+  }
+
 namespace genebits::engine
 {
 ///

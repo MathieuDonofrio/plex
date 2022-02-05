@@ -8,15 +8,6 @@
 
 namespace genebits::engine
 {
-///
-/// Used to define the default unhandled_exception for coroutine promises.
-///
-#define COROUTINE_UNHANDLED_EXCEPTION                         \
-  void unhandled_exception() const noexcept                   \
-  {                                                           \
-    ASSERT(false, "Unhandled exception thrown in coroutine"); \
-  }
-
 template<typename Type = void>
 class Task;
 
@@ -69,17 +60,19 @@ public:
     return *this;
   }
 
-protected:
   ///
   /// Swaps handles with another task base.
   ///
-  /// @param[in] task Other task base.
+  /// @param[in] other Other task base.
   ///
-  void Swap(TaskBase& task) noexcept
+  void Swap(TaskBase& other) noexcept
   {
-    std::swap(handle_, task.handle_);
+    std::swap(handle_, other.handle_);
   }
 
+  // TODO operator == & !=
+
+protected:
   ///
   /// Returns the typed coroutine handle.
   ///
@@ -256,7 +249,7 @@ namespace details
     }
 
   private:
-    std::remove_reference_t<Type> value_; // Uninitialized memory
+    Type value_;
   };
 
   ///
@@ -297,7 +290,7 @@ namespace details
     ///
     /// @return Result value.
     ///
-    Type& Result() const noexcept
+    Type& Result() noexcept
     {
       return *value_;
     }
@@ -409,7 +402,7 @@ public:
   ///
   /// Starts the task and awaits it. The current coroutine will be resumed when the task is done.
   ///
-  /// @warning The coroutine will be resumed on the thread that executed the task.
+  /// @note The coroutine will be resumed on the thread that executed the task.
   ///
   auto operator co_await() const& noexcept
   {
@@ -425,9 +418,11 @@ public:
   }
 
   ///
-  /// Starts the task and awaits it. The current coroutine will be resumed when the task is done.
+  /// Starts the task and waits until it is done.
   ///
-  /// @warning The coroutine will be resumed on the thread that executed the task.
+  /// The current coroutine will be resumed when the task is done.
+  ///
+  /// @note The coroutine will be resumed on the thread that executed the task.
   ///
   auto operator co_await() const&& noexcept
   {
@@ -443,9 +438,11 @@ public:
   }
 
   ///
-  /// Returns an awaitable that will await until the task is done and ignore the result.
+  /// Returns an awaitable that when awaited, starts the task and waits until it is done.
   ///
-  /// @warning The coroutine will be resumed on the thread that executed the task.
+  /// The current coroutine will be resumed when the task is done.
+  ///
+  /// @note The coroutine will be resumed on the thread that executed the task.
   ///
   auto WhenReady() const noexcept
   {
@@ -462,9 +459,11 @@ public:
   ///
   /// Normally used in combination with ejection.
   ///
-  /// @note Prefer using proper synchronization for waiting. Polling is considered dubious by many.
+  /// @note Prefer using proper synchronization for waiting.
   ///
   /// @warning May be unsafe in many cases, use carefully. Also has high CPU usage.
+  ///
+  /// @warning No memory order guarantees.
   ///
   auto Poll()
   {
@@ -481,6 +480,9 @@ public:
   ///
   /// @warning There is no way to reattach a continuation safely, so if the task is executed asynchronously, the only
   /// way to wait for the task to finish is by polling.
+  ///
+  /// @warning Remember that the coroutine will be destroyed in the destructor. So if we eject the task and the
+  /// destructor of the task is called there is undefined behaviour.
   ///
   /// @note This is a dangerous feature and should only be used in extremely rare cases or tests.
   ///

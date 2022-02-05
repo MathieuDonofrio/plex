@@ -26,14 +26,14 @@ namespace
   };
 } // namespace
 
-TEST(Task_Tests, IsReady_VoidAndNotStarted_False)
+TEST(Task_Tests, IsReady_VoidAndNotStarted_NotReady)
 {
   auto task = [&]() -> Task<> { co_return; }();
 
   EXPECT_FALSE(task.IsReady());
 }
 
-TEST(Task_Tests, IsReady_ResultAndNotStarted_False)
+TEST(Task_Tests, IsReady_ResultAndNotStarted_NotReady)
 {
   auto task = [&]() -> Task<int> { co_return 10; }();
 

@@ -51,7 +51,7 @@ public:
   {
     if (counter_.fetch_sub(1, std::memory_order_acq_rel) == 1)
     {
-      auto* old_state = Release();
+      auto* const old_state = Release();
 
       ResumeWaiters(static_cast<Operation*>(old_state));
     }
@@ -116,13 +116,14 @@ private:
     {
       awaiter_ = awaiter;
 
-      const void* const new_state = static_cast<const void*>(&latch_);
+      const void* const set_value = static_cast<const void*>(&latch_);
 
       void* old_state = latch_.state_.load(std::memory_order_acquire);
 
+      // Try to add waiter to the list.
       do
       {
-        if (old_state == new_state)
+        if (old_state == set_value)
         {
           // State was now set, no need to suspend.
           return false;
@@ -163,7 +164,7 @@ private:
     void* const new_state = this;
 
     // Needs release so that writes are visible to waiters.
-    // Needs acquire to see prior writes to the waiting coroutines state and contents of the queue.
+    // Needs acquire to see prior writes to the waiting coroutines state and contents of the list.
     void* old_state = state_.exchange(new_state, std::memory_order_acq_rel);
 
     return old_state;
@@ -172,9 +173,9 @@ private:
   ///
   /// Resumes all the waiters from an operation list in sequence.
   ///
-  /// @param[in] list List of operations (waitiers).
+  /// @param[in] list List of operations (waiters).
   ///
-  static void ResumeWaiters(Operation* list) noexcept
+  static void ResumeWaiters(const Operation* list) noexcept
   {
     while (list != nullptr)
     {
