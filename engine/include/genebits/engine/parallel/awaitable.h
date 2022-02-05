@@ -17,6 +17,18 @@
 #include <tuple>
 #include <type_traits>
 
+//
+// The coroutine library is heavily inspired by the coroutine TS proposals and experimental implementations.
+//
+// Proposals:
+//
+// - Task Type: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1056r0.
+//
+// Implementations:
+//
+// - CppCoro: https://github.com/lewissbaker/cppcoro
+//
+
 ///
 /// Used to define the default unhandled_exception for coroutine promises.
 ///
@@ -39,7 +51,7 @@ concept Awaiter = requires(Type awaiter, std::coroutine_handle<> handle)
 {
   {
     awaiter.await_ready()
-    } -> std::convertible_to<bool>;
+    } -> std::same_as<bool>;
 
   awaiter.await_resume();
 
@@ -57,10 +69,10 @@ concept Awaiter = requires(Type awaiter, std::coroutine_handle<> handle)
 /// @tparam Type Type to check.
 ///
 template<typename Type>
-concept Awaitable = Awaiter<Type> || requires(Type awaitable)
-{
-  awaitable.operator co_await();
-};
+concept Awaitable = Awaiter<Type> || // Or defines co_await
+  (
+    requires(Type awaitable) { awaitable.operator co_await(); } // Member operator co_await
+    || requires(Type awaitable) { operator co_await(awaitable); }); // Non-Member operator co_await
 
 ///
 /// Concept that determines whether or not a type can provide a WhenReady awaitable.
