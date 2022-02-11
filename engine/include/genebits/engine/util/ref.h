@@ -920,7 +920,11 @@ Ref<Type> MakeRef(Args&&... args)
     new (ref.ptr_) Type(std::forward<Args>(args)...);
 
     ref.control_->counter = 0;
-    ref.control_->deleter = [](void*, details::RefControlBlock* control) { std::free(control); };
+    ref.control_->deleter = [](void* ptr, details::RefControlBlock* control)
+    {
+      static_cast<Type*>(ptr)->~Type();
+      std::free(control);
+    };
 
     LOCAL_THREAD_INIT(ref.control_);
 
