@@ -62,44 +62,7 @@ public:
   ///
   auto Schedule()
   {
-    struct ThreadPoolAwaiter
-    {
-      ThreadPool* pool;
-
-      bool await_ready() const noexcept
-      {
-        return false;
-      }
-
-      void await_resume() const noexcept {}
-
-      void await_suspend(std::coroutine_handle<> coro) const noexcept
-      {
-        pool->Enqueue(coro);
-      }
-    };
-
-    return ThreadPoolAwaiter { this };
-  }
-
-  ///
-  /// Enqueues the task to be executed on a worker thread from this pool.
-  ///
-  /// @param[in] task Task to enqueue.
-  ///
-  void Enqueue(std::coroutine_handle<> task)
-  {
-    mutex_.lock();
-
-    ASSERT(running_, "Cannot enqueue task when thread pool not running");
-
-    tasks_.push_front(task);
-
-    mutex_.unlock();
-
-    // By waking up one thread each time we schedule a task we guarantee we will have the maximum amount of
-    // parallelism while not wasting resources if we don't have to (Ex: we don't need 4 threads for 1 task).
-    condition_.notify_one();
+    return Operation { this };
   }
 
   ///
@@ -124,28 +87,23 @@ private:
 
     std::unique_lock lock(mutex_);
 
-    while (running_ || !tasks_.empty()) // Always locked when doing an iteration
+    Operation* op;
+
+    while (running_ || !queue_.Empty()) // Always locked when doing an iteration
     {
+      op = queue_.Front();
 
-      // TODO make better when dequeue replaced
-
-      if (!tasks_.empty())
+      if (op != nullptr)
       {
-        do
-        {
-          std::coroutine_handle<> task = tasks_.back();
+        queue_.Dequeue();
 
-          tasks_.pop_back();
+        // Make sure we are unlocked for task execution
+        lock.unlock();
 
-          // Make sure we are unlocked for task execution
-          lock.unlock();
+        op->Execute();
 
-          task.resume();
-
-          // Lock before running another iteration
-          lock.lock();
-        }
-        while (!tasks_.empty());
+        // Lock before running another iteration
+        lock.lock();
       }
       else
       {
@@ -222,7 +180,7 @@ private:
 #ifndef NDEBUG
     mutex_.lock();
 
-    ASSERT(tasks_.empty(), "There are still tasks");
+    ASSERT(queue_.Empty(), "There are still tasks");
 
     mutex_.unlock();
 #endif
@@ -231,12 +189,131 @@ private:
   }
 
 private:
+  class WorkQueue;
+
+  class Operation
+  {
+  public:
+    constexpr Operation(ThreadPool* pool) noexcept : pool_(pool), next_(nullptr) {}
+
+    bool await_ready() const noexcept
+    {
+      return false;
+    }
+
+    void await_resume() const noexcept {}
+
+    void await_suspend(std::coroutine_handle<> awaiting) noexcept
+    {
+      handle_ = awaiting;
+
+      pool_->Enqueue(this);
+    }
+
+    void Execute() const
+    {
+      handle_.resume();
+    }
+
+  private:
+    friend class WorkQueue;
+
+    ThreadPool* pool_;
+
+    std::coroutine_handle<> handle_;
+    Operation* next_;
+  };
+
+  class WorkQueue
+  {
+  public:
+    ///
+    /// Default constructor.
+    ///
+    constexpr WorkQueue() noexcept : head_(nullptr), tail_(&head_) {}
+
+    WorkQueue(WorkQueue& other) = delete;
+    WorkQueue& operator=(WorkQueue& other) = delete;
+
+    ///
+    /// Adds an operation to the back of the queue.
+    ///
+    /// @param[in] task Task to add.
+    ///
+    constexpr void Enqueue(Operation* task) noexcept
+    {
+      ASSERT(!task->next_, "Task next must be nullptr");
+
+      tail_->next_ = task;
+      tail_ = task;
+    }
+
+    ///
+    /// Removes the operation from the front of the queue.
+    ///
+    constexpr void Dequeue() noexcept
+    {
+      ASSERT(!Empty(), "Queue cannot be empty");
+
+      head_.next_ = head_.next_->next_;
+
+      if (head_.next_ == nullptr) tail_ = &head_;
+    }
+
+    ///
+    /// Returns the operation at the front of the queue.
+    ///
+    /// @warning Will return the sentinel node if list is empty.
+    ///
+    /// @return Operation at the front of the queue, nullptr if the queue is empty.
+    ///
+    [[nodiscard]] constexpr Operation* Front() const noexcept
+    {
+      return head_.next_;
+    }
+
+    ///
+    /// Returns whether or not the queue is empty.
+    ///
+    /// @return True if the queue is empty, false otherwise.
+    ///
+    [[nodiscard]] constexpr bool Empty() const noexcept
+    {
+      return !head_.next_;
+    }
+
+  private:
+    Operation head_; // Sentinel Node
+    Operation* tail_;
+  };
+
+  ///
+  /// Enqueues the task to be executed on a worker thread from this pool.
+  ///
+  /// @param[in] task Task to enqueue.
+  ///
+  void Enqueue(Operation* operation)
+  {
+    mutex_.lock();
+
+    ASSERT(running_, "Cannot enqueue task when thread pool not running");
+
+    queue_.Enqueue(operation);
+
+    mutex_.unlock();
+
+    // By waking up one thread each time we schedule a task we guarantee we will have the maximum amount of
+    // parallelism while not wasting resources if we don't have to (Ex: we don't need 4 threads for 1 task).
+    condition_.notify_one();
+  }
+
+private:
   std::mutex mutex_;
 
   bool running_;
   std::condition_variable condition_;
 
-  std::deque<std::coroutine_handle<>> tasks_; // Replace with more efficient
+  WorkQueue queue_;
 
   std::thread* threads_;
   size_t thread_count_;
