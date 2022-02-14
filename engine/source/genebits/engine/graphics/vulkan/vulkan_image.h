@@ -16,9 +16,14 @@ namespace genebits::engine
 class VulkanImage
 {
 public:
-  VulkanImage() = default;
+  VulkanImage() : image_handle_(VK_NULL_HANDLE), image_view_handle_(VK_NULL_HANDLE) {};
 
   virtual ~VulkanImage() = default;
+
+  VulkanImage(const VulkanImage&) = delete;
+  VulkanImage& operator=(const VulkanImage&) = delete;
+  VulkanImage(VulkanImage&&) = delete;
+  VulkanImage& operator=(VulkanImage&&) = delete;
 
   // This destructor should be in a subclass --> example: TextureImage
   // (where we do own the image -> in contrast to PresentImage where the image is owned by the swap chain)
