@@ -13,12 +13,10 @@ public:
     VkFormat format,
     VkAttachmentLoadOp load_op,
     VkAttachmentStoreOp store_op,
-    VkImageLayout initial_layout,
+    VkImageLayout initial_layout, // NOLINT(bugprone-easily-swappable-parameters)
     VkImageLayout layout,
-    VkImageLayout final_layout)
+    VkImageLayout final_layout) : attachment_description_({}), attachment_reference_({})
   {
-    attachment_description_ = {};
-    attachment_reference_ = {};
 
     attachment_description_.format = format;
     attachment_description_.samples = VK_SAMPLE_COUNT_1_BIT;
