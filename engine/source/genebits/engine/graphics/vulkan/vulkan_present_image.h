@@ -39,7 +39,6 @@ public:
   VulkanPresentImage(const VulkanPresentImage&) = delete;
   VulkanPresentImage& operator=(const VulkanPresentImage&) = delete;
 
-
   VulkanPresentImage(
     VkImage image_handle, VkFormat format, VkImageAspectFlags aspect_flags, std::shared_ptr<VulkanDevice> device)
     : VulkanImage(image_handle, std::move(device))
@@ -62,7 +61,6 @@ public:
   }
 
 protected:
-
 
   bool Initialize(VkFormat format, VkImageAspectFlags aspect_flags)
   {
