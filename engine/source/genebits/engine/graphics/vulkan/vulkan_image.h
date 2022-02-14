@@ -20,7 +20,8 @@ public:
 
   virtual ~VulkanImage() = default;
 
-  // This destructor should be in a subclass
+  // This destructor should be in a subclass --> example: TextureImage
+  // (where we do own the image -> in contrast to PresentImage where the image is owned by the swap chain)
   //  {
   //    if (image_view_handle_)
   //    {
