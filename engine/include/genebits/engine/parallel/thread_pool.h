@@ -79,7 +79,7 @@ private:
   ///
   /// Runnable function executed by every worker thread.
   ///
-  /// Loops and waits for tasks to execute until flagged to finish.
+  /// Loops and waits for work to be processed until flagged to finish.
   ///
   void Run()
   {
@@ -95,15 +95,20 @@ private:
 
       if (op != nullptr)
       {
-        queue_.Dequeue();
+        do
+        {
+          queue_.Dequeue();
 
-        // Make sure we are unlocked for task execution
-        lock.unlock();
+          // Make sure we are unlocked for task execution
+          lock.unlock();
 
-        op->Execute();
+          op->Execute();
 
-        // Lock before running another iteration
-        lock.lock();
+          lock.lock();
+
+          op = queue_.Front();
+        }
+        while (op != nullptr);
       }
       else
       {
@@ -119,8 +124,6 @@ private:
 
   ///
   /// Creates and initializes all the worker threads.
-  ///
-  /// @warning Undefined behaviour if the thread pool already created workers.
   ///
   void CreateWorkers()
   {
@@ -143,8 +146,6 @@ private:
   /// If the amount of worker threads is greater than the amount of physical processors,
   /// multiple worker threads can be assigned per physical processor.
   ///
-  /// @note This does nothing if cpu info is not supported.
-  ///
   void SetWorkerThreadAffinity()
   {
     const CPUInfo info = GetCPUInfo();
@@ -160,7 +161,7 @@ private:
   ///
   /// Destroys all the worker threads.
   ///
-  /// @warning All tasks must be finished before and while destroying workers.
+  /// @warning There should not be any work being scheduled while destroying workers.
   ///
   void DestroyWorkers()
   {
@@ -180,7 +181,7 @@ private:
 #ifndef NDEBUG
     mutex_.lock();
 
-    ASSERT(queue_.Empty(), "There are still tasks");
+    ASSERT(queue_.Empty(), "There is still work left");
 
     mutex_.unlock();
 #endif
@@ -191,9 +192,17 @@ private:
 private:
   class WorkQueue;
 
+  ///
+  /// Represents a queued operation for the thread pool. Contains the handle to the coroutine.
+  ///
   class Operation
   {
   public:
+    ///
+    /// Constructor.
+    ///
+    /// @param[in] pool
+    ///
     constexpr Operation(ThreadPool* pool) noexcept : pool_(pool), next_(nullptr) {}
 
     bool await_ready() const noexcept
@@ -201,8 +210,20 @@ private:
       return false;
     }
 
+    ///
+    /// Does nothing.
+    ///
     void await_resume() const noexcept {}
 
+    ///
+    /// Called after suspension. Enqueues the
+    ///
+    /// @tparam Type Type for task promise.
+    ///
+    /// @param[in] handle Coroutine of the task.
+    ///
+    /// @return Continuation handle to resume.
+    ///
     void await_suspend(std::coroutine_handle<> awaiting) noexcept
     {
       handle_ = awaiting;
@@ -210,6 +231,9 @@ private:
       pool_->Enqueue(this);
     }
 
+    ///
+    /// Resumes the operation coroutine handle.
+    ///
     void Execute() const
     {
       handle_.resume();
@@ -288,22 +312,26 @@ private:
   };
 
   ///
-  /// Enqueues the task to be executed on a worker thread from this pool.
+  /// Enqueues the operation to be executed on a worker thread from this pool.
   ///
-  /// @param[in] task Task to enqueue.
+  /// @param[in] operation Operation to enqueue.
   ///
   void Enqueue(Operation* operation)
   {
     mutex_.lock();
 
-    ASSERT(running_, "Cannot enqueue task when thread pool not running");
+    ASSERT(running_, "Cannot enqueue operation when thread pool not running");
 
     queue_.Enqueue(operation);
 
+    // Manual unlocking is done before notifying, to avoid waking up
+    // the waiting thread only to block again.
+    // https://en.cppreference.com/w/cpp/thread/condition_variable
     mutex_.unlock();
 
-    // By waking up one thread each time we schedule a task we guarantee we will have the maximum amount of
-    // parallelism while not wasting resources if we don't have to (Ex: we don't need 4 threads for 1 task).
+    // Every time we enqueue an operation, we compulsively try to wake up one worker. This guarantees that either all
+    // workers are active or one worker per operation. This still allows the possibility for some workers to stay asleep
+    // if there is not enough work to be done, reducing resource usage and contention.
     condition_.notify_one();
   }
 
