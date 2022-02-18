@@ -17,25 +17,33 @@
 #include <tuple>
 #include <type_traits>
 
+#include "genebits/engine/debug/logging.h"
+
 //
 // The coroutine library is heavily inspired by the coroutine TS proposals and experimental implementations.
 //
-// Proposals:
-//
 // - Task Type: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1056r0.
-//
-// Implementations:
-//
 // - CppCoro: https://github.com/lewissbaker/cppcoro
 //
 
 ///
 /// Used to define the default unhandled_exception for coroutine promises.
 ///
-#define COROUTINE_UNHANDLED_EXCEPTION                         \
-  void unhandled_exception() const noexcept                   \
-  {                                                           \
-    ASSERT(false, "Unhandled exception thrown in coroutine"); \
+#define COROUTINE_UNHANDLED_EXCEPTION                                             \
+  void unhandled_exception() const noexcept                                       \
+  {                                                                               \
+    try                                                                           \
+    {                                                                             \
+      std::rethrow_exception(std::current_exception());                           \
+    }                                                                             \
+    catch (const std::exception& exception)                                       \
+    {                                                                             \
+      LOG_ERROR("Unhandled exception thrown in coroutine: {}", exception.what()); \
+    }                                                                             \
+    catch (...)                                                                   \
+    {                                                                             \
+      LOG_ERROR("Unhandled exception thrown in coroutine (Unknown exception)");   \
+    }                                                                             \
   }
 
 namespace genebits::engine
