@@ -1,5 +1,7 @@
-#ifndef GENEBITS_ENGINE_BENCHMARK_FAKE_WORK_H
-#define GENEBITS_ENGINE_BENCHMARK_FAKE_WORK_H
+#ifndef GENEBITS_ENGINE_BENCHMARK_COMMON_FAKE_WORK_H
+#define GENEBITS_ENGINE_BENCHMARK_COMMON_FAKE_WORK_H
+
+#include <benchmark/benchmark.h>
 
 namespace genebits::engine::bench
 {

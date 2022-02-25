@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-#include "fake_work.h"
+#include "common/fake_work.h"
 #include "genebits/engine/parallel/sync_wait.h"
 
 namespace genebits::engine::bench
@@ -45,7 +45,7 @@ namespace
     ThreadPool& pool_;
   };
 } // namespace
-/*
+
 static void Phase_RunOverheadNoDeps(benchmark::State& state)
 {
   size_t amount = state.range(0);
@@ -98,7 +98,6 @@ static void Phase_RunOverheadWithDeps(benchmark::State& state)
 
 BENCHMARK(Phase_RunOverheadWithDeps)->Arg(10)->Arg(100)->Arg(1000)->Complexity();
 
-*/
 static void Phase_RunOverheadNoDepsWithWork(benchmark::State& state)
 {
   size_t amount = state.range(0);

@@ -5,12 +5,11 @@
 
 #include <benchmark/benchmark.h>
 
+#include "common/fake_work.h"
 #include "genebits/engine/parallel/sync_wait.h"
 #include "genebits/engine/parallel/task.h"
 #include "genebits/engine/parallel/when_all.h"
 #include "genebits/engine/util/fast_vector.h"
-
-#include "fake_work.h"
 
 namespace genebits::engine::bench
 {
