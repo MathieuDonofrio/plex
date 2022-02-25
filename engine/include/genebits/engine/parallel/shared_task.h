@@ -19,8 +19,6 @@ namespace details
   ///
   /// Base for the shared task promise.
   ///
-  /// @note Contains intrusive ref counting.
-  ///
   class SharedTaskPromiseBase
   {
   public:
@@ -135,18 +133,14 @@ namespace details
     bool TryAwait(Node* awaiter, std::coroutine_handle<> coroutine)
     {
       constexpr void* started_no_waiters_value = nullptr;
-
-      const void* const ready_value = this;
       const void* const not_started_value = &this->state_;
+      const void* const ready_value = this;
 
       void* old_list = state_.load(std::memory_order_acquire);
 
       // Resuming after adding the waiter may lead to stack-overflow if the awaiting coroutine has awaited multiple
       // synchronously completing tasks in a row. This can be fixed by starting the coroutine before the first awaiter
       // is added to the list.
-
-      // TODO continue looking into this for potential optimizations.
-
       if (old_list == not_started_value
           && state_.compare_exchange_strong(old_list, started_no_waiters_value, std::memory_order_relaxed))
       {
@@ -208,8 +202,7 @@ namespace details
     std::atomic_uint_fast32_t ref_count_;
 
     // State cannot be the first variable with an address because its address would be the same as 'this'. We need a
-    // different address to
-    //
+    // different address to be able to use it as a unique state value.
 
     ///
     /// States:
@@ -424,6 +417,11 @@ public:
   using value_type = Type;
 
   ///
+  /// Default constructor.
+  ///
+  SharedTask() noexcept : handle_(nullptr) {}
+
+  ///
   /// Constructor.
   ///
   /// @param[in] handle Coroutine handle managed by the task.
@@ -571,6 +569,35 @@ namespace details
     return SharedTask<void> { std::coroutine_handle<SharedTaskPromise<void>>::from_promise(*this) };
   }
 } // namespace details
+
+///
+/// Creates a shared task from an awaitable by co_awaiting it.
+///
+/// @note If the result type is void, will use the WhenReady awaitable if the awaitable supports it.
+///
+/// @tparam Awaitable Awaitable type to create task from.
+/// @tparam Result The result type, defaults to awaitable result type.
+///
+/// @param[in] awaitable Awaitable to used to create the trigger task.
+///
+/// @return Created shared task (initially suspended).
+///
+template<Awaitable Awaitable, typename Result = typename AwaitableTraits<Awaitable>::AwaitResultType>
+auto MakeSharedTask(Awaitable&& awaitable) -> SharedTask<Result>
+{
+  if constexpr (std::is_void_v<Result>)
+  {
+    if constexpr (WhenReadyAwaitable<Awaitable>) co_await std::forward<Awaitable>(awaitable).WhenReady();
+    else
+    {
+      co_await std::forward<Awaitable>(awaitable);
+    }
+  }
+  else
+  {
+    co_return co_await std::forward<Awaitable>(awaitable);
+  }
+}
 
 } // namespace genebits::engine
 

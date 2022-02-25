@@ -134,7 +134,7 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
       tasks.PushBack(CreateTask(pool, 1000));
     }
 
-    Task<> task = WhenAll(tasks);
+    Task<> task = WhenAll(std::move(tasks));
 
     SyncWait(task);
   }

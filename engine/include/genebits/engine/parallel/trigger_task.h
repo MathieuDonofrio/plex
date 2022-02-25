@@ -293,11 +293,7 @@ auto MakeTriggerTask(Awaitable&& awaitable) -> TriggerTask<Result, Trigger>
 {
   if constexpr (std::is_void_v<Result>)
   {
-    if constexpr (WhenReadyAwaitable<Awaitable>)
-    {
-      // WhenReady may be an optimization because it ignores the result.
-      co_await std::forward<Awaitable>(awaitable).WhenReady();
-    }
+    if constexpr (WhenReadyAwaitable<Awaitable>) co_await std::forward<Awaitable>(awaitable).WhenReady();
     else
     {
       co_await std::forward<Awaitable>(awaitable);

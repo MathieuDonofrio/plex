@@ -116,7 +116,7 @@ TEST(SharedTask_Tests, CoAwait_VoidAndMultipleAwaiters_CorrectlyWaited)
 
   auto make_shared_task_waiter = [&](SharedTask<> task) -> Task<> { co_await task; };
 
-  SyncWait(WhenAllReady(make_shared_task_waiter(shared_task),
+  SyncWait(WhenAll(make_shared_task_waiter(shared_task),
     make_shared_task_waiter(shared_task),
     make_shared_task_waiter(shared_task),
     make_shared_task_waiter(shared_task),
@@ -152,7 +152,7 @@ TEST(SharedTask_Tests, CoAwait_ResultAndMultipleAwaiters_CorrectlyWaited)
     EXPECT_EQ(result, 1);
   };
 
-  SyncWait(WhenAllReady(make_shared_task_waiter(shared_task),
+  SyncWait(WhenAll(make_shared_task_waiter(shared_task),
     make_shared_task_waiter(shared_task),
     make_shared_task_waiter(shared_task),
     make_shared_task_waiter(shared_task),

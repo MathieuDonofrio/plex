@@ -26,6 +26,7 @@
 // - CppCoro: https://github.com/lewissbaker/cppcoro
 //
 
+#ifndef NDEBUG
 ///
 /// Used to define the default unhandled_exception for coroutine promises.
 ///
@@ -45,6 +46,10 @@
       LOG_ERROR("Unhandled exception thrown in coroutine (Unknown exception)");   \
     }                                                                             \
   }
+#else
+#define COROUTINE_UNHANDLED_EXCEPTION \
+  void unhandled_exception() const noexcept {}
+#endif
 
 namespace genebits::engine
 {

@@ -157,7 +157,7 @@ TEST(AsyncLatch_Tests, CoAwait_OneDriverAndOneWaiter_Continue)
     waiters++;
   };
 
-  SyncWait(WhenAllReady(make_waiter(), make_driver()));
+  SyncWait(WhenAll(make_waiter(), make_driver()));
 
   EXPECT_EQ(drivers, 1);
   EXPECT_EQ(waiters, 1);
@@ -192,7 +192,7 @@ TEST(AsyncLatch_Tests, CoAwait_ManyDriverAndOneWaiter_Continue)
     waiters++;
   };
 
-  SyncWait(WhenAllReady(make_waiter(), make_driver(), make_driver(), make_driver(), make_driver()));
+  SyncWait(WhenAll(make_waiter(), make_driver(), make_driver(), make_driver(), make_driver()));
 
   EXPECT_EQ(drivers, 4);
   EXPECT_EQ(waiters, 1);
@@ -227,7 +227,7 @@ TEST(AsyncLatch_Tests, CoAwait_OneDriverAndManyWaiter_Continue)
     waiters++;
   };
 
-  SyncWait(WhenAllReady(make_waiter(), make_waiter(), make_waiter(), make_waiter(), make_driver()));
+  SyncWait(WhenAll(make_waiter(), make_waiter(), make_waiter(), make_waiter(), make_driver()));
 
   EXPECT_EQ(drivers, 1);
   EXPECT_EQ(waiters, 4);
@@ -262,7 +262,7 @@ TEST(AsyncLatch_Tests, CoAwait_ManyDriverAndManyWaiter_Continue)
     waiters++;
   };
 
-  SyncWait(WhenAllReady(make_waiter(),
+  SyncWait(WhenAll(make_waiter(),
     make_waiter(),
     make_waiter(),
     make_waiter(),
@@ -304,7 +304,7 @@ TEST(AsyncLatch_Tests, CoAwait_TwoDriverOnWaiterTwoCount_Continue)
     waiters++;
   };
 
-  SyncWait(WhenAllReady(make_waiter(), make_driver(), make_driver()));
+  SyncWait(WhenAll(make_waiter(), make_driver(), make_driver()));
 
   EXPECT_EQ(drivers, 2);
   EXPECT_EQ(waiters, 1);
@@ -339,7 +339,7 @@ TEST(AsyncLatch_Tests, CoAwait_TwoDriverTwoWaiterTwoCount_Continue)
     waiters++;
   };
 
-  SyncWait(WhenAllReady(make_waiter(), make_waiter(), make_driver(), make_driver()));
+  SyncWait(WhenAll(make_waiter(), make_waiter(), make_driver(), make_driver()));
 
   EXPECT_EQ(drivers, 2);
   EXPECT_EQ(waiters, 2);
