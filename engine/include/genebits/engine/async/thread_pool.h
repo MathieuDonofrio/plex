@@ -1,14 +1,9 @@
 #ifndef GENEBITS_ENGINE_ASYNC_THREAD_POOL_H
 #define GENEBITS_ENGINE_ASYNC_THREAD_POOL_H
 
-#include <atomic>
-#include <deque>
 #include <mutex>
 
 #include "genebits/engine/async/task.h"
-#include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/os/cpu_info.h"
-#include "genebits/engine/os/thread.h"
 
 namespace genebits::engine
 {
@@ -28,15 +23,7 @@ public:
   /// @param[in] thread_count Amount of worker threads to create pool with.
   /// @param[in] lock_threads Locks every thread to a physical processor.
   ///
-  ThreadPool(const size_t thread_count, bool lock_threads)
-    : running_(false), threads_(nullptr), thread_count_(thread_count)
-  {
-    ASSERT(thread_count > 0, "Thread pool cannot have 0 threads");
-
-    CreateWorkers();
-
-    if (lock_threads) SetWorkerThreadAffinity();
-  }
+  ThreadPool(const size_t thread_count, bool lock_threads);
 
   ///
   /// Default constructor.
@@ -46,15 +33,12 @@ public:
   ///
   /// Every thread is locked to a physical processor.
   ///
-  ThreadPool() : ThreadPool(GetAmountPhysicalProcessors(), true) {}
+  ThreadPool();
 
   ///
   /// Destructor.
   ///
-  ~ThreadPool()
-  {
-    DestroyWorkers();
-  }
+  ~ThreadPool();
 
   ///
   /// Returns an awaiter that will schedule the awaiting coroutine to be later resumed by the thread pool.
@@ -74,120 +58,6 @@ public:
   [[nodiscard]] constexpr size_t ThreadCount() const noexcept
   {
     return thread_count_;
-  }
-
-private:
-  ///
-  /// Runnable function executed by every worker thread.
-  ///
-  /// Loops and waits for work to be processed until flagged to finish.
-  ///
-  void Run()
-  {
-    this_thread::SetName("Worker");
-
-    std::unique_lock lock(mutex_);
-
-    Operation* op;
-
-    while (running_ || !queue_.Empty()) // Always locked when doing an iteration
-    {
-      op = queue_.Front();
-
-      if (op != nullptr)
-      {
-        do
-        {
-          queue_.Dequeue();
-
-          // Make sure we are unlocked for task execution
-          lock.unlock();
-
-          op->Execute();
-
-          lock.lock();
-
-          op = queue_.Front();
-        }
-        while (op != nullptr);
-      }
-      else
-      {
-        // Unlocks, sleeps then locks again when woke.
-
-        // It is possible that we are sleeping and there are tasks in the queue. This is because
-        // the scheduler is not required to wake up more threads than it needs to execute the tasks.
-        // See the schedule method.
-        condition_.wait(lock);
-      }
-    }
-  }
-
-  ///
-  /// Creates and initializes all the worker threads.
-  ///
-  void CreateWorkers()
-  {
-    ASSERT(!running_, "Thread pool already running");
-
-    running_ = true;
-
-    threads_ = new std::thread[thread_count_];
-
-    for (size_t i = 0; i < thread_count_; i++)
-    {
-      new (threads_ + i) std::thread(&ThreadPool::Run, this);
-    }
-  }
-
-  ///
-  /// Tries to set the worker thread affinity so that every worker can only run on
-  /// one physical processor.
-  ///
-  /// If the amount of worker threads is greater than the amount of physical processors,
-  /// multiple worker threads can be assigned per physical processor.
-  ///
-  void SetWorkerThreadAffinity()
-  {
-    const CPUInfo info = GetCPUInfo();
-
-    const auto core_count = info.processors.size();
-
-    for (size_t i = 0; i < thread_count_; i++)
-    {
-      SetThreadAffinity(threads_[i].native_handle(), info.processors[i % core_count].mask);
-    }
-  }
-
-  ///
-  /// Destroys all the worker threads.
-  ///
-  /// @warning There should not be any work being scheduled while destroying workers.
-  ///
-  void DestroyWorkers()
-  {
-    mutex_.lock();
-
-    running_ = false;
-
-    mutex_.unlock();
-
-    condition_.notify_all();
-
-    for (size_t i = 0; i < thread_count_; i++)
-    {
-      threads_[i].join();
-    }
-
-#ifndef NDEBUG
-    mutex_.lock();
-
-    ASSERT(queue_.Empty(), "There is still work left");
-
-    mutex_.unlock();
-#endif
-
-    delete[] threads_;
   }
 
 private:
@@ -312,29 +182,41 @@ private:
     Operation* tail_;
   };
 
+private:
   ///
-  /// Enqueues the operation to be executed on a worker thread from this pool.
+  /// Executed by every worker thread to enter work loop.
+  ///
+  /// Loops and waits for work to be processed until flagged to finish.
+  ///
+  void RunWorker();
+
+  ///
+  /// Enqueues the operation to be executed on a worker thread.
   ///
   /// @param[in] operation Operation to enqueue.
   ///
-  void Enqueue(Operation* operation)
-  {
-    mutex_.lock();
+  void Enqueue(Operation* operation);
 
-    ASSERT(running_, "Cannot enqueue operation when thread pool not running");
+  ///
+  /// Creates and initializes all the worker threads.
+  ///
+  void CreateWorkers();
 
-    queue_.Enqueue(operation);
+  ///
+  /// Tries to set the worker thread affinity so that every worker can only run on
+  /// one physical processor.
+  ///
+  /// If the amount of worker threads is greater than the amount of physical processors,
+  /// multiple worker threads can be assigned per physical processor.
+  ///
+  void SetWorkerThreadAffinity();
 
-    // Manual unlocking is done before notifying, to avoid waking up
-    // the waiting thread only to block again.
-    // https://en.cppreference.com/w/cpp/thread/condition_variable
-    mutex_.unlock();
-
-    // Every time we enqueue an operation, we compulsively try to wake up one worker. This guarantees that either all
-    // workers are active or one worker per operation. This still allows the possibility for some workers to stay asleep
-    // if there is not enough work to be done, reducing resource usage and contention.
-    condition_.notify_one();
-  }
+  ///
+  /// Destroys all the worker threads.
+  ///
+  /// @warning There should not be any work being scheduled while destroying workers.
+  ///
+  void DestroyWorkers();
 
 private:
   std::mutex mutex_;
