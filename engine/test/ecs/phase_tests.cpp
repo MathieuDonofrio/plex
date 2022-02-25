@@ -3,7 +3,7 @@
 
 #include <gmock/gmock.h>
 
-#include "genebits/engine/parallel/sync_wait.h"
+#include "genebits/engine/async/sync_wait.h"
 
 namespace genebits::engine::tests
 {

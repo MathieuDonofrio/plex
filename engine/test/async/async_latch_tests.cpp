@@ -1,11 +1,11 @@
-#include "genebits/engine/parallel/async_latch.h"
+#include "genebits/engine/async/async_latch.h"
 
 #include <gmock/gmock.h>
 
-#include "genebits/engine/parallel/sync_wait.h"
-#include "genebits/engine/parallel/task.h"
-#include "genebits/engine/parallel/thread_pool.h"
-#include "genebits/engine/parallel/when_all.h"
+#include "genebits/engine/async/sync_wait.h"
+#include "genebits/engine/async/task.h"
+#include "genebits/engine/async/thread_pool.h"
+#include "genebits/engine/async/when_all.h"
 
 namespace genebits::engine
 {

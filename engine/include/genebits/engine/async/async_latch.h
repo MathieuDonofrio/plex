@@ -1,10 +1,10 @@
-#ifndef GENEBITS_ENGINE_PARALLEL_ASYNC_LATCH_H
-#define GENEBITS_ENGINE_PARALLEL_ASYNC_LATCH_H
+#ifndef GENEBITS_ENGINE_ASYNC_ASYNC_LATCH_H
+#define GENEBITS_ENGINE_ASYNC_ASYNC_LATCH_H
 
 #include <atomic>
 
+#include "genebits/engine/async/awaitable.h"
 #include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/parallel/awaitable.h"
 
 namespace genebits::engine
 {

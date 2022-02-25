@@ -1,7 +1,7 @@
-#ifndef GENEBITS_ENGINE_PARALLEL_TRIGGER_TASK_H
-#define GENEBITS_ENGINE_PARALLEL_TRIGGER_TASK_H
+#ifndef GENEBITS_ENGINE_ASYNC_TRIGGER_TASK_H
+#define GENEBITS_ENGINE_ASYNC_TRIGGER_TASK_H
 
-#include "genebits/engine/parallel/task.h"
+#include "genebits/engine/async/task.h"
 
 namespace genebits::engine
 {

@@ -1,9 +1,9 @@
-#ifndef GENEBITS_ENGINE_PARALLEL_WHEN_ALL_H
-#define GENEBITS_ENGINE_PARALLEL_WHEN_ALL_H
+#ifndef GENEBITS_ENGINE_ASYNC_WHEN_ALL_H
+#define GENEBITS_ENGINE_ASYNC_WHEN_ALL_H
 
 #include <atomic>
 
-#include "genebits/engine/parallel/trigger_task.h"
+#include "genebits/engine/async/trigger_task.h"
 #include "genebits/engine/util/fast_vector.h"
 
 namespace genebits::engine

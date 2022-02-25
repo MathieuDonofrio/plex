@@ -1,4 +1,4 @@
-#include "genebits/engine/parallel/sync_wait.h"
+#include "genebits/engine/async/sync_wait.h"
 
 #include <thread>
 

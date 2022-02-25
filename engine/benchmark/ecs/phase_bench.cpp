@@ -3,7 +3,7 @@
 #include <benchmark/benchmark.h>
 
 #include "common/fake_work.h"
-#include "genebits/engine/parallel/sync_wait.h"
+#include "genebits/engine/async/sync_wait.h"
 
 namespace genebits::engine::bench
 {

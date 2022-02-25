@@ -1,4 +1,4 @@
-#include "genebits/engine/parallel/thread_pool.h"
+#include "genebits/engine/async/thread_pool.h"
 
 #include <cmath>
 #include <future>
@@ -6,9 +6,9 @@
 #include <benchmark/benchmark.h>
 
 #include "common/fake_work.h"
-#include "genebits/engine/parallel/sync_wait.h"
-#include "genebits/engine/parallel/task.h"
-#include "genebits/engine/parallel/when_all.h"
+#include "genebits/engine/async/sync_wait.h"
+#include "genebits/engine/async/task.h"
+#include "genebits/engine/async/when_all.h"
 #include "genebits/engine/util/fast_vector.h"
 
 namespace genebits::engine::bench

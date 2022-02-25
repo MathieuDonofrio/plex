@@ -3,8 +3,8 @@
 
 #include <numeric>
 
+#include "genebits/engine/async/when_all.h"
 #include "genebits/engine/ecs/system.h"
-#include "genebits/engine/parallel/when_all.h"
 #include "genebits/engine/util/ref.h"
 
 namespace genebits::engine

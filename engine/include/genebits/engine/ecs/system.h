@@ -5,14 +5,14 @@
 #include <set>
 #include <span>
 
+#include "genebits/engine/async/async_latch.h"
+#include "genebits/engine/async/shared_task.h"
+#include "genebits/engine/async/task.h"
+#include "genebits/engine/async/thread_pool.h"
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/registry.h"
-#include "genebits/engine/parallel/async_latch.h"
-#include "genebits/engine/parallel/shared_task.h"
-#include "genebits/engine/parallel/task.h"
-#include "genebits/engine/parallel/thread_pool.h"
 #include "genebits/engine/util/allocator.h"
 #include "genebits/engine/util/ref.h"
 

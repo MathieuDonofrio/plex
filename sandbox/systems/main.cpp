@@ -1,11 +1,11 @@
 
 #include <iostream>
 
+#include "genebits/engine/async/sync_wait.h"
+#include "genebits/engine/async/task.h"
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/ecs/phase.h"
 #include "genebits/engine/ecs/system.h"
-#include "genebits/engine/parallel/sync_wait.h"
-#include "genebits/engine/parallel/task.h"
 
 using namespace genebits::engine;
 

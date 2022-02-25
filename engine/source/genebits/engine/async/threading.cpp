@@ -1,4 +1,4 @@
-#include "genebits/engine/parallel/threading.h"
+#include "genebits/engine/async/threading.h"
 
 #include "genebits/engine/config/compiler.h"
 #include "genebits/engine/debug/assertion.h"

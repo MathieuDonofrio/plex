@@ -1,9 +1,9 @@
-#ifndef GENEBITS_ENGINE_PARALLEL_SYNC_WAIT_H
-#define GENEBITS_ENGINE_PARALLEL_SYNC_WAIT_H
+#ifndef GENEBITS_ENGINE_ASYNC_SYNC_WAIT_H
+#define GENEBITS_ENGINE_ASYNC_SYNC_WAIT_H
 
 #include <atomic>
 
-#include "genebits/engine/parallel/trigger_task.h"
+#include "genebits/engine/async/trigger_task.h"
 
 namespace genebits::engine
 {

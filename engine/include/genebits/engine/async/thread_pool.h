@@ -1,13 +1,13 @@
-#ifndef GENEBITS_ENGINE_PARALLEL_THREAD_POOL_H
-#define GENEBITS_ENGINE_PARALLEL_THREAD_POOL_H
+#ifndef GENEBITS_ENGINE_ASYNC_THREAD_POOL_H
+#define GENEBITS_ENGINE_ASYNC_THREAD_POOL_H
 
 #include <atomic>
 #include <deque>
 #include <mutex>
 
+#include "genebits/engine/async/task.h"
+#include "genebits/engine/async/threading.h"
 #include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/parallel/task.h"
-#include "genebits/engine/parallel/threading.h"
 
 namespace genebits::engine
 {

@@ -1,10 +1,10 @@
-#ifndef GENEBITS_ENGINE_PARALLEL_SHARED_TASK_H
-#define GENEBITS_ENGINE_PARALLEL_SHARED_TASK_H
+#ifndef GENEBITS_ENGINE_ASYNC_SHARED_TASK_H
+#define GENEBITS_ENGINE_ASYNC_SHARED_TASK_H
 
 #include <thread>
 
+#include "genebits/engine/async/awaitable.h"
 #include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/parallel/awaitable.h"
 
 namespace genebits::engine
 {
