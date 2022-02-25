@@ -6,8 +6,8 @@
 #include <mutex>
 #include <type_traits>
 
+#include "genebits/engine/containers/fast_vector.h"
 #include "genebits/engine/util/allocator.h"
-#include "genebits/engine/util/fast_vector.h"
 #include "genebits/engine/util/meta.h"
 
 namespace genebits::engine

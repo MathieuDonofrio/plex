@@ -4,7 +4,7 @@
 #include <atomic>
 
 #include "genebits/engine/async/trigger_task.h"
-#include "genebits/engine/util/fast_vector.h"
+#include "genebits/engine/containers/fast_vector.h"
 
 namespace genebits::engine
 {

@@ -1,12 +1,12 @@
 #ifndef GENEBITS_ENGINE_STORAGE_H
 #define GENEBITS_ENGINE_STORAGE_H
 
+#include "genebits/engine/containers/fast_vector.h"
+#include "genebits/engine/containers/type_map.h"
 #include "genebits/engine/util/allocator.h"
 #include "genebits/engine/util/concepts.h"
 #include "genebits/engine/util/erased_ptr.h"
-#include "genebits/engine/util/fast_vector.h"
 #include "genebits/engine/util/meta.h"
-#include "genebits/engine/util/type_map.h"
 
 namespace genebits::engine
 {

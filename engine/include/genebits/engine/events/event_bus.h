@@ -4,11 +4,11 @@
 #include <memory>
 #include <mutex>
 
+#include "genebits/engine/containers/fast_vector.h"
+#include "genebits/engine/containers/type_map.h"
 #include "genebits/engine/util/delegate.h"
 #include "genebits/engine/util/erased_ptr.h"
-#include "genebits/engine/util/fast_vector.h"
 #include "genebits/engine/util/meta.h"
-#include "genebits/engine/util/type_map.h"
 
 namespace genebits::engine
 {

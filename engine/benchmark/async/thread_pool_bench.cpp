@@ -9,7 +9,7 @@
 #include "genebits/engine/async/sync_wait.h"
 #include "genebits/engine/async/task.h"
 #include "genebits/engine/async/when_all.h"
-#include "genebits/engine/util/fast_vector.h"
+#include "genebits/engine/containers/fast_vector.h"
 
 namespace genebits::engine::bench
 {

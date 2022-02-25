@@ -3,7 +3,7 @@
 
 #include <concepts>
 
-#include "genebits/engine/util/fast_vector.h"
+#include "genebits/engine/containers/fast_vector.h"
 
 namespace genebits::engine
 {

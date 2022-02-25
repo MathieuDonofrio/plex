@@ -191,6 +191,8 @@ public:
     if constexpr (!std::is_trivially_destructible_v<Type>) array_[size_].~Type();
   }
 
+  // TODO use normal erase & and SwapAndPop
+
   ///
   /// Remove the element at the specified index. Uses swap and pop technique.
   ///
@@ -217,6 +219,8 @@ public:
       *it = std::move(array_[size_]);
     }
   }
+
+  // TODO erase at is pointless
 
   ///
   /// Remove the element at the specified index. Uses swap and pop technique.
@@ -268,6 +272,8 @@ public:
 
     size_ = static_cast<uint32_t>(new_size);
   }
+
+  // TODO shrink to fit. Should be pretty cheap because of realloc.
 
   ///
   /// If necessary, increases the capacity of the vector to be able to fit
@@ -359,6 +365,8 @@ public:
   ///
   FastVector& operator=(const FastVector<Type, AllocatorType>& other) noexcept
   {
+    // TODO use swap
+
     // Avoid self-assignment
     if (other.array_ == array_) return *this;
 
@@ -382,6 +390,8 @@ public:
   ///
   constexpr FastVector& operator=(FastVector<Type, AllocatorType>&& other) noexcept
   {
+    // TODO use swap
+
     // Avoid self-move
     if (other.array_ == array_) return *this;
 
