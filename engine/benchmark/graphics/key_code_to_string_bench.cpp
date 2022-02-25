@@ -4,7 +4,8 @@
 
 #include <benchmark/benchmark.h>
 
-#include "genebits/engine/util/random.h"
+#include "genebits/engine/random/pcg.h"
+#include "genebits/engine/random/seed.h"
 
 namespace genebits::engine::bench
 {

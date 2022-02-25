@@ -1,5 +1,5 @@
 
-#include "genebits/engine/async/threading.h"
+#include "genebits/engine/os/cpu_info.h"
 
 #include <gtest/gtest.h>
 

@@ -1,6 +1,6 @@
 
-#include "genebits/engine/async/threading.h"
 #include "genebits/engine/debug/logging.h"
+#include "genebits/engine/os/cpu_info.h"
 
 using namespace genebits::engine;
 

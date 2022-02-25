@@ -6,8 +6,9 @@
 #include <mutex>
 
 #include "genebits/engine/async/task.h"
-#include "genebits/engine/async/threading.h"
 #include "genebits/engine/debug/assertion.h"
+#include "genebits/engine/os/cpu_info.h"
+#include "genebits/engine/os/thread.h"
 
 namespace genebits::engine
 {
