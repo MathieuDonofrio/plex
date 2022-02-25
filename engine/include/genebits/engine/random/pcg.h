@@ -9,8 +9,6 @@
 
 namespace genebits::engine
 {
-// TODO rewrite this, some of it is incorrect. See PCG website.
-
 ///
 /// Pseudo-random number generator from PCG family.
 ///
@@ -21,7 +19,7 @@ namespace genebits::engine
 /// *Really* minimal PCG32 code / (c) 2014 M.E. O'Neill / pcg-random.org
 /// Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
 ///
-class Random
+class PCG
 {
 public:
   static constexpr uint64_t cMultiplier = 6364136223846793005ull;
@@ -30,12 +28,12 @@ public:
   ///
   /// Default constructor
   ///
-  constexpr Random() : Random(0) {}
+  constexpr PCG() : PCG(0) {}
 
   ///
   /// Constructor with user specified seed.
   ///
-  constexpr explicit Random(const uint64_t seed) noexcept : state_(seed ^ cMultiplier) // Initial scramble
+  constexpr explicit PCG(const uint64_t seed) noexcept : state_(seed ^ cMultiplier) // Initial scramble
   {
     // Run two LCG iterations to correctly initialize
     Next();
@@ -43,89 +41,23 @@ public:
   }
 
   ///
-  /// Random floating point uniform between lower_bound and upper_bound
+  /// Advances the internal state and returns the generated value.
   ///
-  /// @param[in] lower_bound Lower bound.
-  /// @param[in] upper_bound Upper bound.
+  /// @return uint32_t Next uniform 32-bit random number.
   ///
-  /// @return Random float
-  ///
-  [[nodiscard]] constexpr float NextFloat(const float lower_bound, const float upper_bound) noexcept
-  {
-    return lower_bound
-           + (upper_bound - lower_bound) * static_cast<float>(Next())
-               / static_cast<float>(std::numeric_limits<uint32_t>::max());
-  }
-
-  ///
-  /// Random floating point uniform between lower_bound and upper_bound
-  ///
-  /// @param[in] lower_bound Lower bound.
-  /// @param[in] upper_bound Upper bound.
-  ///
-  /// @return Random float
-  ///
-  [[nodiscard]] constexpr float NextFloat(const float upper_bound) noexcept
-  {
-    return static_cast<float>(Next()) * (upper_bound / static_cast<float>(std::numeric_limits<uint32_t>::max()));
-  }
-
-  ///
-  /// Random floating point uniform between 0 and 1
-  ///
-  /// @param[in] lower_bound Lower bound.
-  /// @param[in] upper_bound Upper bound.
-  ///
-  /// @return Random float.
-  ///
-  [[nodiscard]] constexpr float NextFloat() noexcept
-  {
-    return static_cast<float>(Next()) / static_cast<float>(std::numeric_limits<uint32_t>::max());
-  }
-
-  ///
-  /// Random unsigned int between lower_bound and upper_bound.
-  ///
-  /// @param[in] lower_bound Lower bound.
-  /// @param[in] upper_bound Upper bound.
-  ///
-  /// @return Random unsigned int.
-  ///
-  [[nodiscard]] constexpr uint32_t NextUInt(const uint32_t lower_bound, const uint32_t upper_bound) noexcept
-  {
-    return NextBounded(upper_bound - lower_bound) + lower_bound;
-  }
-
-  ///
-  /// Random unsigned int between 0 and upper_bound.
-  ///
-  /// @param[in] upper_bound Upper bound
-  ///
-  /// @return Random unsigned int.
-  ///
-  [[nodiscard]] constexpr uint32_t NextUInt(const uint32_t upper_bound) noexcept
-  {
-    return NextBounded(upper_bound);
-  }
-
-  ///
-  /// Random unsigned int.
-  ///
-  /// @return Random unsigned int.
-  ///
-  [[nodiscard]] constexpr uint32_t NextUInt() noexcept
+  constexpr uint32_t operator()() noexcept
   {
     return Next();
   }
 
   ///
-  /// Returns the current state.
+  /// Advances the internal state and returns the generated value in range [0, bound)
   ///
-  /// @return constexpr uint64_t Current state
+  /// @return uint32_t Next bounded uniform 32-bit random number.
   ///
-  [[nodiscard]] constexpr uint64_t State() const noexcept
+  constexpr uint32_t operator()(const uint32_t bound) noexcept
   {
-    return state_;
+    return NextBounded(bound);
   }
 
 private:
