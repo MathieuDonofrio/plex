@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_FAST_VECTOR_H
-#define GENEBITS_ENGINE_UTIL_FAST_VECTOR_H
+#ifndef GENEBITS_ENGINE_CONTAINERS_FAST_VECTOR_H
+#define GENEBITS_ENGINE_CONTAINERS_FAST_VECTOR_H
 
 #include <iterator>
 #include <memory>
@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/util/allocator.h"
+#include "genebits/engine/utilities/allocator.h"
 
 namespace genebits::engine
 {

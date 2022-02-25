@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_REF_H
-#define GENEBITS_ENGINE_UTIL_REF_H
+#ifndef GENEBITS_ENGINE_UTILITIES_REF_H
+#define GENEBITS_ENGINE_UTILITIES_REF_H
 
 #include <atomic>
 #include <compare>

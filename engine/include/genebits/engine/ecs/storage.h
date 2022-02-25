@@ -3,10 +3,10 @@
 
 #include "genebits/engine/containers/fast_vector.h"
 #include "genebits/engine/containers/type_map.h"
-#include "genebits/engine/util/allocator.h"
-#include "genebits/engine/util/concepts.h"
-#include "genebits/engine/util/erased_ptr.h"
-#include "genebits/engine/util/meta.h"
+#include "genebits/engine/utilities/allocator.h"
+#include "genebits/engine/utilities/concepts.h"
+#include "genebits/engine/utilities/erased_ptr.h"
+#include "genebits/engine/utilities/meta.h"
 
 namespace genebits::engine
 {

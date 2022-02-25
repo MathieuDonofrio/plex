@@ -27,7 +27,7 @@ endfunction()
 # Tests
 #
 
-add_engine_test(util)
+add_engine_test(utilities)
 add_engine_test(events)
 add_engine_test(graphics)
 add_engine_test(ecs)

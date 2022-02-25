@@ -25,7 +25,7 @@ endfunction()
 # Benchmarks
 #
 
-add_engine_benchmark(util)
+add_engine_benchmark(utilities)
 add_engine_benchmark(events)
 add_engine_benchmark(graphics)
 add_engine_benchmark(ecs)

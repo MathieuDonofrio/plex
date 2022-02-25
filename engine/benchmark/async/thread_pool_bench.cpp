@@ -1,6 +1,5 @@
 #include "genebits/engine/async/thread_pool.h"
 
-#include <cmath>
 #include <future>
 
 #include <benchmark/benchmark.h>

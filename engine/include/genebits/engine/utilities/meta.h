@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_META_H
-#define GENEBITS_ENGINE_UTIL_META_H
+#ifndef GENEBITS_ENGINE_UTILITIES_META_H
+#define GENEBITS_ENGINE_UTILITIES_META_H
 
 #include <string_view>
 #include <type_traits>
