@@ -1,39 +1,85 @@
 #ifndef GENEBITS_ENGINE_ECS_SYSTEM_H
 #define GENEBITS_ENGINE_ECS_SYSTEM_H
 
+#include <list>
+#include <set>
+#include <span>
+
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/registry.h"
+#include "genebits/engine/parallel/async_latch.h"
+#include "genebits/engine/parallel/shared_task.h"
 #include "genebits/engine/parallel/task.h"
 #include "genebits/engine/parallel/thread_pool.h"
 #include "genebits/engine/util/allocator.h"
-
-#include <iostream>
-#include <list>
-#include <set>
+#include "genebits/engine/util/ref.h"
 
 namespace genebits::engine
 {
+///
+/// Information about a system component data access:
+///
+/// - The identifier of the component of the access.
+/// - Whether or not the access is read-only.
+///
 struct SystemDataAccess
 {
   ComponentId id;
   bool read_only;
 };
 
+///
+/// Holds information about every single data access of a system.
+///
 using SystemDataAccessList = FastVector<SystemDataAccess>;
+
+class SystemDataAccessProvider
+{
+public:
+  constexpr SystemDataAccessProvider() noexcept : initialized_(false) {}
+
+  virtual ~SystemDataAccessProvider() = default;
+
+  [[nodiscard]] const SystemDataAccessList& GetDataAccess() const noexcept
+  {
+    if (!initialized_) [[unlikely]]
+    {
+      // Resolve data access only once
+      new (&access_) SystemDataAccessList(std::move(CreateDataAccessList()));
+
+      initialized_ = true;
+    }
+
+    return access_;
+  }
+
+private:
+  virtual SystemDataAccessList CreateDataAccessList() const = 0;
+
+private:
+  mutable SystemDataAccessList access_;
+  mutable bool initialized_;
+};
+
+struct SystemContext
+{
+  Registry* registry = nullptr;
+  ThreadPool* thread_pool = nullptr;
+};
+
+using SystemTask = SharedTask<>;
 
 template<typename... Components>
 class System;
 
 class SystemGroup;
 
-class Phase;
-
-class SystemBase
+class SystemBase : public SystemDataAccessProvider
 {
 public:
-  SystemBase() : registry_(nullptr) {};
+  SystemBase() = default;
 
   virtual ~SystemBase() = default;
 
@@ -42,59 +88,55 @@ public:
   SystemBase(SystemBase&&) = delete;
   SystemBase& operator=(SystemBase&&) = delete;
 
-  void Run()
+  Task<> Update()
   {
-    ASSERT(Initialized(), "System not initialized");
-
-    OnUpdate();
+    return OnUpdate();
   }
-
-  void ForceComplete()
-  {
-    ASSERT(Initialized(), "System not initialized");
-
-    // TODO
-  }
-
-  virtual SystemDataAccessList GetDataAccess() = 0;
 
 protected:
-  template<typename... Components>
-  friend class System;
-  friend SystemGroup;
-  friend Phase;
-
-  virtual void OnUpdate() = 0;
-
-  [[nodiscard]] constexpr bool Initialized() const noexcept
+  const SystemContext& GetContext() const noexcept
   {
-    return registry_;
+    return context_;
   }
 
 private:
-  Registry* registry_;
+  virtual Task<> OnUpdate() = 0;
+
+  virtual void OnActivate() {}
+
+  virtual void OnDeactivate() {}
+
+private:
+  SystemContext context_; // TODO
+
+  SystemTask update_task_;
 };
 
 template<typename... Components>
 class System : public SystemBase
 {
-public:
-  SystemDataAccessList GetDataAccess() final
+private:
+  SystemDataAccessList CreateDataAccessList() const final
   {
-    SystemDataAccessList access;
+    SystemDataAccessList list;
+    list.Reserve(sizeof...(Components));
 
-    access.Reserve(sizeof...(Components));
+    (list.PushBack({ GetComponentId<std::remove_cvref_t<Components>>(), std::is_const_v<Components> }), ...);
 
-    (access.PushBack({ GetComponentId<std::remove_cvref_t<Components>>(), std::is_const_v<Components> }), ...);
-
-    return access;
+    return list;
   }
+
+public:
+  // Public interface
 
   PolyView<Components...> GetView()
   {
-    ASSERT(Initialized(), "System not initialized");
+    return GetContext().registry->template View<Components...>();
+  }
 
-    return registry_->template View<Components...>();
+  decltype(auto) Schedule() // TODO Make more generalized scheduling
+  {
+    return GetContext().thread_pool->Schedule();
   }
 };
 
@@ -108,17 +150,9 @@ public:
   SystemGroup(SystemGroup&&) = delete;
   SystemGroup& operator=(SystemGroup&&) = delete;
 
-  void InitializeSystems(Registry& registry)
+  void Add(Ref<SystemBase> system)
   {
-    for (SystemBase* system : registered_systems_)
-    {
-      system->registry_ = &registry;
-    }
-  }
-
-  void Add(SystemBase* system)
-  {
-    registered_systems_.PushBack(system);
+    registered_systems_.PushBack(std::move(system));
   }
 
   [[nodiscard]] constexpr size_t Count() const noexcept
@@ -126,72 +160,13 @@ public:
     return registered_systems_.Size();
   }
 
-  [[nodiscard]] constexpr SystemBase** RawSystems() noexcept
+  [[nodiscard]] constexpr Ref<SystemBase>* RawSystems() noexcept
   {
     return registered_systems_.data();
   }
 
 private:
-  FastVector<SystemBase*> registered_systems_;
-};
-
-class Phase
-{
-public:
-  void Run()
-  {
-    for (auto it = compiled_.begin(); it != compiled_.end(); ++it)
-    {
-      SystemBase& system = *(it->system);
-
-      ASSERT(system.Initialized(), "System not initialized");
-
-      // TODO depedencies
-
-      // TODO execute system
-
-      // TODO Assert dependencies where completed ?
-    }
-  }
-
-  void ForceComplete()
-  {
-    for (auto it = compiled_.begin(); it != compiled_.end(); ++it)
-    {
-      ASSERT(it->system->Initialized(), "System not initialized");
-
-      it->system->ForceComplete();
-    }
-  }
-
-  static Phase Compile(SystemBase** systems, size_t dependencies, size_t total);
-
-  static Phase Compile(SystemGroup& group, std::initializer_list<SystemGroup*> dependencies);
-
-  static Phase Compile(SystemGroup& group);
-
-public:
-  struct CompiledSystem
-  {
-    SystemBase* system;
-    FastVector<SystemBase*> sync;
-  };
-
-  [[nodiscard]] constexpr CompiledSystem* begin() noexcept
-  {
-    return compiled_.begin();
-  }
-
-  [[nodiscard]] constexpr CompiledSystem* end() noexcept
-  {
-    return compiled_.end();
-  }
-
-private:
-  constexpr Phase(FastVector<CompiledSystem>&& compiled) : compiled_(std::move(compiled)) {}
-
-private:
-  FastVector<CompiledSystem> compiled_;
+  FastVector<Ref<SystemBase>> registered_systems_;
 };
 
 } // namespace genebits::engine
