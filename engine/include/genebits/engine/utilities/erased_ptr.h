@@ -1,50 +1,155 @@
 #ifndef GENEBITS_ENGINE_UTILITIES_ERASED_PTR_H
 #define GENEBITS_ENGINE_UTILITIES_ERASED_PTR_H
 
+#include "genebits/engine/utilities/type_traits.h"
+
 namespace genebits::engine
 {
+///
+/// Concept used to determine whether or not two erased ptr's can be implicitly casted.
+///
+/// @tparam From Type casted from.
+/// @tparam To Type to cast to.
+///
+template<typename From, typename To>
+concept AssignableErasedPtr = std::is_void_v<To> || std::is_base_of_v<To, From>;
+
+namespace details
+{
+  ///
+  /// Base for erased ptr.
+  ///
+  /// @tparam Type Pointer type.
+  ///
+  template<typename Type>
+  class ErasedPtrBase
+  {
+  public:
+    ///
+    /// Dereferences the stored ptr.
+    ///
+    /// @return Reference to ptr value.
+    ///
+    [[nodiscard]] constexpr Type& operator*() const noexcept
+    {
+      return *ptr_;
+    }
+
+    ///
+    /// Dereferences the stored ptr.
+    ///
+    /// @return Pointer to managed instance.
+    ///
+    [[nodiscard]] constexpr Type* operator->() const noexcept
+    {
+      return ptr_;
+    }
+
+  protected:
+    Type* ptr_;
+  };
+
+  ///
+  /// Base for erased ptr.
+  ///
+  /// Specialization for void
+  ///
+  /// @tparam Type Pointer type.
+  ///
+  template<>
+  class ErasedPtrBase<void>
+  {
+  protected:
+    void* ptr_;
+  };
+} // namespace details
+
 ///
 /// Type erasure pointer.
 ///
 /// Stores an instance as a base type to lose the type information.
 ///
-/// @tparam Base Base used to erase type with.
+/// @tparam Type Pointer type.
 ///
-template<typename Base = void>
-class ErasedPtr
+template<typename Type>
+class ErasedPtr : public details::ErasedPtrBase<Type>
 {
 public:
   ///
   /// Default Constructor
   ///
-  constexpr ErasedPtr() noexcept : instance_(nullptr), deleter_(nullptr) {}
+  constexpr ErasedPtr() noexcept : ptr_(nullptr), deleter_(nullptr) {}
 
   ///
   /// Parametric Constructor
   ///
-  /// @param[in] instance Instance to handle.
-  /// @param[in] deleter Deleter to delete the instance.
+  /// @tparam T The type to store, must be same or derived from erased type base.
   ///
-  constexpr ErasedPtr(Base* instance, void (*deleter)(Base*)) noexcept : instance_(instance), deleter_(deleter) {}
+  /// @param[in] instance Instance to handle.
+  /// @param[in] deleter The custom deleter to delete the managed instance with.
+  ///
+  template<AssignableErasedPtr<Type> T>
+  constexpr ErasedPtr(T* instance, void (*deleter)(void*)) noexcept : ptr_(instance), deleter_(deleter)
+  {}
 
   ///
   /// Parametric Constructor. Uses default deleter.
   ///
+  /// @tparam T The type to store, must be same or derived from erased type base.
+  ///
   /// @param[in] instance Instance to handle.
   ///
-  template<typename Type>
-  constexpr ErasedPtr(Type* instance) noexcept : ErasedPtr(instance, DefaultDeleter<Type>)
+  template<AssignableErasedPtr<Type> T>
+  constexpr explicit ErasedPtr(T* instance) noexcept
+    : ErasedPtr(instance, [](void* instance) { delete static_cast<T*>(instance); })
   {}
+
+  ///
+  /// Nullptr constructor with custom deleter
+  ///
+  /// @param[in] deleter The custom deleter to delete the managed instance with.
+  ///
+  constexpr ErasedPtr(std::nullptr_t, void (*deleter)(void*)) noexcept : ErasedPtr(nullptr, deleter) {}
+
+  ///
+  /// Nullptr constructor.
+  ///
+  constexpr ErasedPtr(std::nullptr_t) noexcept : ErasedPtr() {}
+
+  ///
+  /// Destructor
+  ///
+  ~ErasedPtr()
+  {
+    if (ptr_) deleter_(ptr_);
+  }
+
+  ErasedPtr(const ErasedPtr& other) = delete;
+  ErasedPtr& operator=(const ErasedPtr& other) = delete;
 
   ///
   /// Move constructor.
   ///
   /// @param[in] other Other erased ptr to move into this one.
   ///
-  constexpr ErasedPtr(ErasedPtr<Base>&& other) noexcept : ErasedPtr(other.instance_, other.deleter_)
+  constexpr ErasedPtr(ErasedPtr<Type>&& other) noexcept : ErasedPtr(other.ptr_, other.deleter_)
   {
-    other.instance_ = nullptr;
-    other.deleter_ = nullptr;
+    other.ptr_ = nullptr;
+    // Let deleter dangle
+  }
+
+  ///
+  /// Move constructor.
+  ///
+  /// @tparam T Other type.
+  ///
+  /// @param[in] other Other erased ptr to move into this one.
+  ///
+  template<AssignableErasedPtr<Type> T>
+  constexpr ErasedPtr(ErasedPtr<T>&& other) noexcept : ErasedPtr(other.ptr_, other.deleter_)
+  {
+    other.ptr_ = nullptr;
+    // Let deleter dangle
   }
 
   ///
@@ -54,121 +159,55 @@ public:
   ///
   /// @return Erased ptr that was assigned.
   ///
-  constexpr ErasedPtr& operator=(ErasedPtr<Base>&& other) noexcept
+  constexpr ErasedPtr& operator=(ErasedPtr<Type>&& other) noexcept
   {
-    if (deleter_) deleter_(instance_);
-
-    instance_ = other.instance_;
-    other.instance_ = nullptr;
-    deleter_ = other.deleter_;
-    other.deleter_ = nullptr;
-
+    ErasedPtr<Type>(std::move(other)).Swap(*this);
     return *this;
   }
 
-  ErasedPtr(const ErasedPtr& other) = delete;
-  ErasedPtr& operator=(const ErasedPtr& other) = delete;
-
   ///
-  /// Destructor
+  /// Move assignment operator.
   ///
-  ~ErasedPtr()
+  /// @tparam T Other type.
+  ///
+  /// @param[in] other Other erased ptr to move into this one.
+  ///
+  /// @return Erased ptr that was assigned.
+  ///
+  template<AssignableErasedPtr<Type> T>
+  constexpr ErasedPtr& operator=(ErasedPtr<T>&& other) noexcept
   {
-    if (deleter_) deleter_(instance_);
+    ErasedPtr<Type>(std::move(other)).Swap(*this);
+    return *this;
   }
 
   ///
-  /// Resets the handled instance. Destroys the current instance if any.
+  /// Exchanges the stored pointer values and ownerships.
   ///
-  /// @param[in] instance Instance to handle.
-  /// @param[in] deleter Deleter to delete the instance.
-  ///
-  constexpr void Reset(Base* instance, void (*deleter)(Base*)) noexcept
+  constexpr void Swap(ErasedPtr<Type>& other) noexcept
   {
-    if (deleter_) deleter_(instance_);
-
-    instance_ = instance;
-    deleter_ = deleter;
+    std::swap(ptr_, other.ptr_);
+    std::swap(deleter_, other.deleter_);
   }
 
   ///
-  /// Resets the handled instance. Destroys the current instance if any. Uses
-  /// the default deleter.
+  /// Returns the stored pointer.
   ///
-  template<typename Type>
-  constexpr void Reset(Type* instance) noexcept
+  /// @return Stored pointer.
+  ///
+  [[nodiscard]] constexpr Type* Get() const noexcept
   {
-    Reset(instance, DefaultDeleter<Type>);
+    return ptr_;
   }
 
   ///
-  /// Casts the instance to the specified type using static cast.
+  /// Returns the stored pointer.
   ///
-  /// @warning
-  ///     The cast must be the exact type. If this is not possible, consider using
-  ///     a polymorphic base and DynamicCast.
+  /// @return Stored pointer.
   ///
-  /// @tparam Type Exact type to cast to.
-  ///
-  /// @return Casted type.
-  ///
-  template<typename Type>
-  [[nodiscard]] constexpr Type* Cast() noexcept
+  [[nodiscard]] constexpr operator Type*() const noexcept
   {
-    return static_cast<Type*>(instance_);
-  }
-
-  ///
-  /// Casts the instance to the specified type using static cast.
-  ///
-  /// @warning
-  ///     The cast must be the exact type. If this is not possible, consider using
-  ///     a polymorphic base and DynamicCast.
-  ///
-  /// @tparam Type Exact type to cast to.
-  ///
-  /// @return Casted type.
-  ///
-  template<typename Type>
-  [[nodiscard]] constexpr const Type* Cast() const noexcept
-  {
-    return static_cast<Type*>(instance_);
-  }
-
-  ///
-  /// Casts the instance to the specified type using dynamic cast. Can cast anywhere
-  /// in the hierarchy as long as the base is polymorphic.
-  ///
-  /// @note
-  ///     Only use this if necessary. Regular cast may be more appropriate and
-  ///     performant.
-  ///
-  /// @tparam Type Type to cast to.
-  ///
-  /// @return If cast is successful, the casted type, otherwise nullptr.
-  ///
-  template<typename Type>
-  [[nodiscard]] constexpr Type* DynamicCast() noexcept
-  {
-    return dynamic_cast<Type*>(instance_);
-  }
-
-  ///
-  /// Casts the instance to the specified type using dynamic cast. Can cast anywhere
-  /// in the hierarchy as long as the base is polymorphic.
-  ///
-  /// @note
-  ///     Only use this if necessary. Regular cast may be more appropriate and
-  ///     performant.
-  ///
-  /// @tparam Type Type to cast to.
-  ///
-  /// @return If cast is successful, the casted type, otherwise nullptr.
-  ///
-  template<typename Type>
-  [[nodiscard]] constexpr const Type* DynamicCast() const noexcept
-  {
-    return dynamic_cast<Type*>(instance_);
+    return Get();
   }
 
   ///
@@ -178,28 +217,124 @@ public:
   ///
   [[nodiscard]] constexpr operator bool() const noexcept
   {
-    return instance_;
+    return ptr_;
   }
 
 private:
-  ///
-  /// Template for default deleter for erased pointers.
-  ///
-  /// @tparam Base Base used to erase type with.
-  /// @tparam Type Exact type of the instance to delete.
-  ///
-  /// @param[in] instance Instance to delete.
-  ///
-  template<typename Type>
-  static void DefaultDeleter(Base* instance)
-  {
-    delete static_cast<Type*>(instance);
-  }
+  template<typename T>
+  friend class ErasedPtr;
 
-private:
-  Base* instance_;
-  void (*deleter_)(Base*);
+  template<typename T, typename... Args>
+  friend ErasedPtr<T> MakeErased(Args&&... args);
+
+  Type* ptr_;
+  void (*deleter_)(void*);
 };
+
+///
+/// Equality Operator.
+///
+/// @tparam T Type of lhs reference
+/// @tparam U Type of rhs reference
+///
+/// @param[in] lhs Lhs reference to compare.
+/// @param[in] rhs Rhs reference to compare.
+///
+/// @return True if both ptr's are equal, false otherwise.
+///
+template<typename T, typename U>
+constexpr bool operator==(const ErasedPtr<T>& lhs, const ErasedPtr<U>& rhs) noexcept
+{
+  return lhs.Get() == rhs.Get();
+}
+
+///
+/// Three Way Compare Operator.
+///
+/// @tparam T Type of lhs reference
+/// @tparam U Type of rhs reference
+///
+/// @param[in] lhs Lhs reference to compare.
+/// @param[in] rhs Rhs reference to compare.
+///
+/// @return Strong ordering.
+///
+template<typename T, typename U>
+constexpr std::strong_ordering operator<=>(const ErasedPtr<T>& lhs, const ErasedPtr<U>& rhs) noexcept
+{
+  return std::compare_three_way()(lhs.Get(), rhs.Get());
+}
+
+///
+/// Equality operator. Compare against nullptr.
+///
+/// @tparam T Type of lhs reference
+///
+/// @param lhs Lhs reference to compare.
+///
+/// @return True erased ptr's managed pointer is equal to nullptr.
+///
+template<typename T>
+constexpr bool operator==(const ErasedPtr<T>& lhs, std::nullptr_t) noexcept
+{
+  return !lhs;
+}
+
+///
+/// Three Way Compare Operator. Compare against nullptr.
+///
+/// @tparam T Type of lhs reference
+///
+/// @param[in] lhs Lhs reference to compare.
+///
+/// @return Strong ordering.
+///
+template<typename T>
+constexpr std::strong_ordering operator<=>(const ErasedPtr<T>& lhs, std::nullptr_t) noexcept
+{
+  return std::compare_three_way()(lhs.Get(), static_cast<T*>(nullptr));
+}
+
+///
+/// Factory method for erased ptr.
+///
+/// Creates an instance of Type and wraps it in a erased ptr using the args
+/// as the parameter list of the constructor.
+///
+/// @tparam Type Type of reference
+/// @tparam Args Constructor argument types.
+///
+/// @param[in] args Arguments to invoke constructor with.
+///
+/// @return ErasedPtr of type.
+///
+template<typename Type, typename... Args>
+ErasedPtr<Type> MakeErased(Args&&... args)
+{
+  return ErasedPtr<Type>(new Type(std::forward<Args>(args)...));
+}
+
+template<typename Type>
+struct IsRelocatable<ErasedPtr<Type>> : std::true_type
+{};
 } // namespace genebits::engine
+
+namespace std
+{
+template<typename T>
+constexpr void swap(genebits::engine::ErasedPtr<T>& lhs, genebits::engine::ErasedPtr<T>& rhs) noexcept
+{
+  lhs.Swap(rhs);
+}
+
+template<typename T>
+struct hash<genebits::engine::ErasedPtr<T>>
+{
+  constexpr size_t operator()(const genebits::engine::ErasedPtr<T>& obj) const noexcept
+  {
+    return std::hash<T*>()(obj.Get());
+  }
+};
+} // namespace std
 
 #endif
