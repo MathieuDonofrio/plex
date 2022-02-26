@@ -11,21 +11,21 @@ TEST(Vector_Tests, Empty_Trivial_AfterDefaultConstruction_True)
 {
   Vector<double> vector;
 
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_TRUE(vector.empty());
 }
 
 TEST(Vector_Tests, Size_Trivial_AfterDefaultConstruction_Zero)
 {
   Vector<double> vector;
 
-  EXPECT_EQ(vector.Size(), 0);
+  EXPECT_EQ(vector.size(), 0);
 }
 
 TEST(Vector_Tests, Capacity_Trivial_AfterDefaultConstruction_Zero)
 {
   Vector<double> vector;
 
-  EXPECT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(vector.capacity(), 0);
 }
 
 TEST(Vector_Tests, PushBack_Trivial_Single_SizeIncrease)
@@ -34,7 +34,7 @@ TEST(Vector_Tests, PushBack_Trivial_Single_SizeIncrease)
 
   vector.PushBack(0);
 
-  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector.size(), 1);
 }
 
 TEST(Vector_Tests, PushBack_NonTrivial_Single_SizeIncrease)
@@ -43,7 +43,7 @@ TEST(Vector_Tests, PushBack_NonTrivial_Single_SizeIncrease)
 
   vector.PushBack("0");
 
-  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector.size(), 1);
 }
 
 TEST(Vector_Tests, PushBack_Trivial_Double_SizeIncrease)
@@ -53,7 +53,7 @@ TEST(Vector_Tests, PushBack_Trivial_Double_SizeIncrease)
   vector.PushBack(0);
   vector.PushBack(0);
 
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.size(), 2);
 }
 
 TEST(Vector_Tests, PushBack_NonTrivial_Double_SizeIncrease)
@@ -63,7 +63,7 @@ TEST(Vector_Tests, PushBack_NonTrivial_Double_SizeIncrease)
   vector.PushBack("0");
   vector.PushBack("0");
 
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.size(), 2);
 }
 
 TEST(Vector_Tests, PushBack_Trivial_Many_SizeIncrease)
@@ -77,7 +77,7 @@ TEST(Vector_Tests, PushBack_Trivial_Many_SizeIncrease)
     vector.PushBack(static_cast<double>(0));
   }
 
-  EXPECT_EQ(vector.Size(), cAmount);
+  EXPECT_EQ(vector.size(), cAmount);
 }
 
 TEST(Vector_Tests, PushBack_NonTrivial_Many_SizeIncrease)
@@ -91,7 +91,7 @@ TEST(Vector_Tests, PushBack_NonTrivial_Many_SizeIncrease)
     vector.PushBack(std::to_string(i));
   }
 
-  EXPECT_EQ(vector.Size(), cAmount);
+  EXPECT_EQ(vector.size(), cAmount);
 }
 
 TEST(Vector_Tests, PushBack_Trivial_Single_CorrectValue)
@@ -179,8 +179,8 @@ TEST(Vector_Tests, PopBack_Trivial_Single_SizeDecrease)
   vector.PushBack(0);
   vector.PopBack();
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
 TEST(Vector_Tests, Clear_Trivial_Empty)
@@ -192,11 +192,11 @@ TEST(Vector_Tests, Clear_Trivial_Empty)
 
   vector.Clear();
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, Clear_NonTrivial_Empty)
+TEST(Vector_Tests, Clear_NonTrivial_empty)
 {
   Vector<std::string> vector;
 
@@ -205,26 +205,26 @@ TEST(Vector_Tests, Clear_NonTrivial_Empty)
 
   vector.Clear();
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, Reserve_Trivial_Empty_CorrectCapacity)
+TEST(Vector_Tests, Reserve_Trivial_empty_CorrectCapacity)
 {
   Vector<double> vector;
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.capacity(), 10);
 }
 
-TEST(Vector_Tests, Reserve_NonTrivial_Empty_CorrectCapacity)
+TEST(Vector_Tests, Reserve_NonTrivial_empty_CorrectCapacity)
 {
   Vector<std::string> vector;
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.capacity(), 10);
 }
 
 TEST(Vector_Tests, Reserve_Trivial_Increase_CorrectCapacity)
@@ -233,11 +233,11 @@ TEST(Vector_Tests, Reserve_Trivial_Increase_CorrectCapacity)
 
   vector.Reserve(5);
 
-  EXPECT_EQ(vector.Capacity(), 5);
+  EXPECT_EQ(vector.capacity(), 5);
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.capacity(), 10);
 }
 
 TEST(Vector_Tests, Reserve_NonTrivial_Increase_CorrectCapacity)
@@ -246,11 +246,11 @@ TEST(Vector_Tests, Reserve_NonTrivial_Increase_CorrectCapacity)
 
   vector.Reserve(5);
 
-  EXPECT_EQ(vector.Capacity(), 5);
+  EXPECT_EQ(vector.capacity(), 5);
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.capacity(), 10);
 }
 
 TEST(Vector_Tests, Reserve_Trivial_Decrease_DoNothing)
@@ -259,11 +259,11 @@ TEST(Vector_Tests, Reserve_Trivial_Decrease_DoNothing)
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.capacity(), 10);
 
   vector.Reserve(5);
 
-  EXPECT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.capacity(), 10);
 }
 
 TEST(Vector_Tests, Reserve_NonTrivial_Decrease_DoNothing)
@@ -272,25 +272,25 @@ TEST(Vector_Tests, Reserve_NonTrivial_Decrease_DoNothing)
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.capacity(), 10);
 
   vector.Reserve(5);
 
-  EXPECT_EQ(vector.Capacity(), 10);
+  EXPECT_EQ(vector.capacity(), 10);
 }
 
-TEST(Vector_Tests, PopBack_NonTrivial_Single_SizeDecrease)
+TEST(Vector_Tests, PopBack_NonTrivial_Single_sizeDecrease)
 {
   Vector<std::string> vector;
 
   vector.PushBack("0");
   vector.PopBack();
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, PopBack_Trivial_Double_SizeDecrease)
+TEST(Vector_Tests, PopBack_Trivial_Double_sizeDecrease)
 {
   Vector<double> vector;
 
@@ -299,11 +299,11 @@ TEST(Vector_Tests, PopBack_Trivial_Double_SizeDecrease)
   vector.PopBack();
   vector.PopBack();
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, PopBack_NonTrivial_Double_SizeDecrease)
+TEST(Vector_Tests, PopBack_NonTrivial_Double_sizeDecrease)
 {
   Vector<std::string> vector;
 
@@ -312,11 +312,11 @@ TEST(Vector_Tests, PopBack_NonTrivial_Double_SizeDecrease)
   vector.PopBack();
   vector.PopBack();
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, PopBack_Trivial_DoublePushSinglePop_SizeDecrease)
+TEST(Vector_Tests, PopBack_Trivial_DoublePushSinglePop_sizeDecrease)
 {
   Vector<double> vector;
 
@@ -324,11 +324,11 @@ TEST(Vector_Tests, PopBack_Trivial_DoublePushSinglePop_SizeDecrease)
   vector.PushBack(0);
   vector.PopBack();
 
-  EXPECT_EQ(vector.Size(), 1);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
 }
 
-TEST(Vector_Tests, PopBack_NonTrivial_DoublePushSinglePop_SizeDecrease)
+TEST(Vector_Tests, PopBack_NonTrivial_DoublePushSinglePop_sizeDecrease)
 {
   Vector<std::string> vector;
 
@@ -336,8 +336,8 @@ TEST(Vector_Tests, PopBack_NonTrivial_DoublePushSinglePop_SizeDecrease)
   vector.PushBack("0");
   vector.PopBack();
 
-  EXPECT_EQ(vector.Size(), 1);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
 }
 
 TEST(Vector_Tests, PopBack_Trivial_DoublePushSinglePop_CorrectValue)
@@ -370,11 +370,11 @@ TEST(Vector_Tests, PopBack_Trivial_PushPopPush_CorrectValues)
   vector.PopBack();
   vector.PushBack(2);
 
-  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector.size(), 1);
   EXPECT_EQ(vector[0], 2);
 }
 
-TEST(Vector_Tests, PopBack_NonTrivial_PushPopPush_CorrectSize)
+TEST(Vector_Tests, PopBack_NonTrivial_PushPopPush_Correctsize)
 {
   Vector<std::string> vector;
 
@@ -382,7 +382,7 @@ TEST(Vector_Tests, PopBack_NonTrivial_PushPopPush_CorrectSize)
   vector.PopBack();
   vector.PushBack("2");
 
-  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector.size(), 1);
   EXPECT_EQ(vector[0], std::string { "2" });
 }
 
@@ -395,7 +395,7 @@ TEST(Vector_Tests, PopBack_Trivial_PushPushPopPush_CorrectValues)
   vector.PopBack();
   vector.PushBack(3);
 
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.size(), 2);
   EXPECT_EQ(vector[1], 3);
 }
 
@@ -408,7 +408,7 @@ TEST(Vector_Tests, PopBack_NonTrivial_PushPushPopPush_CorrectValues)
   vector.PopBack();
   vector.PushBack("3");
 
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.size(), 2);
   EXPECT_EQ(vector[1], std::string { "3" });
 }
 
@@ -419,8 +419,8 @@ TEST(Vector_Tests, EraseAt_Trivial_Single_CorrectValues)
   vector.PushBack(1);
   vector.EraseAt(0);
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
 TEST(Vector_Tests, EraseAt_NonTrivial_Single_CorrectValues)
@@ -430,8 +430,8 @@ TEST(Vector_Tests, EraseAt_NonTrivial_Single_CorrectValues)
   vector.PushBack("1");
   vector.EraseAt(0);
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
 TEST(Vector_Tests, EraseAt_Trivial_Double_CorrectValues)
@@ -442,14 +442,14 @@ TEST(Vector_Tests, EraseAt_Trivial_Double_CorrectValues)
   vector.PushBack(2);
   vector.EraseAt(1);
 
-  EXPECT_EQ(vector.Size(), 1);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], 1);
 
   vector.EraseAt(0);
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
 TEST(Vector_Tests, EraseAt_NonTrivial_Double_CorrectValues)
@@ -460,14 +460,14 @@ TEST(Vector_Tests, EraseAt_NonTrivial_Double_CorrectValues)
   vector.PushBack("2");
   vector.EraseAt(1);
 
-  EXPECT_EQ(vector.Size(), 1);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], "1");
 
   vector.EraseAt(0);
 
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_TRUE(vector.Empty());
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
 }
 
 TEST(Vector_Tests, EraseAt_Trivial_PushPushErase_CorrectValues)
@@ -478,8 +478,8 @@ TEST(Vector_Tests, EraseAt_Trivial_PushPushErase_CorrectValues)
   vector.PushBack(2);
   vector.EraseAt(0);
 
-  EXPECT_EQ(vector.Size(), 1);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], 2);
 }
 
@@ -491,8 +491,8 @@ TEST(Vector_Tests, EraseAt_NonTrivial_PushPushErase_CorrectValues)
   vector.PushBack("2");
   vector.EraseAt(0);
 
-  EXPECT_EQ(vector.Size(), 1);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], "2");
 }
 
@@ -505,8 +505,8 @@ TEST(Vector_Tests, Erase_Trivial_PushPushErase_CorrectValues)
 
   vector.Erase(std::find(vector.begin(), vector.end(), 1));
 
-  EXPECT_EQ(vector.Size(), 1);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], 2);
 }
 
@@ -519,12 +519,12 @@ TEST(Vector_Tests, Erase_NonTrivial_PushPushErase_CorrectValues)
 
   vector.Erase(std::find(vector.begin(), vector.end(), std::string { "1" }));
 
-  EXPECT_EQ(vector.Size(), 1);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], std::string { "2" });
 }
 
-TEST(Vector_Tests, Resize_Trivial_Empty_SizeIncrease)
+TEST(Vector_Tests, Resize_Trivial_empty_sizeIncrease)
 {
   constexpr size_t cAmount = 10;
 
@@ -532,11 +532,11 @@ TEST(Vector_Tests, Resize_Trivial_Empty_SizeIncrease)
 
   vector.Resize(cAmount);
 
-  EXPECT_EQ(vector.Size(), cAmount);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), cAmount);
+  EXPECT_FALSE(vector.empty());
 }
 
-TEST(Vector_Tests, Resize_NonTrivial_Empty_SizeIncrease)
+TEST(Vector_Tests, Resize_NonTrivial_empty_sizeIncrease)
 {
   constexpr size_t cAmount = 10;
 
@@ -544,11 +544,11 @@ TEST(Vector_Tests, Resize_NonTrivial_Empty_SizeIncrease)
 
   vector.Resize(cAmount);
 
-  EXPECT_EQ(vector.Size(), cAmount);
-  EXPECT_FALSE(vector.Empty());
+  EXPECT_EQ(vector.size(), cAmount);
+  EXPECT_FALSE(vector.empty());
 }
 
-TEST(Vector_Tests, Resize_Trivial_Empty_DefaultValues)
+TEST(Vector_Tests, Resize_Trivial_empty_DefaultValues)
 {
   constexpr size_t cAmount = 10;
 
@@ -562,7 +562,7 @@ TEST(Vector_Tests, Resize_Trivial_Empty_DefaultValues)
   }
 }
 
-TEST(Vector_Tests, Resize_NonTrivial_Empty_DefaultValues)
+TEST(Vector_Tests, Resize_NonTrivial_empty_DefaultValues)
 {
   constexpr size_t cAmount = 10;
 
@@ -587,7 +587,7 @@ TEST(Vector_Tests, Resize_Trivial_Increase_CorrectValues)
 
   vector.Resize(cAmount);
 
-  EXPECT_EQ(vector.Size(), cAmount);
+  EXPECT_EQ(vector.size(), cAmount);
 
   EXPECT_EQ(vector[0], 1);
   EXPECT_EQ(vector[1], 2);
@@ -609,7 +609,7 @@ TEST(Vector_Tests, Resize_NonTrivial_Increase_CorrectValues)
 
   vector.Resize(cAmount);
 
-  EXPECT_EQ(vector.Size(), cAmount);
+  EXPECT_EQ(vector.size(), cAmount);
 
   EXPECT_EQ(vector[0], std::string { "1" });
   EXPECT_EQ(vector[1], std::string { "2" });
@@ -630,14 +630,14 @@ TEST(Vector_Tests, Resize_Trivial_Decrease_CorrectValues)
 
   vector.Resize(2);
 
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.size(), 2);
   EXPECT_EQ(vector[0], 1);
   EXPECT_EQ(vector[1], 2);
 
   vector.PushBack(4);
   vector.Resize(1);
 
-  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector.size(), 1);
   EXPECT_EQ(vector[0], 1);
 }
 
@@ -651,14 +651,14 @@ TEST(Vector_Tests, Resize_NonTrivial_Decrease_CorrectValues)
 
   vector.Resize(2);
 
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.size(), 2);
   EXPECT_EQ(vector[0], std::string { "1" });
   EXPECT_EQ(vector[1], std::string { "2" });
 
   vector.PushBack("4");
   vector.Resize(1);
 
-  EXPECT_EQ(vector.Size(), 1);
+  EXPECT_EQ(vector.size(), 1);
   EXPECT_EQ(vector[0], std::string { "1" });
 }
 
@@ -804,9 +804,9 @@ TEST(Vector_Tests, MoveConstructor_Trivial_CorrectValues)
 
   Vector<double> copy { std::move(vector) };
 
-  EXPECT_EQ(copy.Size(), 2);
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(copy.size(), 2);
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_EQ(vector.capacity(), 0);
 
   EXPECT_EQ(copy[0], 1);
   EXPECT_EQ(copy[1], 2);
@@ -821,9 +821,9 @@ TEST(Vector_Tests, MoveConstructor_NonTrivial_CorrectValues)
 
   Vector<std::string> copy { std::move(vector) };
 
-  EXPECT_EQ(copy.Size(), 2);
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(copy.size(), 2);
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_EQ(vector.capacity(), 0);
 
   EXPECT_EQ(copy[0], std::string { "1" });
   EXPECT_EQ(copy[1], std::string { "2" });
@@ -838,9 +838,9 @@ TEST(Vector_Tests, MoveAssignment_Trivial_CorrectValues)
 
   Vector<double> moved = std::move(vector);
 
-  EXPECT_EQ(moved.Size(), 2);
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(moved.size(), 2);
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_EQ(vector.capacity(), 0);
 
   EXPECT_EQ(moved[0], 1);
   EXPECT_EQ(moved[1], 2);
@@ -855,9 +855,9 @@ TEST(Vector_Tests, MoveAssignment_NonTrivial_CorrectValues)
 
   Vector<std::string> moved = std::move(vector);
 
-  EXPECT_EQ(moved.Size(), 2);
-  EXPECT_EQ(vector.Size(), 0);
-  EXPECT_EQ(vector.Capacity(), 0);
+  EXPECT_EQ(moved.size(), 2);
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_EQ(vector.capacity(), 0);
 
   EXPECT_EQ(moved[0], std::string { "1" });
   EXPECT_EQ(moved[1], std::string { "2" });
@@ -872,7 +872,7 @@ TEST(Vector_Tests, MoveAssignment_SelfMove_DoNothing)
 
   vector = std::move(vector);
 
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.size(), 2);
   EXPECT_EQ(vector[0], 1);
   EXPECT_EQ(vector[1], 2);
 }
@@ -886,9 +886,9 @@ TEST(Vector_Tests, CopyConstructor_Trivial_CorrectValues)
 
   Vector<double> copy { vector };
 
-  EXPECT_EQ(copy.Size(), 2);
-  EXPECT_EQ(copy.Capacity(), 2);
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(copy.size(), 2);
+  EXPECT_EQ(copy.capacity(), 2);
+  EXPECT_EQ(vector.size(), 2);
 
   EXPECT_EQ(vector[0], 1);
   EXPECT_EQ(vector[1], 2);
@@ -905,9 +905,9 @@ TEST(Vector_Tests, CopyConstructor_NonTrivial_CorrectValues)
 
   Vector<std::string> copy { vector };
 
-  EXPECT_EQ(copy.Size(), 2);
-  EXPECT_EQ(copy.Capacity(), 2);
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(copy.size(), 2);
+  EXPECT_EQ(copy.capacity(), 2);
+  EXPECT_EQ(vector.size(), 2);
 
   EXPECT_EQ(vector[0], std::string { "1" });
   EXPECT_EQ(vector[1], std::string { "2" });
@@ -924,9 +924,9 @@ TEST(Vector_Tests, CopyAssignment_Trivial_CorrectValues)
 
   Vector<double> copy = vector;
 
-  EXPECT_EQ(copy.Size(), 2);
-  EXPECT_EQ(copy.Capacity(), 2);
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(copy.size(), 2);
+  EXPECT_EQ(copy.capacity(), 2);
+  EXPECT_EQ(vector.size(), 2);
 
   EXPECT_EQ(vector[0], 1);
   EXPECT_EQ(vector[1], 2);
@@ -943,9 +943,9 @@ TEST(Vector_Tests, CopyAssignment_NonTrivial_CorrectValues)
 
   Vector<std::string> copy = vector;
 
-  EXPECT_EQ(copy.Size(), 2);
-  EXPECT_EQ(copy.Capacity(), 2);
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(copy.size(), 2);
+  EXPECT_EQ(copy.capacity(), 2);
+  EXPECT_EQ(vector.size(), 2);
 
   EXPECT_EQ(vector[0], std::string { "1" });
   EXPECT_EQ(vector[1], std::string { "2" });
@@ -962,12 +962,12 @@ TEST(Vector_Tests, CopyAssignment_SelfAssignement_DoNothing)
 
   vector = vector;
 
-  EXPECT_EQ(vector.Size(), 2);
+  EXPECT_EQ(vector.size(), 2);
   EXPECT_EQ(vector[0], 1);
   EXPECT_EQ(vector[1], 2);
 }
 
-TEST(Vector_Tests, Equality_Empty_Equal)
+TEST(Vector_Tests, Equality_empty_Equal)
 {
   Vector<int> vector1;
 
@@ -1003,7 +1003,7 @@ TEST(Vector_Tests, Equality_SameValues_Equal)
   EXPECT_EQ(vector1, vector2);
 }
 
-TEST(Vector_Tests, Inequality_DifferentSize_NotEqual)
+TEST(Vector_Tests, Inequality_Differentsize_NotEqual)
 {
   Vector<int> vector1;
 

@@ -42,7 +42,7 @@ public:
   ///
   [[nodiscard]] Entity Obtain()
   {
-    if (recycled_.Empty()) return Generate();
+    if (recycled_.empty()) return Generate();
     else
     {
       auto entity = recycled_.back();
@@ -114,7 +114,7 @@ public:
   ///
   [[nodiscard]] constexpr size_t RecycledCount() const noexcept
   {
-    return recycled_.Size();
+    return recycled_.size();
   }
 
 private:

@@ -47,7 +47,7 @@ public:
   {
     const size_t index = Key<Type>();
 
-    if (values_.Size() <= index) [[unlikely]]
+    if (values_.size() <= index) [[unlikely]]
     {
       ASSERT(index < 10000, "To many types"); // Highly unlikely the map exceeds 10k types, probably a bug.
 
@@ -73,7 +73,7 @@ public:
   template<typename Type>
   [[nodiscard]] const Value& Get() const noexcept
   {
-    ASSERT(values_.Size() > Key<Type>(), "Type maps out of bounds");
+    ASSERT(values_.size() > Key<Type>(), "Type maps out of bounds");
 
     return values_[Key<Type>()];
   }

@@ -3,7 +3,7 @@
 
 #include "genebits/engine/containers/type_map.h"
 #include "genebits/engine/containers/vector.h"
-#include "genebits/engine/utilities/allocator.h"
+#include "genebits/engine/os/allocator.h"
 #include "genebits/engine/utilities/concepts.h"
 #include "genebits/engine/utilities/erased_ptr.h"
 #include "genebits/engine/utilities/type_info.h"
@@ -272,12 +272,12 @@ public:
     ASSERT(!Contains(entity), "Entity already exists");
 
 #ifndef NDEBUG
-    ASSERT(sizeof...(Components) == components_.Size(), "Invalid amount of components");
+    ASSERT(sizeof...(Components) == components_.size(), "Invalid amount of components");
     ((ASSERT(HasComponent<std::remove_cvref_t<Components>>(), "Component type not valid")), ...);
 #endif
 
     sparse_->Assure(entity);
-    (*sparse_)[entity] = static_cast<Entity>(dense_.Size());
+    (*sparse_)[entity] = static_cast<Entity>(dense_.size());
 
     dense_.PushBack(entity);
     ((Access<std::remove_cvref_t<Components>>().PushBack(std::forward<Components>(components))), ...);
@@ -335,7 +335,7 @@ public:
 
     size_t index;
 
-    return entity < sparse_->Capacity() && (index = (*sparse_)[entity]) < dense_.Size() && dense_[index] == entity;
+    return entity < sparse_->Capacity() && (index = (*sparse_)[entity]) < dense_.size() && dense_[index] == entity;
   }
 
   ///
@@ -420,7 +420,7 @@ public:
   ///
   [[nodiscard]] bool Empty() const noexcept
   {
-    return dense_.Empty();
+    return dense_.empty();
   }
 
   ///
@@ -430,7 +430,7 @@ public:
   ///
   [[nodiscard]] size_t Size() const noexcept
   {
-    return dense_.Size();
+    return dense_.size();
   }
 
 private:

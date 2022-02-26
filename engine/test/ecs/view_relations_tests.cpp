@@ -102,17 +102,17 @@ TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectSize)
   relations.AssureArchetype<int, float, double>();
   relations.AssureArchetype<bool, double, int>();
 
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<>()).Size(), 8);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int>()).Size(), 4);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<float>()).Size(), 4);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<double>()).Size(), 4);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<bool>()).Size(), 2);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<bool>()).Size(), 2);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int, float>()).Size(), 2);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<double, int>()).Size(), 2);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int, double>()).Size(), 2);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<float, double, int>()).Size(), 1);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<double, float, int>()).Size(), 1);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<>()).size(), 8);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int>()).size(), 4);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<float>()).size(), 4);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<double>()).size(), 4);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<bool>()).size(), 2);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<bool>()).size(), 2);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int, float>()).size(), 2);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<double, int>()).size(), 2);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int, double>()).size(), 2);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<float, double, int>()).size(), 1);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<double, float, int>()).size(), 1);
 }
 
 TEST(ViewRelations_Tests, ViewArchetypes_AfterView_CorrectSize)
@@ -124,16 +124,16 @@ TEST(ViewRelations_Tests, ViewArchetypes_AfterView_CorrectSize)
   relations.AssureArchetype<bool>();
   relations.AssureArchetype<double>();
 
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<>()).Size(), 4);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int>()).Size(), 1);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<>()).size(), 4);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int>()).size(), 1);
 
   relations.AssureArchetype<int, float>();
   relations.AssureArchetype<double, float>();
   relations.AssureArchetype<float, double, int>();
   relations.AssureArchetype<bool, double, int>();
 
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<>()).Size(), 8);
-  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int>()).Size(), 4);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<>()).size(), 8);
+  EXPECT_EQ(relations.ViewArchetypes(relations.AssureView<int>()).size(), 4);
 }
 
 TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectArchetypes)
@@ -160,7 +160,7 @@ TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectArchetypes)
 
   view_archetypes = relations.ViewArchetypes(view);
 
-  EXPECT_EQ(view_archetypes.Size(), archetypes.Size());
+  EXPECT_EQ(view_archetypes.size(), archetypes.size());
 
   std::sort(archetypes.begin(), archetypes.end());
   std::sort(view_archetypes.begin(), view_archetypes.end());

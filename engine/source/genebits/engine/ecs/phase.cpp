@@ -112,7 +112,7 @@ namespace
 
   Vector<Phase::CompiledSystem> MakeCompiledSystems(const Vector<SystemBase*>& systems, Vector<bool>& matrix)
   {
-    size_t count = systems.Size();
+    size_t count = systems.size();
 
     Vector<Phase::CompiledSystem> compiled_systems;
     compiled_systems.Resize(count);

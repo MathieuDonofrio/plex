@@ -211,7 +211,7 @@ namespace details
 /// @tparam Trigger Trigger used to fire events and wait on.
 ///
 template<typename Type, Trigger Trigger>
-class TriggerTask : public TaskBase
+class TriggerTask : public details::TaskBase
 {
 public:
   using promise_type = details::TriggerTaskPromise<Type, Trigger>;

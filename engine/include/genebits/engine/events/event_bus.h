@@ -72,7 +72,7 @@ namespace details
     ///
     [[nodiscard]] size_t Count() const noexcept
     {
-      return handlers_.Size();
+      return handlers_.size();
     }
 
   private:

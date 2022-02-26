@@ -40,7 +40,7 @@ public:
 
   [[nodiscard]] size_t Count() const noexcept
   {
-    return compiled_.Size();
+    return compiled_.size();
   }
 
   template<std::same_as<SystemGroup>... Group>
@@ -99,7 +99,7 @@ private:
 
   void Reserve()
   {
-    tasks_.Reserve(compiled_.Size());
+    tasks_.Reserve(compiled_.size());
 
     size_t total_dependencies = 0;
 

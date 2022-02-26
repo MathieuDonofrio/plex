@@ -11,99 +11,99 @@ namespace genebits::engine
 template<typename Type = void>
 class Task;
 
-///
-/// Used as a base class for coroutine tasks.
-///
-/// Manages a coroutine handle.
-///
-class TaskBase
-{
-public:
-  ///
-  /// Constructor.
-  ///
-  /// @param[in] handle The coroutine handle for the task.
-  ///
-  explicit TaskBase(std::coroutine_handle<> handle) noexcept : handle_(handle) {}
-
-  ///
-  /// Destructor.
-  ///
-  ~TaskBase() noexcept
-  {
-    if (handle_) handle_.destroy();
-  }
-
-  TaskBase(const TaskBase&) = delete;
-  TaskBase& operator=(const TaskBase&) = delete;
-
-  ///
-  /// Move constructor.
-  ///
-  /// @param[in] other Other task base to move.
-  ///
-  TaskBase(TaskBase&& other) noexcept : handle_(other.handle_)
-  {
-    other.handle_ = nullptr;
-  }
-
-  ///
-  /// Move assignment operator.
-  ///
-  /// @param[in] other Other task base to move.
-  ///
-  /// @return Reference of this.
-  ///
-  TaskBase& operator=(TaskBase&& other) noexcept
-  {
-    TaskBase(std::move(other)).Swap(*this);
-    return *this;
-  }
-
-  ///
-  /// Swaps handles with another task base.
-  ///
-  /// @param[in] other Other task base.
-  ///
-  void Swap(TaskBase& other) noexcept
-  {
-    std::swap(handle_, other.handle_);
-  }
-
-  // TODO operator == & !=
-
-protected:
-  ///
-  /// Returns the typed coroutine handle.
-  ///
-  /// @warning Undefined behaviour if the promise is not correct.
-  ///
-  /// @tparam PromiseType The type of the promise.
-  ///
-  /// @return The typed coroutine handle.
-  ///
-  template<typename PromiseType>
-  [[nodiscard]] std::coroutine_handle<PromiseType> Handle() const noexcept
-  {
-    return std::coroutine_handle<PromiseType>::from_address(handle_.address());
-  }
-
-  ///
-  /// Returns the void coroutine handle.
-  ///
-  /// @return Void coroutine handle.
-  ///
-  [[nodiscard]] std::coroutine_handle<> Handle() const noexcept
-  {
-    return handle_;
-  }
-
-private:
-  std::coroutine_handle<> handle_;
-};
-
 namespace details
 {
+  ///
+  /// Used as a base class for coroutine tasks.
+  ///
+  /// Manages a coroutine handle.
+  ///
+  class TaskBase
+  {
+  public:
+    ///
+    /// Constructor.
+    ///
+    /// @param[in] handle The coroutine handle for the task.
+    ///
+    explicit TaskBase(std::coroutine_handle<> handle) noexcept : handle_(handle) {}
+
+    ///
+    /// Destructor.
+    ///
+    ~TaskBase() noexcept
+    {
+      if (handle_) handle_.destroy();
+    }
+
+    TaskBase(const TaskBase&) = delete;
+    TaskBase& operator=(const TaskBase&) = delete;
+
+    ///
+    /// Move constructor.
+    ///
+    /// @param[in] other Other task base to move.
+    ///
+    TaskBase(TaskBase&& other) noexcept : handle_(other.handle_)
+    {
+      other.handle_ = nullptr;
+    }
+
+    ///
+    /// Move assignment operator.
+    ///
+    /// @param[in] other Other task base to move.
+    ///
+    /// @return Reference of this.
+    ///
+    TaskBase& operator=(TaskBase&& other) noexcept
+    {
+      TaskBase(std::move(other)).Swap(*this);
+      return *this;
+    }
+
+    ///
+    /// Swaps handles with another task base.
+    ///
+    /// @param[in] other Other task base.
+    ///
+    void Swap(TaskBase& other) noexcept
+    {
+      std::swap(handle_, other.handle_);
+    }
+
+    // TODO operator == & !=
+
+  protected:
+    ///
+    /// Returns the typed coroutine handle.
+    ///
+    /// @warning Undefined behaviour if the promise is not correct.
+    ///
+    /// @tparam PromiseType The type of the promise.
+    ///
+    /// @return The typed coroutine handle.
+    ///
+    template<typename PromiseType>
+    [[nodiscard]] std::coroutine_handle<PromiseType> Handle() const noexcept
+    {
+      return std::coroutine_handle<PromiseType>::from_address(handle_.address());
+    }
+
+    ///
+    /// Returns the void coroutine handle.
+    ///
+    /// @return Void coroutine handle.
+    ///
+    [[nodiscard]] std::coroutine_handle<> Handle() const noexcept
+    {
+      return handle_;
+    }
+
+  private:
+    std::coroutine_handle<> handle_;
+  };
+
   template<typename Type>
   class TaskPromise;
 
@@ -385,7 +385,7 @@ namespace details
 /// @tparam Type The result/return type of the task.
 ///
 template<typename Type>
-class Task : public TaskBase
+class Task : public details::TaskBase
 {
 public:
   using promise_type = details::TaskPromise<Type>;

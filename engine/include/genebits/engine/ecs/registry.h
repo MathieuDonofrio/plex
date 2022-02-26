@@ -225,7 +225,7 @@ private:
   {
     const ArchetypeId archetype = relations_.template AssureArchetype<Components...>();
 
-    if (storages_.Size() <= archetype) storages_.Resize(archetype + 1, nullptr);
+    if (storages_.size() <= archetype) storages_.Resize(archetype + 1, nullptr);
 
     auto storage = storages_[archetype];
 

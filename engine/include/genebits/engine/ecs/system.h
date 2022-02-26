@@ -13,7 +13,7 @@
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/registry.h"
-#include "genebits/engine/utilities/allocator.h"
+#include "genebits/engine/os/allocator.h"
 #include "genebits/engine/utilities/ref.h"
 
 namespace genebits::engine
@@ -157,7 +157,7 @@ public:
 
   [[nodiscard]] constexpr size_t Count() const noexcept
   {
-    return registered_systems_.Size();
+    return registered_systems_.size();
   }
 
   [[nodiscard]] constexpr Ref<SystemBase>* RawSystems() noexcept

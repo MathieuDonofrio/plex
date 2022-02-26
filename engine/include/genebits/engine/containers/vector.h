@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/utilities/allocator.h"
+#include "genebits/engine/os/allocator.h"
 #include "genebits/engine/utilities/type_traits.h"
 
 namespace genebits::engine
@@ -19,6 +19,134 @@ namespace genebits::engine
 ///
 template<typename Type>
 concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
+
+namespace details
+{
+  template<VectorType Type>
+  class VectorBase
+  {
+  public:
+    // Style Exception: STL
+    // clang-format off
+
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
+    using value_type = Type;
+
+    using iterator = Type*;
+    using const_iterator = const Type*;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+
+    using reference = Type&;
+    using const_reference = const Type&;
+    using pointer = Type*;
+    using const_pointer = const Type*;
+
+    // Forward iterator creation methods.
+    [[nodiscard]] constexpr iterator begin() { return array_; }
+    [[nodiscard]] constexpr const_iterator begin() const { return array_; }
+    [[nodiscard]] constexpr iterator end() { return array_ + size_; }
+    [[nodiscard]] constexpr const_iterator end() const { return array_ + size_; }
+
+    // Explicit const forward iterator creation methods.
+    [[nodiscard]] constexpr const_iterator cbegin() const { return array_; }
+    [[nodiscard]] constexpr const_iterator cend() const { return array_ + size_; }
+
+    // Reverse iterator creation methods.
+    [[nodiscard]] constexpr reverse_iterator rbegin() { return reverse_iterator(end()); }
+    [[nodiscard]] constexpr const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    [[nodiscard]] constexpr reverse_iterator rend() { return reverse_iterator(begin()); }
+    [[nodiscard]] constexpr const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+
+    // Internal array accessors
+    [[nodiscard]] constexpr pointer data() { return pointer(begin()); }
+    [[nodiscard]] constexpr const_pointer data() const { return const_pointer(begin()); }
+    [[nodiscard]] constexpr reference front() { return begin()[0]; }
+    [[nodiscard]] constexpr const_reference front() const { return begin()[0]; }
+    [[nodiscard]] constexpr reference back() { return end()[-1]; }
+    [[nodiscard]] constexpr const_reference back() const { return end()[-1]; }
+
+    // clang-format on
+
+    ///
+    /// Const array access operator.
+    ///
+    /// @param[in] index Index to access
+    ///
+    /// @return Const reference to element at the index.
+    ///
+    [[nodiscard]] constexpr const Type& operator[](const size_type index) const noexcept
+    {
+      ASSERT(index < size_, "Index out of bounds");
+      return array_[index];
+    }
+
+    ///
+    /// Array access operator.
+    ///
+    /// @param[in] index Index to access
+    ///
+    /// @return Reference to element at the index.
+    ///
+    [[nodiscard]] constexpr Type& operator[](const size_type index) noexcept
+    {
+      ASSERT(index < size_, "Index out of bounds");
+      return array_[index];
+    }
+
+    ///
+    /// Returns the amount of elements currently stored in the vector.
+    ///
+    /// @return Size of the vector.
+    ///
+    [[nodiscard]] constexpr size_t size() const noexcept
+    {
+      return size_;
+    }
+
+    ///
+    /// Returns the current maximum amount of elements that can be stored
+    /// in the vector without needing to grow the internal array.
+    ///
+    /// @return Capacity of the vector.
+    ///
+    [[nodiscard]] constexpr size_t capacity() const noexcept
+    {
+      return capacity_;
+    }
+
+    ///
+    /// Returns whether or not the vector is empty.
+    ///
+    /// @return True if the vector is empty, false otherwise.
+    ///
+    [[nodiscard]] constexpr bool empty() const noexcept
+    {
+      return size_ == 0;
+    }
+
+  protected:
+    ///
+    /// Default constructor
+    ///
+    constexpr VectorBase() noexcept : array_(nullptr), size_(0), capacity_(0) {}
+
+    ///
+    /// Parametric constructor
+    ///
+    constexpr VectorBase(Type* array, uint32_t size, uint32_t capacity) noexcept
+      : array_(array), size_(size), capacity_(capacity)
+    {}
+
+  protected:
+    Type* array_;
+
+    // We use 32 bit size & capacity to reduce the size of the vector on 64 bit.
+    uint32_t size_;
+    uint32_t capacity_;
+  };
+} // namespace details
 
 ///
 /// Fast unordered vector optimized for performance.
@@ -38,86 +166,21 @@ concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_construc
 /// @tparam AllocatorType The allocator to use for allocating memory.
 ///
 template<VectorType Type, Allocator AllocatorType = Mallocator>
-class Vector : private AllocatorType
+class Vector : public details::VectorBase<Type>, private AllocatorType
 {
-public:
-  // Style Exception: STL
-  // clang-format off
-
-  using size_type = size_t;
-  using difference_type = ptrdiff_t;
-  using value_type = Type;
-
-  using iterator = Type*;
-  using const_iterator = const Type*;
-  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-  using reverse_iterator = std::reverse_iterator<iterator>;
-
-  using reference = Type&;
-  using const_reference = const Type&;
-  using pointer = Type*;
-  using const_pointer = const Type*;
-
-  // Forward iterator creation methods.
-  [[nodiscard]] constexpr iterator begin() { return array_; }
-  [[nodiscard]] constexpr const_iterator begin() const { return array_; }
-  [[nodiscard]] constexpr iterator end() { return array_ + size_; }
-  [[nodiscard]] constexpr const_iterator end() const { return array_ + size_; }
-
-  // Explicit const forward iterator creation methods.
-  [[nodiscard]] constexpr const_iterator cbegin() const { return array_; }
-  [[nodiscard]] constexpr const_iterator cend() const { return array_ + size_; }
-
-  // Reverse iterator creation methods.
-  [[nodiscard]] constexpr reverse_iterator rbegin() { return reverse_iterator(end()); }
-  [[nodiscard]] constexpr const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-  [[nodiscard]] constexpr reverse_iterator rend() { return reverse_iterator(begin()); }
-  [[nodiscard]] constexpr const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
-
-  // Internal array accessors
-  [[nodiscard]] constexpr pointer data() { return pointer(begin()); }
-  [[nodiscard]] constexpr const_pointer data() const { return const_pointer(begin()); }
-  [[nodiscard]] constexpr reference front() { return begin()[0]; }
-  [[nodiscard]] constexpr const_reference front() const { return begin()[0]; }
-  [[nodiscard]] constexpr reference back() { return end()[-1]; }
-  [[nodiscard]] constexpr const_reference back() const { return end()[-1]; }
-
-  // Size
-  [[nodiscard]] constexpr size_t size() const { return size_; }
-
-  // clang-format on
-
-  ///
-  /// Const array access operator.
-  ///
-  /// @param[in] index Index to access
-  ///
-  /// @return Const reference to element at the index.
-  ///
-  [[nodiscard]] constexpr const Type& operator[](const size_type index) const noexcept
-  {
-    ASSERT(index < size_, "Index out of bounds");
-    return array_[index];
-  }
-
-  ///
-  /// Array access operator.
-  ///
-  /// @param[in] index Index to access
-  ///
-  /// @return Reference to element at the index.
-  ///
-  [[nodiscard]] constexpr Type& operator[](const size_type index) noexcept
-  {
-    ASSERT(index < size_, "Index out of bounds");
-    return array_[index];
-  }
+private:
+  using SuperClass = typename details::VectorBase<Type>;
 
 public:
+  using iterator = typename SuperClass::iterator;
+  using const_iterator = typename SuperClass::const_iterator;
+  using reference = typename SuperClass::reference;
+  using size_type = typename SuperClass::size_type;
+
   ///
   /// Default constructor
   ///
-  constexpr Vector() noexcept : array_(nullptr), size_(0), capacity_(0) {}
+  constexpr Vector() noexcept : details::VectorBase<Type>() {}
 
   // TODO constructor with initializer list
 
@@ -126,7 +189,7 @@ public:
   ///
   ~Vector() noexcept
   {
-    if (array_) [[likely]]
+    if (this->array_) [[likely]]
     {
       DestroyAll();
       Deallocate();
@@ -144,8 +207,8 @@ public:
   void PushBack(const Type& value) noexcept
   {
     PrepareInsertion();
-    new (array_ + size_) Type(value);
-    ++size_;
+    new (this->end()) Type(value);
+    ++this->size_;
   }
 
   ///
@@ -159,8 +222,8 @@ public:
   void PushBack(Type&& value) noexcept
   {
     PrepareInsertion();
-    new (array_ + size_) Type(std::forward<Type>(value));
-    ++size_;
+    new (this->end()) Type(std::forward<Type>(value));
+    ++this->size_;
   }
 
   // TODO emplace back
@@ -172,10 +235,10 @@ public:
   ///
   void PopBack() noexcept
   {
-    ASSERT(size_ > 0, "Vector is empty");
+    ASSERT(this->size_ > 0, "Vector is empty");
 
-    --size_;
-    if constexpr (!std::is_trivially_destructible_v<Type>) array_[size_].~Type();
+    --this->size_;
+    if constexpr (!std::is_trivially_destructible_v<Type>) this->array_[this->size_].~Type();
   }
 
   // TODO use normal erase & and SwapAndPop
@@ -193,17 +256,17 @@ public:
   ///
   void Erase(iterator it) noexcept
   {
-    ASSERT(size_ > 0, "Vector is empty");
+    ASSERT(this->size_ > 0, "Vector is empty");
 
-    if (size_ == 1) [[unlikely]]
+    if (this->size_ == 1) [[unlikely]]
     {
       if constexpr (!std::is_trivially_destructible_v<Type>) it->~Type();
-      size_ = 0;
+      this->size_ = 0;
     }
     else [[likely]]
     {
-      --size_;
-      *it = std::move(array_[size_]);
+      --this->size_;
+      *it = std::move(*this->end());
     }
   }
 
@@ -222,7 +285,7 @@ public:
   ///
   void EraseAt(size_t index) noexcept
   {
-    Erase(array_ + index);
+    Erase(this->array_ + index);
   }
 
   ///
@@ -246,18 +309,18 @@ public:
   requires std::is_constructible_v<Type, Args...>
   void Resize(const size_t new_size, Args&&... args) noexcept
   {
-    if (static_cast<uint32_t>(new_size) > capacity_) Grow(static_cast<uint32_t>(new_size));
+    if (static_cast<uint32_t>(new_size) > this->capacity_) Grow(static_cast<uint32_t>(new_size));
 
-    if (static_cast<uint32_t>(new_size) < size_) std::destroy(array_ + new_size, array_ + size_);
+    if (static_cast<uint32_t>(new_size) < this->size_) std::destroy(this->begin() + new_size, this->end());
     else
     {
-      for (size_t i = size_; i != new_size; i++)
+      for (size_t i = this->size_; i != new_size; i++)
       {
-        new (array_ + i) Type(std::forward<Args>(args)...);
+        new (this->array_ + i) Type(std::forward<Args>(args)...);
       }
     }
 
-    size_ = static_cast<uint32_t>(new_size);
+    this->size_ = static_cast<uint32_t>(new_size);
   }
 
   // TODO shrink to fit. Should be pretty cheap because of realloc.
@@ -273,7 +336,7 @@ public:
   ///
   void Reserve(const size_t min_capacity) noexcept
   {
-    if (static_cast<uint32_t>(min_capacity) > capacity_) [[likely]] { Grow(static_cast<uint32_t>(min_capacity)); }
+    if (static_cast<uint32_t>(min_capacity) > this->capacity_) [[likely]] { Grow(static_cast<uint32_t>(min_capacity)); }
   }
 
   ///
@@ -285,38 +348,7 @@ public:
   {
     DestroyAll();
 
-    size_ = 0;
-  }
-
-  ///
-  /// Returns the amount of elements currently stored in the vector.
-  ///
-  /// @return Size of the vector.
-  ///
-  [[nodiscard]] constexpr size_t Size() const noexcept
-  {
-    return size_;
-  }
-
-  ///
-  /// Returns the current maximum amount of elements that can be stored
-  /// in the vector without needing to grow the internal array.
-  ///
-  /// @return Capacity of the vector.
-  ///
-  [[nodiscard]] constexpr size_t Capacity() const noexcept
-  {
-    return capacity_;
-  }
-
-  ///
-  /// Returns whether or not the vector is empty.
-  ///
-  /// @return True if the vector is empty, false otherwise.
-  ///
-  [[nodiscard]] constexpr bool Empty() const noexcept
-  {
-    return size_ == 0;
+    this->size_ = 0;
   }
 
 public:
@@ -336,7 +368,7 @@ public:
   /// @param[in] other Vector to move into this one.
   ///
   constexpr Vector(Vector<Type, AllocatorType>&& other) noexcept
-    : array_(other.array_), size_(other.size_), capacity_(other.capacity_)
+    : details::VectorBase<Type>(other.array_, other.size_, other.capacity_)
   {
     other.array_ = nullptr;
     other.size_ = 0;
@@ -355,9 +387,9 @@ public:
     // TODO use swap
 
     // Avoid self-assignment
-    if (other.array_ == array_) return *this;
+    if (other.array_ == this->array_) return *this;
 
-    if (array_)
+    if (this->array_)
     {
       DestroyAll();
       Deallocate();
@@ -380,13 +412,13 @@ public:
     // TODO use swap
 
     // Avoid self-move
-    if (other.array_ == array_) return *this;
+    if (other.array_ == this->array_) return *this;
 
-    array_ = other.array_;
+    this->array_ = other.array_;
     other.array_ = nullptr;
-    size_ = other.size_;
+    this->size_ = other.size_;
     other.size_ = 0;
-    capacity_ = other.capacity_;
+    this->capacity_ = other.capacity_;
     other.capacity_ = 0;
 
     return *this;
@@ -401,10 +433,10 @@ public:
   ///
   [[nodiscard]] constexpr bool operator==(const Vector<Type, AllocatorType>& other) const noexcept
   {
-    if (array_ == other.array_) return true; // Checks for same instance or two empty vectors.
-    if (size_ != other.size_) return false;
+    if (this->array_ == other.array_) return true; // Checks for same instance or two empty vectors.
+    if (this->size_ != other.size_) return false;
 
-    return std::equal(begin(), end(), other.begin());
+    return std::equal(this->begin(), this->end(), other.begin());
   }
 
   ///
@@ -427,33 +459,33 @@ protected:
   ///
   void Grow(const uint32_t new_capacity) noexcept
   {
-    const size_t current_capacity_bytes = sizeof(Type) * capacity_;
+    const size_t current_capacity_bytes = sizeof(Type) * this->capacity_;
     const size_t new_capacity_bytes = sizeof(Type) * new_capacity;
 
     if constexpr (IsRelocatable<Type>::value)
     {
-      Block block { reinterpret_cast<char*>(array_), current_capacity_bytes };
+      Block block { reinterpret_cast<char*>(this->array_), current_capacity_bytes };
 
       AllocatorType::Reallocate(block, new_capacity_bytes);
 
-      array_ = reinterpret_cast<Type*>(block.ptr);
+      this->array_ = reinterpret_cast<Type*>(block.ptr);
     }
     else
     {
       Block block = AllocatorType::Allocate(new_capacity_bytes);
 
-      if (array_) [[likely]]
+      if (this->array_) [[likely]]
       {
-        std::uninitialized_move(begin(), end(), reinterpret_cast<Type*>(block.ptr));
-        std::destroy(begin(), end());
+        std::uninitialized_move(this->begin(), this->end(), reinterpret_cast<Type*>(block.ptr));
+        std::destroy(this->begin(), this->end());
 
-        AllocatorType::Deallocate(Block { reinterpret_cast<char*>(array_), current_capacity_bytes });
+        AllocatorType::Deallocate(Block { reinterpret_cast<char*>(this->array_), current_capacity_bytes });
       }
 
-      array_ = reinterpret_cast<Type*>(block.ptr);
+      this->array_ = reinterpret_cast<Type*>(block.ptr);
     }
 
-    capacity_ = new_capacity;
+    this->capacity_ = new_capacity;
   }
 
   ///
@@ -464,7 +496,7 @@ protected:
     // TODO find better strategies?
     // Maybe specialize for sizeof(Type) & AllocatorType
 
-    const uint32_t new_capacity = ((capacity_ << 1) | 0xF);
+    const uint32_t new_capacity = ((this->capacity_ << 1) | 0xF);
 
     Grow(new_capacity);
   }
@@ -474,7 +506,7 @@ protected:
   ///
   void PrepareInsertion() noexcept
   {
-    if (size_ == capacity_) [[unlikely]]
+    if (this->size_ == this->capacity_) [[unlikely]]
       Grow();
   }
 
@@ -486,7 +518,7 @@ protected:
   ///
   void DestroyAll() noexcept
   {
-    std::destroy(begin(), end());
+    std::destroy(this->begin(), this->end());
   }
 
   ///
@@ -494,8 +526,8 @@ protected:
   ///
   void Deallocate() noexcept
   {
-    AllocatorType::Deallocate(Block { reinterpret_cast<char*>(array_), capacity_ });
-    array_ = nullptr;
+    AllocatorType::Deallocate(Block { reinterpret_cast<char*>(this->array_), this->capacity_ });
+    this->array_ = nullptr;
   }
 
   ///
@@ -511,19 +543,12 @@ protected:
   {
     const Block block = AllocatorType::Allocate(sizeof(Type) * other.size_);
 
-    array_ = reinterpret_cast<Type*>(block.ptr);
-    size_ = other.size_;
-    capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
+    this->array_ = reinterpret_cast<Type*>(block.ptr);
+    this->size_ = other.size_;
+    this->capacity_ = static_cast<uint32_t>(block.size / sizeof(Type));
 
-    std::uninitialized_copy(other.cbegin(), other.cend(), array_);
+    std::uninitialized_copy(other.cbegin(), other.cend(), this->array_);
   }
-
-private:
-  Type* array_;
-
-  // We use 32 bit size & capacity to reduce the size of the vector on 64 bit.
-  uint32_t size_;
-  uint32_t capacity_;
 };
 
 } // namespace genebits::engine

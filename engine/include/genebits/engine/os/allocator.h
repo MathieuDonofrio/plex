@@ -1,10 +1,11 @@
-#ifndef GENEBITS_ENGINE_UTILITIES_ALLOCATOR_H
-#define GENEBITS_ENGINE_UTILITIES_ALLOCATOR_H
+#ifndef GENEBITS_ENGINE_OS_ALLOCATOR_H
+#define GENEBITS_ENGINE_OS_ALLOCATOR_H
 
 #include <concepts>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <type_traits>
 
 namespace genebits::engine

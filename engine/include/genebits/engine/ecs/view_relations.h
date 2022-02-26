@@ -31,7 +31,7 @@ public:
   {
     const ViewId id = GetViewId<std::remove_cvref_t<Components>...>();
 
-    if (id >= view_states_.Size() || !view_states_[id]) [[unlikely]]
+    if (id >= view_states_.size() || !view_states_[id]) [[unlikely]]
     {
       std::scoped_lock lock_(mutex_);
 
@@ -55,7 +55,7 @@ public:
   {
     const ArchetypeId id = GetArchetypeId<std::remove_cvref_t<Components>...>();
 
-    if (id >= archetype_states_.Size() || !archetype_states_[id]) [[unlikely]]
+    if (id >= archetype_states_.size() || !archetype_states_[id]) [[unlikely]]
     {
       std::scoped_lock lock_(mutex_);
 
@@ -76,7 +76,7 @@ public:
   ///
   [[nodiscard]] constexpr const Vector<ArchetypeId>& ViewArchetypes(const ViewId id) const noexcept
   {
-    ASSERT(id < view_states_.Size() && view_states_[id], "View not initialized");
+    ASSERT(id < view_states_.size() && view_states_[id], "View not initialized");
 
     return view_archetypes_[id];
   }
@@ -99,7 +99,7 @@ private:
   template<std::unsigned_integral IdType, typename... Components>
   static bool Initialize(Vector<Vector<ComponentId>>& components, Vector<bool>& states, const IdType id)
   {
-    if (id >= states.Size())
+    if (id >= states.size())
     {
       components.Resize(id + 1);
       states.Resize(id + 1);

@@ -7,7 +7,7 @@
 #include <type_traits>
 
 #include "genebits/engine/containers/vector.h"
-#include "genebits/engine/utilities/allocator.h"
+#include "genebits/engine/os/allocator.h"
 #include "genebits/engine/utilities/type_info.h"
 
 namespace genebits::engine
