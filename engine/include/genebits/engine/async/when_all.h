@@ -4,7 +4,7 @@
 #include <atomic>
 
 #include "genebits/engine/async/trigger_task.h"
-#include "genebits/engine/containers/fast_vector.h"
+#include "genebits/engine/containers/vector.h"
 
 namespace genebits::engine
 {
@@ -190,7 +190,7 @@ Task<> WhenAll(Awaitables awaitables)
 
   WhenAllCounter when_all_counter(amount);
 
-  FastVector<TriggerTask<void, WhenAllCounter>> trigger_tasks;
+  Vector<TriggerTask<void, WhenAllCounter>> trigger_tasks;
   trigger_tasks.Reserve(amount);
 
   for (auto&& awaitable : awaitables)

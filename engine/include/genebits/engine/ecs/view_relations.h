@@ -74,7 +74,7 @@ public:
   ///
   /// @return List of archetypes for the view.
   ///
-  [[nodiscard]] constexpr const FastVector<ArchetypeId>& ViewArchetypes(const ViewId id) const noexcept
+  [[nodiscard]] constexpr const Vector<ArchetypeId>& ViewArchetypes(const ViewId id) const noexcept
   {
     ASSERT(id < view_states_.Size() && view_states_[id], "View not initialized");
 
@@ -97,7 +97,7 @@ private:
   /// @return True if already initialized, false otherwise.
   ///
   template<std::unsigned_integral IdType, typename... Components>
-  static bool Initialize(FastVector<FastVector<ComponentId>>& components, FastVector<bool>& states, const IdType id)
+  static bool Initialize(Vector<Vector<ComponentId>>& components, Vector<bool>& states, const IdType id)
   {
     if (id >= states.Size())
     {
@@ -135,12 +135,12 @@ private:
   void AddArchetype(ArchetypeId id);
 
 private:
-  FastVector<FastVector<ComponentId>> archetype_components_;
-  FastVector<bool> archetype_states_;
+  Vector<Vector<ComponentId>> archetype_components_;
+  Vector<bool> archetype_states_;
 
-  FastVector<FastVector<ComponentId>> view_components_;
-  FastVector<FastVector<ArchetypeId>> view_archetypes_;
-  FastVector<bool> view_states_;
+  Vector<Vector<ComponentId>> view_components_;
+  Vector<Vector<ArchetypeId>> view_archetypes_;
+  Vector<bool> view_states_;
 
   std::mutex mutex_;
 };

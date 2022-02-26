@@ -46,7 +46,7 @@ public:
   template<std::same_as<SystemGroup>... Group>
   static Phase Compile(Ref<Group>... groups)
   {
-    FastVector<Ref<SystemGroup>> vector;
+    Vector<Ref<SystemGroup>> vector;
     vector.Reserve(sizeof...(Group));
 
     (vector.PushBack(std::move(groups)), ...);
@@ -54,17 +54,17 @@ public:
     return Compile(vector);
   }
 
-  static Phase Compile(const FastVector<Ref<SystemGroup>>& groups);
+  static Phase Compile(const Vector<Ref<SystemGroup>>& groups);
 
 public:
   struct CompiledSystem
   {
     SystemBase* system;
-    FastVector<size_t> dependencies;
+    Vector<size_t> dependencies;
   };
 
 private:
-  Phase(FastVector<CompiledSystem>&& compiled_systems) : compiled_(std::move(compiled_systems))
+  Phase(Vector<CompiledSystem>&& compiled_systems) : compiled_(std::move(compiled_systems))
   {
     Reserve();
   }
@@ -112,9 +112,9 @@ private:
   }
 
 private:
-  FastVector<CompiledSystem> compiled_;
-  FastVector<SharedTask<>> tasks_;
-  FastVector<TriggerTask<void, WhenAllCounter>> triggers_;
+  Vector<CompiledSystem> compiled_;
+  Vector<SharedTask<>> tasks_;
+  Vector<TriggerTask<void, WhenAllCounter>> triggers_;
 };
 
 } // namespace genebits::engine

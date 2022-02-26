@@ -3,7 +3,7 @@
 
 #include <concepts>
 
-#include "genebits/engine/containers/fast_vector.h"
+#include "genebits/engine/containers/vector.h"
 
 namespace genebits::engine
 {
@@ -119,7 +119,7 @@ public:
 
 private:
   Entity current_;
-  FastVector<Entity, AllocatorImpl> recycled_;
+  Vector<Entity, AllocatorImpl> recycled_;
 };
 
 } // namespace genebits::engine

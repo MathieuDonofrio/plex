@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_CONTAINERS_FAST_VECTOR_H
-#define GENEBITS_ENGINE_CONTAINERS_FAST_VECTOR_H
+#ifndef GENEBITS_ENGINE_CONTAINERS_VECTOR_H
+#define GENEBITS_ENGINE_CONTAINERS_VECTOR_H
 
 #include <iterator>
 #include <memory>
@@ -13,12 +13,12 @@
 namespace genebits::engine
 {
 ///
-/// Concept that determines if the type can be used as in a fast vector.
+/// Concept that determines if the type can be used as in a vector.
 ///
 /// @tparam Type The type to check
 ///
 template<typename Type>
-concept FastVectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
+concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
 
 ///
 /// Fast unordered vector optimized for performance.
@@ -37,8 +37,8 @@ concept FastVectorType = std::is_copy_constructible_v<Type> || std::is_move_cons
 /// @tparam Type The type the vector contains.
 /// @tparam AllocatorType The allocator to use for allocating memory.
 ///
-template<FastVectorType Type, Allocator AllocatorType = Mallocator>
-class FastVector : private AllocatorType
+template<VectorType Type, Allocator AllocatorType = Mallocator>
+class Vector : private AllocatorType
 {
 public:
   // Style Exception: STL
@@ -117,14 +117,14 @@ public:
   ///
   /// Default constructor
   ///
-  constexpr FastVector() noexcept : array_(nullptr), size_(0), capacity_(0) {}
+  constexpr Vector() noexcept : array_(nullptr), size_(0), capacity_(0) {}
 
   // TODO constructor with initializer list
 
   ///
   /// Destructor
   ///
-  ~FastVector() noexcept
+  ~Vector() noexcept
   {
     if (array_) [[likely]]
     {
@@ -325,7 +325,7 @@ public:
   ///
   /// @param[in] other Vector to copy from.
   ///
-  FastVector(const FastVector<Type, AllocatorType>& other) noexcept
+  Vector(const Vector<Type, AllocatorType>& other) noexcept
   {
     CopyFrom(other);
   }
@@ -335,7 +335,7 @@ public:
   ///
   /// @param[in] other Vector to move into this one.
   ///
-  constexpr FastVector(FastVector<Type, AllocatorType>&& other) noexcept
+  constexpr Vector(Vector<Type, AllocatorType>&& other) noexcept
     : array_(other.array_), size_(other.size_), capacity_(other.capacity_)
   {
     other.array_ = nullptr;
@@ -350,7 +350,7 @@ public:
   ///
   /// @return Reference to this vector.
   ///
-  FastVector& operator=(const FastVector<Type, AllocatorType>& other) noexcept
+  Vector& operator=(const Vector<Type, AllocatorType>& other) noexcept
   {
     // TODO use swap
 
@@ -375,7 +375,7 @@ public:
   ///
   /// @return Reference to this vector.
   ///
-  constexpr FastVector& operator=(FastVector<Type, AllocatorType>&& other) noexcept
+  constexpr Vector& operator=(Vector<Type, AllocatorType>&& other) noexcept
   {
     // TODO use swap
 
@@ -399,7 +399,7 @@ public:
   ///
   /// @return True if vectors are equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator==(const FastVector<Type, AllocatorType>& other) const noexcept
+  [[nodiscard]] constexpr bool operator==(const Vector<Type, AllocatorType>& other) const noexcept
   {
     if (array_ == other.array_) return true; // Checks for same instance or two empty vectors.
     if (size_ != other.size_) return false;
@@ -414,7 +414,7 @@ public:
   ///
   /// @return True if vectors are not equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator!=(const FastVector<Type, AllocatorType>& other) const noexcept
+  [[nodiscard]] constexpr bool operator!=(const Vector<Type, AllocatorType>& other) const noexcept
   {
     return !(*this == other);
   }
@@ -507,7 +507,7 @@ protected:
   ///
   template<Allocator OtherAllocator>
   requires std::is_copy_constructible_v<Type>
-  void CopyFrom(const FastVector<Type, OtherAllocator>& other) noexcept
+  void CopyFrom(const Vector<Type, OtherAllocator>& other) noexcept
   {
     const Block block = AllocatorType::Allocate(sizeof(Type) * other.size_);
 

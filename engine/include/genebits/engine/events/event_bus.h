@@ -4,8 +4,8 @@
 #include <memory>
 #include <mutex>
 
-#include "genebits/engine/containers/fast_vector.h"
 #include "genebits/engine/containers/type_map.h"
+#include "genebits/engine/containers/vector.h"
 #include "genebits/engine/utilities/delegate.h"
 #include "genebits/engine/utilities/erased_ptr.h"
 
@@ -76,7 +76,7 @@ namespace details
     }
 
   private:
-    FastVector<EventHandler<Event>> handlers_;
+    Vector<EventHandler<Event>> handlers_;
   };
 } // namespace details
 

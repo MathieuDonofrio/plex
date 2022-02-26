@@ -140,8 +140,8 @@ TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectArchetypes)
 {
   ViewRelations relations;
 
-  FastVector<ArchetypeId> archetypes;
-  FastVector<ArchetypeId> view_archetypes;
+  Vector<ArchetypeId> archetypes;
+  Vector<ArchetypeId> view_archetypes;
 
   archetypes.PushBack(relations.AssureArchetype<int>());
 

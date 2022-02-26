@@ -6,7 +6,7 @@
 #include <mutex>
 #include <type_traits>
 
-#include "genebits/engine/containers/fast_vector.h"
+#include "genebits/engine/containers/vector.h"
 #include "genebits/engine/utilities/allocator.h"
 #include "genebits/engine/utilities/type_info.h"
 
@@ -260,9 +260,9 @@ namespace details
     ///
     /// @return Vector of component ids at runtime.
     ///
-    static FastVector<ComponentId> Value()
+    static Vector<ComponentId> Value()
     {
-      FastVector<ComponentId> components;
+      Vector<ComponentId> components;
       components.Reserve(sizeof...(Components));
 
       (components.PushBack(GetComponentId<Components>()), ...);
@@ -282,7 +282,7 @@ namespace details
 /// @return Sorted list of component ids.
 ///
 template<typename... Components>
-const FastVector<ComponentId>& GetComponentIds()
+const Vector<ComponentId>& GetComponentIds()
 {
   static const auto components = details::ComponentSequence<ComponentList<Components...>>::Value();
 

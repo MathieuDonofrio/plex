@@ -8,7 +8,7 @@
 #include "genebits/engine/async/sync_wait.h"
 #include "genebits/engine/async/task.h"
 #include "genebits/engine/async/when_all.h"
-#include "genebits/engine/containers/fast_vector.h"
+#include "genebits/engine/containers/vector.h"
 
 namespace genebits::engine::bench
 {
@@ -120,7 +120,7 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
   {
     state.PauseTiming();
 
-    FastVector<Task<>> tasks;
+    Vector<Task<>> tasks;
     tasks.Reserve(amount);
 
     benchmark::DoNotOptimize(tasks);
@@ -192,7 +192,7 @@ static void ThreadPool_STD_Async_ManySmallTasks(benchmark::State& state)
   {
     state.PauseTiming();
 
-    FastVector<std::future<void>> tasks;
+    Vector<std::future<void>> tasks;
     tasks.Resize(amount);
 
     benchmark::DoNotOptimize(tasks);

@@ -243,7 +243,7 @@ private:
   EntityManager<Entity> manager_;
   ViewRelations relations_;
 
-  FastVector<Storage<Entity>*> storages_;
+  Vector<Storage<Entity>*> storages_;
 };
 
 ///
@@ -1146,7 +1146,7 @@ public:
 
 private:
   Registry& registry_;
-  const FastVector<ArchetypeId>& archetypes_;
+  const Vector<ArchetypeId>& archetypes_;
 };
 
 } // namespace genebits::engine

@@ -1,8 +1,8 @@
 #ifndef GENEBITS_ENGINE_STORAGE_H
 #define GENEBITS_ENGINE_STORAGE_H
 
-#include "genebits/engine/containers/fast_vector.h"
 #include "genebits/engine/containers/type_map.h"
+#include "genebits/engine/containers/vector.h"
 #include "genebits/engine/utilities/allocator.h"
 #include "genebits/engine/utilities/concepts.h"
 #include "genebits/engine/utilities/erased_ptr.h"
@@ -234,7 +234,7 @@ public:
     ASSERT(!initialized_, "Already initialized");
 
     // Set up all the pools with type erased vectors.
-    ((pools_.template Assure<Components>() = std::move(MakeErased<FastVector<Components, DenseAllocator>>())), ...);
+    ((pools_.template Assure<Components>() = std::move(MakeErased<Vector<Components, DenseAllocator>>())), ...);
 
     // Store functors for the operations that need type information and don't have it.
     erase_function_ = []([[maybe_unused]] auto storage, [[maybe_unused]] const size_t index)
@@ -390,12 +390,12 @@ public:
   /// @return Reference to dense array for the component type.
   ///
   template<typename Component>
-  [[nodiscard]] const FastVector<Component, DenseAllocator>& Access() const noexcept
+  [[nodiscard]] const Vector<Component, DenseAllocator>& Access() const noexcept
   {
     ASSERT(initialized_, "Not initialized");
     ASSERT(HasComponent<Component>(), "Component type not valid");
 
-    return *static_cast<FastVector<Component, DenseAllocator>*>(pools_.template Get<Component>().Get());
+    return *static_cast<Vector<Component, DenseAllocator>*>(pools_.template Get<Component>().Get());
   }
 
   ///
@@ -408,9 +408,9 @@ public:
   /// @return Reference to dense array for the component type.
   ///
   template<typename Component>
-  [[nodiscard]] FastVector<Component, DenseAllocator>& Access() noexcept
+  [[nodiscard]] Vector<Component, DenseAllocator>& Access() noexcept
   {
-    return const_cast<FastVector<Component, DenseAllocator>&>(static_cast<const Storage*>(this)->Access<Component>());
+    return const_cast<Vector<Component, DenseAllocator>&>(static_cast<const Storage*>(this)->Access<Component>());
   }
 
   ///
@@ -457,7 +457,7 @@ private:
 
   SharedSparseArray<Entity, SparseAllocator>* sparse_;
 
-  FastVector<Entity, DenseAllocator> dense_;
+  Vector<Entity, DenseAllocator> dense_;
   TypeMap<ErasedPtr<void>> pools_;
 
   // Functions
@@ -467,7 +467,7 @@ private:
   // Used for debugging purposes
 #ifndef NDEBUG
   bool initialized_ = false;
-  FastVector<size_t> components_;
+  Vector<size_t> components_;
 #endif
 };
 

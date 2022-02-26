@@ -41,11 +41,11 @@ namespace
     return false;
   }
 
-  FastVector<bool> ComputeAdjacencyMatrix(const FastVector<SystemBase*>& systems)
+  Vector<bool> ComputeAdjacencyMatrix(const Vector<SystemBase*>& systems)
   {
     size_t count = systems.size();
 
-    FastVector<bool> matrix;
+    Vector<bool> matrix;
     matrix.Resize(count * count);
 
     for (size_t i = 0; i < count; i++)
@@ -67,7 +67,7 @@ namespace
     return matrix;
   }
 
-  void PruneRedundant(FastVector<bool>& matrix, size_t length)
+  void PruneRedundant(Vector<bool>& matrix, size_t length)
   {
     // For each system
     for (size_t i = 0; i < length; i++) // i = current system (us)
@@ -95,9 +95,9 @@ namespace
     }
   }
 
-  FastVector<SystemBase*> CombineGroups(const FastVector<Ref<SystemGroup>>& groups)
+  Vector<SystemBase*> CombineGroups(const Vector<Ref<SystemGroup>>& groups)
   {
-    FastVector<SystemBase*> systems;
+    Vector<SystemBase*> systems;
 
     for (const Ref<SystemGroup>& group : groups)
     {
@@ -110,12 +110,11 @@ namespace
     return systems;
   }
 
-  FastVector<Phase::CompiledSystem> MakeCompiledSystems(
-    const FastVector<SystemBase*>& systems, FastVector<bool>& matrix)
+  Vector<Phase::CompiledSystem> MakeCompiledSystems(const Vector<SystemBase*>& systems, Vector<bool>& matrix)
   {
     size_t count = systems.Size();
 
-    FastVector<Phase::CompiledSystem> compiled_systems;
+    Vector<Phase::CompiledSystem> compiled_systems;
     compiled_systems.Resize(count);
 
     for (size_t i = 0; i != count; i++)
@@ -137,11 +136,11 @@ namespace
 
 } // namespace
 
-Phase Phase::Compile(const FastVector<Ref<SystemGroup>>& groups)
+Phase Phase::Compile(const Vector<Ref<SystemGroup>>& groups)
 {
-  FastVector<SystemBase*> systems = CombineGroups(groups);
+  Vector<SystemBase*> systems = CombineGroups(groups);
 
-  FastVector<bool> matrix = ComputeAdjacencyMatrix(systems);
+  Vector<bool> matrix = ComputeAdjacencyMatrix(systems);
 
   PruneRedundant(matrix, systems.size());
 

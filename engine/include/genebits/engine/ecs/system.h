@@ -33,7 +33,7 @@ struct SystemDataAccess
 ///
 /// Holds information about every single data access of a system.
 ///
-using SystemDataAccessList = FastVector<SystemDataAccess>;
+using SystemDataAccessList = Vector<SystemDataAccess>;
 
 class SystemDataAccessProvider
 {
@@ -166,7 +166,7 @@ public:
   }
 
 private:
-  FastVector<Ref<SystemBase>> registered_systems_;
+  Vector<Ref<SystemBase>> registered_systems_;
 };
 
 } // namespace genebits::engine

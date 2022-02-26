@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_CONTAINERS_TYPE_MAP_H
 #define GENEBITS_ENGINE_CONTAINERS_TYPE_MAP_H
 
-#include "genebits/engine/containers/fast_vector.h"
+#include "genebits/engine/containers/vector.h"
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/type_info.h"
 
@@ -13,7 +13,7 @@ namespace genebits::engine
 /// @tparam Type The type to check
 ///
 template<typename Type>
-concept TypeMapValueType = FastVectorType<Type>;
+concept TypeMapValueType = VectorType<Type>;
 
 ///
 /// Map used to map types to values where the type is the key.
@@ -115,7 +115,7 @@ private:
   }
 
 private:
-  FastVector<Value, AllocatorImpl> values_;
+  Vector<Value, AllocatorImpl> values_;
 };
 
 } // namespace genebits::engine

@@ -176,7 +176,7 @@ TEST(WhenAllTask_Tests, WhenAll_ManyAsRange_Execute)
 
   auto task = [&]() -> Task<>
   {
-    FastVector<Task<>> tasks;
+    Vector<Task<>> tasks;
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -218,7 +218,7 @@ TEST(WhenAllTask_Tests, WhenAll_ManyWithResultAsRange_Execute)
 
   auto task = [&]() -> Task<>
   {
-    FastVector<Task<int>> tasks;
+    Vector<Task<int>> tasks;
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -285,7 +285,7 @@ TEST(WhenAllTask_Tests, WhenAll_ManyAsRange_CorrectValues)
 
   auto task = [&]() -> Task<>
   {
-    FastVector<Task<>> tasks;
+    Vector<Task<>> tasks;
 
     for (size_t i = 0; i < amount; i++)
     {

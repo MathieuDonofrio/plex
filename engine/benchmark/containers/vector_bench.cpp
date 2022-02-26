@@ -1,10 +1,10 @@
-#include "genebits/engine/containers/fast_vector.h"
+#include "genebits/engine/containers/vector.h"
 
 #include <benchmark/benchmark.h>
 
 namespace genebits::engine::bench
 {
-static void FastVector_STD_Vector_Iterate(benchmark::State& state)
+static void Vector_STD_Vector_Iterate(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
@@ -28,9 +28,9 @@ static void FastVector_STD_Vector_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_STD_Vector_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(Vector_STD_Vector_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void FastVector_STD_Vector_NonTrivial_Iterate(benchmark::State& state)
+static void Vector_STD_Vector_NonTrivial_Iterate(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
@@ -54,9 +54,9 @@ static void FastVector_STD_Vector_NonTrivial_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_STD_Vector_NonTrivial_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(Vector_STD_Vector_NonTrivial_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void FastVector_STD_Vector_PushBack(benchmark::State& state)
+static void Vector_STD_Vector_PushBack(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
@@ -79,9 +79,9 @@ static void FastVector_STD_Vector_PushBack(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_STD_Vector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(Vector_STD_Vector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void FastVector_STD_Vector_NonTrivial_PushBack(benchmark::State& state)
+static void Vector_STD_Vector_NonTrivial_PushBack(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
@@ -104,13 +104,13 @@ static void FastVector_STD_Vector_NonTrivial_PushBack(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_STD_Vector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(Vector_STD_Vector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void FastVector_Iterate(benchmark::State& state)
+static void Vector_Iterate(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  FastVector<size_t> vector;
+  Vector<size_t> vector;
 
   for (size_t i = 0; i != amount; i++)
   {
@@ -130,13 +130,13 @@ static void FastVector_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(Vector_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void FastVector_NonTrivial_Iterate(benchmark::State& state)
+static void Vector_NonTrivial_Iterate(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  FastVector<size_t> vector;
+  Vector<size_t> vector;
 
   for (size_t i = 0; i != amount; i++)
   {
@@ -156,9 +156,9 @@ static void FastVector_NonTrivial_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_NonTrivial_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(Vector_NonTrivial_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void FastVector_PushBack(benchmark::State& state)
+static void Vector_PushBack(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
@@ -166,7 +166,7 @@ static void FastVector_PushBack(benchmark::State& state)
   {
     state.PauseTiming();
 
-    FastVector<size_t> vector;
+    Vector<size_t> vector;
 
     benchmark::DoNotOptimize(vector);
 
@@ -181,9 +181,9 @@ static void FastVector_PushBack(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(Vector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
-static void FastVector_NonTrivial_PushBack(benchmark::State& state)
+static void Vector_NonTrivial_PushBack(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
@@ -191,7 +191,7 @@ static void FastVector_NonTrivial_PushBack(benchmark::State& state)
   {
     state.PauseTiming();
 
-    FastVector<std::string> vector;
+    Vector<std::string> vector;
 
     benchmark::DoNotOptimize(vector);
 
@@ -206,6 +206,6 @@ static void FastVector_NonTrivial_PushBack(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(FastVector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(Vector_NonTrivial_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 } // namespace genebits::engine::bench
