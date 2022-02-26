@@ -234,7 +234,7 @@ public:
     ASSERT(!initialized_, "Already initialized");
 
     // Set up all the pools with type erased vectors.
-    ((pools_.template Assure<Components>().Reset(new FastVector<Components, DenseAllocator>())), ...);
+    ((pools_.template Assure<Components>() = std::move(MakeErased<FastVector<Components, DenseAllocator>>())), ...);
 
     // Store functors for the operations that need type information and don't have it.
     erase_function_ = []([[maybe_unused]] auto storage, [[maybe_unused]] const size_t index)
@@ -395,7 +395,7 @@ public:
     ASSERT(initialized_, "Not initialized");
     ASSERT(HasComponent<Component>(), "Component type not valid");
 
-    return *pools_.template Get<Component>().template Cast<FastVector<Component, DenseAllocator>>();
+    return *static_cast<FastVector<Component, DenseAllocator>*>(pools_.template Get<Component>().Get());
   }
 
   ///

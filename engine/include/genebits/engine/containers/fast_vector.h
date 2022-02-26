@@ -8,6 +8,7 @@
 
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/allocator.h"
+#include "genebits/engine/utilities/type_traits.h"
 
 namespace genebits::engine
 {
@@ -18,17 +19,6 @@ namespace genebits::engine
 ///
 template<typename Type>
 concept FastVectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
-
-///
-/// We approximate std::is_trivially_copyable with trivial move/copy construction and trivial destruction.
-/// This is allows us to safely capture important cases such as std::pair<POD, POD>, which is not trivially
-/// assignable. Inspired by llvm small vector: https://llvm.org/doxygen/SmallVector_8h_source.html
-///
-/// @tparam Type Type to approximate.
-///
-template<typename Type>
-constexpr bool FastVectorDefaultTriviallyCopyable = std::is_trivially_copy_constructible_v<Type>&&
-  std::is_trivially_move_constructible_v<Type>&& std::is_trivially_destructible_v<Type>;
 
 ///
 /// Fast unordered vector optimized for performance.
@@ -46,11 +36,8 @@ constexpr bool FastVectorDefaultTriviallyCopyable = std::is_trivially_copy_const
 ///
 /// @tparam Type The type the vector contains.
 /// @tparam AllocatorType The allocator to use for allocating memory.
-/// @tparam TriviallyCopyable Whether or not the type is trivially copyable.
 ///
-template<FastVectorType Type,
-  Allocator AllocatorType = Mallocator,
-  bool TriviallyCopyable = FastVectorDefaultTriviallyCopyable<Type>>
+template<FastVectorType Type, Allocator AllocatorType = Mallocator>
 class FastVector : private AllocatorType
 {
 public:
@@ -443,7 +430,7 @@ protected:
     const size_t current_capacity_bytes = sizeof(Type) * capacity_;
     const size_t new_capacity_bytes = sizeof(Type) * new_capacity;
 
-    if constexpr (TriviallyCopyable)
+    if constexpr (IsRelocatable<Type>::value)
     {
       Block block { reinterpret_cast<char*>(array_), current_capacity_bytes };
 

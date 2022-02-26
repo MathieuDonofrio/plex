@@ -26,7 +26,7 @@ static void ErasedPtr_Cast(benchmark::State& state)
   {
     ErasedPtr<void> erased(new int(10));
 
-    int* casted = erased.Cast<int>();
+    int* casted = static_cast<int*>(erased.Get());
 
     benchmark::DoNotOptimize(casted);
   }

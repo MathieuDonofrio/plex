@@ -10,6 +10,7 @@
 
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/debug/thread_validator.h"
+#include "genebits/engine/utilities/type_traits.h"
 
 namespace genebits::engine
 {
@@ -936,6 +937,9 @@ Ref<Type> MakeRef(Args&&... args)
   }
 }
 
+template<typename Type>
+struct IsRelocatable<Ref<Type>> : std::true_type
+{};
 } // namespace genebits::engine
 
 namespace std
