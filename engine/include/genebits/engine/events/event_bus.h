@@ -8,7 +8,6 @@
 #include "genebits/engine/containers/type_map.h"
 #include "genebits/engine/utilities/delegate.h"
 #include "genebits/engine/utilities/erased_ptr.h"
-#include "genebits/engine/utilities/meta.h"
 
 namespace genebits::engine
 {

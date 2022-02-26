@@ -3,7 +3,7 @@
 
 #include "genebits/engine/containers/fast_vector.h"
 #include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/utilities/meta.h"
+#include "genebits/engine/utilities/type_info.h"
 
 namespace genebits::engine
 {
@@ -18,7 +18,7 @@ concept TypeMapValueType = FastVectorType<Type>;
 ///
 /// Map used to map types to values where the type is the key.
 ///
-/// The key is generated using the Meta util UniqueId method.
+/// The key is generated using the Meta util Index method.
 ///
 /// This map is extremely low overhead and performance oriented.
 ///
@@ -101,7 +101,7 @@ private:
   ///
   /// Obtains the key for a type.
   ///
-  /// Correctly implements the UniqueId fetching so that there is a new sequence generated
+  /// Correctly implements the Index fetching so that there is a new sequence generated
   /// for every value type. This reduces the memory usage.
   ///
   /// @tparam Type The type to obtain key for.
@@ -111,7 +111,7 @@ private:
   template<typename Type>
   [[nodiscard]] static size_t Key() noexcept
   {
-    return Meta<Type>::template UniqueId<TypeMap<Value>>();
+    return TypeInfo<Type>::template Index<TypeMap>();
   }
 
 private:

@@ -6,7 +6,7 @@
 #include "genebits/engine/utilities/allocator.h"
 #include "genebits/engine/utilities/concepts.h"
 #include "genebits/engine/utilities/erased_ptr.h"
-#include "genebits/engine/utilities/meta.h"
+#include "genebits/engine/utilities/type_info.h"
 
 namespace genebits::engine
 {
@@ -243,7 +243,7 @@ public:
 
 #ifndef NDEBUG
     // When debugging it is useful to have the list of components used at initialization.
-    ((components_.PushBack(Meta<Components>::Hash())), ...);
+    ((components_.PushBack(TypeInfo<Components>::HashCode())), ...);
     initialized_ = true;
 #endif
   }
@@ -445,7 +445,7 @@ private:
   template<typename Component>
   [[nodiscard]] bool HasComponent() const noexcept
   {
-    return std::ranges::find(components_, Meta<Component>::Hash()) != components_.end();
+    return std::ranges::find(components_, TypeInfo<Component>::HashCode()) != components_.end();
   }
 #endif
 

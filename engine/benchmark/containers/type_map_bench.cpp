@@ -19,13 +19,13 @@ static void TypeMap_STD_Map_Assure(benchmark::State& state)
 {
   std::map<size_t, int> map;
 
-  benchmark::DoNotOptimize(map[Meta<TestType<0>>::Hash()]);
-  benchmark::DoNotOptimize(map[Meta<TestType<1>>::Hash()]);
-  benchmark::DoNotOptimize(map[Meta<TestType<2>>::Hash()]);
+  benchmark::DoNotOptimize(map[TypeInfo<TestType<0>>::HashCode()]);
+  benchmark::DoNotOptimize(map[TypeInfo<TestType<1>>::HashCode()]);
+  benchmark::DoNotOptimize(map[TypeInfo<TestType<2>>::HashCode()]);
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(map[Meta<TestType<9999>>::Hash()]);
+    benchmark::DoNotOptimize(map[TypeInfo<TestType<9999>>::HashCode()]);
   }
 }
 
@@ -35,13 +35,13 @@ static void TypeMap_STD_UnorderedMap_Assure(benchmark::State& state)
 {
   std::unordered_map<size_t, int> map;
 
-  benchmark::DoNotOptimize(map[Meta<TestType<0>>::Hash()]);
-  benchmark::DoNotOptimize(map[Meta<TestType<1>>::Hash()]);
-  benchmark::DoNotOptimize(map[Meta<TestType<2>>::Hash()]);
+  benchmark::DoNotOptimize(map[TypeInfo<TestType<0>>::HashCode()]);
+  benchmark::DoNotOptimize(map[TypeInfo<TestType<1>>::HashCode()]);
+  benchmark::DoNotOptimize(map[TypeInfo<TestType<2>>::HashCode()]);
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(map[Meta<TestType<9999>>::Hash()]);
+    benchmark::DoNotOptimize(map[TypeInfo<TestType<9999>>::HashCode()]);
   }
 }
 

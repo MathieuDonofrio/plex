@@ -6,7 +6,7 @@
 
 #include "genebits/engine/config/compiler.h"
 
-namespace fsig // Function signature namespace. Keep small name, for faster compile time
+namespace fsig // Keep small namespace for faster compile-time.
 {
 ///
 /// Returns the function name with a templated type. Can be used to probe type name.
@@ -16,7 +16,7 @@ namespace fsig // Function signature namespace. Keep small name, for faster comp
 /// @return The function name with the templated type.
 ///
 template<typename Type>
-consteval const char* /* Keep char* for faster compile-time */ F()
+consteval const char* F() // Keep char* return and small name for faster compile-time.
 {
 #if COMPILER_MSVC
   return __FUNCSIG__;
@@ -36,20 +36,21 @@ constexpr size_t cOffset = cProbe.length() - 4;
 
 namespace genebits::engine
 {
-///
-/// Returns a unique id for the type name and sequence at runtime.
-///
-/// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
-/// distributed in a first come first serve fashion.
-///
-/// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
-///
-/// @param[in] full_name The name of the type.
-/// @param[in] sequence_key Identifier to the index sequence.
-///
-/// @return size_t The unique id for the type name and sequence.
-///
-size_t UniqueId(std::string_view full_name, std::string_view sequence_key);
+namespace details
+{
+  ///
+  /// Returns a unique index for the type name and a tag. Indexes obtained from the same tag use the same index
+  /// sequence.
+  ///
+  /// Indexes are provided at runtime in a first come first serve order.
+  ///
+  /// @param[in] type_name The name of the type.
+  /// @param[in] tag_name Tag used to identify the index sequence.
+  ///
+  /// @return size_t The unique id for the type name and sequence.
+  ///
+  size_t TypeIndex(std::string_view type_name, std::string_view tag_name);
+} // namespace details
 
 ///
 /// Templated structure that contains meta information about the templated type.
@@ -57,7 +58,7 @@ size_t UniqueId(std::string_view full_name, std::string_view sequence_key);
 /// @tparam Type The type to access meta information for.
 ///
 template<typename Type>
-struct Meta
+struct TypeInfo
 {
 public:
   ///
@@ -69,7 +70,7 @@ public:
   ///
   /// @note Const, volatile and references are stripped from the type.
   ///
-  /// @return Full name of templated type.
+  /// @return Full name for type.
   ///
   [[nodiscard]] static consteval std::string_view Name() noexcept
   {
@@ -79,18 +80,14 @@ public:
   }
 
   ///
-  /// Returns the hash of the type based on its full name.
+  /// Returns a compile-time hash code for the type derived from type name.
   ///
-  /// Hashing is done at compile-time so it can be used in a constexpr context.
+  /// @return Hash code for type.
   ///
-  /// @note FNV1a algorithm.
-  ///
-  /// @warning There may be collisions.
-  ///
-  /// @return Type Hash of type.
-  ///
-  [[nodiscard]] static consteval size_t Hash() noexcept
+  [[nodiscard]] static consteval size_t HashCode() noexcept
   {
+    // FNV1a
+
     const uint64_t prime = 0x100000001b3;
 
     uint64_t hash = 14695981039346656037ul;
@@ -105,23 +102,22 @@ public:
   }
 
   ///
-  /// Returns a unique id for the type at runtime.
+  /// Returns an index for the type initialized once at runtime.
   ///
-  /// UniqueId's are packed, therefore they are ideal for lookup tables. Id's are incrementally
-  /// distributed in a first come first serve fashion.
+  /// Indexes start at zero and are incremented each time a new type requests an index. This makes the index ideal for
+  /// lookup tables.
   ///
-  /// UniqueId's are distributed from sequences. You can specify the sequence index (Usually a hash).
+  /// An optional tag can be provided to use a difference index sequence. This helps to create more packed index
+  /// sequences.
   ///
-  /// @note Implies one branch of overhead that will correctly be branch predicted.
+  /// @tparam Tag Optional tag used to identify the index sequence to use.
   ///
-  /// @tparam Sequence Type to use name as identifier for the sequence to use.
+  /// @return Index for type.
   ///
-  /// @return size_t The unique id for the type and sequence.
-  ///
-  template<typename Sequence = void>
-  static size_t UniqueId()
+  template<typename Tag = void>
+  static size_t Index()
   {
-    static const size_t value = engine::UniqueId(Name(), Meta<Sequence>::Name());
+    static const size_t value = engine::details::TypeIndex(Name(), TypeInfo<Tag>::Name());
 
     return value;
   }

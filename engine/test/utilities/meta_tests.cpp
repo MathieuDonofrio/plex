@@ -1,4 +1,4 @@
-#include "genebits/engine/utilities/meta.h"
+#include "genebits/engine/utilities/type_info.h"
 
 #include <gtest/gtest.h>
 
@@ -27,58 +27,58 @@ class TestType
 
 // Hash static tests
 
-static_assert(Meta<int>::Hash() == Meta<int>::Hash());
-static_assert(Meta<TestTypeA>::Hash() == Meta<TestTypeA>::Hash());
-static_assert(Meta<int>::Hash() != Meta<double>::Hash());
-static_assert(Meta<float>::Hash() != Meta<double>::Hash());
-static_assert(Meta<int>::Hash() != Meta<TestTypeA>::Hash());
-static_assert(Meta<TestTypeC>::Hash() != Meta<TestTypeA>::Hash());
+static_assert(TypeInfo<int>::HashCode() == TypeInfo<int>::HashCode());
+static_assert(TypeInfo<TestTypeA>::HashCode() == TypeInfo<TestTypeA>::HashCode());
+static_assert(TypeInfo<int>::HashCode() != TypeInfo<double>::HashCode());
+static_assert(TypeInfo<float>::HashCode() != TypeInfo<double>::HashCode());
+static_assert(TypeInfo<int>::HashCode() != TypeInfo<TestTypeA>::HashCode());
+static_assert(TypeInfo<TestTypeC>::HashCode() != TypeInfo<TestTypeA>::HashCode());
 
 TEST(Meta_Tests, UniqueId_SameType_Equal)
 {
-  EXPECT_EQ(Meta<int>::UniqueId(), Meta<int>::UniqueId());
+  EXPECT_EQ(TypeInfo<int>::Index(), TypeInfo<int>::Index());
 }
 
 TEST(Meta_Tests, UniqueId_SameTypeStruct_Equal)
 {
-  EXPECT_EQ(Meta<TestTypeC>::UniqueId(), Meta<TestTypeC>::UniqueId());
+  EXPECT_EQ(TypeInfo<TestTypeC>::Index(), TypeInfo<TestTypeC>::Index());
 }
 
 TEST(Meta_Tests, UniqueId_DifferentType_NotEqual)
 {
-  EXPECT_NE(Meta<float>::UniqueId(), Meta<double>::UniqueId());
+  EXPECT_NE(TypeInfo<float>::Index(), TypeInfo<double>::Index());
 }
 
 TEST(Meta_Tests, UniqueId_DifferentTypeStruct_NotEqual)
 {
-  EXPECT_NE(Meta<TestTypeA>::UniqueId(), Meta<test_namespace::TestTypeB>::UniqueId());
+  EXPECT_NE(TypeInfo<TestTypeA>::Index(), TypeInfo<test_namespace::TestTypeB>::Index());
 }
 
 TEST(Meta_Tests, UniqueId_SameTypeDifferentTags_NotEqual)
 {
-  EXPECT_EQ(Meta<TestType<0>>::UniqueId<STS<1>>(), Meta<TestType<0>>::UniqueId<STS<2>>());
+  EXPECT_EQ(TypeInfo<TestType<0>>::Index<STS<1>>(), TypeInfo<TestType<0>>::Index<STS<2>>());
 }
 
 TEST(Meta_Tests, UniqueId_MultipleTypesSameTag_Increment)
 {
-  EXPECT_EQ(Meta<TestType<11>>::UniqueId<STS<10>>(), 0);
-  EXPECT_EQ(Meta<TestType<12>>::UniqueId<STS<10>>(), 1);
-  EXPECT_EQ(Meta<TestType<13>>::UniqueId<STS<10>>(), 2);
-  EXPECT_EQ(Meta<TestType<14>>::UniqueId<STS<10>>(), 3);
-  EXPECT_EQ(Meta<TestType<15>>::UniqueId<STS<10>>(), 4);
-  EXPECT_EQ(Meta<TestType<16>>::UniqueId<STS<10>>(), 5);
-  EXPECT_EQ(Meta<TestType<17>>::UniqueId<STS<10>>(), 6);
-  EXPECT_EQ(Meta<TestType<18>>::UniqueId<STS<10>>(), 7);
-  EXPECT_EQ(Meta<TestType<19>>::UniqueId<STS<10>>(), 8);
+  EXPECT_EQ(TypeInfo<TestType<11>>::Index<STS<10>>(), 0);
+  EXPECT_EQ(TypeInfo<TestType<12>>::Index<STS<10>>(), 1);
+  EXPECT_EQ(TypeInfo<TestType<13>>::Index<STS<10>>(), 2);
+  EXPECT_EQ(TypeInfo<TestType<14>>::Index<STS<10>>(), 3);
+  EXPECT_EQ(TypeInfo<TestType<15>>::Index<STS<10>>(), 4);
+  EXPECT_EQ(TypeInfo<TestType<16>>::Index<STS<10>>(), 5);
+  EXPECT_EQ(TypeInfo<TestType<17>>::Index<STS<10>>(), 6);
+  EXPECT_EQ(TypeInfo<TestType<18>>::Index<STS<10>>(), 7);
+  EXPECT_EQ(TypeInfo<TestType<19>>::Index<STS<10>>(), 8);
 }
 
 TEST(Meta_Tests, UniqueId_MultipleTypesTwoTags_Increment)
 {
-  EXPECT_EQ(Meta<TestType<21>>::UniqueId<STS<20>>(), 0);
-  EXPECT_EQ(Meta<TestType<22>>::UniqueId<STS<20>>(), 1);
+  EXPECT_EQ(TypeInfo<TestType<21>>::Index<STS<20>>(), 0);
+  EXPECT_EQ(TypeInfo<TestType<22>>::Index<STS<20>>(), 1);
 
-  EXPECT_EQ(Meta<TestType<31>>::UniqueId<STS<30>>(), 0);
-  EXPECT_EQ(Meta<TestType<32>>::UniqueId<STS<30>>(), 1);
+  EXPECT_EQ(TypeInfo<TestType<31>>::Index<STS<30>>(), 0);
+  EXPECT_EQ(TypeInfo<TestType<32>>::Index<STS<30>>(), 1);
 }
 
 } // namespace genebits::engine::tests
