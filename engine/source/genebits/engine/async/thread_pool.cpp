@@ -1,5 +1,6 @@
 #include "genebits/engine/async/thread_pool.h"
 
+#include "genebits/engine/async/exponential_backoff.h"
 #include "genebits/engine/os/cpu_info.h"
 #include "genebits/engine/os/thread.h"
 
@@ -44,6 +45,15 @@ void ThreadPool::RunWorker()
         lock.unlock();
 
         op->Execute();
+
+        // Spin for a little while util we think we have more work to do.
+        // Avoids putting the worker to sleep only to wake up again.
+        ExponentialBackoff backoff;
+
+        for (size_t i = 0; i != 16 && !queue_.HasWorkApprox(); i++)
+        {
+          backoff.Wait();
+        }
 
         lock.lock();
 

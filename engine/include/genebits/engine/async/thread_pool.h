@@ -1,6 +1,7 @@
 #ifndef GENEBITS_ENGINE_ASYNC_THREAD_POOL_H
 #define GENEBITS_ENGINE_ASYNC_THREAD_POOL_H
 
+#include <atomic>
 #include <mutex>
 
 #include "genebits/engine/async/task.h"
@@ -135,24 +136,24 @@ private:
     ///
     /// @param[in] task Task to add.
     ///
-    constexpr void Enqueue(Operation* task) noexcept
+    void Enqueue(Operation* task) noexcept
     {
       ASSERT(!task->next_, "Task next must be nullptr");
 
-      tail_->next_ = task;
+      tail_.load(std::memory_order_acquire)->next_ = task;
       tail_ = task;
     }
 
     ///
     /// Removes the operation from the front of the queue.
     ///
-    constexpr void Dequeue() noexcept
+    void Dequeue() noexcept
     {
       ASSERT(!Empty(), "Queue cannot be empty");
 
       head_.next_ = head_.next_->next_;
 
-      if (head_.next_ == nullptr) tail_ = &head_;
+      if (head_.next_ == nullptr) tail_.store(&head_, std::memory_order_release);
     }
 
     ///
@@ -177,9 +178,19 @@ private:
       return !head_.next_;
     }
 
+    ///
+    /// Returns approximately whether or not the queue has work.
+    ///
+    /// @return True if the queue might have work, false otherwise.
+    ///
+    [[nodiscard]] bool HasWorkApprox() const noexcept
+    {
+      return tail_.load(std::memory_order_acquire) != &head_;
+    }
+
   private:
     Operation head_; // Sentinel Node
-    Operation* tail_;
+    std::atomic<Operation*> tail_;
   };
 
 private:
