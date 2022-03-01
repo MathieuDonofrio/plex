@@ -249,12 +249,12 @@ public:
       Deleter custom_deleter;
     };
 
-    control_ = static_cast<details::RefControlBlock*>(std::malloc(sizeof(RefControlBlockWithDeleter)));
+    control_ = static_cast<details::RefControlBlock*>(::operator new(sizeof(RefControlBlockWithDeleter)));
     control_->counter = 0;
     control_->deleter = [](void* ptr, details::RefControlBlock* control)
     {
       static_cast<RefControlBlockWithDeleter*>(control)->custom_deleter(static_cast<T*>(ptr));
-      std::free(control);
+      ::operator delete(control, sizeof(RefControlBlockWithDeleter));
     };
 
     new (control_ + 1) Deleter(std::move(deleter));
@@ -274,13 +274,13 @@ public:
   template<typename T>
   requires(std::is_base_of_v<Type, T>) explicit Ref(T* instance) noexcept : ptr_(static_cast<Type*>(instance))
   {
-    control_ = static_cast<details::RefControlBlock*>(std::malloc(sizeof(details::RefControlBlock)));
+    control_ = static_cast<details::RefControlBlock*>(::operator new(sizeof(details::RefControlBlock)));
     control_->counter = 0;
 
     control_->deleter = [](void* ptr, details::RefControlBlock* control)
     {
       delete static_cast<T*>(ptr);
-      std::free(control);
+      ::operator delete(control, sizeof(details::RefControlBlock));
     };
 
     LOCAL_THREAD_INIT(control_);
@@ -915,7 +915,7 @@ Ref<Type> MakeRef(Args&&... args)
     };
 
     Ref<Type> ref;
-    ref.control_ = static_cast<details::RefControlBlock*>(std::malloc(sizeof(RefControlBlockAndType)));
+    ref.control_ = static_cast<details::RefControlBlock*>(::operator new(sizeof(RefControlBlockAndType)));
     ref.ptr_ = reinterpret_cast<Type*>(ref.control_ + 1);
 
     new (ref.ptr_) Type(std::forward<Args>(args)...);
@@ -924,7 +924,7 @@ Ref<Type> MakeRef(Args&&... args)
     ref.control_->deleter = [](void* ptr, details::RefControlBlock* control)
     {
       static_cast<Type*>(ptr)->~Type();
-      std::free(control);
+      ::operator delete(control, sizeof(RefControlBlockAndType));
     };
 
     LOCAL_THREAD_INIT(ref.control_);
@@ -938,7 +938,7 @@ Ref<Type> MakeRef(Args&&... args)
 }
 
 template<typename Type>
-struct IsRelocatable<Ref<Type>> : std::true_type
+struct IsTriviallyRelocatable<Ref<Type>> : std::true_type
 {};
 } // namespace genebits::engine
 

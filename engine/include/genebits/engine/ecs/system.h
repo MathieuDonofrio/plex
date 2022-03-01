@@ -13,7 +13,6 @@
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/registry.h"
-#include "genebits/engine/os/allocator.h"
 #include "genebits/engine/utilities/ref.h"
 
 namespace genebits::engine

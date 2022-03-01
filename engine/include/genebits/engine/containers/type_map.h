@@ -13,7 +13,7 @@ namespace genebits::engine
 /// @tparam Type The type to check
 ///
 template<typename Type>
-concept TypeMapValueType = VectorType<Type>;
+concept TypeMapValueType = VectorType<Type> && std::is_default_constructible_v<Type>;
 
 ///
 /// Map used to map types to values where the type is the key.
@@ -23,27 +23,22 @@ concept TypeMapValueType = VectorType<Type>;
 /// This map is extremely low overhead and performance oriented.
 ///
 /// @tparam Value Value to map types with.
-/// @tparam AllocatorImpl Allocator to use to allocate memory.
 ///
-template<TypeMapValueType Value, Allocator AllocatorImpl = Mallocator>
+template<TypeMapValueType Value>
 class TypeMap
 {
 public:
   ///
   /// Safely returns the value reference for the type key.
   ///
-  /// If the mapping never existed, this method will make sure that it is created.
-  ///
-  /// Usually O(1). If a value was never initialized for the type this method is expensive
-  /// but this happens at most only once per type.
+  /// If the mapping never existed, the value will be default constructed.
   ///
   /// @tparam Type The type to use as key.
-  /// @tparam Args The arguments used to initialize new values.
   ///
   /// @return Reference to the value mapped by the type.
   ///
-  template<typename Type, typename... Args>
-  requires std::is_constructible_v<Value, Args...> Value& Assure(Args&&... args) noexcept
+  template<typename Type>
+  Value& Assure() noexcept
   {
     const size_t index = Key<Type>();
 
@@ -51,7 +46,7 @@ public:
     {
       ASSERT(index < 10000, "To many types"); // Highly unlikely the map exceeds 10k types, probably a bug.
 
-      values_.Resize(index + 1, std::forward<Args>(args)...);
+      values_.Resize(index + 1);
     }
 
     return values_[index];
@@ -81,11 +76,8 @@ public:
   ///
   /// Returns the value reference for the type key.
   ///
-  /// Always O(1) with extremely low overhead. Essentially an array lookup.
-  ///
   /// @warning
-  ///     Make sure Assure was called at least once for this type. Or else
-  ///     this method is undefined behaviour.
+  ///     Make sure Assure was called at least once for this type. Otherwise, behaviour is undefined.
   ///
   /// @tparam Type The type to use as key.
   ///
@@ -101,9 +93,6 @@ private:
   ///
   /// Obtains the key for a type.
   ///
-  /// Correctly implements the Index fetching so that there is a new sequence generated
-  /// for every value type. This reduces the memory usage.
-  ///
   /// @tparam Type The type to obtain key for.
   ///
   /// @return size_t key for the templated type.
@@ -115,7 +104,7 @@ private:
   }
 
 private:
-  Vector<Value, AllocatorImpl> values_;
+  Vector<Value> values_;
 };
 
 } // namespace genebits::engine

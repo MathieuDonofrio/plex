@@ -4,8 +4,11 @@
 
 namespace genebits::engine::tests
 {
-static_assert(sizeof(Vector<size_t>) == 16, "The size of Vector should not need to be bigger than 16 bytes");
+static_assert(
+  sizeof(Vector<size_t>) == sizeof(void*) * 2, "The size of Vector should not need to be bigger than 2 pointers");
 static_assert(std::contiguous_iterator<Vector<size_t>::iterator>, "Vector should have contiguous iterator");
+
+static_assert(IsTriviallyRelocatable<Vector<size_t>>::value, "Vector with relocatable type should be relocatable");
 
 TEST(Vector_Tests, Empty_Trivial_AfterDefaultConstruction_True)
 {
@@ -170,6 +173,25 @@ TEST(Vector_Tests, PushBack_NonTrivial_Many_CorrectValues)
   {
     EXPECT_EQ(vector[i], std::to_string(i));
   }
+}
+
+TEST(Vector_Tests, EmplaceBack_NonTrivial_Single_SizeIncrease)
+{
+  Vector<std::pair<int, int>> vector;
+
+  vector.EmplaceBack(1, 2);
+
+  EXPECT_EQ(vector.size(), 1);
+}
+
+TEST(Vector_Tests, EmplaceBack_NonTrivial_Single_CorrectValue)
+{
+  Vector<std::pair<int, int>> vector;
+
+  vector.EmplaceBack(99, 10);
+
+  EXPECT_EQ(vector[0].first, 99);
+  EXPECT_EQ(vector[0].second, 10);
 }
 
 TEST(Vector_Tests, PopBack_Trivial_Single_SizeDecrease)
@@ -412,112 +434,112 @@ TEST(Vector_Tests, PopBack_NonTrivial_PushPushPopPush_CorrectValues)
   EXPECT_EQ(vector[1], std::string { "3" });
 }
 
-TEST(Vector_Tests, EraseAt_Trivial_Single_CorrectValues)
+TEST(Vector_Tests, UnorderedErase_Trivial_Single_CorrectValues)
 {
   Vector<double> vector;
 
   vector.PushBack(1);
-  vector.EraseAt(0);
+  vector.UnorderedErase(vector.begin());
 
   EXPECT_EQ(vector.size(), 0);
   EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, EraseAt_NonTrivial_Single_CorrectValues)
+TEST(Vector_Tests, UnorderedErase_NonTrivial_Single_CorrectValues)
 {
   Vector<std::string> vector;
 
   vector.PushBack("1");
-  vector.EraseAt(0);
+  vector.UnorderedErase(vector.begin());
 
   EXPECT_EQ(vector.size(), 0);
   EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, EraseAt_Trivial_Double_CorrectValues)
+TEST(Vector_Tests, UnorderedErase_Trivial_Double_CorrectValues)
 {
   Vector<double> vector;
 
   vector.PushBack(1);
   vector.PushBack(2);
-  vector.EraseAt(1);
+  vector.UnorderedErase(vector.begin() + 1);
 
   EXPECT_EQ(vector.size(), 1);
   EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], 1);
 
-  vector.EraseAt(0);
+  vector.UnorderedErase(vector.begin());
 
   EXPECT_EQ(vector.size(), 0);
   EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, EraseAt_NonTrivial_Double_CorrectValues)
+TEST(Vector_Tests, UnorderedErase_NonTrivial_Double_CorrectValues)
 {
   Vector<std::string> vector;
 
   vector.PushBack("1");
   vector.PushBack("2");
-  vector.EraseAt(1);
+  vector.UnorderedErase(vector.begin() + 1);
 
   EXPECT_EQ(vector.size(), 1);
   EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], "1");
 
-  vector.EraseAt(0);
+  vector.UnorderedErase(vector.begin());
 
   EXPECT_EQ(vector.size(), 0);
   EXPECT_TRUE(vector.empty());
 }
 
-TEST(Vector_Tests, EraseAt_Trivial_PushPushErase_CorrectValues)
+TEST(Vector_Tests, UnorderedErase_Trivial_PushPushErase_CorrectValues)
 {
   Vector<double> vector;
 
   vector.PushBack(1);
   vector.PushBack(2);
-  vector.EraseAt(0);
+  vector.UnorderedErase(vector.begin());
 
   EXPECT_EQ(vector.size(), 1);
   EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], 2);
 }
 
-TEST(Vector_Tests, EraseAt_NonTrivial_PushPushErase_CorrectValues)
+TEST(Vector_Tests, UnorderedErase_NonTrivial_PushPushErase_CorrectValues)
 {
   Vector<std::string> vector;
 
   vector.PushBack("1");
   vector.PushBack("2");
-  vector.EraseAt(0);
+  vector.UnorderedErase(vector.begin());
 
   EXPECT_EQ(vector.size(), 1);
   EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], "2");
 }
 
-TEST(Vector_Tests, Erase_Trivial_PushPushErase_CorrectValues)
+TEST(Vector_Tests, UnorderedErase_Trivial_PushPushFindErase_CorrectValues)
 {
   Vector<double> vector;
 
   vector.PushBack(1);
   vector.PushBack(2);
 
-  vector.Erase(std::find(vector.begin(), vector.end(), 1));
+  vector.UnorderedErase(std::find(vector.begin(), vector.end(), 1));
 
   EXPECT_EQ(vector.size(), 1);
   EXPECT_FALSE(vector.empty());
   EXPECT_EQ(vector[0], 2);
 }
 
-TEST(Vector_Tests, Erase_NonTrivial_PushPushErase_CorrectValues)
+TEST(Vector_Tests, UnorderedErase_NonTrivial_PushPushFindErase_CorrectValues)
 {
   Vector<std::string> vector;
 
   vector.PushBack("1");
   vector.PushBack("2");
 
-  vector.Erase(std::find(vector.begin(), vector.end(), std::string { "1" }));
+  vector.UnorderedErase(std::find(vector.begin(), vector.end(), std::string { "1" }));
 
   EXPECT_EQ(vector.size(), 1);
   EXPECT_FALSE(vector.empty());

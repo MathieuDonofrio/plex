@@ -11,9 +11,8 @@ namespace genebits::engine
 /// Responsible for providing and recycling entity identifiers.
 ///
 /// @tparam Entity Entity of integral type to generate.
-/// @tparam AllocatorImpl Allocator to use.
 ///
-template<std::unsigned_integral Entity, Allocator AllocatorImpl = Mallocator>
+template<std::unsigned_integral Entity>
 class EntityManager final
 {
 public:
@@ -119,7 +118,7 @@ public:
 
 private:
   Entity current_;
-  Vector<Entity, AllocatorImpl> recycled_;
+  Vector<Entity> recycled_;
 };
 
 } // namespace genebits::engine

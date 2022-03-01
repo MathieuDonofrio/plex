@@ -3,7 +3,7 @@
 
 #include "genebits/engine/containers/type_map.h"
 #include "genebits/engine/containers/vector.h"
-#include "genebits/engine/os/allocator.h"
+#include "genebits/engine/os/memory.h"
 #include "genebits/engine/utilities/concepts.h"
 #include "genebits/engine/utilities/erased_ptr.h"
 #include "genebits/engine/utilities/type_info.h"
@@ -25,21 +25,24 @@ namespace genebits::engine
 /// @tparam Entity The type of entity to use.
 /// @tparam AllocatorImpl Allocator to allocate memory with.
 ///
-template<std::unsigned_integral Entity, Allocator AllocatorImpl = Mallocator>
-class SharedSparseArray : private AllocatorImpl
+template<std::unsigned_integral Entity>
+class SharedSparseArray
 {
 public:
   ///
   /// Constructor.
   ///
-  constexpr SharedSparseArray() noexcept : array_(nullptr), capacity_(0) {}
+  constexpr SharedSparseArray() noexcept : capacity_(32)
+  {
+    array_ = static_cast<Entity*>(std::malloc(sizeof(Entity) * capacity_));
+  }
 
   ///
   /// Destructor.
   ///
   ~SharedSparseArray()
   {
-    AllocatorImpl::Deallocate(Block { reinterpret_cast<char*>(array_), sizeof(Entity) * capacity_ });
+    std::free(array_);
   }
 
   SharedSparseArray(const SharedSparseArray&) = delete;
@@ -54,16 +57,10 @@ public:
   ///
   void Assure(const Entity entity) noexcept
   {
-    if (entity >= capacity_)
+    if (entity >= capacity_) [[unlikely]]
     {
-      Block block { reinterpret_cast<char*>(array_), capacity_ * sizeof(Entity) };
-
-      capacity_ += static_cast<uint32_t>(entity + 1);
-
-      AllocatorImpl::Reallocate(block, capacity_ * sizeof(Entity));
-
-      array_ = reinterpret_cast<Entity*>(block.ptr);
-      capacity_ = static_cast<uint32_t>(block.size / sizeof(Entity));
+      capacity_ += static_cast<uint32_t>(entity); // Growth < factor 2
+      array_ = static_cast<Entity*>(std::realloc(array_, capacity_ * sizeof(Entity)));
     }
   }
 
@@ -109,23 +106,16 @@ private:
 ///
 /// Storage container for a single archetype.
 ///
-/// Basically a sparse set, but optimized for storing extra data, in this case component data.
+/// Basically a sparse set, but optimized for storing extra type erased data, in this case component data.
 ///
 /// Component data is contiguously stored in memory and can achieve near vector iteration speeds.
 /// Insertion and erasing is constant time.
 ///
 /// @warning
-///  The order is never guaranteed.
+///  Never assume any order. Storage reserves freedom of moving entities around at any time.
 ///
-/// @warning
-///  Storage data is type erased using an unsafe initialization design. This allows for more performance
-///  but is undefined behaviour if the storage is not initialized.
-///
-/// @tparam DenseAllocator Allocator to use for dense arrays.
-/// @tparam SparseAllocator Allocator to use for sparse array.
-///
-template<std::unsigned_integral Entity, Allocator DenseAllocator = Mallocator, Allocator SparseAllocator = Mallocator>
-class Storage : private DenseAllocator
+template<std::unsigned_integral Entity>
+class Storage
 {
 public:
   // Style Exception: STL
@@ -199,7 +189,7 @@ public:
   ///
   /// @param[in] sparse Shared sparse array.
   ///
-  explicit Storage(SharedSparseArray<Entity, SparseAllocator>* sparse) noexcept
+  explicit Storage(SharedSparseArray<Entity>* sparse) noexcept
   {
     ASSERT(sparse != nullptr, "Sparse array cannot be nullptr");
 
@@ -233,12 +223,12 @@ public:
   {
     ASSERT(!initialized_, "Already initialized");
 
-    // Set up all the pools with type erased vectors.
-    ((pools_.template Assure<Components>() = std::move(MakeErased<Vector<Components, DenseAllocator>>())), ...);
+    // Set up all the component arrays with type erased vectors.
+    ((component_arrays_.template Assure<Components>() = std::move(MakeErased<Vector<Components>>())), ...);
 
     // Store functors for the operations that need type information and don't have it.
-    erase_function_ = []([[maybe_unused]] auto storage, [[maybe_unused]] const size_t index)
-    { ((storage->template Access<Components>().EraseAt(index)), ...); };
+    erase_function_ = []([[maybe_unused]] auto* storage, [[maybe_unused]] const size_t index)
+    { (AccessAndEraseAt<Components>(storage, index), ...); };
     clear_function_ = []([[maybe_unused]] auto storage) { ((storage->template Access<Components>().Clear()), ...); };
 
 #ifndef NDEBUG
@@ -390,12 +380,12 @@ public:
   /// @return Reference to dense array for the component type.
   ///
   template<typename Component>
-  [[nodiscard]] const Vector<Component, DenseAllocator>& Access() const noexcept
+  [[nodiscard]] const Vector<Component>& Access() const noexcept
   {
     ASSERT(initialized_, "Not initialized");
     ASSERT(HasComponent<Component>(), "Component type not valid");
 
-    return *static_cast<Vector<Component, DenseAllocator>*>(pools_.template Get<Component>().Get());
+    return *static_cast<Vector<Component>*>(component_arrays_.template Get<Component>().Get());
   }
 
   ///
@@ -408,9 +398,9 @@ public:
   /// @return Reference to dense array for the component type.
   ///
   template<typename Component>
-  [[nodiscard]] Vector<Component, DenseAllocator>& Access() noexcept
+  [[nodiscard]] Vector<Component>& Access() noexcept
   {
-    return const_cast<Vector<Component, DenseAllocator>&>(static_cast<const Storage*>(this)->Access<Component>());
+    return const_cast<Vector<Component>&>(static_cast<const Storage*>(this)->Access<Component>());
   }
 
   ///
@@ -449,18 +439,31 @@ private:
   }
 #endif
 
+  ///
+  /// Static utility function for accessing and erasing at an index.
+  ///
+  /// @tparam Component Component type to access.
+  ///
+  /// @param[in] storage This storage.
+  /// @param[in] index Index to erase at.
+  ///
+  template<typename Component>
+  static void AccessAndEraseAt(Storage<Entity>* storage, size_t index)
+  {
+    auto& component_array = storage->template Access<Component>();
+    component_array.UnorderedErase(component_array.begin() + index);
+  }
+
 private:
-  using StorageType = Storage<Entity, DenseAllocator, SparseAllocator>;
+  using EraseFunction = void (*)(Storage<Entity>* storage, const size_t);
+  using ClearFunction = void (*)(Storage<Entity>* storage);
 
-  using EraseFunction = void (*)(StorageType* storage, const size_t);
-  using ClearFunction = void (*)(StorageType* storage);
+  SharedSparseArray<Entity>* sparse_;
+  Vector<Entity> dense_;
 
-  SharedSparseArray<Entity, SparseAllocator>* sparse_;
+  TypeMap<ErasedPtr<void>> component_arrays_;
 
-  Vector<Entity, DenseAllocator> dense_;
-  TypeMap<ErasedPtr<void>> pools_;
-
-  // Functions
+  // Indirect functions
   EraseFunction erase_function_;
   ClearFunction clear_function_;
 
