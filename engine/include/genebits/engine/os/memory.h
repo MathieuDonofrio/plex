@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <immintrin.h>
 #include <memory>
 
@@ -16,54 +17,106 @@ namespace genebits::engine
 ///
 /// @param[in] source Memory address.
 ///
-inline void Prefetch(void* source)
+constexpr void Prefetch(void* source)
 {
-  _mm_prefetch(static_cast<const char*>(source), _MM_HINT_NTA);
+  if (!std::is_constant_evaluated())
+  {
+    // We should always use NTA
+    _mm_prefetch(static_cast<const char*>(source), _MM_HINT_NTA);
+  }
 }
 
 ///
-/// Relocates elements into uninitialized memory. Equivalent to moving all elements to new array and calling destructor
-/// on old array elements.
+/// Relocates an element into uninitialized memory. Equivalent to moving source to destination then destroying source.
 ///
-/// If the type is trivially relocatable, optimizes the relocation by using memcpy/memmove.
+/// Optimizes destructive move with bitwise memory copy when possible.
 ///
 /// @note Inspired by proposal: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p1144r5.html
 ///
-/// @tparam Overlap Whether or not source and destination overlap.
-/// @tparam SourceIt Source iterator.
-/// @tparam DestIt Destination iterator.
+/// @tparam Type Type to relocate.
+///
+/// @param[in] src Source.
+/// @param[in] dst Destionation.
+///
+template<class Type>
+constexpr void RelocateAt(Type* src, Type* dst)
+{
+  if (std::is_constant_evaluated() || !IsTriviallyRelocatable<Type>::value)
+  {
+    ::new (static_cast<void*>(dst)) Type(std::move(*src));
+    src->~Type();
+  }
+  else if constexpr (IsTriviallyRelocatable<Type>::value)
+  {
+    std::memmove(dst, src, sizeof(Type));
+  }
+}
+
+///
+/// Relocates the range of elements into uninitialized memory. Equivalent to moving all source elements to the
+/// destination then destroying the source elements.
+///
+/// Optimizes destructive move with bitwise memory copy when possible.
+///
+/// @note Inspired by proposal: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p1144r5.html
+///
+/// @tparam Type Type to relocate.
 ///
 /// @param[in] first First iterator to source.
 /// @param[in] last Last iterator to source.
 /// @param[in] dest Destination iterator.
 ///
-template<bool Overlap = true, typename SourceIt, typename DestIt>
-inline void UninitializedRelocate(SourceIt first, SourceIt last, DestIt dest)
+template<typename Type>
+constexpr void UninitializedRelocate(Type* first, Type* last, Type* dest)
 {
-  using DestType = typename std::iterator_traits<DestIt>::value_type;
-  using SourceType = decltype(std::move(*first));
-
-  constexpr bool memcpyable =
-    (std::is_same_v<DestType, std::remove_reference_t<SourceType>> && IsTriviallyRelocatable<DestType>::value);
-  constexpr bool both_contiguous = (std::is_pointer_v<SourceIt> && std::is_pointer_v<DestIt>);
-
-  if constexpr (memcpyable && both_contiguous)
-  {
-    const size_t bytes = (char*)last - (char*)first;
-
-    if constexpr (Overlap) std::memmove(std::addressof(*dest), std::addressof(*first), bytes);
-    else
-    {
-      std::memcpy(std::addressof(*dest), std::addressof(*first), bytes);
-    }
-  }
-  else
+  if (std::is_constant_evaluated() || !IsTriviallyRelocatable<Type>::value)
   {
     for (; first != last; (void)++dest, ++first)
     {
-      ::new (static_cast<void*>(std::addressof(*dest))) DestType(std::move(*first));
-      std::destroy_at(std::addressof(*first));
+      ::new (static_cast<void*>(dest)) Type(std::move(*first));
+      first->~Type();
     }
+  }
+  else if constexpr (IsTriviallyRelocatable<Type>::value)
+  {
+    const size_t bytes = reinterpret_cast<char*>(last) - reinterpret_cast<char*>(first);
+
+    std::memmove(dest, first, bytes);
+  }
+}
+
+///
+/// Relocates the range of elements backwards into uninitialized memory. Equivalent to moving all source elements to the
+/// destination then destroying the source elements.
+///
+/// Optimizes destructive move with bitwise memory copy when possible.
+///
+/// @tparam Type Type to relocate.
+///
+/// @param[in] first First iterator to source.
+/// @param[in] last Last iterator to source.
+/// @param[in] dest Destination iterator (points to end of destination).
+///
+template<typename Type>
+constexpr void UninitializedRelocateBackwards(Type* first, Type* last, Type* dest)
+{
+  if (std::is_constant_evaluated() || !IsTriviallyRelocatable<Type>::value)
+  {
+    --dest;
+    --last;
+    --first;
+
+    for (; first != last; (void)--dest, --last)
+    {
+      ::new (static_cast<void*>(dest)) Type(std::move(*last));
+      last->~Type();
+    }
+  }
+  else if constexpr (IsTriviallyRelocatable<Type>::value)
+  {
+    const size_t bytes = reinterpret_cast<char*>(last) - reinterpret_cast<char*>(first);
+
+    std::memmove(reinterpret_cast<char*>(dest) - bytes, first, bytes);
   }
 }
 

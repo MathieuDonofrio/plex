@@ -31,6 +31,64 @@ TEST(Vector_Tests, Capacity_Trivial_AfterDefaultConstruction_Zero)
   EXPECT_EQ(vector.capacity(), 0);
 }
 
+TEST(Vector_Tests, ConstructorCArray_Trivial_EmptyCArray_Empty)
+{
+  Vector<double> vector({});
+
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
+}
+
+TEST(Vector_Tests, ConstructorCArray_NonTrivial_EmptyCArray_Empty)
+{
+  Vector<std::string> vector({});
+
+  EXPECT_EQ(vector.size(), 0);
+  EXPECT_TRUE(vector.empty());
+}
+
+TEST(Vector_Tests, ConstructorCArray_Trivial_OneElement_NotEmpty)
+{
+  Vector<double> vector({ 0.5 });
+
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
+}
+
+TEST(Vector_Tests, ConstructorCArray_Trivial_OneElement_CorrectValue)
+{
+  Vector<double> vector({ 0.5 });
+
+  EXPECT_EQ(vector[0], 0.5);
+}
+
+TEST(Vector_Tests, ConstructorCArray_NonTrivial_OneElement_NotEmpty)
+{
+  Vector<std::string> vector({ std::string { "0.5" } });
+
+  EXPECT_EQ(vector.size(), 1);
+  EXPECT_FALSE(vector.empty());
+}
+
+TEST(Vector_Tests, ConstructorCArray_NonTrivial_OneElement_CorrectValue)
+{
+  Vector<std::string> vector({ std::string { "0.5" } });
+
+  EXPECT_EQ(vector[0], std::string { "0.5" });
+}
+
+TEST(Vector_Tests, ConstructorCArray_Trivial_ManyElements_CorrectValues)
+{
+  Vector<double> vector({ 0.5, 0.4, 0.1 });
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 3);
+
+  EXPECT_EQ(vector[0], 0.5);
+  EXPECT_EQ(vector[1], 0.4);
+  EXPECT_EQ(vector[2], 0.1);
+}
+
 TEST(Vector_Tests, PushBack_Trivial_Single_SizeIncrease)
 {
   Vector<double> vector;
@@ -194,6 +252,282 @@ TEST(Vector_Tests, EmplaceBack_NonTrivial_Single_CorrectValue)
   EXPECT_EQ(vector[0].second, 10);
 }
 
+TEST(Vector_Tests, Insert_Trivial_SingleAtEndWhenEmpty_SizeIncrease)
+{
+  Vector<int> vector;
+
+  vector.Insert(vector.end(), 99);
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 1);
+}
+
+TEST(Vector_Tests, Insert_Trivial_SingleAtEndWhenEmpty_CorrectValue)
+{
+  Vector<int> vector;
+
+  vector.Insert(vector.end(), 99);
+
+  EXPECT_EQ(vector.back(), 99);
+}
+
+TEST(Vector_Tests, Insert_Trivial_SingleAtEnd_SizeIncrease)
+{
+  Vector<int> vector;
+
+  vector.PushBack(10);
+  vector.Insert(vector.end(), 99);
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 2);
+}
+
+TEST(Vector_Tests, Insert_Trivial_SingleAtEnd_CorrectValue)
+{
+  Vector<int> vector;
+
+  vector.PushBack(10);
+  vector.Insert(vector.end(), 99);
+
+  EXPECT_EQ(vector.front(), 10);
+  EXPECT_EQ(vector.back(), 99);
+}
+
+TEST(Vector_Tests, Insert_Trivial_SingleAtBegining_SizeIncrease)
+{
+  Vector<int> vector;
+
+  vector.PushBack(10);
+  vector.Insert(vector.begin(), 99);
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 2);
+}
+
+TEST(Vector_Tests, Insert_Trivial_SingleAtBegining_CorrectValue)
+{
+  Vector<int> vector;
+
+  vector.PushBack(10);
+  vector.Insert(vector.begin(), 99);
+
+  EXPECT_EQ(vector.front(), 99);
+  EXPECT_EQ(vector.back(), 10);
+}
+
+TEST(Vector_Tests, Insert_Trivial_SingleAtMiddle_SizeIncrease)
+{
+  Vector<int> vector;
+
+  vector.PushBack(10);
+  vector.PushBack(11);
+  vector.Insert(vector.begin() + 1, 99);
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 3);
+}
+
+TEST(Vector_Tests, Insert_Trivial_SingleAtMiddle_CorrectValue)
+{
+  Vector<int> vector;
+
+  vector.PushBack(10);
+  vector.PushBack(11);
+  vector.Insert(vector.begin() + 1, 99);
+
+  EXPECT_EQ(vector.front(), 10);
+  EXPECT_EQ(*(vector.begin() + 1), 99);
+  EXPECT_EQ(vector.back(), 11);
+}
+
+TEST(Vector_Tests, Insert_Trivial_DoubleAtBegining_CorrectValue)
+{
+  Vector<int> vector;
+
+  vector.Insert(vector.begin(), 10);
+  vector.Insert(vector.begin(), 11);
+
+  EXPECT_EQ(vector.size(), 2);
+  EXPECT_EQ(vector[0], 11);
+  EXPECT_EQ(vector[1], 10);
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_SingleAtEndWhenEmpty_SizeIncrease)
+{
+  Vector<std::string> vector;
+
+  vector.Insert(vector.end(), "99");
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 1);
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_SingleAtEndWhenEmpty_CorrectValue)
+{
+  Vector<std::string> vector;
+
+  vector.Insert(vector.end(), "99");
+
+  EXPECT_EQ(vector.back(), std::string { "99" });
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_SingleAtEnd_SizeIncrease)
+{
+  Vector<std::string> vector;
+
+  vector.PushBack("10");
+  vector.Insert(vector.end(), "99");
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 2);
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_SingleAtEnd_CorrectValue)
+{
+  Vector<std::string> vector;
+
+  vector.PushBack("10");
+  vector.Insert(vector.end(), "99");
+
+  EXPECT_EQ(vector.front(), std::string { "10" });
+  EXPECT_EQ(vector.back(), std::string { "99" });
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_SingleAtBegining_SizeIncrease)
+{
+  Vector<std::string> vector;
+
+  vector.PushBack("10");
+  vector.Insert(vector.begin(), "99");
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 2);
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_SingleAtBegining_CorrectValue)
+{
+  Vector<std::string> vector;
+
+  vector.PushBack("10");
+  vector.Insert(vector.begin(), "99");
+
+  EXPECT_EQ(vector.front(), std::string { "99" });
+  EXPECT_EQ(vector.back(), std::string { "10" });
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_SingleAtMiddle_SizeIncrease)
+{
+  Vector<std::string> vector;
+
+  vector.PushBack("10");
+  vector.PushBack("11");
+  vector.Insert(vector.begin() + 1, "99");
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 3);
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_SingleAtMiddle_CorrectValue)
+{
+  Vector<std::string> vector;
+
+  vector.PushBack("10");
+  vector.PushBack("11");
+  vector.Insert(vector.begin() + 1, "99");
+
+  EXPECT_EQ(vector.front(), std::string { "10" });
+  EXPECT_EQ(*(vector.begin() + 1), std::string { "99" });
+  EXPECT_EQ(vector.back(), std::string { "11" });
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_DoubleAtBegining_CorrectValue)
+{
+  Vector<std::string> vector;
+
+  vector.Insert(vector.begin(), "10");
+  vector.Insert(vector.begin(), "11");
+
+  EXPECT_EQ(vector.size(), 2);
+  EXPECT_EQ(vector[0], std::string { "11" });
+  EXPECT_EQ(vector[1], std::string { "10" });
+}
+
+TEST(Vector_Tests, Insert_Trivial_ManyAtBegining_CorrectValues)
+{
+  constexpr size_t cAmount = 100;
+
+  Vector<double> vector;
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    vector.Insert(vector.begin(), static_cast<double>(i));
+  }
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    EXPECT_EQ(vector[i], static_cast<double>(cAmount - i - 1));
+  }
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_ManyAtBegining_CorrectValues)
+{
+  constexpr size_t cAmount = 100;
+
+  Vector<std::string> vector;
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    vector.Insert(vector.begin(), std::to_string(i));
+  }
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    EXPECT_EQ(vector[i], std::to_string(cAmount - i - 1));
+  }
+}
+
+TEST(Vector_Tests, Insert_Trivial_ManyAtBeginingPlus1_CorrectValues)
+{
+  constexpr size_t cAmount = 100;
+
+  Vector<double> vector;
+
+  vector.PushBack(-1);
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    vector.Insert(vector.begin() + 1, static_cast<double>(i));
+  }
+
+  EXPECT_EQ(vector[0], -1);
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    EXPECT_EQ(vector[i + 1], static_cast<double>(cAmount - i - 1));
+  }
+}
+
+TEST(Vector_Tests, Insert_NonTrivial_ManyAtBeginingPlus1_CorrectValues)
+{
+  constexpr size_t cAmount = 100;
+
+  Vector<std::string> vector;
+
+  vector.PushBack(std::string { "-1" });
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    vector.Insert(vector.begin() + 1, std::to_string(i));
+  }
+
+  EXPECT_EQ(vector[0], std::to_string(-1));
+
+  for (size_t i = 0; i < cAmount; i++)
+  {
+    EXPECT_EQ(vector[i + 1], std::to_string(cAmount - i - 1));
+  }
+}
+
 TEST(Vector_Tests, PopBack_Trivial_Single_SizeDecrease)
 {
   Vector<double> vector;
@@ -246,7 +580,7 @@ TEST(Vector_Tests, Reserve_NonTrivial_empty_CorrectCapacity)
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.capacity(), 10);
+  EXPECT_GE(vector.capacity(), 10);
 }
 
 TEST(Vector_Tests, Reserve_Trivial_Increase_CorrectCapacity)
@@ -255,11 +589,11 @@ TEST(Vector_Tests, Reserve_Trivial_Increase_CorrectCapacity)
 
   vector.Reserve(5);
 
-  EXPECT_EQ(vector.capacity(), 5);
+  EXPECT_GE(vector.capacity(), 5);
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.capacity(), 10);
+  EXPECT_GE(vector.capacity(), 10);
 }
 
 TEST(Vector_Tests, Reserve_NonTrivial_Increase_CorrectCapacity)
@@ -268,11 +602,11 @@ TEST(Vector_Tests, Reserve_NonTrivial_Increase_CorrectCapacity)
 
   vector.Reserve(5);
 
-  EXPECT_EQ(vector.capacity(), 5);
+  EXPECT_GE(vector.capacity(), 5);
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.capacity(), 10);
+  EXPECT_GE(vector.capacity(), 10);
 }
 
 TEST(Vector_Tests, Reserve_Trivial_Decrease_DoNothing)
@@ -281,11 +615,13 @@ TEST(Vector_Tests, Reserve_Trivial_Decrease_DoNothing)
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.capacity(), 10);
+  size_t last_capacity = vector.capacity();
+
+  EXPECT_GE(last_capacity, 10);
 
   vector.Reserve(5);
 
-  EXPECT_EQ(vector.capacity(), 10);
+  EXPECT_EQ(last_capacity, 10);
 }
 
 TEST(Vector_Tests, Reserve_NonTrivial_Decrease_DoNothing)
@@ -294,11 +630,13 @@ TEST(Vector_Tests, Reserve_NonTrivial_Decrease_DoNothing)
 
   vector.Reserve(10);
 
-  EXPECT_EQ(vector.capacity(), 10);
+  size_t last_capacity = vector.capacity();
+
+  EXPECT_EQ(last_capacity, 10);
 
   vector.Reserve(5);
 
-  EXPECT_EQ(vector.capacity(), 10);
+  EXPECT_EQ(last_capacity, 10);
 }
 
 TEST(Vector_Tests, PopBack_NonTrivial_Single_sizeDecrease)
@@ -909,7 +1247,6 @@ TEST(Vector_Tests, CopyConstructor_Trivial_CorrectValues)
   Vector<double> copy { vector };
 
   EXPECT_EQ(copy.size(), 2);
-  EXPECT_EQ(copy.capacity(), 2);
   EXPECT_EQ(vector.size(), 2);
 
   EXPECT_EQ(vector[0], 1);
@@ -928,7 +1265,6 @@ TEST(Vector_Tests, CopyConstructor_NonTrivial_CorrectValues)
   Vector<std::string> copy { vector };
 
   EXPECT_EQ(copy.size(), 2);
-  EXPECT_EQ(copy.capacity(), 2);
   EXPECT_EQ(vector.size(), 2);
 
   EXPECT_EQ(vector[0], std::string { "1" });
@@ -947,7 +1283,6 @@ TEST(Vector_Tests, CopyAssignment_Trivial_CorrectValues)
   Vector<double> copy = vector;
 
   EXPECT_EQ(copy.size(), 2);
-  EXPECT_EQ(copy.capacity(), 2);
   EXPECT_EQ(vector.size(), 2);
 
   EXPECT_EQ(vector[0], 1);
@@ -966,7 +1301,6 @@ TEST(Vector_Tests, CopyAssignment_NonTrivial_CorrectValues)
   Vector<std::string> copy = vector;
 
   EXPECT_EQ(copy.size(), 2);
-  EXPECT_EQ(copy.capacity(), 2);
   EXPECT_EQ(vector.size(), 2);
 
   EXPECT_EQ(vector[0], std::string { "1" });

@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "genebits/engine/containers/c_array.h"
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/os/memory.h"
 #include "genebits/engine/utilities/type_traits.h"
@@ -20,177 +21,178 @@ namespace genebits::engine
 template<typename Type>
 concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
 
-namespace details
-{
-  template<VectorType Type, std::unsigned_integral InternalSizeType>
-  class VectorBase
-  {
-  public:
-    // Style Exception: STL
-    // clang-format off
+// Currently, only stateless and default constructed allocators are really supported. Once we have a compressed pair, we
+// could correctly implement allocators with empty base optimization.
 
-    using size_type = size_t;
-    using difference_type = ptrdiff_t;
-    using value_type = Type;
-
-    using iterator = Type*;
-    using const_iterator = const Type*;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-
-    using reference = Type&;
-    using const_reference = const Type&;
-    using pointer = Type*;
-    using const_pointer = const Type*;
-
-    // Forward iterator creation methods.
-    [[nodiscard]] constexpr iterator begin() { return array_; }
-    [[nodiscard]] constexpr const_iterator begin() const { return array_; }
-    [[nodiscard]] constexpr iterator end() { return array_ + size_; }
-    [[nodiscard]] constexpr const_iterator end() const { return array_ + size_; }
-
-    // Explicit const forward iterator creation methods.
-    [[nodiscard]] constexpr const_iterator cbegin() const { return array_; }
-    [[nodiscard]] constexpr const_iterator cend() const { return array_ + size_; }
-
-    // Reverse iterator creation methods.
-    [[nodiscard]] constexpr reverse_iterator rbegin() { return reverse_iterator(end()); }
-    [[nodiscard]] constexpr const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
-    [[nodiscard]] constexpr reverse_iterator rend() { return reverse_iterator(begin()); }
-    [[nodiscard]] constexpr const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
-
-    // Internal array accessors
-    [[nodiscard]] constexpr pointer data() { return pointer(begin()); }
-    [[nodiscard]] constexpr const_pointer data() const { return const_pointer(begin()); }
-    [[nodiscard]] constexpr reference front() { return begin()[0]; }
-    [[nodiscard]] constexpr const_reference front() const { return begin()[0]; }
-    [[nodiscard]] constexpr reference back() { return end()[-1]; }
-    [[nodiscard]] constexpr const_reference back() const { return end()[-1]; }
-
-    // clang-format on
-
-    ///
-    /// Const array access operator.
-    ///
-    /// @param[in] index Index to access
-    ///
-    /// @return Const reference to element at the index.
-    ///
-    [[nodiscard]] constexpr const Type& operator[](const size_type index) const noexcept
-    {
-      ASSERT(index < size_, "Index out of bounds");
-      return array_[index];
-    }
-
-    ///
-    /// Array access operator.
-    ///
-    /// @param[in] index Index to access
-    ///
-    /// @return Reference to element at the index.
-    ///
-    [[nodiscard]] constexpr Type& operator[](const size_type index) noexcept
-    {
-      ASSERT(index < size_, "Index out of bounds");
-      return array_[index];
-    }
-
-    ///
-    /// Returns the amount of elements currently stored in the vector.
-    ///
-    /// @return Size of the vector.
-    ///
-    [[nodiscard]] constexpr size_t size() const noexcept
-    {
-      return static_cast<size_t>(size_);
-    }
-
-    ///
-    /// Returns the current maximum amount of elements that can be stored
-    /// in the vector without needing to grow the internal array.
-    ///
-    /// @return Capacity of the vector.
-    ///
-    [[nodiscard]] constexpr size_t capacity() const noexcept
-    {
-      return static_cast<size_t>(capacity_);
-    }
-
-    ///
-    /// Returns whether or not the vector is empty.
-    ///
-    /// @return True if the vector is empty, false otherwise.
-    ///
-    [[nodiscard]] constexpr bool empty() const noexcept
-    {
-      return size_ == 0;
-    }
-
-  protected:
-    ///
-    /// Parametric constructor
-    ///
-    constexpr VectorBase(Type* array, uint32_t size, uint32_t capacity) noexcept
-      : array_(array), size_(size), capacity_(capacity)
-    {}
-
-    ///
-    /// Swaps contents of other vector base with this one.
-    ///
-    /// @param[in] other Other vector
-    ///
-    void Swap(VectorBase& other)
-    {
-      std::swap(array_, other.array_);
-      std::swap(size_, other.size_);
-      std::swap(capacity_, other.capacity_);
-    }
-
-  protected:
-    Type* array_;
-    InternalSizeType size_;
-    InternalSizeType capacity_;
-  };
-} // namespace details
-
+///
+/// General purpose vector implementation optimized for speed.
+///
+/// This implementation of vector is our replacement for std::vector. Is most cases this vector is faster than
+/// std::vector for the following reason:
+///
+/// - Implementation simplicity resulting in significantly less code size.
+/// - Optimizations for relocatable types replacing move and destroy loops for bitwise memory copy.
+/// - Memory/speed tradeoffs like better growth rate and 32 bit size/capacity.
+/// - Carefully crafted to try and take advantage of heap elision. (Works well on clang)
+/// - Built-in fast unordered operations.
+///
+/// This is not a drop-in replacement for std::vector, replacement should be done diligently.
+///
+/// @tparam[in] Type Value type to contain.
+/// @tparam[in] AllocatorType Allocator type to allocate memory with.
+///
 template<VectorType Type, typename AllocatorType = std::allocator<Type>>
-class Vector : public details::VectorBase<Type, uint32_t>, private AllocatorType
+class Vector : private AllocatorType
 {
-private:
-  using SuperClass = typename details::VectorBase<Type, uint32_t>;
-
 public:
-  using size_type = typename SuperClass::size_type;
-  using difference_type = typename SuperClass::difference_type;
-  using value_type = typename SuperClass::value_type;
+  // Style Exception: STL
+  // clang-format off
 
-  using iterator = typename SuperClass::iterator;
-  using const_iterator = typename SuperClass::const_iterator;
-  using const_reverse_iterator = typename SuperClass::const_reverse_iterator;
-  using reverse_iterator = typename SuperClass::reverse_iterator;
+  using size_type = size_t;
+  using difference_type = ptrdiff_t;
+  using value_type = Type;
 
-  using reference = typename SuperClass::reference;
-  using const_reference = typename SuperClass::const_reference;
-  using pointer = typename SuperClass::pointer;
-  using const_pointer = typename SuperClass::const_pointer;
+  using iterator = Type*;
+  using const_iterator = const Type*;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+
+  using reference = Type&;
+  using const_reference = const Type&;
+  using pointer = Type*;
+  using const_pointer = const Type*;
 
   using allocator_type = AllocatorType;
+  using allocator_traits = std::allocator_traits<allocator_type>;
+
+  // Forward iterator creation methods.
+  [[nodiscard]] constexpr iterator begin() { return array_; }
+  [[nodiscard]] constexpr const_iterator begin() const { return array_; }
+  [[nodiscard]] constexpr iterator end() { return array_ + size_; }
+  [[nodiscard]] constexpr const_iterator end() const { return array_ + size_; }
+
+  // Explicit const forward iterator creation methods.
+  [[nodiscard]] constexpr const_iterator cbegin() const { return array_; }
+  [[nodiscard]] constexpr const_iterator cend() const { return array_ + size_; }
+
+  // Reverse iterator creation methods.
+  [[nodiscard]] constexpr reverse_iterator rbegin() { return reverse_iterator(end()); }
+  [[nodiscard]] constexpr const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+  [[nodiscard]] constexpr reverse_iterator rend() { return reverse_iterator(begin()); }
+  [[nodiscard]] constexpr const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+
+  // Internal array accessors
+  [[nodiscard]] constexpr pointer data() { return pointer(begin()); }
+  [[nodiscard]] constexpr const_pointer data() const { return const_pointer(begin()); }
+  [[nodiscard]] constexpr reference front() { return begin()[0]; }
+  [[nodiscard]] constexpr const_reference front() const { return begin()[0]; }
+  [[nodiscard]] constexpr reference back() { return end()[-1]; }
+  [[nodiscard]] constexpr const_reference back() const { return end()[-1]; }
+
+  // clang-format on
+
+  ///
+  /// Const array access operator.
+  ///
+  /// @param[in] index Index to access
+  ///
+  /// @return Const reference to element at the index.
+  ///
+  [[nodiscard]] constexpr const Type& operator[](const size_type index) const noexcept
+  {
+    ASSERT(index < size_, "Index out of bounds");
+    return array_[index];
+  }
+
+  ///
+  /// Array access operator.
+  ///
+  /// @param[in] index Index to access
+  ///
+  /// @return Reference to element at the index.
+  ///
+  [[nodiscard]] constexpr Type& operator[](const size_type index) noexcept
+  {
+    ASSERT(index < size_, "Index out of bounds");
+    return array_[index];
+  }
+
+  ///
+  /// Returns the amount of elements currently stored in the vector.
+  ///
+  /// @return Size of the vector.
+  ///
+  [[nodiscard]] constexpr size_t size() const noexcept
+  {
+    return static_cast<size_t>(size_);
+  }
+
+  ///
+  /// Returns the current maximum amount of elements that can be stored
+  /// in the vector without needing to grow the internal array.
+  ///
+  /// @return Capacity of the vector.
+  ///
+  [[nodiscard]] constexpr size_t capacity() const noexcept
+  {
+    return static_cast<size_t>(capacity_);
+  }
+
+  ///
+  /// Returns whether or not the vector is empty.
+  ///
+  /// @return True if the vector is empty, false otherwise.
+  ///
+  [[nodiscard]] constexpr bool empty() const noexcept
+  {
+    return size_ == 0;
+  }
+
+  ///
+  /// Returns the allocator for this vector.
+  ///
+  /// @return Allocator.
+  ///
+  allocator_type get_allocator() const noexcept
+  {
+    return *this;
+  }
 
 public:
   ///
   /// Default constructor
   ///
-  constexpr Vector() noexcept(std::is_nothrow_default_constructible_v<allocator_type>) : SuperClass(nullptr, 0, 0) {}
+  constexpr Vector() noexcept : array_(nullptr), size_(0), capacity_(0) {}
+
+  ///
+  /// Constructs vector using c-array style initializer list.
+  ///
+  /// @tparam Size CArray size.
+  ///
+  /// @param[in] source Array.
+  ///
+  template<size_t Size>
+  Vector(CArray<Type, Size>&& source) noexcept
+  {
+    AssignToEmpty(std::move(source));
+  }
+
+  ///
+  /// Empty c-array constructor. Default constructs the vector.
+  ///
+  template<std::same_as<EmptyCArray> Source = EmptyCArray>
+  constexpr Vector(Source) noexcept : Vector()
+  {}
 
   ///
   /// Destructor
   ///
   ~Vector() noexcept
   {
-    if (this->array_) [[likely]]
+    if (this->array_)
     {
-      std::destroy(this->begin(), this->end());
-      Deallocate();
+      std::destroy(begin(), end());
+      get_allocator().deallocate(array_, capacity_);
     }
   }
 
@@ -200,7 +202,7 @@ public:
   /// @param[in] other Vector to move into this one.
   ///
   constexpr Vector(Vector<Type, AllocatorType>&& other) noexcept
-    : SuperClass(other.array_, other.size_, other.capacity_)
+    : array_(other.array_), size_(other.size_), capacity_(other.capacity_)
   {
     other.array_ = nullptr;
     other.size_ = 0;
@@ -212,17 +214,14 @@ public:
   ///
   /// @param[in] other Vector to copy from.
   ///
-  Vector(const Vector<Type, AllocatorType>& other)
-    : SuperClass(AllocatorType::allocate(other.size_), other.size_, other.size_)
+  Vector(const Vector<Type, AllocatorType>& other) noexcept : size_(other.size_)
   {
-    if constexpr (std::is_trivially_copy_constructible_v<Type>)
-    {
-      std::memcpy(this->begin(), other.cbegin(), (char*)other.cend() - (char*)other.cbegin());
-    }
-    else
-    {
-      std::uninitialized_copy(other.cbegin(), other.cend(), this->begin());
-    }
+    Block block = AllocateAtLeast(size_);
+
+    array_ = block.ptr;
+    capacity_ = block.count;
+
+    std::uninitialized_copy(other.cbegin(), other.cend(), this->begin());
   }
 
   ///
@@ -252,6 +251,42 @@ public:
   }
 
   ///
+  /// Constructs the element in place directly before the position.
+  ///
+  /// @param[in] pos Position to place element before.
+  /// @param[in] value Element to add and construct in place.
+  ///
+  template<typename... Args>
+  void Emplace(iterator pos, Args&&... args)
+  {
+    if (size_ < capacity_ && pos == end()) { ConstructOneAtEnd(std::forward<Args>(args)...); }
+    else // Slow path
+    {
+      ReallocEmplace(pos, std::forward<Args>(args)...);
+    }
+  }
+
+  ///
+  /// Inserts the element directly before the position.
+  ///
+  /// @param[in] value Element to insert.
+  ///
+  void Insert(iterator pos, const Type& value)
+  {
+    Emplace(pos, value);
+  }
+
+  ///
+  /// Inserts the element directly before the position.
+  ///
+  /// @param[in] value Element to insert.
+  ///
+  void Insert(iterator pos, Type&& value)
+  {
+    Emplace(pos, std::move(value));
+  }
+
+  ///
   /// Constructs the element in place at the back of the vector.
   ///
   /// @param[in] value Element to add and construct in place.
@@ -259,9 +294,11 @@ public:
   template<typename... Args>
   void EmplaceBack(Args&&... args)
   {
-    PrepareInsertion();
-    new (this->end()) Type(std::forward<Args>(args)...);
-    ++this->size_;
+    if (size_ < capacity_) [[likely]] { ConstructOneAtEnd(std::forward<Args>(args)...); }
+    else // Slow path
+    {
+      ReallocEmplaceBack(std::forward<Args>(args)...);
+    }
   }
 
   ///
@@ -289,10 +326,23 @@ public:
   ///
   void PopBack() noexcept
   {
-    ASSERT(this->size_ > 0, "Vector is empty");
+    ASSERT(size_ > 0, "Vector is empty");
 
-    --this->size_;
-    if constexpr (!std::is_trivially_destructible_v<Type>) this->array_[this->size_].~Type();
+    --size_;
+    end()->~Type();
+  }
+
+  ///
+  /// Remove the element at the specified index. Shifts all elements after element.
+  ///
+  /// @param[in] it Iterator for element to erase
+  ///
+  void Erase(iterator it) noexcept
+  {
+    ASSERT(size_ > 0, "Vector is empty");
+
+    it->~Type();
+    if (it + 1 != end()) UninitializedRelocate(it + 1, end(), it);
   }
 
   ///
@@ -302,24 +352,14 @@ public:
   ///     This changes the order of elements by swapping the element at the end of
   ///     the vector with the one at the erased index.
   ///
-  /// @param[in] value Iterator for element to erase
+  /// @param[in] it Iterator for element to erase
   ///
   void UnorderedErase(iterator it) noexcept
   {
-    ASSERT(this->size_ > 0, "Vector is empty");
+    ASSERT(size_ > 0, "Vector is empty");
 
-    if (--this->size_) [[likely]]
-    {
-      if constexpr (IsTriviallyRelocatable<Type>::value) std::memmove(it, this->end(), sizeof(Type));
-      else
-      {
-        *it = std::move(*this->end());
-      }
-    }
-    else
-    {
-      if constexpr (!std::is_trivially_destructible_v<Type>) it->~Type();
-    }
+    it->~Type();
+    if (--size_) [[likely]] { RelocateAt(end(), it); }
   }
 
   ///
@@ -333,16 +373,11 @@ public:
   {
     Reserve(new_size);
 
-    if (static_cast<uint32_t>(new_size) > this->size_)
-    {
-      std::uninitialized_value_construct(this->end(), this->begin() + new_size);
-    }
+    if (static_cast<uint32_t>(new_size) > size_) std::uninitialized_value_construct(end(), begin() + new_size);
     else
-    {
-      std::destroy(this->begin() + new_size, this->end());
-    }
+      std::destroy(begin() + new_size, end());
 
-    this->size_ = static_cast<uint32_t>(new_size);
+    size_ = static_cast<uint32_t>(new_size);
   }
 
   ///
@@ -357,16 +392,11 @@ public:
   {
     Reserve(new_size);
 
-    if (static_cast<uint32_t>(new_size) > this->size_)
-    {
-      std::uninitialized_fill(this->end(), this->begin() + new_size, value);
-    }
+    if (static_cast<uint32_t>(new_size) > size_) std::uninitialized_fill(end(), begin() + new_size, value);
     else
-    {
-      std::destroy(this->begin() + new_size, this->end());
-    }
+      std::destroy(begin() + new_size, end());
 
-    this->size_ = static_cast<uint32_t>(new_size);
+    size_ = static_cast<uint32_t>(new_size);
   }
 
   ///
@@ -377,8 +407,13 @@ public:
   ///
   void Reserve(const size_t min_capacity) noexcept
   {
-    if (static_cast<uint32_t>(min_capacity) > this->capacity_) [[likely]]
-      Grow(static_cast<uint32_t>(min_capacity));
+    if (static_cast<uint32_t>(min_capacity) > capacity_) [[likely]]
+    {
+      const Block block = AllocateAtLeast(min_capacity);
+      UninitializedRelocate(begin(), end(), block.ptr);
+
+      SwapArrays(block.ptr, block.count);
+    }
   }
 
   ///
@@ -388,7 +423,7 @@ public:
   ///
   void Clear() noexcept
   {
-    std::destroy(this->begin(), this->end());
+    std::destroy(begin(), end());
 
     this->size_ = 0;
   }
@@ -400,7 +435,9 @@ public:
   ///
   void Swap(Vector<Type, AllocatorType>& other) noexcept
   {
-    SuperClass::Swap(other);
+    std::swap(array_, other.array_);
+    std::swap(size_, other.size_);
+    std::swap(capacity_, other.capacity_);
   }
 
   ///
@@ -432,25 +469,32 @@ public:
 
 protected:
   ///
-  /// Grows the internal array to at least fit the specified amount of elements.
+  /// Block returned by allocation. Returns a pointer and a count.
   ///
-  /// @param[in] new_capacity Minimum capacity to grow to.
-  ///
-  void Grow(const uint32_t new_capacity) noexcept
+  struct Block
   {
-    // Use allocate_at_least here for c++23.
-    // It should yield major performance benefits and every container will use it.
-    Type* new_array = AllocatorType::allocate(new_capacity);
+    Type* ptr;
+    uint32_t count;
+  };
 
-    if (this->array_ == nullptr) goto Update;
-
-    UninitializedRelocate<false>(this->begin(), this->end(), new_array);
-
-    AllocatorType::deallocate(this->array_, this->capacity_);
-
-Update:
-    this->array_ = new_array;
-    this->capacity_ = new_capacity;
+  ///
+  /// Allocates a block of memory with least the required capacity.
+  ///
+  /// @param[in] capacity Minimum capacity.
+  ///
+  /// @return The allocated block.
+  ///
+  Block AllocateAtLeast(size_t capacity) noexcept
+  {
+    // C++ 23 allocate_at_least should yield major performance benefits over regular allocation for containers.
+    // It is a suitable replacement for realloc.
+    // Proposal: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0401r6.html
+#ifdef __cpp_lib_allocate_at_least
+    const auto result = get_allocator().allocate_at_least(capacity);
+    return { result.ptr, static_cast<uint32_t>(result.count) };
+#else
+    return { get_allocator().allocate(capacity), static_cast<uint32_t>(capacity) };
+#endif
   }
 
   ///
@@ -460,41 +504,126 @@ Update:
   ///
   /// @return Computed capacity.
   ///
-  [[nodiscard]] uint32_t ComputeGrowthCapacity() const noexcept
+  [[nodiscard]] uint32_t ComputeNextCapacity() const noexcept
   {
-    if (this->capacity_ == 0) [[unlikely]]
+    if (capacity_ == 0) [[unlikely]]
     {
       // First allocation is always at least 256 bytes and a capacity of 4
       return sizeof(Type) >= 64 ? 4 : 256 / sizeof(Type);
     }
 
     // Ideally we want to grow by 1.5x to maximize memory reallocation.
-
-    return this->capacity_ + (this->capacity_ >> 1); // Same as 1.5x
+    return capacity_ + (capacity_ / 2); // Same as 1.5x
   }
 
   ///
-  /// Makes sure the vector has enough available space to add an new element to it.
+  /// Swaps the old array with the new array. Deallocates the old array if any.
   ///
-  void PrepareInsertion() noexcept
+  /// @param[in] new_array Array to swap to.
+  /// @param[in] new_capacity New array capacity.
+  ///
+  void SwapArrays(Type* new_array, uint32_t new_capacity) noexcept
   {
-    if (this->size_ == this->capacity_) [[unlikely]]
+    if (array_) get_allocator().deallocate(array_, capacity_);
+
+    array_ = new_array;
+    capacity_ = new_capacity;
+  }
+
+  ///
+  /// Reallocates the array and constructs one element directly before the position.
+  ///
+  /// @tparam Args Argument types.
+  ///
+  /// @param[in] pos Position to emplace at.
+  /// @param[in] args Arguments.
+  ///
+  template<typename... Args>
+  void ReallocEmplace(iterator pos, Args&&... args)
+  {
+    if (size_ < capacity_) [[likely]]
     {
-      // We may want to allow customization of growth policy in the future.
-      // Depending on the allocator the default growth policy may not be ideal.
+      UninitializedRelocateBackwards(pos, end(), end() + 1);
 
-      Grow(ComputeGrowthCapacity());
+      new (pos) Type(std::forward<Args>(args)...);
     }
+    else
+    {
+      const Block block = AllocateAtLeast(ComputeNextCapacity());
+
+      const size_t elements_before = static_cast<size_t>(pos - begin());
+      const iterator new_pos = block.ptr + elements_before;
+
+      new (new_pos) Type(std::forward<Args>(args)...);
+
+      UninitializedRelocate(begin(), pos, block.ptr);
+      UninitializedRelocate(pos, end(), new_pos + 1);
+
+      SwapArrays(block.ptr, block.count);
+    }
+
+    ++size_;
   }
 
   ///
-  /// Deallocates the current internal array.
+  /// Reallocates the array and constructs one element at the end of the vector.
   ///
-  void Deallocate() noexcept
+  /// @tparam Args Argument types.
+  ///
+  /// @param[in] args Arguments.
+  ///
+  template<typename... Args>
+  void ReallocEmplaceBack(Args&&... args)
   {
-    AllocatorType::deallocate(this->array_, this->capacity_);
-    this->array_ = nullptr;
+    const Block block = AllocateAtLeast(ComputeNextCapacity());
+
+    new (block.ptr + size_) Type(std::forward<Args>(args)...);
+    UninitializedRelocate(begin(), end(), block.ptr);
+
+    SwapArrays(block.ptr, block.count);
+
+    ++size_;
   }
+
+  ///
+  /// Constructs one element at the end of the vector.
+  ///
+  /// @tparam Args Argument types.
+  ///
+  /// @param[in] args Arguments.
+  ///
+  template<typename... Args>
+  void ConstructOneAtEnd(Args&&... args) noexcept
+  {
+    new (end()) Type(std::forward<Args>(args)...);
+    ++size_;
+  }
+
+  ///
+  /// Assigns a c-array to an empty vector.
+  ///
+  /// @tparam Size CArray size.
+  ///
+  /// @param[in] source CArray source.
+  ///
+  template<size_t Size>
+  void AssignToEmpty(CArray<Type, Size>&& source) noexcept
+  {
+    Block block = AllocateAtLeast(Size);
+
+    array_ = block.ptr;
+    size_ = Size;
+    capacity_ = block.count;
+
+    UninitializedRelocate(source, static_cast<Type*>(source) + Size, array_);
+  }
+
+private:
+  Type* array_;
+
+  // We use 32 bit size and capacity to get a 16 byte vector on 64 bit.
+  uint32_t size_;
+  uint32_t capacity_;
 };
 
 template<typename Type, typename Allocator>

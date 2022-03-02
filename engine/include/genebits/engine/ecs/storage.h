@@ -270,7 +270,7 @@ public:
     (*sparse_)[entity] = static_cast<Entity>(dense_.size());
 
     dense_.PushBack(entity);
-    ((Access<std::remove_cvref_t<Components>>().PushBack(std::forward<Components>(components))), ...);
+    ((Access<std::remove_cvref_t<Components>>().EmplaceBack(std::forward<Components>(components))), ...);
   }
 
   ///
