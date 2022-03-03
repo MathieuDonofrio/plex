@@ -3,6 +3,7 @@
 
 #include "genebits/engine/debug/logging.h"
 #include "vulkan_attachment.h"
+#include "vulkan_sub_pass.h"
 
 namespace genebits::engine {
 
