@@ -11,7 +11,7 @@
 
 namespace genebits::engine
 {
-
+// TODO window resize event -> resize buffers, swapchain, etc...
 class VulkanRenderer : public Renderer
 {
 public:
@@ -57,7 +57,7 @@ private:
 
     adapter_ = std::shared_ptr<VkPhysicalDevice_T>(
       VulkanAdapterQueries::FindSuitableAdapter(instance_->GetHandle(), surface_->GetHandle(), required_extensions_),
-      [](VkPhysicalDevice_T*) {});
+      [](VkPhysicalDevice_T*) {}); // TODO this doesn't need to be a shared ptr (trivially destructible)
     if (!adapter_.get()) { return false; }
 
     device_ = std::make_shared<VulkanDevice>(adapter_, surface_->GetHandle(), required_extensions_);
