@@ -13,7 +13,7 @@ public:
     VkFormat format,
     VkAttachmentLoadOp load_op,
     VkAttachmentStoreOp store_op,
-    VkImageLayout initial_layout, // NOLINT(bugprone-easily-swappable-parameters)
+    VkImageLayout initial_layout, // NOLINT(bugprone-easily-swappable-parameters) //TODO make a struct out of the three layout -> LayoutTransitionSequence
     VkImageLayout layout,
     VkImageLayout final_layout) : attachment_description_({}), attachment_reference_({})
   {
@@ -34,6 +34,11 @@ public:
     attachment_reference_.attachment = attachment_index;
     // Defines the layout that is needed during the subpass
     attachment_reference_.layout = layout;
+  }
+
+  [[nodiscard]] const VkAttachmentReference& GetAttachmentReference() const
+  {
+    return attachment_reference_;
   }
 
 protected:
