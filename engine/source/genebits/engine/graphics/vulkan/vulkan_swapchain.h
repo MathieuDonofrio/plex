@@ -20,7 +20,7 @@ public:
     std::shared_ptr<VulkanSurface> surface,
     VkPhysicalDevice adapter_handle,
     uint32_t image_width,
-    uint32_t image_height,
+    uint32_t image_height, // NOLINT(bugprone-easily-swappable-parameters)
     uint32_t min_image_count = 0)
     : device_(std::move(device)), surface_(std::move(surface)), swapchain_extent_({ image_width, image_height }),
       min_image_count_(min_image_count)
@@ -42,14 +42,14 @@ public:
     LOG_INFO("Vulkan swapchain destroyed");
   }
 
-  [[nodiscard]] const VkSwapchainKHR GetSwapchainHandle() const noexcept
+  [[nodiscard]] VkSwapchainKHR GetSwapchainHandle() const noexcept
   {
     return swapchain_handle_;
   }
 
   bool UpdateSwapchainSize(uint32_t, uint32_t)
   {
-    return false;
+    return false; //TODO
   }
 
 private:
