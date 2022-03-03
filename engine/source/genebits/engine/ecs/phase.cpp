@@ -101,9 +101,9 @@ namespace
 
     for (const Ref<SystemGroup>& group : groups)
     {
-      for (size_t i = 0; i < group->Count(); i++)
+      for (Ref<SystemBase>& system : group->GetSystems())
       {
-        systems.PushBack(group->RawSystems()[i].Get());
+        systems.PushBack(system.Get());
       }
     }
 

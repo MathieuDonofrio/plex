@@ -599,6 +599,9 @@ auto MakeSharedTask(Awaitable&& awaitable) -> SharedTask<Result>
   }
 }
 
+template<typename Type>
+struct IsTriviallyRelocatable<SharedTask<Type>> : std::true_type
+{};
 } // namespace genebits::engine
 
 #endif

@@ -20,8 +20,6 @@ namespace genebits::engine
 /// Sharing the sparse array reduces overall memory use by a substantial amount. For example, if there are
 /// 10 archetypes, sharing the sparse array could save up to 9 times the memory of one sparse array.
 ///
-/// @warning Uses a lot of memory.
-///
 /// @tparam Entity The type of entity to use.
 /// @tparam AllocatorImpl Allocator to allocate memory with.
 ///
@@ -241,13 +239,8 @@ public:
   ///
   /// Inserts the entity with its component data into the storage.
   ///
-  /// This operation O(1) and is very fast.
-  ///
   /// @note
   ///    Order of the components does not matter.
-  ///
-  /// @warning
-  ///    The component types must be exactly the same as the
   ///
   /// @tparam Components List of component types to add.
   ///
@@ -276,8 +269,6 @@ public:
   ///
   /// Erases the entity from the storage.
   ///
-  /// This operation O(1) and is very fast.
-  ///
   /// @param[in] entity Entity to erase.
   ///
   void Erase(const Entity entity) noexcept
@@ -299,8 +290,6 @@ public:
   ///
   /// Clears the entire storage.
   ///
-  /// This operation is O(1) if all component types are trivial. Otherwise the complexity is O(n).
-  ///
   void Clear()
   {
     ASSERT(initialized_, "Not initialized");
@@ -312,8 +301,6 @@ public:
 
   ///
   /// Checks if the entity is in the storage.
-  ///
-  /// This operation is O(1) and is very fast.
   ///
   /// @param[in] entity The entity to check.
   ///
@@ -330,8 +317,6 @@ public:
 
   ///
   /// Returns a reference to the component data for the entity.
-  ///
-  /// This operation is O(1) and is very fast.
   ///
   /// @note
   ///    This method of unpacking is slightly slower than the unpacking during iteration.
@@ -353,8 +338,6 @@ public:
   ///
   /// Returns a reference to the component data for the entity.
   ///
-  /// This operation is O(1) and is very fast.
-  ///
   /// @note
   ///    This method of unpacking is slightly slower than the unpacking during iteration.
   ///
@@ -373,8 +356,6 @@ public:
   ///
   /// Directly accesses the internal array of the dense storage of the component.
   ///
-  /// This method is O(1) and is very fast.
-  ///
   /// @tparam Component The component type to access array for.
   ///
   /// @return Reference to dense array for the component type.
@@ -390,8 +371,6 @@ public:
 
   ///
   /// Directly accesses the internal array of the dense storage of the component.
-  ///
-  /// This method is O(1) and is very fast.
   ///
   /// @tparam Component The component type to access array for.
   ///

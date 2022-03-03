@@ -34,9 +34,7 @@ concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_construc
 /// - Optimizations for relocatable types replacing move and destroy loops for bitwise memory copy.
 /// - Memory/speed tradeoffs like better growth rate and 32 bit size/capacity.
 /// - Carefully crafted to try and take advantage of heap elision. (Works well on clang)
-/// - Built-in fast unordered operations.
-///
-/// This is not a drop-in replacement for std::vector, replacement should be done diligently.
+/// - Built-in optimized unordered operations.
 ///
 /// @tparam[in] Type Value type to contain.
 /// @tparam[in] AllocatorType Allocator type to allocate memory with.
@@ -262,7 +260,7 @@ public:
     if (size_ < capacity_ && pos == end()) { ConstructOneAtEnd(std::forward<Args>(args)...); }
     else // Slow path
     {
-      ReallocEmplace(pos, std::forward<Args>(args)...);
+      SlowEmplace(pos, std::forward<Args>(args)...);
     }
   }
 
@@ -297,7 +295,7 @@ public:
     if (size_ < capacity_) [[likely]] { ConstructOneAtEnd(std::forward<Args>(args)...); }
     else // Slow path
     {
-      ReallocEmplaceBack(std::forward<Args>(args)...);
+      SlowEmplaceBack(std::forward<Args>(args)...);
     }
   }
 
@@ -419,8 +417,6 @@ public:
   ///
   /// Clears the vector of all its contents without deallocating the memory.
   ///
-  /// Always O(n), where n is the size of the vector.
-  ///
   void Clear() noexcept
   {
     std::destroy(begin(), end());
@@ -539,7 +535,7 @@ protected:
   /// @param[in] args Arguments.
   ///
   template<typename... Args>
-  void ReallocEmplace(iterator pos, Args&&... args)
+  void SlowEmplace(iterator pos, Args&&... args)
   {
     if (size_ < capacity_) [[likely]]
     {
@@ -573,7 +569,7 @@ protected:
   /// @param[in] args Arguments.
   ///
   template<typename... Args>
-  void ReallocEmplaceBack(Args&&... args)
+  void SlowEmplaceBack(Args&&... args)
   {
     const Block block = AllocateAtLeast(ComputeNextCapacity());
 

@@ -1,10 +1,6 @@
 #ifndef GENEBITS_ENGINE_ECS_SYSTEM_H
 #define GENEBITS_ENGINE_ECS_SYSTEM_H
 
-#include <list>
-#include <set>
-#include <span>
-
 #include "genebits/engine/async/async_latch.h"
 #include "genebits/engine/async/shared_task.h"
 #include "genebits/engine/async/task.h"
@@ -34,20 +30,32 @@ struct SystemDataAccess
 ///
 using SystemDataAccessList = Vector<SystemDataAccess>;
 
+///
+/// Provides a list of system data accesses.
+///
 class SystemDataAccessProvider
 {
 public:
+  ///
+  /// Default constructor.
+  ///
   constexpr SystemDataAccessProvider() noexcept : initialized_(false) {}
 
+  ///
+  /// Destructor.
+  ///
   virtual ~SystemDataAccessProvider() = default;
 
+  ///
+  /// Returns the list of all the entity component data the system is allowed to access.
+  ///
+  /// @return List of all data system accesses.
+  ///
   [[nodiscard]] const SystemDataAccessList& GetDataAccess() const noexcept
   {
     if (!initialized_) [[unlikely]]
     {
-      // Resolve data access only once
-      new (&access_) SystemDataAccessList(std::move(CreateDataAccessList()));
-
+      new (static_cast<void*>(&access_)) SystemDataAccessList(CreateDataAccessList());
       initialized_ = true;
     }
 
@@ -55,6 +63,11 @@ public:
   }
 
 private:
+  ///
+  /// Called once by derived class to fetch all the data accesses and create the list.
+  ///
+  /// @return Newly created list of all data system accesses.
+  ///
   virtual SystemDataAccessList CreateDataAccessList() const = 0;
 
 private:
@@ -62,59 +75,90 @@ private:
   mutable bool initialized_;
 };
 
-struct SystemContext
-{
-  Registry* registry = nullptr;
-  ThreadPool* thread_pool = nullptr;
-};
-
-using SystemTask = SharedTask<>;
-
 template<typename... Components>
 class System;
 
-class SystemGroup;
-
+///
+/// Polymorphic system base.
+///
 class SystemBase : public SystemDataAccessProvider
 {
 public:
+  ///
+  /// Constructor.
+  ///
   SystemBase() = default;
-
-  virtual ~SystemBase() = default;
 
   SystemBase(const SystemBase&) = delete;
   SystemBase& operator=(const SystemBase&) = delete;
   SystemBase(SystemBase&&) = delete;
   SystemBase& operator=(SystemBase&&) = delete;
 
+  ///
+  /// Returns a task for executing the system update.
+  ///
+  /// @return Task of the system update.
+  ///
   Task<> Update()
   {
     return OnUpdate();
   }
 
-protected:
-  const SystemContext& GetContext() const noexcept
+  ///
+  /// Sets the registry for this system.
+  ///
+  /// @param[in] registry Registry to set.
+  ///
+  void SetRegistry(Registry& registry)
   {
-    return context_;
+    registry_ = std::addressof(registry);
   }
 
 private:
+  template<typename... Components>
+  friend class System;
+
+  ///
+  /// Called when a new update is requested. Generates a task for the update.
+  ///
+  /// @return Update task.
+  ///
   virtual Task<> OnUpdate() = 0;
 
-  virtual void OnActivate() {}
+  ///
+  /// Returns the registry set for this system.
+  ///
+  /// @return The registry set for this system.
+  ///
+  Registry& GetRegistry() const
+  {
+    ASSERT(registry_ != nullptr, "Registry not set");
 
-  virtual void OnDeactivate() {}
+    return *registry_;
+  }
 
 private:
-  SystemContext context_; // TODO
-
-  SystemTask update_task_;
+  Registry* registry_;
 };
 
+///
+/// Templated system.
+///
+/// This system computes all its data accesses at compile-time from templated components. If the component is const the
+/// access is read-only. This system can only view components that are part of its template arguments.
+///
+/// @tparam[in] Components Accesses components.
+///
 template<typename... Components>
 class System : public SystemBase
 {
 private:
+  ///
+  /// Creates the data access list from template arguments. If the template argument is const, the access will be
+  /// read-only.
+  ///
+  /// @return Data access list for the system.
+  ///
   SystemDataAccessList CreateDataAccessList() const final
   {
     SystemDataAccessList list;
@@ -126,22 +170,26 @@ private:
   }
 
 public:
-  // Public interface
-
+  ///
+  /// Returns the full view of the system. Contains all system component accesses.
+  ///
+  /// @return Full view of the system.
+  ///
   PolyView<Components...> GetView()
   {
-    return GetContext().registry->template View<Components...>();
-  }
-
-  decltype(auto) Schedule() // TODO Make more generalized scheduling
-  {
-    return GetContext().thread_pool->Schedule();
+    return GetRegistry().template View<Components...>();
   }
 };
 
+///
+/// Ordered container for systems.
+///
 class SystemGroup
 {
 public:
+  ///
+  /// Constructor.
+  ///
   SystemGroup() = default;
 
   SystemGroup(const SystemGroup&) = delete;
@@ -149,19 +197,34 @@ public:
   SystemGroup(SystemGroup&&) = delete;
   SystemGroup& operator=(SystemGroup&&) = delete;
 
+  ///
+  /// Adds a system to the end of the system list.
+  ///
+  /// @param[in] system Reference to system.
+  ///
   void Add(Ref<SystemBase> system)
   {
-    registered_systems_.PushBack(std::move(system));
+    registered_systems_.EmplaceBack(std::move(system));
   }
 
+  ///
+  /// Returns the amount of systems currently in the group.
+  ///
+  /// @return Amount of systems in group.
+  ///
   [[nodiscard]] constexpr size_t Count() const noexcept
   {
     return registered_systems_.size();
   }
 
-  [[nodiscard]] constexpr Ref<SystemBase>* RawSystems() noexcept
+  ///
+  /// Returns an vector of all systems in the group in correct order.
+  ///
+  /// @return Ordered vector of systems in group.
+  ///
+  [[nodiscard]] Vector<Ref<SystemBase>> GetSystems() noexcept
   {
-    return registered_systems_.data();
+    return registered_systems_;
   }
 
 private:

@@ -18,9 +18,9 @@ concept TypeMapValueType = VectorType<Type> && std::is_default_constructible_v<T
 ///
 /// Map used to map types to values where the type is the key.
 ///
-/// The key is generated using the Meta util Index method.
+/// The key is obtained from type using TypeInfo unique identifiers.
 ///
-/// This map is extremely low overhead and performance oriented.
+/// Much faster than using a normal map.
 ///
 /// @tparam Value Value to map types with.
 ///
@@ -107,6 +107,9 @@ private:
   Vector<Value> values_;
 };
 
+template<typename Type>
+struct IsTriviallyRelocatable<TypeMap<Type>> : IsTriviallyRelocatable<Vector<Type>>
+{};
 } // namespace genebits::engine
 
 #endif

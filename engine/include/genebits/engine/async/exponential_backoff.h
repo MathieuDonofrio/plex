@@ -8,7 +8,7 @@
 namespace genebits::engine
 {
 ///
-/// Uses in spin wait loops to exponentially wait for longer durations.
+/// Used in spin wait loops to exponentially wait for longer durations to reduce contention and save power.
 ///
 class ExponentialBackoff
 {
@@ -40,8 +40,6 @@ public:
     }
     else
     {
-      // Fallback to yielding spins
-
       std::this_thread::yield();
     }
   }

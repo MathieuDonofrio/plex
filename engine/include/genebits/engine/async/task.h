@@ -525,6 +525,9 @@ namespace details
   }
 } // namespace details
 
+template<typename Type>
+struct IsTriviallyRelocatable<Task<Type>> : std::true_type
+{};
 } // namespace genebits::engine
 
 #endif

@@ -43,9 +43,9 @@ namespace this_thread
   ///
   /// Can help improve performance and power consumption of spin-wait loops.
   ///
-  inline void Pause() noexcept
+  constexpr void Pause() noexcept
   {
-    _mm_pause();
+    if (!std::is_constant_evaluated()) _mm_pause();
   }
 } // namespace this_thread
 
