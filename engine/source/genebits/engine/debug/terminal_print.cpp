@@ -1,4 +1,4 @@
-#include "genebits/engine/debug/print.h"
+#include "genebits/engine/debug/terminal_print.h"
 
 #include <cstdio>
 
@@ -10,7 +10,7 @@
 #include <Windows.h> // for displaying colors
 #endif
 
-namespace genebits::engine
+namespace genebits::engine::debug
 {
 [[nodiscard]] constexpr decltype(auto) TColorId(const TColor Color) noexcept
 {
@@ -56,22 +56,22 @@ namespace genebits::engine
   }
 }
 
-void Print(const std::string& string)
+void TPrint(const std::string& string)
 {
   fwrite(string.data(), sizeof(char), string.size(), stdout);
 }
 
-void Print(const std::string_view string)
+void TPrint(std::string_view string)
 {
   fwrite(string.data(), sizeof(char), string.size(), stdout);
 }
 
-void Print(const char character)
+void TPrint(const char character)
 {
   putc(character, stdout);
 }
 
-void PrintColor(const TColor color)
+void TPrintColor(TColor color)
 {
 #if PLATFORM_WINDOWS
   static const HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -83,18 +83,18 @@ void PrintColor(const TColor color)
 #endif
 }
 
-void PrintColorReset()
+void TPrintColorReset()
 {
-  PrintColor(TColor::LightGray); // Light gray is the default
+  TPrintColor(TColor::LightGray); // Light gray is the default
 }
 
-void PrintLine()
+void TPrintLine()
 {
   putc('\n', stdout);
 }
 
-void PrintFlush()
+void TPrintFlush()
 {
   fflush(stdout);
 }
-} // namespace genebits::engine
+} // namespace genebits::engine::debug

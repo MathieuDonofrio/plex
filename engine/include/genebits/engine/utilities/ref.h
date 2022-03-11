@@ -218,6 +218,10 @@ namespace details
 /// Smart pointer that retains shared ownership of an instance through a pointer. Several ref's may
 /// own the same instance. The held instance is destroyed when the last ref owning the instance is destroyed.
 ///
+/// This is essentially our replacement for std::shared_ptr however there is no support for weak pointers and its not
+/// thread safe since we dont atomically increment the ref count. See the intrusive specialization if you want to
+/// customize the behaviour of the reference, for instance, making the ref count atomic.
+///
 /// @tparam Type Type to hold instance of.
 /// @tparam Deleter Deleter used to delete the instance.
 ///
@@ -560,7 +564,7 @@ private:
 /// own the same instance. The held instance is destroyed when the last ref owning the instance is destroyed.
 ///
 /// Specialization for intrusive ref types. Will use the intrusive methods from the instance to handle control.
-/// Most of the time using this specialization is faster than using the general purpose ref.
+/// Most of the time using this specialization is slightly faster than using the general purpose ref.
 ///
 /// @tparam Type Type to hold instance of.
 /// @tparam Deleter Deleter used to delete the instance.

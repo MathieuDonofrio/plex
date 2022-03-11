@@ -44,7 +44,7 @@ public:
 
     if (values_.size() <= index) [[unlikely]]
     {
-      ASSERT(index < 10000, "To many types"); // Highly unlikely the map exceeds 10k types, probably a bug.
+      ASSERT(index < 100000, "To many types"); // Highly unlikely the map exceeds 100k types, probably a bug.
 
       values_.Resize(index + 1);
     }
@@ -54,8 +54,6 @@ public:
 
   ///
   /// Returns the value reference for the type key.
-  ///
-  /// Always O(1) with extremely low overhead. Essentially an array lookup.
   ///
   /// @warning
   ///     Make sure Assure was called at least once for this type. Or else

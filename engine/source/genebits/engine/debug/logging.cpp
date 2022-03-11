@@ -10,6 +10,7 @@
 namespace
 {
 using namespace genebits::engine;
+using namespace genebits::engine::debug;
 
 ///
 /// Handler called when the application crashes.
@@ -50,7 +51,7 @@ TerminalLogger InitializeDebugTerminalLogging()
 } // namespace
 #endif
 
-namespace genebits::engine
+namespace genebits::engine::debug
 {
 EventBus& GetLoggingEventBus()
 {
@@ -58,4 +59,4 @@ EventBus& GetLoggingEventBus()
 
   return bus;
 }
-} // namespace genebits::engine
+} // namespace genebits::engine::debug

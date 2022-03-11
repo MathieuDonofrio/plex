@@ -1,10 +1,10 @@
-#ifndef GENEBITS_ENGINE_DEBUG_PRINT_H
-#define GENEBITS_ENGINE_DEBUG_PRINT_H
+#ifndef GENEBITS_ENGINE_DEBUG_TERMINAL_PRINT_H
+#define GENEBITS_ENGINE_DEBUG_TERMINAL_PRINT_H
 
 #include <string>
 #include <string_view>
 
-namespace genebits::engine
+namespace genebits::engine::debug
 {
 ///
 /// Enumerator for terminal colors.
@@ -36,44 +36,44 @@ enum class TColor
 ///
 /// @param[in] string The string to print.
 ///
-void Print(std::string_view string);
+void TPrint(std::string_view string);
 
 ///
 /// Prints the string to the console output (stdout).
 ///
 /// @param[in] string The string to print.
 ///
-void Print(const std::string& string);
+void TPrint(const std::string& string);
 
 ///
 /// Prints the character to the console output (stdout).
 ///
 /// @param[in] character The character to print.
 ///
-void Print(char character);
+void TPrint(char character);
 
 ///
 /// Prints the color code to the console output (stdout) to set the color.
 ///
 /// @param[in] color The color to print/set.
 ///
-void PrintColor(TColor color);
+void TPrintColor(TColor color);
 
 ///
 /// Prints the default color code to the console output (stdout) to reset the color.
 ///
-void PrintColorReset();
+void TPrintColorReset();
 
 ///
 /// Prints a new line ('\n') to the console output (stdout).
 ///
-void PrintLine();
+void TPrintLine();
 
 ///
 /// Flushes the console output (stdout).
 ///
-void PrintFlush();
+void TPrintFlush();
 
-} // namespace genebits::engine
+} // namespace genebits::engine::debug
 
 #endif

@@ -50,21 +50,22 @@ Utilities
 - [ ] TypeInfo PrettyName (Same for every compiler)
 - [ ] TypeInfo UniqueId Investigation & Cross-Boundaries tests
 - [ ] Smart pointer casting
+- [ ] Intrusive to non-intrusive ref conversion. (Would allow better type erasure)
 - [ ] AllocateRef, AllocateRefWithDeleter and MakeRefWithDeleter
 
 Other
 
 - [ ] Build sandboxes/examples cmake option
+- [ ] Precompiled headers
 
 ## Major
 
 These tasks are large updates with potentially breaking changes.
 
 - [ ] Make engine more generic than "genebits". (Use different name for the engine)
-- [x] None
 
 ## Experimental
 
 These tasks are experiments to be done in the experimental branch.
 
-- [ ] Cmake precompiled headers
+- [x] None
