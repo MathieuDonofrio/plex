@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_GRAPHIC_DEBUG_MESSAGE_SEVERITY_THRESHOLD_H
 #define GENEBITS_ENGINE_GRAPHICS_GRAPHIC_DEBUG_MESSAGE_SEVERITY_THRESHOLD_H
 
-#include "genebits/engine/util/enumerator.h"
+#include "genebits/engine/utilities/enumerator.h"
 
 namespace genebits::engine
 {

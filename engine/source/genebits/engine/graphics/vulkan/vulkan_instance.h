@@ -2,7 +2,7 @@
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_INSTANCE_H
 
 #include "genebits/engine/graphics/graphics_debug_level.h"
-#include "genebits/engine/util/enumerator.h"
+#include "genebits/engine/utilities/enumerator.h"
 #include "vulkan_capable_window.h"
 
 #include <vulkan/vulkan_core.h>
