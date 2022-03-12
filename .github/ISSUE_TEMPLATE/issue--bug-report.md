@@ -1,3 +1,9 @@
+---
+name: 'Bug Report' 
+about: Help us improve the engine by reporting a bug
+
+---
+
 ## Expected Behavior
 
 ## Actual Behavior
