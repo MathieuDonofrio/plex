@@ -16,6 +16,7 @@ function(add_engine_test subdirectory)
 
   add_executable(${subdirectory}_test ${${subdirectory}_test_headers} ${${subdirectory}_test_sources})
 
+  target_include_directories(${subdirectory}_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_include_directories(${subdirectory}_test PRIVATE ${engine_include_directories} ${GTest_INCLUDE_DIRS})
   target_link_libraries(${subdirectory}_test PRIVATE engine ${GTest_LIBRARIES})
 
@@ -26,8 +27,11 @@ endfunction()
 # Tests
 #
 
-add_engine_test(util)
+add_engine_test(utilities)
 add_engine_test(events)
 add_engine_test(graphics)
 add_engine_test(ecs)
-add_engine_test(parallel)
+add_engine_test(async)
+add_engine_test(os)
+add_engine_test(random)
+add_engine_test(containers)

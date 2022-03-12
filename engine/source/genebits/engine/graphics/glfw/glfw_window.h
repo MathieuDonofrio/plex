@@ -6,7 +6,7 @@
 
 #include "genebits/engine/graphics/vulkan/vulkan_capable_window.h"
 #include "genebits/engine/graphics/window.h"
-#include "genebits/engine/util/enumerator.h"
+#include "genebits/engine/utilities/enumerator.h"
 
 namespace
 {

@@ -331,8 +331,6 @@ GLFWmonitor* GetWindowMonitor(GLFWwindow* handle)
     if (inside_h && inside_v) return monitor.ptr;
   }
 
-  LOG_ERROR("The window should be inside one of the monitor, but it is not");
-
   return nullptr;
 }
 
