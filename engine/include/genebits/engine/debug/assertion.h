@@ -7,5 +7,4 @@
 #include <cassert>
 #define ASSERT(expression, message) assert(((void)(message), (expression)))
 #endif
-
 #endif

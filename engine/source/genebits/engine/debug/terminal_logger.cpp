@@ -1,65 +1,65 @@
 #include "genebits/engine/debug/terminal_logger.h"
 
-#include "genebits/engine/debug/print.h"
+#include "genebits/engine/debug/terminal_print.h"
 
-namespace genebits::engine
+namespace genebits::engine::debug
 {
 void PrintPrefix(const LogLevel level)
 {
-  Print('[');
+  TPrint('[');
 
   switch (level)
   {
   case LogLevel::Trace:
   {
-    PrintColor(TColor::Cyan);
-    Print(std::string_view { "TRACE" });
+    TPrintColor(TColor::Cyan);
+    TPrint(std::string_view { "TRACE" });
     break;
   }
   case LogLevel::Info:
   {
-    PrintColor(TColor::Blue);
-    Print(std::string_view { "INFO " });
+    TPrintColor(TColor::Blue);
+    TPrint(std::string_view { "INFO " });
     break;
   }
   case LogLevel::Warn:
   {
-    PrintColor(TColor::Yellow);
-    Print(std::string_view { "WARN " });
+    TPrintColor(TColor::Yellow);
+    TPrint(std::string_view { "WARN " });
     break;
   }
   case LogLevel::Error:
   {
-    PrintColor(TColor::Red);
-    Print(std::string_view { "ERROR" });
+    TPrintColor(TColor::Red);
+    TPrint(std::string_view { "ERROR" });
     break;
   }
-  default: Print(std::string_view { "?????" }); break;
+  default: TPrint(std::string_view { "?????" }); break;
   }
 
-  PrintColorReset();
+  TPrintColorReset();
 
-  Print(std::string_view { "] " });
+  TPrint(std::string_view { "] " });
 }
 
 void PrintStackTrace(const StackTrace stack_trace)
 {
-  PrintColor(TColor::DarkRed);
+  TPrintColor(TColor::DarkRed);
 
-  Print(std::string_view { "Backtrace:\n" });
+  TPrint(std::string_view { "Backtrace:\n" });
 
   for (const auto& frame : stack_trace.frames)
   {
-    Print(std::string_view { "\tat " });
-    Print(frame.name);
-    Print('(');
-    Print(frame.file_name);
-    Print(':');
-    Print(std::to_string(frame.line));
-    Print(std::string_view { ")\n" });
+    TPrint(std::string_view { "\tat " });
+    TPrint(frame.name);
+    TPrint('(');
+    TPrint(frame.file_name);
+    TPrint(':');
+    TPrint(std::to_string(frame.line));
+    TPrint(std::string_view { ")\n" });
   }
 
-  PrintColorReset();
+  TPrintColorReset();
 }
 
 void TerminalLogger::Listen(const LogEvent& event)
@@ -68,9 +68,9 @@ void TerminalLogger::Listen(const LogEvent& event)
 
   PrintPrefix(event.log.metadata.level);
 
-  Print(event.log.message);
+  TPrint(event.log.message);
 
-  PrintLine();
+  TPrintLine();
 
   const auto& stack_trace = event.log.metadata.stack_trace;
 
@@ -80,6 +80,6 @@ void TerminalLogger::Listen(const LogEvent& event)
     PrintStackTrace(stack_trace);
   }
 
-  PrintFlush();
+  TPrintFlush();
 }
-} // namespace genebits::engine
+} // namespace genebits::engine::debug

@@ -6,9 +6,8 @@
 #include <mutex>
 #include <type_traits>
 
-#include "genebits/engine/util/allocator.h"
-#include "genebits/engine/util/fast_vector.h"
-#include "genebits/engine/util/meta.h"
+#include "genebits/engine/containers/vector.h"
+#include "genebits/engine/utilities/type_info.h"
 
 namespace genebits::engine
 {
@@ -27,7 +26,7 @@ namespace details
   template<typename T1, typename T2>
   struct Compare
   {
-    static constexpr bool value = Meta<T1>::Name().compare(Meta<T2>::Name()) < 0;
+    static constexpr bool value = TypeInfo<T1>::Name().compare(TypeInfo<T2>::Name()) < 0;
 
     using type = std::conditional_t<value, T1, T2>;
   };
@@ -205,7 +204,7 @@ struct ViewIdTag
 template<typename Component>
 ComponentId GetComponentId()
 {
-  return static_cast<ComponentId>(Meta<Component>::template UniqueId<ComponentIdTag>());
+  return static_cast<ComponentId>(TypeInfo<Component>::template Index<ComponentIdTag>());
 }
 
 ///
@@ -222,7 +221,7 @@ ComponentId GetComponentId()
 template<typename... Components>
 ArchetypeId GetArchetypeId()
 {
-  return static_cast<ArchetypeId>(Meta<ComponentList<Components...>>::template UniqueId<ArchetypeIdTag>());
+  return static_cast<ArchetypeId>(TypeInfo<ComponentList<Components...>>::template Index<ArchetypeIdTag>());
 }
 
 ///
@@ -239,7 +238,7 @@ ArchetypeId GetArchetypeId()
 template<typename... Components>
 ViewId GetViewId()
 {
-  return static_cast<ViewId>(Meta<ComponentList<Components...>>::template UniqueId<ViewIdTag>());
+  return static_cast<ViewId>(TypeInfo<ComponentList<Components...>>::template Index<ViewIdTag>());
 }
 
 namespace details
@@ -260,9 +259,9 @@ namespace details
     ///
     /// @return Vector of component ids at runtime.
     ///
-    static FastVector<ComponentId> Value()
+    static Vector<ComponentId> Value()
     {
-      FastVector<ComponentId> components;
+      Vector<ComponentId> components;
       components.Reserve(sizeof...(Components));
 
       (components.PushBack(GetComponentId<Components>()), ...);
@@ -282,7 +281,7 @@ namespace details
 /// @return Sorted list of component ids.
 ///
 template<typename... Components>
-const FastVector<ComponentId>& GetComponentIds()
+const Vector<ComponentId>& GetComponentIds()
 {
   static const auto components = details::ComponentSequence<ComponentList<Components...>>::Value();
 

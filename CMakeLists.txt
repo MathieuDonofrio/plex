@@ -5,12 +5,12 @@
 cmake_minimum_required(VERSION 3.20)
 
 if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-    message(FATAL_ERROR "Preventing in-source building. Please run cmake in a separate build directory.")
+  message(FATAL_ERROR "Preventing in-source building. Please run cmake in a separate build directory.")
 endif ()
 
 if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
-    message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-    set(CMAKE_BUILD_TYPE RelWithDebInfo)
+  message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif ()
 
 #
@@ -23,14 +23,14 @@ list(TRANSFORM GENEBITS_VERSION REPLACE ${GENEBITS_VERSION_REGEX} "\\1")
 string(JOIN "." GENEBITS_VERSION ${GENEBITS_VERSION})
 
 project(
-        Genebits
-        VERSION ${GENEBITS_VERSION}
-        DESCRIPTION "Artificial life simulator"
-        HOMEPAGE_URL "https://github.com/MathieuDonofrio/Genebits"
-        LANGUAGES CXX
+  Genebits
+  VERSION ${GENEBITS_VERSION}
+  DESCRIPTION "Artificial life simulator"
+  HOMEPAGE_URL "https://github.com/MathieuDonofrio/Genebits"
+  LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_BINARY_DIR})
 
@@ -50,16 +50,12 @@ include(cmake/Conan.cmake)
 
 add_conan_package(glfw/3.3.4)
 
-if (BUILD_EDITOR)
-    add_conan_package(imgui/1.83)
-endif ()
-
 if (BUILD_TESTS)
-    add_conan_package(gtest/1.11.0)
+  add_conan_package(gtest/1.11.0)
 endif ()
 
 if (BUILD_BENCHMARKS)
-    add_conan_package(benchmark/1.5.3)
+  add_conan_package(benchmark/1.5.3)
 endif ()
 
 run_conan()

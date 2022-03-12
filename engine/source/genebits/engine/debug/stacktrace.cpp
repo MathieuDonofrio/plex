@@ -17,7 +17,7 @@
 #endif
 #endif
 
-namespace genebits::engine
+namespace genebits::engine::debug
 {
 #ifndef NDEBUG
 
@@ -98,4 +98,4 @@ StackTrace StackBackTrace(size_t)
 
 #endif
 
-} // namespace genebits::engine
+} // namespace genebits::engine::debug

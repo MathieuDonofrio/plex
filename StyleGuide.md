@@ -1,61 +1,67 @@
 # Genebits Style Guide
 
-Welcome to the genebits style guide. This style guide is heavily influences by the **Google C++ Style Guide** and can be found [here](https://google.github.io/styleguide/cppguide.html).
+Welcome to the genebits style guide. This style guide is heavily influences by the **Google C++ Style Guide** and can be
+found [here](https://google.github.io/styleguide/cppguide.html).
 
 # Table of Contents
 
 * [Project Structure](#project-structure)
-  * [Dependancies](#dependancies)
-    * [Package Manager](#package-manager)
-    * [Other Third Parties](#other-third-parties)
-  * [Engine Module](#engine-module)
-    * [Low Coupling](#low-coupling)
-  * [Define Guard](#define-guard)
-  * [Minimalist Includes](#minimalist-includes)
-  * [Include Order](#includes-order)
+    * [Dependencies](#dependencies)
+        * [Guidelines](#guidelines)
+        * [Package Manager](#package-manager)
+    * [Private Implementation](#private-implementation)
+    * [Define Guard](#define-guard)
+    * [Include Order](#includes-order)
 * [Naming](#naming)
-  * [File Names](#file-names)
-  * [Macro Names](#macro-names)
-  * [Namespace Names](#namespace-names)
-  * [Type Names](#type-names)
-  * [Variable Names](#variable-names)
-    * [Struct Data Members](#struct-data-members)
-    * [Class Data Members](#class-data-members)
-  * [Constant Names](#constant-names)
-  * [Function Names](#function-names)
-  * [Enumerator Names](#enumerator-names)
+    * [File Names](#file-names)
+    * [Macro Names](#macro-names)
+    * [Namespace Names](#namespace-names)
+    * [Type Names](#type-names)
+    * [Variable Names](#variable-names)
+        * [Struct Data Members](#struct-data-members)
+        * [Class Data Members](#class-data-members)
+    * [Constant Names](#constant-names)
+    * [Function Names](#function-names)
+    * [Enumerator Names](#enumerator-names)
 
-# Project Stucture
+# Project Structure
 
-The project structure allows us to more easily scale the project, therefor is quite important for the long term.
+## Dependencies
 
-## Dependancies
+### Guidelines
 
-Both external and internal dependancies should be keapt to a minimum. There are various methods to adding third party dependancies to the project, but conan is encouraged when possible.
+Dependencies should be avoided as much as possible. Whenever a dependency is added to the project it must be discussed
+rigorously with the rest of the group.
+
+If you need a library to handle something specific and simple, it is almost always better to simply implement a
+minimalist version in the engine.
+
+Dependencies that are only for development tools such as the editor, or debugging tools are much more likely to be
+accepted.
+
+Avoid needing to modify an external library. We don't want to be maintaining other libraries. Make sure the library is
+well-supported long term, and doesn't suck us into its ecosystem.
 
 ### Package Manager
 
-We use the **Conan Package Manager** for most of our dependancies. Always prefer uses the package manager. We have cmake utilites for making conan easier to use. 
+We use the **Conan Package Manager** for most of our dependencies.
 
-### Other Third Parties
+Always prefer using this package manager over other alternatives.
 
-Prefer putting the dependancy within its own folder the in the `thirdparty` folder at the root of the project.
+## Private Implementation
 
-If this is not possible, make sure sufficient cmake code is used to properly handle the dependancy.
+In order to expose a bare minimum, it is encouraged to place headers inside sources as much as possible.
 
-## Engine Module
+For public headers with many or large dependencies it is encouraged to break the dependencies by putting as much code as
+possible in the sources. This can sometimes be achieved using a `Private Implementation Pattern (Pimpl)` and is
+regularly used in the engine.
 
-The engine is separated into `Modules`. Various cmake utilies facilitate the creation and manament of these modules.
-
-### Low Coupling
-
-In order to expose a bare minimum, engine modules must have a `public` and `private` directory. Only headers that are to be exposes should be in the public folder.
-
-Every project should try not to expose thier internal dependancies. Using a `Private Implementation Pattern (Pimpl)` is encouraged to achieve this.
+Normally, dependencies that are used for release builds should never be exposed in public headers.
 
 ## Define Guard
 
-All header files should have `#define` guards. Do not use `#pragma once`. The name should be `<PROJECT>_<PATH/SCOPE>_<FILE>_H_`.
+All header files should have `#define` guards. Do not use `#pragma once`. The name should
+be `<PROJECT>_<PATH/SCOPE>_<FILE>_H_`.
 
 The path/scope should be somewhat based on the projects source tree.
 
@@ -68,51 +74,41 @@ The path/scope should be somewhat based on the projects source tree.
 #endif // FOO_BAR_BAZ_H_
 ```
 
-## Minimalist Includes
-
-You should only include what you use. Frequently clean up headers to reduce the bloat and keep everything included to a minimum.
-
 ## Includes Order
 
 Includes should be in the following order:
 
 * Related Header
-* System Headers
 * Standard Library Headers
 * Other Libraries Headers
 * Your headers
 
 ```
-#include "my_header.h"
+#include "my_header.h" // Related header
 
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <string>
+#include <string> // Standard library headers
 #include <vector>
 
-#include <cuda.h>
+#include <cuda.h> // Other libraries headers
+#include <Windows.h>
 
-#include "some_util.h"
+#include "some_util.h" // Your headers
+...
 ```
 
-There may be execeptions where conditional includes are needed, prefer putting these at the bottom.
+This order is not always possible, in exceptional cases make sure to document reasons for breaking the style.
 
 # Naming
 
-The most important consistency rules are those that govern naming. The style informs us of the sort thing we are looking at without needing to search for the declaration.
-
-There may be exceptions to naming something, usually if its something thats analogous to an exisiting `C` or `C++` entity.
-
-## Folder Names
+## Directory Names
 
 **Do not use spaces**
 
-Naming is quite flexible, but prefer a minimalist all lowercase name.
+Use **lower_snake_case** for naming directories.
 
 ## File Names
 
-File names should all be lowercase and can include underscores.
+Use **lower_snake_case** for naming files.
 
 C++ files should use the `.cpp` extension and header files should use the `.h` extension.
 
@@ -120,7 +116,7 @@ Do not use file names that exist in the standard libraries or operating system i
 
 ## Macro Names
 
-Macros should use **UPPER_SNAKE_CASE**. 
+Macros should use **UPPER_SNAKE_CASE**.
 
 ```
 MY_MACRO(...) 
@@ -128,22 +124,22 @@ MY_MACRO(...)
 
 ## Namespace Names
 
-Namespace names are in **snake_case**. 
+Namespace names are in **lower_snake_case**.
 
 When creating an embedded namespace scope, prefer the more modern `::` approche.
 
 ```
 // Prefered
-namespace genebits::engine
+namespace hello::reader
 {
 ...
 }
 
 // Also OK
-namespace genebits 
+namespace hello 
 {
 ...
-namespace engine 
+namespace reader 
 {
 ...
 }
@@ -153,7 +149,7 @@ namespace engine
 
 ## Type Names
 
-Type names are in **PascalCasing**. This applies for classes, structs, typedefs & aliases.
+Type names are in **PascalCasing**. This applies for everything: classes, structs, typedefs & aliases.
 
 ```
 class MyClass;
@@ -164,11 +160,13 @@ typedef std::string MyString;
 using MyMap = std::map<std::string, std::string>;
 ```
 
+Not required for compliance with other libraries such as the standard.
+
 ## Variables Names
 
-The names variables are in **snake_case**. This also applies to static data members.
+The names variables are in **lower_snake_case**.
 
-This also applies to const variables that do not have a fixed value for the duration of the program.
+Also applies to static variables and const variables that do not have a fixed value for the duration of the program.
 
 ```
 int today_week_day = 5;
@@ -177,6 +175,8 @@ const int tomorrow_week_day = (today + 1) % 7;
 ```
 
 ### Struct Data Members
+
+The struct data member names are in **lower_snake_case**.
 
 ```
 struct Node
@@ -188,7 +188,7 @@ struct Node
 
 ### Class Data Memebers
 
-Class data members has an additional underscore at the end of the name.
+Class data members are in **lower_snake_case** and have an additional underscore at the end of the name.
 
 ```
 class Account
@@ -202,7 +202,8 @@ private:
 
 ## Constants
 
-Constants, declared constexpr or const, and whoses value is fixed for the duration of the program are named with leading "c" and followed by **PascalCasing**.
+Constants, declared constexpr or const, where the value is fixed for the duration of the program, are named with
+leading 'c' and followed by **PascalCasing**.
 
 ```
 class Account
@@ -214,7 +215,7 @@ const int cWeeksInAYear = 52;
 
 ## Function Names
 
-Regular functions use **PascalCasing**.
+Functions use **PascalCasing**.
 
 ```
 PushBack()
@@ -226,7 +227,8 @@ OpenFile()
 
 Enumerators are named with **PascalCasing**.
 
-Naming enums like macros is also permitted but should be avoid because this may cause collisions between enums and macros.
+Naming enums like macros is also permitted but should be avoided because this may cause collisions between enums and
+macros.
 
 ```
 // Prefered

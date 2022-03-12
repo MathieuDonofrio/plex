@@ -7,18 +7,20 @@
 #include <type_traits>
 
 #include "genebits/engine/ecs/archetype.h"
-#include "genebits/engine/ecs/archetype_graph.h"
 #include "genebits/engine/ecs/entity_manager.h"
 #include "genebits/engine/ecs/storage.h"
+#include "genebits/engine/ecs/view_relations.h"
 
 namespace genebits::engine
 {
 ///
-/// Recommended entity type.
+/// Entity identifier type.
+///
+/// 32 bit should always be sufficient (~4.2 billion entities).
 ///
 using Entity = uint_fast32_t;
 
-template<std::unsigned_integral Entity, typename... Components>
+template<typename... Components>
 class PolyView;
 
 ///
@@ -30,9 +32,6 @@ class PolyView;
 /// The registry organizes entities and component data into archetypes. Archetypes are an unordered set of components.
 /// Using archetypes allows us to optimize memory layout to make operations faster in most cases.
 ///
-/// @tparam Entity Entity integral type.
-///
-template<std::unsigned_integral Entity = Entity>
 class Registry final
 {
 public:
@@ -203,13 +202,13 @@ public:
   /// @return Basic view of the registry for the component types.
   ///
   template<typename... Components>
-  [[nodiscard]] PolyView<Entity, Components...> View()
+  [[nodiscard]] PolyView<Components...> View()
   {
-    return PolyView<Entity, Components...>(*this);
+    return PolyView<Components...>(*this);
   }
 
 private:
-  template<std::unsigned_integral, typename...>
+  template<typename...>
   friend class PolyView;
 
   ///
@@ -224,9 +223,9 @@ private:
   template<typename... Components>
   Storage<Entity>& Assure()
   {
-    const ArchetypeId archetype = graph_.template AssureArchetype<Components...>();
+    const ArchetypeId archetype = relations_.template AssureArchetype<Components...>();
 
-    if (storages_.Size() <= archetype) storages_.Resize(archetype + 1, nullptr);
+    if (storages_.size() <= archetype) storages_.Resize(archetype + 1, nullptr);
 
     auto storage = storages_[archetype];
 
@@ -242,78 +241,200 @@ private:
 private:
   SharedSparseArray<Entity> mappings_;
   EntityManager<Entity> manager_;
-  ArchetypeGraph graph_;
+  ViewRelations relations_;
 
-  FastVector<Storage<Entity>*> storages_;
+  Vector<Storage<Entity>*> storages_;
 };
 
 ///
-/// Concept used to determine if an invokable can be used as an extended iteration function in the view.
+/// Tuple for all data pointers of an entity.
 ///
-/// The function be invocable with the entity as the first argument and all components after.
+/// They is one pointer for the entity identifier and one pointer for each component.
 ///
-/// @tparam Entity Entity integral type.
-/// @tparam Invocable Invocable functor type.
-/// @tparam Components Component types of the view.
+/// @tparam Components All the component types.
 ///
-template<typename Entity, typename Invocable, typename... Components>
-concept ExtendedUnpackFunction = requires(Invocable invocable, Entity entity, Components... components)
+template<typename... Components>
+using EntityData = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
+
+///
+/// Concept used to determine if an functor can be used as an extended entity apply functor.
+///
+/// To meet the requirements, the functor operator must contain the entity identifier type as
+/// the first argument.
+///
+/// @tparam Functor Functor type.
+/// @tparam Components Component types.
+///
+template<typename Functor, typename... Components>
+concept EntityExtendedFunctor = requires(Functor functor, Entity entity, Components... components)
 {
-  invocable(entity, components...);
+  functor(std::forward<Entity>(entity), std::forward<Components>(components)...);
 };
 
 ///
-/// Concept used to determine if an invokable can be used as an reduced iteration function in the view.
+/// Concept used to determine if an functor can be used as an reduced entity apply functor.
 ///
-/// The function be invocable with all components as the only arguments.
+/// To meet the requirements, the functor operator must not contain the entity identifier.
 ///
-/// @tparam Invocable Invocable functor type.
-/// @tparam Components Component types of the view.
+/// @tparam Functor Functor type.
+/// @tparam Components Component types.
 ///
-template<typename Invocable, typename... Components>
-concept ReducedUnpackFunction = requires(Invocable invocable, Components... components)
+template<typename Functor, typename... Components>
+concept EntityReducedFunctor = requires(Functor functor, Components... components)
 {
-  invocable(components...);
+  functor(std::forward<Components>(components)...);
 };
 
 ///
-/// Concept used to determine if an invocable can be used as an iteration function in the view.
+/// Concept used to determine if an functor can be used as an entity apply functor.
 ///
-/// Requires that the function either meets the requirements of either the reduced function or the extended function.
+/// To meet the requirements, must be EntityReducedFunctor or EntityExtendedFunctor.
 ///
-/// @tparam Entity Entity integral type.
-/// @tparam Invocable Invocable functor type.
-/// @tparam Components Component types of the view.
+/// @tparam Functor Functor type.
+/// @tparam Components Component types.
 ///
-template<typename Entity, typename Invocable, typename... Components>
-concept UnpackFunction =
-  ReducedUnpackFunction<Invocable, Components...> || ExtendedUnpackFunction<Entity, Invocable, Components...>;
+template<typename Functor, typename... Components>
+concept EntityFunctor = EntityReducedFunctor<Functor, Components...> || EntityExtendedFunctor<Functor, Components...>;
 
 ///
-/// Unpacks the data from a tuple and invokes a function with it.
+/// Unpacks the entity identifier and entity data, then invokes the functor.
 ///
-/// Entity data is usually obtained from view iteration.
+/// Overload used for functors such as lambda's.
 ///
-/// @tparam Entity Entity type.
-/// @tparam Function Function type.
-/// @tparam Components Components to unpack.
+/// @tparam Functor Type of functor to apply.
+/// @tparam Components Component types of the entity data.
 ///
-/// @param[in] function Instance of function to invoke.
-/// @param[in] data Data to unpack.
+/// @param[in] invocable Invocable to apply.
+/// @param[in] data Entity data.
 ///
-template<std::unsigned_integral Entity, typename Function, typename... Components>
-requires UnpackFunction<Entity, Function, Components...>
-constexpr void UnpackAndApply(
-  Function& function, [[maybe_unused]] std::tuple<Entity*, std::remove_cvref_t<Components>*...>& data)
+template<typename Functor, typename... Components>
+requires EntityExtendedFunctor<Functor, Components...>
+constexpr void EntityApply(Functor& func, EntityData<Components...>& data)
 {
-  if constexpr (ExtendedUnpackFunction<Entity, Function, Components...>)
-  {
-    function(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
-  }
-  else
-  {
-    function(*std::get<std::remove_cvref_t<Components>*>(data)...);
-  }
+  func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Unpacks the entity data, then invokes the functor.
+///
+/// Overload used for functors such as lambda's.
+///
+/// @tparam Functor Type of functor to apply.
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] invocable Invocable to apply.
+/// @param[in] data Entity data.
+///
+template<typename Functor, typename... Components>
+requires EntityReducedFunctor<Functor, Components...>
+constexpr void EntityApply(Functor& func, EntityData<Components...>& data)
+{
+  func(*std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Unpacks the entity identifier and entity data, then invokes the member function.
+///
+/// Overload used for const member function.
+///
+/// @tparam Type Type of instance to invoke member function with.
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] func Member function to apply.
+/// @param[in] instance Instance to invoke function on.
+/// @param[in] data Entity data.
+///
+template<class Type, typename... Components>
+constexpr void EntityApply(
+  void (Type::*func)(Entity, Components...) const, Type* instance, EntityData<Components...>& data)
+{
+  instance->*func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Unpacks the entity identifier and entity data, then invokes the member function.
+///
+/// Overload used for member function.
+///
+/// @tparam Type Type of instance to invoke member function with.
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] func Member function to apply.
+/// @param[in] instance Instance to invoke function on.
+/// @param[in] data Entity data.
+///
+template<class Type, typename... Components>
+constexpr void EntityApply(void (Type::*func)(Entity, Components...), Type* instance, EntityData<Components...>& data)
+{
+  instance->*func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Unpacks the entity data, then invokes the member function.
+///
+/// Overload used for const member function.
+///
+/// @tparam Type Type of instance to invoke member function with.
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] func Member function to apply.
+/// @param[in] instance Instance to invoke function on.
+/// @param[in] data Entity data.
+///
+template<class Type, typename... Components>
+constexpr void EntityApply(void (Type::*func)(Components...) const, Type* instance, EntityData<Components...>& data)
+{
+  instance->*func(*std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Unpacks the entity data, then invokes the member function.
+///
+/// Overload used for member function.
+///
+/// @tparam Type Type of instance to invoke member function with.
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] func Member function to apply.
+/// @param[in] instance Instance to invoke function on.
+/// @param[in] data Entity data.
+///
+template<class Type, typename... Components>
+constexpr void EntityApply(void (Type::*func)(Components...), Type* instance, EntityData<Components...>& data)
+{
+  instance->*func(*std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Unpacks the entity identifier and entity data, then invokes the function.
+///
+/// Overload used for free functions.
+///
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] func Function to apply.
+/// @param[in] data Entity data.
+///
+template<typename... Components>
+constexpr void EntityApply(void (*func)(Entity, Components...), EntityData<Components...>& data)
+{
+  func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Unpacks the entity data, then invokes the function.
+///
+/// Overload used for free functions.
+///
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] func Function to apply.
+/// @param[in] data Entity data.
+///
+template<typename... Components>
+constexpr void EntityApply(void (*func)(Components...), EntityData<Components...>& data)
+{
+  func(*std::get<std::remove_cvref_t<Components>*>(data)...);
 }
 
 ///
@@ -321,7 +442,7 @@ constexpr void UnpackAndApply(
 ///
 /// @tparam Components Component types of the view.
 ///
-template<std::unsigned_integral Entity, typename... Components>
+template<typename... Components>
 class MonoView
 {
 public:
@@ -335,12 +456,12 @@ public:
   /// @param[in] function Function to invoke for each entity.
   ///
   template<typename Function>
-  requires UnpackFunction<Entity, Function, Components...>
+  requires EntityFunctor<Function, Components...>
   void ForEach(Function function)
   {
     for (auto& data : *this)
     {
-      UnpackAndApply<Entity, Function, Components...>(function, data);
+      EntityApply<Function, Components...>(function, data);
     }
   }
 
@@ -416,7 +537,7 @@ public:
   class Iterator
   {
   public:
-    using Data = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
+    using Data = EntityData<Components...>;
 
     ///
     /// Constructs an entity iterator using data.
@@ -604,7 +725,7 @@ public:
     }
 
   private:
-    template<std::unsigned_integral, typename...>
+    template<typename...>
     friend class MonoView;
 
     ///
@@ -634,7 +755,7 @@ public:
   // clang-format on
 
 private:
-  template<std::unsigned_integral, typename...>
+  template<typename...>
   friend class PolyView;
 
   ///
@@ -659,7 +780,7 @@ private:
 ///
 /// @tparam Components Required component types for the view.
 ///
-template<std::unsigned_integral Entity, typename... Components>
+template<typename... Components>
 class PolyView
 {
 public:
@@ -670,9 +791,9 @@ public:
   ///
   /// @param[in] registry Registry to construct view for.
   ///
-  constexpr explicit PolyView(Registry<Entity>& registry)
+  constexpr explicit PolyView(Registry& registry)
     : registry_(registry),
-      archetypes_(registry.graph_.ViewArchetypes(registry.graph_.template AssureView<Components...>()))
+      archetypes_(registry.relations_.ViewArchetypes(registry.relations_.template AssureView<Components...>()))
   {}
 
   ///
@@ -688,14 +809,14 @@ public:
   /// @param[in] function Function to invoke for each entity.
   ///
   template<typename Function>
-  requires UnpackFunction<Entity, Function, Components...>
+  requires EntityFunctor<Function, Components...>
   void ForEach(Function function)
   {
     for (auto mono_view : *this)
     {
       for (auto& data : mono_view)
       {
-        UnpackAndApply<Entity, Function, Components...>(function, data);
+        EntityApply<Function, Components...>(function, data);
       }
     }
   }
@@ -966,9 +1087,9 @@ public:
     ///
     /// @return Storage reference.
     ///
-    constexpr MonoView<Entity, Components...> operator*() const noexcept
+    constexpr MonoView<Components...> operator*() const noexcept
     {
-      return MonoView<Entity, Components...> { registry_.storages_[*archetype_] };
+      return MonoView<Components...> { registry_.storages_[*archetype_] };
     }
 
     ///
@@ -996,7 +1117,7 @@ public:
     }
 
   private:
-    template<std::unsigned_integral, typename...>
+    template<typename...>
     friend class PolyView;
 
     ///
@@ -1006,13 +1127,13 @@ public:
     ///
     /// @param[in] registry Registry to obtain storages from.
     ///
-    constexpr Iterator(const ArchetypeId* archetype, Registry<Entity>& registry) noexcept
+    constexpr Iterator(const ArchetypeId* archetype, Registry& registry) noexcept
       : archetype_(archetype), registry_(registry)
     {}
 
   private:
     const ArchetypeId* archetype_;
-    Registry<Entity>& registry_;
+    Registry& registry_;
   };
 
   // Style Exception: STL
@@ -1024,8 +1145,8 @@ public:
   // clang-format on
 
 private:
-  Registry<Entity>& registry_;
-  const FastVector<ArchetypeId>& archetypes_;
+  Registry& registry_;
+  const Vector<ArchetypeId>& archetypes_;
 };
 
 } // namespace genebits::engine

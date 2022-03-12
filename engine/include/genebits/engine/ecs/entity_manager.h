@@ -3,7 +3,7 @@
 
 #include <concepts>
 
-#include "genebits/engine/util/fast_vector.h"
+#include "genebits/engine/containers/vector.h"
 
 namespace genebits::engine
 {
@@ -11,9 +11,8 @@ namespace genebits::engine
 /// Responsible for providing and recycling entity identifiers.
 ///
 /// @tparam Entity Entity of integral type to generate.
-/// @tparam AllocatorImpl Allocator to use.
 ///
-template<std::unsigned_integral Entity, Allocator AllocatorImpl = Mallocator>
+template<std::unsigned_integral Entity>
 class EntityManager final
 {
 public:
@@ -42,7 +41,7 @@ public:
   ///
   [[nodiscard]] Entity Obtain()
   {
-    if (recycled_.Empty()) return Generate();
+    if (recycled_.empty()) return Generate();
     else
     {
       auto entity = recycled_.back();
@@ -114,12 +113,12 @@ public:
   ///
   [[nodiscard]] constexpr size_t RecycledCount() const noexcept
   {
-    return recycled_.Size();
+    return recycled_.size();
   }
 
 private:
   Entity current_;
-  FastVector<Entity, AllocatorImpl> recycled_;
+  Vector<Entity> recycled_;
 };
 
 } // namespace genebits::engine
