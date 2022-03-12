@@ -7,7 +7,7 @@ namespace genebits::engine::bench
 {
 inline void Work(size_t amount)
 {
-  uint64_t seed = static_cast<uint64_t>(time(nullptr));
+  auto seed = static_cast<uint64_t>(time(nullptr));
 
   benchmark::DoNotOptimize(seed);
 
