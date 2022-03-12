@@ -57,6 +57,12 @@ Other
 
 - [ ] Build sandboxes/examples cmake option
 - [ ] Precompiled headers
+- [ ] Added info about tests and benchmark to style guide
+
+Official C++ 20 Support
+
+- [ ] Remove coroutine CLion feature test patch (awaitable.h)
+- [ ] Change cmake c++ standard from 23 (latest) to 20
 
 ## Major
 
