@@ -6,7 +6,7 @@
 #include "genebits/engine/debug/stacktrace.h"
 #include "genebits/engine/events/event_bus.h"
 
-namespace genebits::engine
+namespace genebits::engine::debug
 {
 ///
 /// Enumerator of the different log levels.
@@ -89,22 +89,22 @@ inline void PublishLog(std::string&& message, LogMetadata&& metadata, EventBus& 
   bus.Publish(event);
 }
 
-} // namespace genebits::engine
+} // namespace genebits::engine::debug
 
-#define CREATE_LOG_METADATA(level)                                                           \
-  ::genebits::engine::LogMetadata                                                            \
-  {                                                                                          \
-    level, ::genebits::engine::StackBackTrace(GetStackTraceDepth(level)), __FILE__, __LINE__ \
+#define CREATE_LOG_METADATA(level)                                                                  \
+  ::genebits::engine::debug::LogMetadata                                                            \
+  {                                                                                                 \
+    level, ::genebits::engine::debug::StackBackTrace(GetStackTraceDepth(level)), __FILE__, __LINE__ \
   }
 
 #ifndef NDEBUG
 
-#define LOG(level, ...) ::genebits::engine::PublishLog(::std::format(__VA_ARGS__), CREATE_LOG_METADATA(level))
+#define LOG(level, ...) ::genebits::engine::debug::PublishLog(::std::format(__VA_ARGS__), CREATE_LOG_METADATA(level))
 
-#define LOG_TRACE(...) LOG(::genebits::engine::LogLevel::Trace, __VA_ARGS__)
-#define LOG_INFO(...) LOG(::genebits::engine::LogLevel::Info, __VA_ARGS__)
-#define LOG_WARN(...) LOG(::genebits::engine::LogLevel::Warn, __VA_ARGS__)
-#define LOG_ERROR(...) LOG(::genebits::engine::LogLevel::Error, __VA_ARGS__)
+#define LOG_TRACE(...) LOG(::genebits::engine::debug::LogLevel::Trace, __VA_ARGS__)
+#define LOG_INFO(...) LOG(::genebits::engine::debug::LogLevel::Info, __VA_ARGS__)
+#define LOG_WARN(...) LOG(::genebits::engine::debug::LogLevel::Warn, __VA_ARGS__)
+#define LOG_ERROR(...) LOG(::genebits::engine::debug::LogLevel::Error, __VA_ARGS__)
 
 #else
 

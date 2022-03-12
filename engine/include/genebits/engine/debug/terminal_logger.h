@@ -6,7 +6,7 @@
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/events/listener.h"
 
-namespace genebits::engine
+namespace genebits::engine::debug
 {
 ///
 /// Terminal logger.
@@ -37,6 +37,6 @@ public:
 private:
   std::mutex mutex_;
 };
-} // namespace genebits::engine
+} // namespace genebits::engine::debug
 
 #endif

@@ -4,11 +4,10 @@
 #include <memory>
 #include <mutex>
 
-#include "genebits/engine/util/delegate.h"
-#include "genebits/engine/util/erased_ptr.h"
-#include "genebits/engine/util/fast_vector.h"
-#include "genebits/engine/util/meta.h"
-#include "genebits/engine/util/type_map.h"
+#include "genebits/engine/containers/type_map.h"
+#include "genebits/engine/containers/vector.h"
+#include "genebits/engine/utilities/delegate.h"
+#include "genebits/engine/utilities/erased_ptr.h"
 
 namespace genebits::engine
 {
@@ -63,7 +62,7 @@ namespace details
     ///
     void Remove(EventHandler<Event> handler) noexcept
     {
-      handlers_.Erase(std::ranges::find(handlers_, handler));
+      handlers_.UnorderedErase(std::ranges::find(handlers_, handler));
     }
 
     ///
@@ -73,11 +72,11 @@ namespace details
     ///
     [[nodiscard]] size_t Count() const noexcept
     {
-      return handlers_.Size();
+      return handlers_.size();
     }
 
   private:
-    FastVector<EventHandler<Event>> handlers_;
+    Vector<EventHandler<Event>> handlers_;
   };
 } // namespace details
 
@@ -160,13 +159,13 @@ private:
   {
     auto& pool = pools_.Assure<Event>();
 
-    if (!pool) [[unlikely]] { pool.Reset(new details::EventHandlerPool<Event>()); }
+    if (!pool) [[unlikely]] { pool = std::move(MakeErased<details::EventHandlerPool<Event>>()); }
 
-    return pool.template Cast<details::EventHandlerPool<Event>>();
+    return static_cast<details::EventHandlerPool<Event>*>(pool.Get());
   }
 
 private:
-  TypeMap<ErasedPtr<void>, EventBus> pools_;
+  TypeMap<ErasedPtr<void>> pools_;
 };
 
 } // namespace genebits::engine

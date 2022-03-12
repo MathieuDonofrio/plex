@@ -27,19 +27,12 @@ find_package(Vulkan REQUIRED)
 target_include_directories(engine PRIVATE ${glfw_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(engine ${glfw_LIBRARIES} ${Vulkan_LIBRARIES})
 
-if (BUILD_EDITOR)
-    find_package(imgui REQUIRED)
-
-    target_include_directories(engine PRIVATE ${imgui_INCLUDE_DIRS})
-    target_link_libraries(engine ${imgui_LIBRARIES})
-endif ()
-
 #
 # Tests
 #
 
 if (BUILD_TESTS)
-    add_subdirectory(test)
+  add_subdirectory(test)
 endif ()
 
 #
@@ -47,5 +40,5 @@ endif ()
 #
 
 if (BUILD_BENCHMARKS)
-    add_subdirectory(benchmark)
+  add_subdirectory(benchmark)
 endif ()

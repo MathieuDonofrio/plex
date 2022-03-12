@@ -16,7 +16,7 @@ namespace
 
 static void Registry_Iterate_OneArchetype(benchmark::State& state)
 {
-  Registry<size_t> registry;
+  Registry registry;
 
   size_t amount = state.range(0);
 
@@ -27,7 +27,7 @@ static void Registry_Iterate_OneArchetype(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ForEach([](size_t entity) { benchmark::DoNotOptimize(entity); });
+    registry.ForEach([](Entity entity) { benchmark::DoNotOptimize(entity); });
   }
 
   benchmark::DoNotOptimize(registry);
@@ -39,7 +39,7 @@ BENCHMARK(Registry_Iterate_OneArchetype)->Arg(100)->Arg(1000)->Arg(10000)->Compl
 
 static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
 {
-  Registry<size_t> registry;
+  Registry registry;
 
   size_t amount = state.range(0);
 
@@ -51,7 +51,7 @@ static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
   for (auto _ : state)
   {
     registry.ForEach<Component<0>>(
-      [](size_t entity, Component<0> c1)
+      [](Entity entity, Component<0> c1)
       {
         benchmark::DoNotOptimize(entity);
         benchmark::DoNotOptimize(c1);
@@ -67,7 +67,7 @@ BENCHMARK(Registry_Iterate_OneArchetype_Unpack1)->Arg(100)->Arg(1000)->Arg(10000
 
 static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
 {
-  Registry<size_t> registry;
+  Registry registry;
 
   size_t amount = state.range(0);
 
@@ -79,7 +79,7 @@ static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
   for (auto _ : state)
   {
     registry.ForEach<Component<0>, Component<1>>(
-      [](size_t entity, Component<0> c1, Component<1> c2)
+      [](Entity entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
         benchmark::DoNotOptimize(c1);
@@ -96,7 +96,7 @@ BENCHMARK(Registry_Iterate_OneArchetype_Unpack2)->Arg(100)->Arg(1000)->Arg(10000
 
 static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
 {
-  Registry<size_t> registry;
+  Registry registry;
 
   size_t amount = state.range(0);
 
@@ -113,7 +113,7 @@ static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
   for (auto _ : state)
   {
     registry.ForEach<Component<0>, Component<1>>(
-      [](size_t entity, Component<0> c1, Component<1> c2)
+      [](Entity entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
         benchmark::DoNotOptimize(c1);
@@ -130,7 +130,7 @@ BENCHMARK(Registry_Iterate_TwoArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(1000
 
 static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
 {
-  Registry<size_t> registry;
+  Registry registry;
 
   size_t amount = state.range(0);
 
@@ -187,7 +187,7 @@ static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
   for (auto _ : state)
   {
     registry.ForEach<Component<0>, Component<1>>(
-      [](size_t entity, Component<0> c1, Component<1> c2)
+      [](Entity entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
         benchmark::DoNotOptimize(c1);
@@ -210,7 +210,7 @@ static void Registry_Create_NoComponents(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry<size_t> registry;
+    Registry registry;
 
     state.ResumeTiming();
 
@@ -235,7 +235,7 @@ static void Registry_Create_OneComponent(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry<size_t> registry;
+    Registry registry;
 
     state.ResumeTiming();
 
@@ -260,7 +260,7 @@ static void Registry_Create_TwoComponents(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry<size_t> registry;
+    Registry registry;
 
     state.ResumeTiming();
 
@@ -285,7 +285,7 @@ static void Registry_Destroy_NoComponents(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry<size_t> registry;
+    Registry registry;
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -294,7 +294,7 @@ static void Registry_Destroy_NoComponents(benchmark::State& state)
 
     state.ResumeTiming();
 
-    for (size_t i = 0; i < amount; i++)
+    for (Entity i = 0; i < amount; i++)
     {
       registry.Destroy(i);
     }
@@ -315,7 +315,7 @@ static void Registry_Destroy_OneComponent(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry<size_t> registry;
+    Registry registry;
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -324,7 +324,7 @@ static void Registry_Destroy_OneComponent(benchmark::State& state)
 
     state.ResumeTiming();
 
-    for (size_t i = 0; i < amount; i++)
+    for (Entity i = 0; i < amount; i++)
     {
       registry.Destroy(i);
     }
@@ -345,7 +345,7 @@ static void Registry_Destroy_TwoComponents(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry<size_t> registry;
+    Registry registry;
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -354,7 +354,7 @@ static void Registry_Destroy_TwoComponents(benchmark::State& state)
 
     state.ResumeTiming();
 
-    for (size_t i = 0; i < amount; i++)
+    for (Entity i = 0; i < amount; i++)
     {
       registry.Destroy(i);
     }
