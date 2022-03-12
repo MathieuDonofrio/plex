@@ -58,6 +58,7 @@ Other
 - [ ] Build sandboxes/examples cmake option
 - [ ] Precompiled headers
 - [ ] Added info about tests and benchmark to style guide
+- [ ] Add CONTRIBUTING.md
 
 Official C++ 20 Support
 
