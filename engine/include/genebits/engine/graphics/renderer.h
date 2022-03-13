@@ -19,9 +19,8 @@ public:
   virtual ~Renderer() = default;
 };
 
-Renderer* CreateRenderer(Window* window_handle,
-  const char* application_name,
-  bool is_debug,
+std::shared_ptr<Renderer> CreateRenderer(std::shared_ptr<Window> window_handle,
+  const std::string& application_name,
   GraphicsDebugLevel debug_message_severity_threshold,
   RenderingBackend renderingBackend);
 

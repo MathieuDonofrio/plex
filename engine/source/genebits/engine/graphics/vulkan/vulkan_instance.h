@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_INSTANCE_H
 
 #include "genebits/engine/graphics/graphics_debug_level.h"
+#include "genebits/engine/graphics/window.h"
 #include "genebits/engine/utilities/enumerator.h"
 #include "vulkan_capable_window.h"
 
@@ -15,17 +16,8 @@ namespace genebits::engine
 class VulkanInstance
 {
 public:
-  ///
-  /// Parametric constructor used to create a vulkan instance
-  /// TODO update documentation
-  /// @param[in] vulkan_capable_window Class implementing the VulkanCapableWindow interface for querying the required
-  /// extensions for the multimedia library in use.
-  /// @param[in] use_debug_messenger Whether the debug messenger should be set up and used
-  ///
-  VulkanInstance(VulkanCapableWindow* window_handle,
-    const char* application_name,
-    bool use_debug_messenger,
-    GraphicsDebugLevel debug_level);
+  VulkanInstance(
+    std::shared_ptr<Window> window_handle, const std::string& application_name, GraphicsDebugLevel debug_level);
 
   VulkanInstance(const VulkanInstance&) = delete;
   VulkanInstance& operator=(const VulkanInstance&) = delete;
@@ -34,32 +26,26 @@ public:
 
   ~VulkanInstance();
 
-  [[nodiscard]] const VkInstance GetHandle() const noexcept;
+  [[nodiscard]] const VkInstance GetHandle() const noexcept
+  {
+    return instance_;
+  }
 
-  ///
-  ///
-  /// @warning Requires debug level INFO to print
-  ///
-  const void PrintAvailableExtensions();
+  const std::string& GetApplicationName()
+  {
+    return application_name_;
+  }
 
 private:
-  VkInstance instance_;
-
-  VkDebugUtilsMessengerEXT debug_messenger_ = nullptr;
-  bool use_debug_messenger_;
-
-  const char* application_name_;
-
-  GraphicsDebugLevel debug_message_severity_threshold_;
-
-  const std::vector<const char*> validation_layer_names_ = { "VK_LAYER_KHRONOS_validation" };
-
   bool Initialize(VulkanCapableWindow* window_handle);
 
-  void CreateDebugMessenger(VkInstance instance_handle, VkDebugUtilsMessengerEXT* debug_messenger_ptr);
+  bool CheckValidationLayerSupport();
 
-  bool QueryValidationLayersSupport(const std::vector<const char*>& validation_layer_names);
+  bool IsValidationLayerSupported(const std::string& layer_name);
 
+  bool SetupDebugMessenger();
+
+private:
   ///
   /// Callback used by vulkan to provide feedback on the application's use of vulkan if an event of interest occurs
   ///
@@ -74,16 +60,44 @@ private:
     const VkDebugUtilsMessengerCallbackDataEXT* callback_data_ptr,
     void*);
 
-  // Proxy function since the real function needs to be acquired at runtime
-  VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-    const VkDebugUtilsMessengerCreateInfoEXT* create_info_ptr,
-    const VkAllocationCallbacks* allocator_ptr,
-    VkDebugUtilsMessengerEXT* debug_messenger_callback_ptr);
+  ///
+  /// Creates the debug messenger.
+  ///
+  /// Proxy function used to delegate the call to the real function loaded at runtime.
+  ///
+  /// @param instance Vulkan instance.
+  /// @param create_info Create info struct.
+  /// @param allocator Pointer to allocation callbacks.
+  /// @param debug_messenger_callback Reference to function called when a debug message is sent.
+  ///
+  /// @return Whether or not the creation failed.
+  ///
+  static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+    const VkDebugUtilsMessengerCreateInfoEXT* create_info,
+    const VkAllocationCallbacks* allocator,
+    VkDebugUtilsMessengerEXT* debug_messenger_callback);
 
-  // Proxy function since the real function needs to be acquired at runtime
-  void DestroyDebugUtilsMessengerEXT(
-    VkInstance instance_handle, VkDebugUtilsMessengerEXT debug_messenger, const VkAllocationCallbacks* allocator_ptr);
-  void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& create_info) noexcept;
+  ///
+  /// Destroys the debug messenger.
+  ///
+  /// Proxy function used to delegate the call to the real function loaded at runtime.
+  ///
+  /// @param instance Vulkan instance
+  /// @param debug_messenger Debug messenger to destroy.
+  /// @param allocator Pointer to allocation callbacks.
+  ///
+  static void DestroyDebugUtilsMessengerEXT(
+    VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger, const VkAllocationCallbacks* allocator_ptr);
+
+private:
+  VkInstance instance_;
+
+  std::string application_name_;
+
+#ifndef NDEBUG
+  VkDebugUtilsMessengerEXT debug_messenger_;
+  GraphicsDebugLevel debug_level_;
+#endif
 };
 
 } // namespace genebits::engine

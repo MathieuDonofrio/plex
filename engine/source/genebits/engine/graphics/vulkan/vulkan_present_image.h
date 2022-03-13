@@ -15,20 +15,21 @@ namespace genebits::engine
 
 // TODO find a hierarchy with VulkanImage
 
-class VulkanPresentImage : VulkanImage
+class VulkanPresentImage : public VulkanImage
 {
 public:
-
   VulkanPresentImage() = default;
 
-  VulkanPresentImage(VulkanPresentImage&& other) noexcept {
+  VulkanPresentImage(VulkanPresentImage&& other) noexcept
+  {
     device_ = std::move(other.device_);
 
     image_view_handle_ = other.image_view_handle_;
     other.image_view_handle_ = VK_NULL_HANDLE;
   };
 
-  VulkanPresentImage& operator=(VulkanPresentImage&& other) noexcept {
+  VulkanPresentImage& operator=(VulkanPresentImage&& other) noexcept
+  {
     device_ = std::move(other.device_);
 
     image_view_handle_ = other.image_view_handle_;
@@ -52,7 +53,7 @@ public:
 
   ~VulkanPresentImage() override
   {
-    if(image_view_handle_)
+    if (image_view_handle_)
     {
       vkDestroyImageView(device_->GetHandle(), image_view_handle_, nullptr);
       image_view_handle_ = VK_NULL_HANDLE;
@@ -61,7 +62,6 @@ public:
   }
 
 protected:
-
   bool Initialize(VkFormat format, VkImageAspectFlags aspect_flags)
   {
     VkImageViewCreateInfo view_info {};

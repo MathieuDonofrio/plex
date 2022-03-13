@@ -22,7 +22,7 @@ namespace genebits::engine::debug
 #ifndef NDEBUG
 
 constexpr size_t cMaxFrames = 128;
-constexpr size_t cMaxFunctionNameLength = 256;
+constexpr size_t cMaxFunctionNameLength = 1024;
 
 #if PLATFORM_WINDOWS
 

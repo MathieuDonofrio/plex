@@ -1,10 +1,10 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_SURFACE_H
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_SURFACE_H
 
-#include "vulkan_instance.h"
-
-#include <genebits/engine/debug/logging.h>
 #include <memory>
+
+#include "genebits/engine/debug/logging.h"
+#include "vulkan_instance.h"
 
 namespace genebits::engine
 {
@@ -12,13 +12,16 @@ namespace genebits::engine
 class VulkanSurface
 {
 public:
-  VulkanSurface(std::shared_ptr<VulkanInstance> instance, VulkanCapableWindow* window_handle)
+  VulkanSurface(std::shared_ptr<Window> window, std::shared_ptr<VulkanInstance> instance) : instance_(instance)
   {
-    if (!Initialize(std::move(instance), window_handle)) { LOG_ERROR("Failed to initialize Vulkan surface"); }
-    else
+    if (!Initialize(dynamic_cast<VulkanCapableWindow*>(window.get())))
     {
-      LOG_INFO("Vulkan surface initialized");
+      LOG_ERROR("Failed to initialize Vulkan surface");
+
+      return;
     }
+
+    LOG_INFO("Vulkan surface initialized");
   }
 
   VulkanSurface(const VulkanSurface&) = delete;
@@ -30,6 +33,7 @@ public:
   {
     vkDestroySurfaceKHR(instance_->GetHandle(), surface_handle_, nullptr);
     surface_handle_ = VK_NULL_HANDLE;
+
     LOG_INFO("Vulkan surface destroyed");
   };
 
@@ -39,17 +43,17 @@ public:
   }
 
 private:
-  VkSurfaceKHR surface_handle_;
-  std::shared_ptr<VulkanInstance> instance_;
-
-  bool Initialize(std::shared_ptr<VulkanInstance> instance, VulkanCapableWindow* window)
+  bool Initialize(VulkanCapableWindow* window)
   {
-    instance_ = std::move(instance);
-
     surface_handle_ = window->CreateWindowSurface(instance_->GetHandle());
 
     return surface_handle_ != VK_NULL_HANDLE;
   };
+
+private:
+  VkSurfaceKHR surface_handle_;
+
+  std::shared_ptr<VulkanInstance> instance_;
 };
 
 } // namespace genebits::engine

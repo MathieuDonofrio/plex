@@ -102,24 +102,17 @@ int main(int, char**)
 
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
 
-  Window* window = CreateWindow("Hello world", 256, 256, &bus, hints);
+  std::shared_ptr<Window> window = CreateWindow("Hello world", 256, 256, &bus, hints);
 
-  auto renderer = CreateRenderer(window, "Genebits", true, GraphicsDebugLevel::Info, RenderingBackend::VULKAN);
-  (void)(renderer);
+  [[maybe_unused]] std::shared_ptr<Renderer> renderer =
+    CreateRenderer(window, "Genebits", GraphicsDebugLevel::Info, RenderingBackend::VULKAN);
+
   // Window loop
-  //  auto vulkan_dummy = new VulkanDummy(window, "Genebits", true, VulkanDummy::DebugMessageSeverityThreshold::Warn);
-  //  vulkan_dummy->DummyFunction(*vulkan_dummy);
-
   while (!window->IsClosing())
   {
     window->WaitEvents(0.5);
     window->PollEvents();
   }
-
-  // Cleanup
-
-  delete window;
-  delete renderer;
 
   return 0;
 }

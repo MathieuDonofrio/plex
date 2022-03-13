@@ -385,6 +385,16 @@ void GLFWWindow::SetFullScreenRefreshRate(uint32_t refresh_rate)
   glfwWindowHint(GLFW_REFRESH_RATE, static_cast<int>(refresh_rate));
 }
 
+std::pair<int32_t, int32_t> GLFWWindow::GetFrameBufferSize() const
+{
+  int width = 0;
+  int height = 0;
+
+  glfwGetFramebufferSize(handle_, &width, &height);
+
+  return { width, height };
+}
+
 VkSurfaceKHR GLFWWindow::CreateWindowSurface(VkInstance instance)
 {
   VkSurfaceKHR surface;
@@ -606,16 +616,4 @@ void GLFWWindow::GLFWFramebufferResizeCallback(GLFWWindowHandle handle, int32_t 
     window->bus_->Publish(event);
   }
 }
-
-// TODO move to window.h
-std::pair<int32_t, int32_t> GLFWWindow::GetFrameBufferSize()
-{
-  int width = 0;
-  int height = 0;
-
-  glfwGetFramebufferSize(handle_, &width, &height);
-
-  return { width, height };
-}
-
 } // namespace genebits::engine

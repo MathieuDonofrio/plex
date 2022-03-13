@@ -208,6 +208,13 @@ public:
   void SetFullScreenRefreshRate(uint32_t refresh_rate) override;
 
   ///
+  /// Obtains the size of the window's frame buffer.
+  ///
+  /// @return Frame buffer size pair.
+  ///
+  [[nodiscard]] std::pair<int32_t, int32_t> GetFrameBufferSize() const override;
+
+  ///
   /// Creates a Vulkan surface for the window's drawable area.
   ///
   /// @param[in] instance Vulkan instance of the application.
@@ -236,8 +243,6 @@ public:
   ///
   bool GetPhysicalDevicePresentationSupport(
     VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index) override;
-
-  std::pair<int32_t, int32_t> GetFrameBufferSize() override;
 
 private:
   using GLFWWindowHandle = ::GLFWwindow*;

@@ -6,14 +6,14 @@
 namespace genebits::engine
 {
 ///
-/// Enum flag used to indicate at which level of severity should the debug messages be printed
+/// Enum used to indicate the level of severity of logged messages involving the underlying graphics API.
 ///
 enum class GraphicsDebugLevel : uint32_t
 {
-  Trace = BitFlag(0),
-  Info = BitFlag(1),
-  Warn = BitFlag(2),
-  Error = BitFlag(3)
+  Trace,
+  Info,
+  Warn,
+  Error,
 };
 
 } // namespace genebits::engine

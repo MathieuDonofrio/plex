@@ -5,29 +5,29 @@
 namespace genebits::engine
 {
 
-VulkanRenderer* CreateVulkanRenderer(Window* window_handle,
-  const char* application_name,
-  bool is_debug,
-  GraphicsDebugLevel debug_message_severity_threshold)
+std::shared_ptr<VulkanRenderer> CreateVulkanRenderer(
+  std::shared_ptr<Window> window, const std::string& application_name, GraphicsDebugLevel debug_level)
 {
-  auto* vulkan_capable_window_handle = dynamic_cast<VulkanCapableWindow*>(window_handle);
-  if (!vulkan_capable_window_handle) { LOG_ERROR("Failed to cast window handle to vulkan capable window handle"); }
-
-  return new VulkanRenderer(vulkan_capable_window_handle, application_name, is_debug, debug_message_severity_threshold);
-}
-
-Renderer* CreateRenderer(Window* window_handle,
-  const char* application_name,
-  bool is_debug,
-  GraphicsDebugLevel debug_message_severity_threshold,
-  RenderingBackend renderingBackend)
-{
-  if (renderingBackend == RenderingBackend::VULKAN)
+  if (dynamic_cast<VulkanCapableWindow*>(window.get()) == nullptr)
   {
-    return CreateVulkanRenderer(window_handle, application_name, is_debug, debug_message_severity_threshold);
+    LOG_ERROR("Window is not vulkan capable");
+
+    return nullptr;
   }
 
-  return nullptr; // oops
+  return std::make_shared<VulkanRenderer>(window, application_name, debug_level);
+}
+
+std::shared_ptr<Renderer> CreateRenderer(std::shared_ptr<Window> window,
+  const std::string& application_name,
+  GraphicsDebugLevel debug_level,
+  RenderingBackend renderingBackend)
+{
+  switch (renderingBackend)
+  {
+  case RenderingBackend::VULKAN: return CreateVulkanRenderer(window, application_name, debug_level);
+  default: return nullptr;
+  }
 }
 
 } // namespace genebits::engine

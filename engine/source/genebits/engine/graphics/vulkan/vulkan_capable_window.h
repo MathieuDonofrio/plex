@@ -44,11 +44,6 @@ public:
   ///
   virtual bool GetPhysicalDevicePresentationSupport(
     VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index) = 0;
-
-  /// TODO DOC
-  ///
-  ///
-  virtual std::pair<int32_t, int32_t> GetFrameBufferSize() = 0;
 };
 } // namespace genebits::engine
 
