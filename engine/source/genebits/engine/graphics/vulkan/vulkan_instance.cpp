@@ -11,11 +11,8 @@ namespace genebits::engine
 {
 VulkanInstance::VulkanInstance(
   std::shared_ptr<Window> window, const std::string& application_name, GraphicsDebugLevel debug_level)
-  : application_name_(application_name)
+  : application_name_(application_name), debug_level_(debug_level), debug_messenger_(nullptr)
 {
-#ifndef NDEBUG
-  debug_level_ = debug_level;
-#endif
 
   if (!Initialize(dynamic_cast<VulkanCapableWindow*>(window.get())))
   {

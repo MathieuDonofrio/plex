@@ -94,10 +94,8 @@ private:
 
   std::string application_name_;
 
-#ifndef NDEBUG
   VkDebugUtilsMessengerEXT debug_messenger_;
   GraphicsDebugLevel debug_level_;
-#endif
 };
 
 } // namespace genebits::engine
