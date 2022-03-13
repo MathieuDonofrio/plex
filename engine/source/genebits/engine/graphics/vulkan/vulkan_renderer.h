@@ -59,6 +59,7 @@ private:
   std::shared_ptr<VulkanSurface> surface_;
   std::shared_ptr<VulkanDevice> device_;
   std::shared_ptr<VulkanSwapchain> swapchain_;
+  std::shared_ptr<FrameBufferGroup> frame_buffer_group_;
 };
 
 } // namespace genebits::engine

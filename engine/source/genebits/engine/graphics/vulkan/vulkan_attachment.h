@@ -9,13 +9,20 @@ namespace genebits::engine
 class VulkanAttachment
 {
 public:
+
+  struct LayoutTransitionSequence
+  {
+    VkImageLayout initial_layout;
+    VkImageLayout layout;
+    VkImageLayout final_layout;
+  };
+
   VulkanAttachment(uint32_t attachment_index,
     VkFormat format,
     VkAttachmentLoadOp load_op,
     VkAttachmentStoreOp store_op,
-    VkImageLayout initial_layout, // NOLINT(bugprone-easily-swappable-parameters) //TODO make a struct out of the three layout -> LayoutTransitionSequence
-    VkImageLayout layout,
-    VkImageLayout final_layout) : attachment_description_({}), attachment_reference_({})
+    LayoutTransitionSequence layout_transition_sequence)
+    : attachment_description_({}), attachment_reference_({})
   {
 
     attachment_description_.format = format;
@@ -27,13 +34,13 @@ public:
     attachment_description_.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     // Defines the initial layout (Let's vulkan know if there is a need to convert to another layout when calling the
     // subpass for the first time
-    attachment_description_.initialLayout = initial_layout;
+    attachment_description_.initialLayout = layout_transition_sequence.initial_layout;
     // Defines what layout is needed at the after this subpass
-    attachment_description_.finalLayout = final_layout;
+    attachment_description_.finalLayout = layout_transition_sequence.final_layout;
 
     attachment_reference_.attachment = attachment_index;
     // Defines the layout that is needed during the subpass
-    attachment_reference_.layout = layout;
+    attachment_reference_.layout = layout_transition_sequence.layout;
   }
 
   [[nodiscard]] const VkAttachmentReference& GetAttachmentReference() const
