@@ -9,13 +9,20 @@ namespace genebits::engine
 class VulkanAttachment
 {
 public:
+
+  struct LayoutTransitionSequence
+  {
+    VkImageLayout initial_layout;
+    VkImageLayout layout;
+    VkImageLayout final_layout;
+  };
+
   VulkanAttachment(uint32_t attachment_index,
     VkFormat format,
     VkAttachmentLoadOp load_op,
     VkAttachmentStoreOp store_op,
-    VkImageLayout initial_layout, // NOLINT(bugprone-easily-swappable-parameters) //TODO make a struct out of the three layout -> LayoutTransitionSequence
-    VkImageLayout layout,
-    VkImageLayout final_layout) : attachment_description_({}), attachment_reference_({})
+    LayoutTransitionSequence layout_transition_sequence)
+    : attachment_description_({}), attachment_reference_({})
   {
 
     attachment_description_.format = format;

@@ -19,9 +19,7 @@ public:
       format,
       load_op,
       store_op,
-      initial_layout,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      final_layout)
+      { initial_layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, final_layout })
   {}
 
 private:
