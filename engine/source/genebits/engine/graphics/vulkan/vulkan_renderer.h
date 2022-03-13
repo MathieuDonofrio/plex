@@ -43,7 +43,7 @@ private:
   std::shared_ptr<VulkanSurface> surface_;
   std::shared_ptr<VulkanDevice> device_;
   std::shared_ptr<VulkanSwapchain> swapchain_;
-  std::shared_ptr<VulkanFrameBufferGroup> frame_buffer_group_; //
+  std::shared_ptr<FrameBufferGroup> frame_buffer_group_; //
 
   const std::vector<std::string> required_extensions_ = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
