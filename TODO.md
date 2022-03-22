@@ -30,6 +30,8 @@ OS
 ECS
 
 - [ ] Archetype swapping
+- [ ] Hierarchies
+- [ ] Scripts
 - [ ] Phase parallelization statistics (for debug/profiling)
 - [ ] Phase dynamic reordering optimization?
 
@@ -37,8 +39,30 @@ Async
 
 - [ ] WhenAll/WhenAllReady optimizations and benchmarks
 
+IO
+
+- [ ] Serialization/Deserialization
+- [ ] YAML Parser
+- [ ] JSON Parser
+- [ ] XML Parser
+
+Audio
+
+- [ ] OpenAL Integration
+
+Physics
+
+- [ ] Custom Top-Down 2D Physics
+- [ ] Box2D Integration (2D)
+- [ ] Nvidia PhysX Integration (3D)
+
+Editor
+
+- [ ] IMGUI Integration
+
 Containers
 
+- [ ] Bitset (SIMD optimized)
 - [ ] Map
 - [ ] Set
 - [ ] Vector range operations
@@ -52,6 +76,7 @@ Utilities
 - [ ] Smart pointer casting
 - [ ] Intrusive to non-intrusive ref conversion. (Would allow better type erasure)
 - [ ] AllocateRef, AllocateRefWithDeleter and MakeRefWithDeleter
+- [ ] UUID
 
 Other
 
