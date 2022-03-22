@@ -57,11 +57,11 @@ static void Phase_RunOverheadNoDeps(benchmark::State& state)
     group->Add(MakeRef<TestSystem<>>());
   }
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   for (auto _ : state)
   {
-    SyncWait(phase.Run());
+    SyncWait(phase->Run());
   }
 
   benchmark::DoNotOptimize(phase);
@@ -83,11 +83,11 @@ static void Phase_RunOverheadWithDeps(benchmark::State& state)
     group->Add(MakeRef<TestSystem<int>>());
   }
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   for (auto _ : state)
   {
-    SyncWait(phase.Run());
+    SyncWait(phase->Run());
   }
 
   benchmark::DoNotOptimize(phase);
@@ -111,11 +111,11 @@ static void Phase_RunOverheadNoDepsWithWork(benchmark::State& state)
     group->Add(MakeRef<TestSystemWithWork<>>(pool));
   }
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   for (auto _ : state)
   {
-    SyncWait(phase.Run());
+    SyncWait(phase->Run());
   }
 
   benchmark::DoNotOptimize(phase);
@@ -139,11 +139,11 @@ static void Phase_RunOverheadWithDepsWithWork(benchmark::State& state)
     group->Add(MakeRef<TestSystemWithWork<int>>(pool));
   }
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   for (auto _ : state)
   {
-    SyncWait(phase.Run());
+    SyncWait(phase->Run());
   }
 
   benchmark::DoNotOptimize(phase);
