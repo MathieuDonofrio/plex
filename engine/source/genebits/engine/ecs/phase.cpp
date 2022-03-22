@@ -147,4 +147,53 @@ Ref<Phase> Phase::Compile(const Vector<Ref<SystemGroup>>& groups)
   return MakeRef<Phase>(MakeCompiledSystems(systems, matrix));
 }
 
+PhaseBuilder::PhaseBuilder()
+{
+  root_.parent = nullptr;
+
+  root_.phase = Phase::Compile();
+
+  Reset();
+}
+
+PhaseBuilder::~PhaseBuilder()
+{
+  DestroyNode(&root_);
+}
+
+Ref<Phase>& PhaseBuilder::BakePhase()
+{
+  Vector<Ref<SystemGroup>> groups; // Use circular buffer or container with O(1) insert
+
+  Node* current = current_;
+
+  while (current->parent != nullptr)
+  {
+    groups.PushBack(current->system_group);
+
+    current = current_->parent;
+  }
+
+  std::reverse(groups.begin(), groups.end());
+
+  current_->phase = Phase::Compile(groups);
+
+  return current_->phase;
+}
+
+void PhaseBuilder::DestroyNode(Node* node)
+{
+  if (node == nullptr) return;
+
+  for (Node* child : current_->children)
+  {
+    DestroyNode(child);
+  }
+
+  if (node->parent != nullptr) // Not root
+  {
+    delete node;
+  }
+}
+
 } // namespace genebits::engine
