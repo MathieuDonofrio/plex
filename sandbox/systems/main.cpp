@@ -47,9 +47,9 @@ int main()
   group->Add(MakeRef<PrintSystem<int>>(pool, "System 2", 1));
   group->Add(MakeRef<PrintSystem<>>(pool, "System 3", 0));
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 
   return 0;
 }
