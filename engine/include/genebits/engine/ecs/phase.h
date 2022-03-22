@@ -93,7 +93,7 @@ public:
   /// @return Phase compiled with system groups.
   ///
   template<std::same_as<SystemGroup>... Groups>
-  static Phase Compile(Ref<Groups>... groups)
+  static Ref<Phase> Compile(Ref<Groups>... groups)
   {
     Vector<Ref<SystemGroup>> vector;
     vector.Reserve(sizeof...(Groups));
@@ -112,7 +112,7 @@ public:
   ///
   /// @return Phase compiled with system groups.
   ///
-  static Phase Compile(const Vector<Ref<SystemGroup>>& groups);
+  static Ref<Phase> Compile(const Vector<Ref<SystemGroup>>& groups);
 
 public:
   ///
@@ -124,7 +124,6 @@ public:
     Vector<size_t> dependencies; // As indexes
   };
 
-private:
   ///
   /// Internal constructor.
   ///

@@ -136,7 +136,7 @@ namespace
 
 } // namespace
 
-Phase Phase::Compile(const Vector<Ref<SystemGroup>>& groups)
+Ref<Phase> Phase::Compile(const Vector<Ref<SystemGroup>>& groups)
 {
   Vector<SystemBase*> systems = CombineGroups(groups);
 
@@ -144,7 +144,7 @@ Phase Phase::Compile(const Vector<Ref<SystemGroup>>& groups)
 
   PruneRedundant(matrix, systems.size());
 
-  return { MakeCompiledSystems(systems, matrix) };
+  return MakeRef<Phase>(MakeCompiledSystems(systems, matrix));
 }
 
 } // namespace genebits::engine
