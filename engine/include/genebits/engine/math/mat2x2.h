@@ -135,12 +135,7 @@ public:
 
   [[nodiscard]] friend constexpr Mat operator*(const Mat& lhs, const Mat& rhs) noexcept
   {
-    return Mat { //
-      lhs[0][0] * rhs[0][0] + lhs[1][0] * rhs[0][1], //
-      lhs[0][1] * rhs[0][0] + lhs[1][1] * rhs[0][1], //
-      lhs[0][0] * rhs[1][0] + lhs[1][0] * rhs[1][1], //
-      lhs[0][1] * rhs[1][0] + lhs[1][1] * rhs[1][1]
-    };
+    return Product(lhs, rhs);
   }
 
   // TODO Other multiplications
@@ -155,8 +150,6 @@ public:
     return lhs * Inverse(rhs);
   }
 
-  // TODO Other divisions
-
   [[nodiscard]] friend constexpr bool operator==(const Mat& lhs, const Mat&& rhs) noexcept
   {
     return (lhs[0] == rhs[0]) && (lhs[1] == rhs[1]);
@@ -169,14 +162,22 @@ public:
 };
 
 using bool2x2 = Mat<bool, 2, 2>;
-using char2x2 = Mat<char, 2, 2>;
-using uchar2x2 = Mat<unsigned char, 2, 2>;
-using short2x2 = Mat<short, 2, 2>;
-using ushort2x2 = Mat<unsigned short, 2, 2>;
 using int2x2 = Mat<int, 2, 2>;
 using uint2x2 = Mat<unsigned int, 2, 2>;
 using float2x2 = Mat<float, 2, 2>;
 using double2x2 = Mat<double, 2, 2>;
 } // namespace genebits::engine
+
+namespace std
+{
+template<typename T>
+struct hash<genebits::engine::Mat<T, 2, 2>>
+{
+  constexpr size_t operator()(const genebits::engine::Mat<T, 2, 2>& mat) const noexcept
+  {
+    return std::hash<T>()(mat[0]) ^ std::hash<T>(mat[1]);
+  }
+};
+} // namespace std
 
 #endif // GENEBITS_VEC_H
