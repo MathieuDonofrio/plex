@@ -4,6 +4,8 @@
 
 namespace genebits::engine::tests
 {
+static_assert(sizeof(float2) == sizeof(float) * 2, "float2 size is not 2 floats");
+
 static_assert(std::is_trivially_copy_constructible_v<float2>, "Vec2 Must be trivially copy constructable");
 static_assert(std::is_trivially_move_constructible_v<float2>, "Vec2 Must be trivially move constructable");
 static_assert(std::is_trivially_destructible_v<float2>, "Vec2 Must be trivially move constructable");
@@ -407,7 +409,7 @@ TEST(Vec2Bitwise_Tests, BitwiseRightShiftAssign_Scalar)
   EXPECT_EQ(a, (int2 { 1 >> 3, 2 >> 3 }));
 }
 
-TEST(Vector2_Tests, BitwiseRightShiftAssign_Vec)
+TEST(Vec2Bitwise_Tests, BitwiseRightShiftAssign_Vec)
 {
   int2 a { 1, 2 };
   int2 b { 3, 4 };

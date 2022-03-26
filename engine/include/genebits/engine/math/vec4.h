@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_MATH_VEC2_H
-#define GENEBITS_ENGINE_MATH_VEC2_H
+#ifndef GENEBITS_ENGINE_MATH_VEC4_H
+#define GENEBITS_ENGINE_MATH_VEC4_H
 
 #include <numeric>
 
@@ -12,19 +12,19 @@ template<typename T, size_t Size>
 struct Vec;
 
 ///
-/// 2-dimensional mathematical vector.
+/// 4-dimensional mathematical vector.
 ///
-/// The memory layout of the vector is: [x, y].
+/// The memory layout of the vector is: [x, y, z, w].
 ///
 /// @tparam T The type of the components
 ///
 template<typename T>
-struct Vec<T, 2>
+struct Vec<T, 4>
 {
 public:
   using value_type = T;
 
-  static constexpr size_t length = 2;
+  static constexpr size_t length = 4;
 
   union
   {
@@ -32,30 +32,30 @@ public:
 
     struct
     {
-      T x, y;
+      T x, y, z, w;
     };
 
     struct
     {
-      T r, g;
+      T r, g, b, a;
     };
 
     struct
     {
-      T s, t;
+      T s, t, p, q;
     };
 
-    SWIZZLE_VEC2_TO_VEC2(Vec, x, y);
-    SWIZZLE_VEC2_TO_VEC2(Vec, r, g);
-    SWIZZLE_VEC2_TO_VEC2(Vec, s, t);
+    SWIZZLE_VEC4_TO_VEC2(Vec, x, y, z, w);
+    SWIZZLE_VEC4_TO_VEC2(Vec, r, g, b, a);
+    SWIZZLE_VEC4_TO_VEC2(Vec, s, t, p, q);
 
-    SWIZZLE_VEC2_TO_VEC3(Vec, x, y);
-    SWIZZLE_VEC2_TO_VEC3(Vec, r, g);
-    SWIZZLE_VEC2_TO_VEC3(Vec, s, t);
+    SWIZZLE_VEC4_TO_VEC3(Vec, x, y, z, w);
+    SWIZZLE_VEC4_TO_VEC3(Vec, r, g, b, a);
+    SWIZZLE_VEC4_TO_VEC3(Vec, s, t, p, q);
 
-    SWIZZLE_VEC2_TO_VEC4(Vec, x, y);
-    SWIZZLE_VEC2_TO_VEC4(Vec, r, g);
-    SWIZZLE_VEC2_TO_VEC4(Vec, s, t);
+    SWIZZLE_VEC4_TO_VEC4(Vec, x, y, z, w);
+    SWIZZLE_VEC4_TO_VEC4(Vec, r, g, b, a);
+    SWIZZLE_VEC4_TO_VEC4(Vec, s, t, p, q);
   };
 
 public:
@@ -64,7 +64,7 @@ public:
   ///
   /// Initializes all components to zero.
   ///
-  constexpr Vec() noexcept : x(0), y(0) {}
+  constexpr Vec() noexcept : x(0), y(0), z(0), w(0) {}
 
   ///
   /// Scalar constructor.
@@ -73,7 +73,7 @@ public:
   ///
   /// @param[in] scalar The scalar to use for all components.
   ///
-  constexpr Vec(T scalar) noexcept : x(scalar), y(scalar) {}
+  constexpr Vec(T scalar) noexcept : x(scalar), y(scalar), z(scalar), w(scalar) {}
 
   ///
   /// Parametric constructor.
@@ -82,8 +82,10 @@ public:
   ///
   /// @param[in] x The x component.
   /// @param[in] y The y component.
+  /// @param[in] z The z component.
+  /// @param[in] w The w component.
   ///
-  constexpr Vec(T x, T y) noexcept : r(x), g(y) {}
+  constexpr Vec(T x, T y, T z, T w) noexcept : r(x), g(y), b(z), a(w) {}
 
   ///
   /// Copy constructor.
@@ -100,7 +102,8 @@ public:
   /// @param[in] other The vector to copy.
   ///
   template<typename U>
-  constexpr explicit Vec(const Vec<U, 2>& other) noexcept : Vec(static_cast<T>(other.x), static_cast<T>(other.y))
+  constexpr explicit Vec(const Vec<U, 4>& other) noexcept
+    : Vec(static_cast<T>(other.x), static_cast<T>(other.y), static_cast<T>(other.z), static_cast<T>(other.w))
   {}
 
   ///
@@ -114,6 +117,8 @@ public:
   {
     x += scalar;
     y += scalar;
+    z += scalar;
+    w += scalar;
     return *this;
   }
 
@@ -128,6 +133,8 @@ public:
   {
     x += other.x;
     y += other.y;
+    z += other.z;
+    w += other.w;
     return *this;
   }
 
@@ -142,6 +149,8 @@ public:
   {
     x -= scalar;
     y -= scalar;
+    z -= scalar;
+    w -= scalar;
     return *this;
   }
 
@@ -156,6 +165,8 @@ public:
   {
     x -= other.x;
     y -= other.y;
+    z -= other.z;
+    w -= other.w;
     return *this;
   }
 
@@ -170,6 +181,8 @@ public:
   {
     x *= scalar;
     y *= scalar;
+    z *= scalar;
+    w *= scalar;
     return *this;
   }
 
@@ -184,6 +197,8 @@ public:
   {
     x *= other.x;
     y *= other.y;
+    z *= other.z;
+    w *= other.w;
     return *this;
   }
 
@@ -198,6 +213,8 @@ public:
   {
     x /= scalar;
     y /= scalar;
+    z /= scalar;
+    w /= scalar;
     return *this;
   }
 
@@ -212,6 +229,8 @@ public:
   {
     x /= other.x;
     y /= other.y;
+    z /= other.z;
+    w /= other.w;
     return *this;
   }
 
@@ -226,6 +245,8 @@ public:
   {
     x %= scalar;
     y %= scalar;
+    z %= scalar;
+    w %= scalar;
     return *this;
   }
 
@@ -240,6 +261,8 @@ public:
   {
     x %= other.x;
     y %= other.y;
+    z %= other.z;
+    w %= other.w;
     return *this;
   }
 
@@ -254,6 +277,8 @@ public:
   {
     x &= scalar;
     y &= scalar;
+    z &= scalar;
+    w &= scalar;
     return *this;
   }
 
@@ -268,6 +293,8 @@ public:
   {
     x &= other.x;
     y &= other.y;
+    z &= other.z;
+    w &= other.w;
     return *this;
   }
 
@@ -282,6 +309,8 @@ public:
   {
     x |= scalar;
     y |= scalar;
+    z |= scalar;
+    w |= scalar;
     return *this;
   }
 
@@ -296,6 +325,8 @@ public:
   {
     x |= other.x;
     y |= other.y;
+    z |= other.z;
+    w |= other.w;
     return *this;
   }
 
@@ -310,6 +341,8 @@ public:
   {
     x ^= scalar;
     y ^= scalar;
+    z ^= scalar;
+    w ^= scalar;
     return *this;
   }
 
@@ -324,6 +357,8 @@ public:
   {
     x ^= other.x;
     y ^= other.y;
+    z ^= other.z;
+    w ^= other.w;
     return *this;
   }
 
@@ -338,6 +373,8 @@ public:
   {
     x <<= scalar;
     y <<= scalar;
+    z <<= scalar;
+    w <<= scalar;
     return *this;
   }
 
@@ -352,6 +389,8 @@ public:
   {
     x <<= other.x;
     y <<= other.y;
+    z <<= other.z;
+    w <<= other.w;
     return *this;
   }
 
@@ -366,6 +405,8 @@ public:
   {
     x >>= scalar;
     y >>= scalar;
+    z >>= scalar;
+    w >>= scalar;
     return *this;
   }
 
@@ -380,6 +421,8 @@ public:
   {
     x >>= other.x;
     y >>= other.y;
+    z >>= other.z;
+    w >>= other.w;
     return *this;
   }
 
@@ -392,6 +435,8 @@ public:
   {
     ++x;
     ++y;
+    ++z;
+    ++w;
     return *this;
   }
 
@@ -415,6 +460,8 @@ public:
   {
     --x;
     --y;
+    --z;
+    --w;
     return *this;
   }
 
@@ -458,7 +505,7 @@ public:
   ///
   [[nodiscard]] explicit constexpr operator bool() const noexcept
   {
-    return x || y;
+    return x || y || z || w;
   }
 
   ///
@@ -471,7 +518,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator+(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x + scalar, vec.y + scalar };
+    return Vec { vec.x + scalar, vec.y + scalar, vec.z + scalar, vec.w + scalar };
   }
 
   ///
@@ -484,7 +531,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator+(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x + rhs.x, lhs.y + rhs.y };
+    return Vec { lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w };
   }
 
   ///
@@ -497,7 +544,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator-(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x - scalar, vec.y - scalar };
+    return Vec { vec.x - scalar, vec.y - scalar, vec.z - scalar, vec.w - scalar };
   }
 
   ///
@@ -510,7 +557,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator-(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x - rhs.x, lhs.y - rhs.y };
+    return Vec { lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z, lhs.w - rhs.w };
   }
 
   ///
@@ -523,7 +570,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator*(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x * scalar, vec.y * scalar };
+    return Vec { vec.x * scalar, vec.y * scalar, vec.z * scalar, vec.w * scalar };
   }
 
   ///
@@ -536,7 +583,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator*(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x * rhs.x, lhs.y * rhs.y };
+    return Vec { lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z, lhs.w * rhs.w };
   }
 
   ///
@@ -549,7 +596,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator/(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x / scalar, vec.y / scalar };
+    return Vec { vec.x / scalar, vec.y / scalar, vec.z / scalar, vec.w / scalar };
   }
 
   ///
@@ -562,7 +609,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator/(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x / rhs.x, lhs.y / rhs.y };
+    return Vec { lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z, lhs.w / rhs.w };
   }
 
   ///
@@ -575,7 +622,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator%(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x % scalar, vec.y % scalar };
+    return Vec { vec.x % scalar, vec.y % scalar, vec.z % scalar, vec.w % scalar };
   }
 
   ///
@@ -588,7 +635,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator%(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x % rhs.x, lhs.y % rhs.y };
+    return Vec { lhs.x % rhs.x, lhs.y % rhs.y, lhs.z % rhs.z, lhs.w % rhs.w };
   }
 
   ///
@@ -601,7 +648,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator&(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x & scalar, vec.y & scalar };
+    return Vec { vec.x & scalar, vec.y & scalar, vec.z & scalar, vec.w & scalar };
   }
 
   ///
@@ -614,7 +661,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator&(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x & rhs.x, lhs.y & rhs.y };
+    return Vec { lhs.x & rhs.x, lhs.y & rhs.y, lhs.z & rhs.z, lhs.w & rhs.w };
   }
 
   ///
@@ -627,7 +674,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator|(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x | scalar, vec.y | scalar };
+    return Vec { vec.x | scalar, vec.y | scalar, vec.z | scalar, vec.w | scalar };
   }
 
   ///
@@ -640,7 +687,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator|(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x | rhs.x, lhs.y | rhs.y };
+    return Vec { lhs.x | rhs.x, lhs.y | rhs.y, lhs.z | rhs.z, lhs.w | rhs.w };
   }
 
   ///
@@ -653,7 +700,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator^(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x ^ scalar, vec.y ^ scalar };
+    return Vec { vec.x ^ scalar, vec.y ^ scalar, vec.z ^ scalar, vec.w ^ scalar };
   }
 
   ///
@@ -666,7 +713,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator^(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x ^ rhs.x, lhs.y ^ rhs.y };
+    return Vec { lhs.x ^ rhs.x, lhs.y ^ rhs.y, lhs.z ^ rhs.z, lhs.w ^ rhs.w };
   }
 
   ///
@@ -679,7 +726,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator<<(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x << scalar, vec.y << scalar };
+    return Vec { vec.x << scalar, vec.y << scalar, vec.z << scalar, vec.w << scalar };
   }
 
   ///
@@ -692,7 +739,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator<<(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x << rhs.x, lhs.y << rhs.y };
+    return Vec { lhs.x << rhs.x, lhs.y << rhs.y, lhs.z << rhs.z, lhs.w << rhs.w };
   }
 
   ///
@@ -705,7 +752,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator>>(const Vec& vec, T scalar) noexcept
   {
-    return Vec { vec.x >> scalar, vec.y >> scalar };
+    return Vec { vec.x >> scalar, vec.y >> scalar, vec.z >> scalar, vec.w >> scalar };
   }
 
   ///
@@ -718,7 +765,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator>>(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return Vec { lhs.x >> rhs.x, lhs.y >> rhs.y };
+    return Vec { lhs.x >> rhs.x, lhs.y >> rhs.y, lhs.z >> rhs.z, lhs.w >> rhs.w };
   }
 
   ///
@@ -730,7 +777,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Vec operator~(const Vec& vec) noexcept
   {
-    return Vec { ~vec.x, ~vec.y };
+    return Vec { ~vec.x, ~vec.y, ~vec.z, ~vec.w };
   }
 
   ///
@@ -743,7 +790,7 @@ public:
   ///
   [[nodiscard]] friend constexpr bool operator==(const Vec& lhs, const Vec& rhs) noexcept
   {
-    return lhs.x == rhs.x && lhs.y == rhs.y;
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
   }
 
   ///
@@ -768,9 +815,9 @@ public:
 ///
 /// @returns The result of the and.
 ///
-[[nodiscard]] constexpr Vec<bool, 2> operator&&(const Vec<bool, 2>& lhs, const Vec<bool, 2>& rhs) noexcept
+[[nodiscard]] constexpr Vec<bool, 4> operator&&(const Vec<bool, 4>& lhs, const Vec<bool, 4>& rhs) noexcept
 {
-  return Vec<bool, 2> { lhs.x && rhs.y, lhs.y && rhs.y };
+  return Vec<bool, 4> { lhs.x && rhs.y, lhs.y && rhs.y, lhs.z && rhs.z, lhs.w && rhs.w };
 }
 
 ///
@@ -781,26 +828,26 @@ public:
 ///
 /// @returns The result of the or.
 ///
-[[nodiscard]] constexpr Vec<bool, 2> operator||(const Vec<bool, 2>& lhs, const Vec<bool, 2>& rhs) noexcept
+[[nodiscard]] constexpr Vec<bool, 4> operator||(const Vec<bool, 4>& lhs, const Vec<bool, 4>& rhs) noexcept
 {
-  return Vec<bool, 2> { lhs.x || rhs.y, lhs.y || rhs.y };
+  return Vec<bool, 4> { lhs.x || rhs.y, lhs.y || rhs.y, lhs.z || rhs.z, lhs.w || rhs.w };
 }
 
-using bool2 = Vec<bool, 2>;
-using int2 = Vec<int, 2>;
-using uint2 = Vec<unsigned int, 2>;
-using float2 = Vec<float, 2>;
-using double2 = Vec<double, 2>;
+using bool4 = Vec<bool, 4>;
+using int4 = Vec<int, 4>;
+using uint4 = Vec<unsigned int, 4>;
+using float4 = Vec<float, 4>;
+using double4 = Vec<double, 4>;
 } // namespace genebits::engine
 
 namespace std
 {
 template<typename T>
-struct hash<genebits::engine::Vec<T, 2>>
+struct hash<genebits::engine::Vec<T, 4>>
 {
-  constexpr size_t operator()(const genebits::engine::Vec<T, 2>& vec) const noexcept
+  constexpr size_t operator()(const genebits::engine::Vec<T, 4>& vec) const noexcept
   {
-    return hash<T>()(vec.x) ^ (hash<T>()(vec.y) << 1);
+    return hash<T>()(vec.x) ^ hash<T>()(vec.y) ^ hash<T>()(vec.z) ^ hash<T>()(vec.w);
   }
 };
 } // namespace std
