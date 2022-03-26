@@ -129,7 +129,7 @@ TEST(Phase_Tests, Run_SingleSystem_Update)
 
   UpdateNotifier notifier;
 
-  EXPECT_CALL(*system.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&notifier, pool, 10));
+  EXPECT_CALL(*system.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&notifier, pool, 1));
 
   EXPECT_CALL(notifier, NotifyStart).Times(1);
   EXPECT_CALL(notifier, NotifyEnd).Times(1);
@@ -154,8 +154,8 @@ TEST(Phase_Tests, Run_2Systems_UpdateAll)
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 10));
-  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 10));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
+  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 1));
 
   EXPECT_CALL(s1n, NotifyStart).Times(1);
   EXPECT_CALL(s1n, NotifyEnd).Times(1);
@@ -190,7 +190,7 @@ TEST(Phase_Tests, Run_2SystemsNoDeps_QuickestFinishesFirst)
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
   EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s2n));
 
   ::testing::Sequence s1;
@@ -228,7 +228,7 @@ TEST(Phase_Tests, Run_2SystemsWithDeps_UpdateInSeq)
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
   EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s2n));
 
   ::testing::Sequence s1;
@@ -298,10 +298,10 @@ TEST(Phase_Tests, Run_5SystemsWithDeps_UpdateInSeq)
 
   UpdateNotifier s1n, s2n, s3n, s4n, s5n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
-  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 50));
-  EXPECT_CALL(*system3.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s3n, pool, 75));
-  EXPECT_CALL(*system4.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s4n, pool, 50));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 3));
+  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 1));
+  EXPECT_CALL(*system3.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s3n, pool, 2));
+  EXPECT_CALL(*system4.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s4n, pool, 1));
   EXPECT_CALL(*system5.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s5n));
 
   ::testing::Sequence s1, s2, s3;
@@ -346,7 +346,7 @@ TEST(Phase_Tests, Run_2Systems2GroupsNoDeps_QuickestFinishesFirst)
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
   EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s2n));
 
   ::testing::Sequence s1;
@@ -385,7 +385,7 @@ TEST(Phase_Tests, Run_2Systems2GroupsWithDeps_UpdateInSeq)
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
   EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s2n));
 
   ::testing::Sequence s1;
@@ -457,10 +457,10 @@ TEST(Phase_Tests, Run_5Systems3GroupsWithDeps_UpdateInSeq)
 
   UpdateNotifier s1n, s2n, s3n, s4n, s5n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
-  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 50));
-  EXPECT_CALL(*system3.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s3n, pool, 75));
-  EXPECT_CALL(*system4.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s4n, pool, 50));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 3));
+  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 1));
+  EXPECT_CALL(*system3.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s3n, pool, 2));
+  EXPECT_CALL(*system4.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s4n, pool, 1));
   EXPECT_CALL(*system5.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s5n));
 
   ::testing::Sequence s1, s2, s3;

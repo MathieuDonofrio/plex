@@ -380,24 +380,4 @@ TEST(Task_Tests, CoAwait_DifferentThreadsResultAndAsync_CorrectValue)
   if (thread2.joinable()) thread2.join();
 }
 
-TEST(Task_Tests, CoAwait_MultipleSync_NoStackOverflow)
-{
-  const size_t amount = 1'000'000;
-
-  auto make_task = [&]() -> Task<int> { co_return 1; };
-
-  size_t result = 0;
-
-  SyncWait(
-    [&]() -> Task<>
-    {
-      for (size_t i = 0; i < amount; ++i)
-      {
-        result += co_await make_task();
-      }
-    }());
-
-  EXPECT_EQ(result, amount);
-}
-
 } // namespace genebits::engine::tests
