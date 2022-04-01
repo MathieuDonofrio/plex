@@ -40,7 +40,7 @@ private:
   ///
   /// @returns true if the swizzle contains a duplicate value, false otherwise.
   ///
-  static constexpr bool HasDuplicateElements()
+  static constexpr bool HasDuplicateElements() noexcept
   {
     for (size_t i = 0; i < SwizzleSize; i++)
     {

@@ -9,35 +9,91 @@ namespace genebits::engine
 template<typename T, size_t Rows, size_t Cols>
 struct Mat;
 
+///
+/// 2x2 mathematical matrix.
+///
+/// The matrix is stored in column major order.
+///
+/// The memory layout of the matrix is: [c0r0, c0r1, c1r0, c1r1]
+///
+/// @tparam T The type of the matrix elements.
+///
 template<typename T>
 struct Mat<T, 2, 2>
 {
 public:
-  static constexpr const size_t rows = 2;
-  static constexpr const size_t cols = 2;
+  using value_type = T;
 
-  using ColType = Vec<T, rows>;
-  using RowType = Vec<T, cols>;
-  using TransposeType = Mat<T, rows, cols>;
+  static constexpr size_t rows = 2;
+  static constexpr size_t cols = 2;
+
+  using col_type = Vec<T, rows>;
+  using row_type = Vec<T, cols>;
+  using transpose_type = Mat<T, rows, cols>;
 
 private:
-  ColType data[2];
+  col_type data[2];
 
 public:
-  constexpr Mat() noexcept : data { ColType(1, 0), ColType(0, 1) } {} // Identity
+  ///
+  /// Default constructor.
+  ///
+  /// Initializes the matrix to the identity matrix.
+  ///
+  constexpr Mat() noexcept : data { col_type(1, 0), col_type(0, 1) } {} // Identity
 
-  constexpr Mat(T scalar) noexcept : data { ColType(scalar, 0), ColType(0, scalar) } {} // Identity
+  ///
+  /// Scalar constructor.
+  ///
+  /// Initializes the matrix to the scaled identity matrix.
+  ///
+  /// @param[in] scalar The scalar to scale the identity matrix by.
+  ///
+  constexpr Mat(T scalar) noexcept : data { col_type(scalar, 0), col_type(0, scalar) } {} // Identity
 
-  constexpr Mat(T x0, T y0, T x1, T y1) noexcept : data { ColType(x0, y0), ColType(x1, y1) } {}
+  ///
+  /// Parametric constructor.
+  ///
+  /// @param[in] x0 The x component of the first column.
+  /// @param[in] y0 The y component of the first column.
+  /// @param[in] x1 The x component of the second column.
+  /// @param[in] y1 The y component of the second column.
+  ///
+  constexpr Mat(T x0, T y0, T x1, T y1) noexcept : data { col_type(x0, y0), col_type(x1, y1) } {}
 
-  constexpr Mat(const ColType& a, const ColType& b) noexcept : data { a, b } {}
+  ///
+  /// Column constructor.
+  ///
+  /// @param a The first column.
+  /// @param b The second column.
+  ///
+  constexpr Mat(const col_type& a, const col_type& b) noexcept : data { a, b } {}
 
+  ///
+  /// Copy constructor.
+  ///
+  /// @param[in] other The matrix to copy.
+  ///
   constexpr Mat(const Mat& other) noexcept = default;
 
+  ///
+  /// Copy constructor.
+  ///
+  /// @tparam U The type of the other matrix.
+  ///
+  /// @param[in] other The matrix to copy.
+  ///
   template<typename U>
-  constexpr explicit Mat(const Mat<U, rows, cols>& other) noexcept : data(ColType(other[0]), ColType(other[1]))
+  constexpr explicit Mat(const Mat<U, rows, cols>& other) noexcept : data { col_type(other[0]), col_type(other[1]) }
   {}
 
+  ///
+  /// Add assignment operator.
+  ///
+  /// @param[in] scalar The scalar to add.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator+=(T scalar) noexcept
   {
     data[0] += scalar;
@@ -45,6 +101,13 @@ public:
     return *this;
   }
 
+  ///
+  /// Add assignment operator.
+  ///
+  /// @param[in] other The matrix to add.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator+=(const Mat& other) noexcept
   {
     data[0] += other[0];
@@ -52,6 +115,13 @@ public:
     return *this;
   }
 
+  ///
+  /// Subtract assignment operator.
+  ///
+  /// @param[in] scalar The scalar to subtract.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator-=(T scalar) noexcept
   {
     data[0] -= scalar;
@@ -59,6 +129,13 @@ public:
     return *this;
   }
 
+  ///
+  /// Subtract assignment operator.
+  ///
+  /// @param[in] other The matrix to subtract.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator-=(const Mat& other) noexcept
   {
     data[0] -= other[0];
@@ -66,6 +143,13 @@ public:
     return *this;
   }
 
+  ///
+  /// Multiply assignment operator.
+  ///
+  /// @param[in] scalar The scalar to multiply.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator*=(T scalar) noexcept
   {
     data[0] *= scalar;
@@ -73,11 +157,25 @@ public:
     return *this;
   }
 
+  ///
+  /// Multiply assignment operator.
+  ///
+  /// @param[in] other The matrix to multiply.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator*=(const Mat& other) noexcept
   {
-    return (*this = *this * other);
+    return (*this = Product(*this, other));
   }
 
+  ///
+  /// Divide assignment operator.
+  ///
+  /// @param[in] scalar The scalar to divide.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator/=(T scalar) noexcept
   {
     data[0] /= scalar;
@@ -85,11 +183,11 @@ public:
     return *this;
   }
 
-  constexpr Mat& operator/=(const Mat& other) noexcept
-  {
-    return (*this = *this * Inverse(other));
-  }
-
+  ///
+  /// Pre-increment operator.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator++() noexcept
   {
     ++data[0];
@@ -97,12 +195,22 @@ public:
     return *this;
   }
 
+  ///
+  /// Post-increment operator.
+  ///
+  /// @return A copy of the matrix.
+  ///
   constexpr const Mat operator++(int) noexcept
   {
     Mat tmp(*this);
     return ++(*this), tmp;
   }
 
+  ///
+  /// Pre-decrement operator.
+  ///
+  /// @return A reference to the matrix.
+  ///
   constexpr Mat& operator--() noexcept
   {
     --data[0];
@@ -110,52 +218,191 @@ public:
     return *this;
   }
 
+  ///
+  /// Post-decrement operator.
+  ///
+  /// @return A copy of the matrix.
+  ///
   constexpr const Mat operator--(int) noexcept
   {
     Mat tmp(*this);
     return --(*this), tmp;
   }
 
-  [[nodiscard]] constexpr const ColType& operator[](size_t index) const noexcept
+  ///
+  /// Subscript operator.
+  ///
+  /// Accesses the column at the specified index.
+  ///
+  /// @param[in] index The index corresponding to the column.
+  ///
+  /// @return A reference to the column.
+  ///
+  [[nodiscard]] constexpr const col_type& operator[](size_t index) const noexcept
   {
     ASSERT(index < cols, "Matrix column out of range");
     return data[index];
   }
 
-  [[nodiscard]] constexpr ColType& operator[](size_t index) noexcept
+  ///
+  /// Subscript operator.
+  ///
+  /// Accesses the column at the specified index.
+  ///
+  /// @param[in] index The index corresponding to the column.
+  ///
+  /// @return A reference to the column.
+  ///
+  [[nodiscard]] constexpr col_type& operator[](size_t index) noexcept
   {
     ASSERT(index < cols, "Matrix column out of range");
     return data[index];
   }
 
+  ///
+  /// Add operator.
+  ///
+  /// @param[in] scalar The scalar to add.
+  ///
+  /// @return The result of the addition.
+  ///
+  [[nodiscard]] friend constexpr Mat operator+(const Mat& mat, T scalar) noexcept
+  {
+    return Mat { mat[0] + scalar, mat[1] + scalar };
+  }
+
+  ///
+  /// Add operator.
+  ///
+  /// @param[in] lhs Left-hand side matrix.
+  /// @param[in] rhs Right-hand side matrix.
+  ///
+  /// @return The result of the addition.
+  ///
+  [[nodiscard]] friend constexpr Mat operator+(const Mat& lhs, const Mat& rhs) noexcept
+  {
+    return Mat { lhs[0] + rhs[0], lhs[1] + rhs[1] };
+  }
+
+  ///
+  /// Subtract operator.
+  ///
+  /// @param[in] scalar The scalar to add.
+  ///
+  /// @return The result of the subtraction.
+  ///
+  [[nodiscard]] friend constexpr Mat operator-(const Mat& mat, T scalar) noexcept
+  {
+    return Mat { mat[0] - scalar, mat[1] - scalar };
+  }
+
+  ///
+  /// Subtract operator.
+  ///
+  /// @param[in] lhs Left-hand side matrix.
+  /// @param[in] rhs Right-hand side matrix.
+  ///
+  /// @return The result of the subtraction.
+  ///
+  [[nodiscard]] friend constexpr Mat operator-(const Mat& lhs, const Mat& rhs) noexcept
+  {
+    return Mat { lhs[0] - rhs[0], lhs[1] - rhs[1] };
+  }
+
+  ///
+  /// Multiplication operator.
+  ///
+  /// @param[in] scalar The scalar to multiply.
+  ///
+  /// @return The product of the matrix and the scalar.
+  ///
   [[nodiscard]] friend constexpr Mat operator*(const Mat& mat, T scalar) noexcept
   {
     return Mat { mat[0] * scalar, mat[1] * scalar };
   }
 
-  [[nodiscard]] friend constexpr Mat operator*(const Mat& lhs, const Mat& rhs) noexcept
+  ///
+  /// Multiplication operator.
+  ///
+  /// Performs matrix-vector multiplication.
+  ///
+  /// @param[in] mat Matrix to multiply vector by.
+  /// @param[in] vec Vector to transform.
+  ///
+  /// @return The transformed vector.
+  ///
+  [[nodiscard]] friend constexpr Mat::col_type operator*(const Mat& mat, const Mat::row_type& vec) noexcept
   {
-    return Product(lhs, rhs);
+    return Mat::col_type { mat[0][0] * vec.x + mat[1][0] * vec.y, mat[0][1] * vec.x + mat[1][1] * vec.y };
   }
 
-  // TODO Other multiplications
+  ///
+  /// Multiplication operator.
+  ///
+  /// Performs vector-matrix multiplication.
+  ///
+  /// @param[in] mat Matrix to multiply.
+  /// @param[in] vec Vector to multiply vector with.
+  ///
+  /// @return The transformed vector.
+  ///
+  [[nodiscard]] friend constexpr Mat::row_type operator*(const Mat::col_type& vec, const Mat& mat) noexcept
+  {
+    return Mat::row_type { mat[0][0] * vec.x + mat[0][1] * vec.y, mat[1][0] * vec.x + mat[1][1] * vec.y };
+  }
 
+  ///
+  /// Multiplication operator.
+  ///
+  /// Performs matrix-matrix multiplication.
+  ///
+  /// @param[in] lhs Left-hand side matrix.
+  /// @param[in] rhs Right-hand side matrix.
+  ///
+  /// @return The product of the matrices.
+  ///
+  [[nodiscard]] friend constexpr Mat operator*(const Mat& lhs, const Mat& rhs) noexcept
+  {
+    return Mat { //
+      lhs[0][0] * rhs[0][0] + lhs[1][0] * rhs[0][1], //
+      lhs[0][1] * rhs[0][0] + lhs[1][1] * rhs[0][1], //
+      lhs[0][0] * rhs[1][0] + lhs[1][0] * rhs[1][1], //
+      lhs[0][1] * rhs[1][0] + lhs[1][1] * rhs[1][1]
+    };
+  }
+
+  ///
+  /// Division operator.
+  ///
+  /// @param[in] scalar The scalar to divide.
+  ///
+  /// @return The quotient of the matrix and the scalar.
+  ///
   [[nodiscard]] friend constexpr Mat operator/(const Mat& mat, T scalar) noexcept
   {
     return Mat { mat[0] / scalar, mat[1] / scalar };
   }
 
-  [[nodiscard]] friend constexpr Mat operator/(const Mat& lhs, const Mat& rhs) noexcept
-  {
-    return lhs * Inverse(rhs);
-  }
-
-  [[nodiscard]] friend constexpr bool operator==(const Mat& lhs, const Mat&& rhs) noexcept
+  ///
+  /// Equality operator.
+  ///
+  /// @param[in] other The matrix to compare.
+  ///
+  /// @return True if the matrices are equal, false otherwise.
+  ///
+  [[nodiscard]] friend constexpr bool operator==(const Mat& lhs, const Mat& rhs) noexcept
   {
     return (lhs[0] == rhs[0]) && (lhs[1] == rhs[1]);
   }
 
-  [[nodiscard]] friend constexpr bool operator!=(const Mat&& lhs, const Mat&& rhs) noexcept
+  ///
+  /// Inequality operator.
+  ///
+  /// @param[in] other The matrix to compare.
+  ///
+  /// @return True if the matrices are not equal, false otherwise.
+  ///
+  [[nodiscard]] friend constexpr bool operator!=(const Mat& lhs, const Mat& rhs) noexcept
   {
     return !(lhs == rhs);
   }

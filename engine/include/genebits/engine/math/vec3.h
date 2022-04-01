@@ -94,7 +94,7 @@ public:
   constexpr Vec(const Vec& other) noexcept = default;
 
   ///
-  /// Copy Constructor.
+  /// Copy constructor.
   ///
   /// @tparam U The type of the other vector.
   ///
