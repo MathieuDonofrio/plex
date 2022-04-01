@@ -40,7 +40,7 @@ include(cmake/Testing.cmake)
 include(cmake/Benchmarking.cmake)
 include(cmake/ColorDiagnostics.cmake)
 include(cmake/CompilerWarnings.cmake)
-include(cmake/Simd.cmake)
+include(cmake/ArchitectureOptimizations.cmake)
 
 #
 # Install Packages
