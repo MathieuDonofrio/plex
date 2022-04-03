@@ -287,4 +287,16 @@ TYPED_TEST(Mat2x2_Tests, Mult_Mat)
   EXPECT_EQ(result[1][0], 31);
   EXPECT_EQ(result[1][1], 46);
 }
+
+TYPED_TEST(Mat2x2_Tests, Mult_Mat_Reversed)
+{
+  TypeParam mat1(1, 2, 3, 4);
+  TypeParam mat2(5, 6, 7, 8);
+  TypeParam result = mat2 * mat1;
+  EXPECT_EQ(result[0][0], 19);
+  EXPECT_EQ(result[0][1], 22);
+  EXPECT_EQ(result[1][0], 43);
+  EXPECT_EQ(result[1][1], 50);
+}
+
 } // namespace genebits::engine::tests

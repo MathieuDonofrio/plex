@@ -1,7 +1,7 @@
-#ifndef GENEBITS_ENGINE_MATH_MAT2X2_H
-#define GENEBITS_ENGINE_MATH_MAT2X2_H
+#ifndef GENEBITS_ENGINE_MATH_MAT3X3_H
+#define GENEBITS_ENGINE_MATH_MAT3X3_H
 
-#include "genebits/engine/math/vec2.h"
+#include "genebits/engine/math/vec3.h"
 
 namespace genebits::engine
 {
@@ -9,27 +9,27 @@ template<typename T, size_t Rows, size_t Cols>
 struct Mat;
 
 ///
-/// 2x2 mathematical matrix.
+/// 3x3 mathematical matrix.
 ///
 /// The matrix is stored in column major order.
 ///
 /// @tparam T The type of the matrix elements.
 ///
 template<typename T>
-struct Mat<T, 2, 2>
+struct Mat<T, 3, 3>
 {
 public:
   using value_type = T;
 
-  static constexpr size_t rows = 2;
-  static constexpr size_t cols = 2;
+  static constexpr size_t rows = 3;
+  static constexpr size_t cols = 3;
 
   using col_type = Vec<T, rows>;
   using row_type = Vec<T, cols>;
   using transpose_type = Mat<T, rows, cols>;
 
 private:
-  col_type data[2];
+  col_type data[3];
 
 public:
   ///
@@ -37,7 +37,7 @@ public:
   ///
   /// Initializes the matrix to the identity matrix.
   ///
-  constexpr Mat() noexcept : data { col_type(1, 0), col_type(0, 1) } {} // Identity
+  constexpr Mat() noexcept : data { col_type(1, 0, 0), col_type(0, 1, 0), col_type(0, 0, 1) } {} // Identity
 
   ///
   /// Scalar constructor.
@@ -46,25 +46,33 @@ public:
   ///
   /// @param[in] scalar The scalar to scale the identity matrix by.
   ///
-  constexpr Mat(T scalar) noexcept : data { col_type(scalar, 0), col_type(0, scalar) } {}
+  constexpr Mat(T scalar) noexcept : data { col_type(scalar, 0, 0), col_type(0, scalar, 0), col_type(0, 0, scalar) } {}
 
   ///
   /// Parametric constructor.
   ///
   /// @param[in] x0 The x component of the first column.
   /// @param[in] y0 The y component of the first column.
+  /// @param[in] z0 The z component of the first column.
   /// @param[in] x1 The x component of the second column.
   /// @param[in] y1 The y component of the second column.
+  /// @param[in] z1 The z component of the second column.
+  /// @param[in] x2 The x component of the third column.
+  /// @param[in] y2 The y component of the third column.
+  /// @param[in] z2 The z component of the third column.
   ///
-  constexpr Mat(T x0, T y0, T x1, T y1) noexcept : data { col_type(x0, y0), col_type(x1, y1) } {}
+  constexpr Mat(T x0, T y0, T z0, T x1, T y1, T z1, T x2, T y2, T z2) noexcept
+    : data { col_type(x0, y0, z0), col_type(x1, y1, z1), col_type(x2, y2, z2) }
+  {}
 
   ///
   /// Column constructor.
   ///
   /// @param a The first column.
   /// @param b The second column.
+  /// @param c The third column.
   ///
-  constexpr Mat(const col_type& a, const col_type& b) noexcept : data { a, b } {}
+  constexpr Mat(const col_type& a, const col_type& b, const col_type& c) noexcept : data { a, b, c } {}
 
   ///
   /// Copy constructor.
@@ -81,7 +89,8 @@ public:
   /// @param[in] other The matrix to copy.
   ///
   template<typename U>
-  constexpr explicit Mat(const Mat<U, rows, cols>& other) noexcept : data { col_type(other[0]), col_type(other[1]) }
+  constexpr explicit Mat(const Mat<U, rows, cols>& other) noexcept
+    : data { col_type(other[0]), col_type(other[1]), col_type(other[1]) }
   {}
 
   ///
@@ -95,6 +104,7 @@ public:
   {
     data[0] += scalar;
     data[1] += scalar;
+    data[2] += scalar;
     return *this;
   }
 
@@ -109,6 +119,7 @@ public:
   {
     data[0] += other[0];
     data[1] += other[1];
+    data[2] += other[2];
     return *this;
   }
 
@@ -123,6 +134,7 @@ public:
   {
     data[0] -= scalar;
     data[1] -= scalar;
+    data[2] -= scalar;
     return *this;
   }
 
@@ -137,6 +149,7 @@ public:
   {
     data[0] -= other[0];
     data[1] -= other[1];
+    data[2] -= other[2];
     return *this;
   }
 
@@ -151,6 +164,7 @@ public:
   {
     data[0] *= scalar;
     data[1] *= scalar;
+    data[2] *= scalar;
     return *this;
   }
 
@@ -177,6 +191,7 @@ public:
   {
     data[0] /= scalar;
     data[1] /= scalar;
+    data[2] /= scalar;
     return *this;
   }
 
@@ -189,6 +204,7 @@ public:
   {
     ++data[0];
     ++data[1];
+    ++data[2];
     return *this;
   }
 
@@ -212,6 +228,7 @@ public:
   {
     --data[0];
     --data[1];
+    --data[2];
     return *this;
   }
 
@@ -265,7 +282,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Mat operator+(const Mat& mat, T scalar) noexcept
   {
-    return Mat { mat[0] + scalar, mat[1] + scalar };
+    return Mat { mat[0] + scalar, mat[1] + scalar, mat[2] + scalar };
   }
 
   ///
@@ -278,7 +295,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Mat operator+(const Mat& lhs, const Mat& rhs) noexcept
   {
-    return Mat { lhs[0] + rhs[0], lhs[1] + rhs[1] };
+    return Mat { lhs[0] + rhs[0], lhs[1] + rhs[1], lhs[2] + rhs[2] };
   }
 
   ///
@@ -290,7 +307,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Mat operator-(const Mat& mat, T scalar) noexcept
   {
-    return Mat { mat[0] - scalar, mat[1] - scalar };
+    return Mat { mat[0] - scalar, mat[1] - scalar, mat[2] - scalar };
   }
 
   ///
@@ -303,7 +320,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Mat operator-(const Mat& lhs, const Mat& rhs) noexcept
   {
-    return Mat { lhs[0] - rhs[0], lhs[1] - rhs[1] };
+    return Mat { lhs[0] - rhs[0], lhs[1] - rhs[1], lhs[2] - rhs[2] };
   }
 
   ///
@@ -315,7 +332,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Mat operator*(const Mat& mat, T scalar) noexcept
   {
-    return Mat { mat[0] * scalar, mat[1] * scalar };
+    return Mat { mat[0] * scalar, mat[1] * scalar, mat[2] * scalar };
   }
 
   ///
@@ -330,7 +347,11 @@ public:
   ///
   [[nodiscard]] friend constexpr Mat::col_type operator*(const Mat& mat, const Mat::row_type& vec) noexcept
   {
-    return Mat::col_type { mat[0][0] * vec.x + mat[1][0] * vec.y, mat[0][1] * vec.x + mat[1][1] * vec.y };
+    return Mat::col_type { //
+      mat[0][0] * vec.x + mat[1][0] * vec.y + mat[2][0] * vec.z,
+      mat[0][1] * vec.x + mat[1][1] * vec.y + mat[2][1] * vec.z,
+      mat[0][2] * vec.x + mat[1][2] * vec.y + mat[2][2] * vec.z
+    };
   }
 
   ///
@@ -345,7 +366,11 @@ public:
   ///
   [[nodiscard]] friend constexpr Mat::row_type operator*(const Mat::col_type& vec, const Mat& mat) noexcept
   {
-    return Mat::row_type { mat[0][0] * vec.x + mat[0][1] * vec.y, mat[1][0] * vec.x + mat[1][1] * vec.y };
+    return Mat::row_type { //
+      mat[0][0] * vec.x + mat[0][1] * vec.y + mat[0][2] * vec.z,
+      mat[1][0] * vec.x + mat[1][1] * vec.y + mat[1][2] * vec.z,
+      mat[2][0] * vec.x + mat[2][1] * vec.y + mat[2][2] * vec.z
+    };
   }
 
   ///
@@ -361,10 +386,15 @@ public:
   [[nodiscard]] friend constexpr Mat operator*(const Mat& lhs, const Mat& rhs) noexcept
   {
     return Mat { //
-      lhs[0][0] * rhs[0][0] + lhs[1][0] * rhs[0][1],
-      lhs[0][1] * rhs[0][0] + lhs[1][1] * rhs[0][1],
-      lhs[0][0] * rhs[1][0] + lhs[1][0] * rhs[1][1],
-      lhs[0][1] * rhs[1][0] + lhs[1][1] * rhs[1][1]
+      lhs[0][0] * rhs[0][0] + lhs[1][0] * rhs[0][1] + lhs[2][0] * rhs[0][2],
+      lhs[0][1] * rhs[0][0] + lhs[1][1] * rhs[0][1] + lhs[2][1] * rhs[0][2],
+      lhs[0][2] * rhs[0][0] + lhs[1][2] * rhs[0][1] + lhs[2][2] * rhs[0][2],
+      lhs[0][0] * rhs[1][0] + lhs[1][0] * rhs[1][1] + lhs[2][0] * rhs[1][2],
+      lhs[0][1] * rhs[1][0] + lhs[1][1] * rhs[1][1] + lhs[2][1] * rhs[1][2],
+      lhs[0][2] * rhs[1][0] + lhs[1][2] * rhs[1][1] + lhs[2][2] * rhs[1][2],
+      lhs[0][0] * rhs[2][0] + lhs[1][0] * rhs[2][1] + lhs[2][0] * rhs[2][2],
+      lhs[0][1] * rhs[2][0] + lhs[1][1] * rhs[2][1] + lhs[2][1] * rhs[2][2],
+      lhs[0][2] * rhs[2][0] + lhs[1][2] * rhs[2][1] + lhs[2][2] * rhs[2][2]
     };
   }
 
@@ -377,7 +407,7 @@ public:
   ///
   [[nodiscard]] friend constexpr Mat operator/(const Mat& mat, T scalar) noexcept
   {
-    return Mat { mat[0] / scalar, mat[1] / scalar };
+    return Mat { mat[0] / scalar, mat[1] / scalar, mat[2] / scalar };
   }
 
   ///
@@ -389,7 +419,7 @@ public:
   ///
   [[nodiscard]] friend constexpr bool operator==(const Mat& lhs, const Mat& rhs) noexcept
   {
-    return (lhs[0] == rhs[0]) && (lhs[1] == rhs[1]);
+    return (lhs[0] == rhs[0]) && (lhs[1] == rhs[1]) && (lhs[2] == rhs[2]);
   }
 
   ///
@@ -405,21 +435,21 @@ public:
   }
 };
 
-using bool2x2 = Mat<bool, 2, 2>;
-using int2x2 = Mat<int, 2, 2>;
-using uint2x2 = Mat<unsigned int, 2, 2>;
-using float2x2 = Mat<float, 2, 2>;
-using double2x2 = Mat<double, 2, 2>;
+using bool3x3 = Mat<bool, 3, 3>;
+using int3x3 = Mat<int, 3, 3>;
+using uint3x3 = Mat<unsigned int, 3, 3>;
+using float3x3 = Mat<float, 3, 3>;
+using double3x3 = Mat<double, 3, 3>;
 } // namespace genebits::engine
 
 namespace std
 {
 template<typename T>
-struct hash<genebits::engine::Mat<T, 2, 2>>
+struct hash<genebits::engine::Mat<T, 3, 3>>
 {
-  constexpr size_t operator()(const genebits::engine::Mat<T, 2, 2>& mat) const noexcept
+  constexpr size_t operator()(const genebits::engine::Mat<T, 3, 3>& mat) const noexcept
   {
-    return std::hash<T>()(mat[0]) ^ std::hash<T>(mat[1]);
+    return std::hash<T>()(mat[0]) ^ std::hash<T>(mat[1]) ^ std::hash<T>(mat[2]);
   }
 };
 } // namespace std
