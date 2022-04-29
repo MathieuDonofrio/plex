@@ -1,6 +1,7 @@
 #ifndef GENEBITS_ENGINE_MATH_SWIZZLE_H
 #define GENEBITS_ENGINE_MATH_SWIZZLE_H
 
+#include <cstdlib>
 #include <type_traits>
 
 namespace genebits::engine
