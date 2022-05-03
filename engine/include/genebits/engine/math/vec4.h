@@ -80,12 +80,12 @@ public:
   ///
   /// Creates a vector with the given components.
   ///
-  /// @param[in] x The x component.
-  /// @param[in] y The y component.
-  /// @param[in] z The z component.
-  /// @param[in] w The w component.
+  /// @param[in] x_ The x component.
+  /// @param[in] y_ The y component.
+  /// @param[in] z_ The z component.
+  /// @param[in] w_ The w component.
   ///
-  constexpr Vec(T x, T y, T z, T w) noexcept : r(x), g(y), b(z), a(w) {}
+  constexpr Vec(T x_, T y_, T z_, T w_) noexcept : x(x_), y(y_), z(z_), w(w_) {}
 
   ///
   /// Copy constructor.
@@ -484,7 +484,23 @@ public:
   [[nodiscard]] constexpr T operator[](size_t index) const noexcept
   {
     ASSERT(index < length, "Vector component out of range");
-    return data[index];
+
+    if (std::is_constant_evaluated())
+    {
+      // Avoids non-active union member access during constant evaluation.
+      switch (index)
+      {
+      default:
+      case 0: return x;
+      case 1: return y;
+      case 2: return z;
+      case 3: return w;
+      }
+    }
+    else
+    {
+      return data[index];
+    }
   }
 
   ///
@@ -495,7 +511,23 @@ public:
   [[nodiscard]] constexpr T& operator[](size_t index) noexcept
   {
     ASSERT(index < length, "Vector component out of range");
-    return data[index];
+
+    if (std::is_constant_evaluated())
+    {
+      // Avoids non-active union member access during constant evaluation.
+      switch (index)
+      {
+      default:
+      case 0: return x;
+      case 1: return y;
+      case 2: return z;
+      case 3: return w;
+      }
+    }
+    else
+    {
+      return data[index];
+    }
   }
 
   ///
