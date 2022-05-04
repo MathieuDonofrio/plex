@@ -179,9 +179,6 @@ namespace rtmath
   inline float Sqrt(float x) noexcept
   {
 #ifdef ISA_SSSE3
-    if (x == 0) return 0;
-    if (x < 0 || x >= std::numeric_limits<float>::infinity()) return std::numeric_limits<float>::quiet_NaN();
-
     return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ps1(x)));
 #else
     return std::sqrtf(x);
