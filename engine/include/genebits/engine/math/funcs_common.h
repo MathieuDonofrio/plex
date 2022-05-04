@@ -49,14 +49,40 @@ namespace details
     return diff <= std::numeric_limits<T>::epsilon();
   }
 
-  template<typename T>
-  constexpr T SqrtNewtonRaphson(T x, T current, T previous = T(0)) noexcept
+  constexpr float SqrtApprox(float x)
   {
-    if (IsNear(current, previous)) return current;
+    auto i = std::bit_cast<uint32_t>(x);
+    i -= 1 << 23;
+    i >>= 1;
+    i += 1 << 29;
+    return std::bit_cast<float>(i);
+  }
 
-    const T next = T(0.5) * (current + x / current);
+  constexpr double SqrtApprox(double x) noexcept
+  {
+    auto i = std::bit_cast<uint64_t>(x);
+    i -= 1ULL << 52;
+    i >>= 1;
+    i += 1ULL << 61;
+    return std::bit_cast<double>(i);
+  }
 
-    return SqrtNewtonRaphson(x, next, current);
+  constexpr long double SqrtApprox(long double x) noexcept
+  {
+    return SqrtApprox(static_cast<double>(x));
+  }
+
+  template<typename T, size_t MaxIterations>
+  constexpr T SqrtBabylonian(T x) noexcept
+  {
+    T current = SqrtApprox(x); // Initial guess
+
+    current = T(0.5) * (current + x / current);
+    current = T(0.5) * (current + x / current);
+    current = T(0.5) * (current + x / current);
+    current = T(0.5) * (current + x / current);
+
+    return current;
   }
 } // namespace details
 
@@ -102,7 +128,7 @@ namespace ctmath
     if (x == 0) return 0;
     if (x < 0 || x >= std::numeric_limits<T>::infinity()) return std::numeric_limits<T>::quiet_NaN();
 
-    return details::SqrtNewtonRaphson(x, x);
+    return details::SqrtBabylonian<T, 4>(x);
   }
 
   template<typename T>
@@ -153,6 +179,9 @@ namespace rtmath
   inline float Sqrt(float x) noexcept
   {
 #ifdef ISA_SSSE3
+    if (x == 0) return 0;
+    if (x < 0 || x >= std::numeric_limits<float>::infinity()) return std::numeric_limits<float>::quiet_NaN();
+
     return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ps1(x)));
 #else
     return std::sqrtf(x);
@@ -162,7 +191,7 @@ namespace rtmath
   inline double Sqrt(double x) noexcept
   {
 #ifdef ISA_SSSE3
-    return _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(x), {}));
+    return _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(x), _mm_set_sd(0)));
 #else
     return std::sqrt(x);
 #endif
@@ -170,11 +199,7 @@ namespace rtmath
 
   inline long double Sqrt(long double x) noexcept
   {
-#ifdef ISA_SSSE3
-    return _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(static_cast<double>(x)), {}));
-#else
-    return std::sqrtl(x);
-#endif
+    return Sqrt(static_cast<float>(x));
   }
 
   inline float RSqrt(float x) noexcept
@@ -193,6 +218,9 @@ namespace rtmath
 
   inline double RSqrt(double x) noexcept
   {
+#ifdef ISA_SSSE3
+    return 1.0 / Sqrt(x); // Already pretty fast on x86
+#else
     const double halfx = x * 0.5;
 
     // auto y = std::bit_cast<double>(0x5FE6EC85E7DE30D9 - (std::bit_cast<std::uint64_t>(x) >> 1));
@@ -202,6 +230,7 @@ namespace rtmath
     y = y * (1.5 - (halfx * y * y)); // Second iteration for better precision for doubles
 
     return y;
+#endif
   }
 
   inline long double RSqrt(long double x) noexcept

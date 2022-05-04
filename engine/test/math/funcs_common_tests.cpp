@@ -23,7 +23,7 @@ namespace
   }
 
   template<typename T, typename Iterator>
-  void ExpectNearRange(Iterator begin, Iterator otherBegin, Iterator end, T tolerance)
+  void ExpectNearRange(Iterator begin, Iterator otherBegin, Iterator end, long long tolerance = 1)
   {
     for (Iterator it = begin; it != end; ++it, ++otherBegin)
     {
@@ -36,8 +36,12 @@ namespace
       {
         if (Abs(*it - *otherBegin) > std::numeric_limits<T>::epsilon() && Abs(*otherBegin) > 0.000001)
         {
-          T error = Abs(1 - *it / *otherBegin);
-          EXPECT_LE(error, tolerance);
+          auto sum = Abs(*it + *otherBegin);
+          if (sum < 1) sum = 1;
+
+          auto allowed_diff = std::numeric_limits<T>::epsilon() * sum * tolerance;
+
+          EXPECT_NEAR(*it, *otherBegin, allowed_diff);
         }
       }
     }
@@ -252,7 +256,7 @@ TEST(Func_Common_Tests, Sqrt_Float_CTEqRT)
   constexpr auto ct_values = Generate<1000>(0.0f, 0.5f, [](float x) { return Sqrt(x); });
   auto rt_values = Generate<1000>(0.0f, 0.5f, [](float x) { return Sqrt(x); });
 
-  ExpectNearRange(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 0.0001f);
+  ExpectNearRange<float>(ct_values.begin(), rt_values.cbegin(), ct_values.end());
 }
 
 TEST(Func_Common_Tests, Sqrt_Double_CTEqRT)
@@ -260,7 +264,7 @@ TEST(Func_Common_Tests, Sqrt_Double_CTEqRT)
   constexpr auto ct_values = Generate<1000>(0.0, 0.5, [](double x) { return Sqrt(x); });
   auto rt_values = Generate<1000>(0.0, 0.5, [](double x) { return Sqrt(x); });
 
-  ExpectNearRange(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 0.0001);
+  ExpectNearRange<double>(ct_values.begin(), rt_values.cbegin(), ct_values.end());
 }
 
 TEST(Func_Common_Tests, RSqrt_Float_CTEqRT)
@@ -268,7 +272,7 @@ TEST(Func_Common_Tests, RSqrt_Float_CTEqRT)
   constexpr auto ct_values = Generate<1000>(0.0f, 0.5f, [](float x) { return RSqrt(x); });
   auto rt_values = Generate<1000>(0.0f, 0.5f, [](float x) { return RSqrt(x); });
 
-  ExpectNearRange(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 0.001f);
+  ExpectNearRange<float>(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 1400);
 }
 
 TEST(Func_Common_Tests, RSqrt_Double_CTEqRT)
@@ -276,7 +280,7 @@ TEST(Func_Common_Tests, RSqrt_Double_CTEqRT)
   constexpr auto ct_values = Generate<1000>(0.0, 0.5, [](double x) { return RSqrt(x); });
   auto rt_values = Generate<1000>(0.0, 0.5, [](double x) { return RSqrt(x); });
 
-  ExpectNearRange(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 0.001);
+  ExpectNearRange<double>(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 11000000000ll);
 }
 
 TEST(Func_Common_Tests, RSqrt_Float_SmallAccuracy)

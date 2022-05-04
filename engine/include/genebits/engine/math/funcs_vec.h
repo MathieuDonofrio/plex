@@ -172,10 +172,20 @@ constexpr Vec<double, L> Sqrt(const Vec<double, L>& v)
   }
   else
   {
-    alignas(32) Vec<double, L> result;
-    _mm_store_ps(result.data, _mm_sqrt_pd(_mm_load_ps(v.data)));
-    if constexpr (L > 2) _mm_store_ps(result.data + 2, _mm_sqrt_pd(_mm_load_ps(v.data + 2)));
-    return result;
+#ifdef ISA_AVX
+    if constexpr (L > 2)
+    {
+      alignas(64) Vec<double, L> result;
+      _mm256_store_ps(result.data, _mm256_sqrt_pd(_mm256_load_ps(v.data)));
+      return result;
+    }
+    else
+#endif
+    {
+      alignas(32) Vec<double, L> result;
+      _mm_store_pd(result.data, _mm_sqrt_pd(_mm_load_pd(v.data)));
+      return result;
+    }
   }
 }
 #endif
