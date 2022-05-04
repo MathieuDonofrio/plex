@@ -9,17 +9,17 @@
 namespace genebits::engine
 {
 #define VEC_UNROLLED_LOOP_ITERATION(L, I, expression) \
-  if constexpr (L > I)                                \
+  if constexpr ((L) > (I))                            \
   {                                                   \
-    const constexpr size_t i = I;                     \
+    const constexpr size_t i = (I);                   \
     expression;                                       \
   }
 
-#define VEC_UNROLLED_LOOP(L, expression)        \
-  VEC_UNROLLED_LOOP_ITERATION(L, 0, expression) \
-  VEC_UNROLLED_LOOP_ITERATION(L, 1, expression) \
-  VEC_UNROLLED_LOOP_ITERATION(L, 2, expression) \
-  VEC_UNROLLED_LOOP_ITERATION(L, 3, expression)
+#define VEC_UNROLLED_LOOP(L, expression)          \
+  VEC_UNROLLED_LOOP_ITERATION((L), 0, expression) \
+  VEC_UNROLLED_LOOP_ITERATION((L), 1, expression) \
+  VEC_UNROLLED_LOOP_ITERATION((L), 2, expression) \
+  VEC_UNROLLED_LOOP_ITERATION((L), 3, expression)
 
 template<typename T, size_t L>
 constexpr Vec<T, L> Abs(const Vec<T, L>& v)
@@ -142,18 +142,18 @@ constexpr Vec<T, L> Sqrt(const Vec<T, L>& v)
 }
 
 #ifdef ISA_SSE3
-template<size_t L>
-constexpr Vec<float, L> Sqrt(const Vec<float, L>& v)
+template<>
+constexpr Vec<float, 4> Sqrt(const Vec<float, 4>& v)
 {
   if (std::is_constant_evaluated())
   {
-    Vec<float, L> result;
-    VEC_UNROLLED_LOOP(L, result[i] = Sqrt(v[i]));
+    Vec<float, 4> result;
+    VEC_UNROLLED_LOOP(4, result[i] = Sqrt(v[i]));
     return result;
   }
   else
   {
-    alignas(32) Vec<float, L> result;
+    Vec<float, 4> result;
     _mm_store_ps(result.data, _mm_sqrt_ps(_mm_load_ps(v.data)));
     return result;
   }
@@ -162,28 +162,29 @@ constexpr Vec<float, L> Sqrt(const Vec<float, L>& v)
 
 #ifdef ISA_SSE3
 template<size_t L>
-constexpr Vec<double, L> Sqrt(const Vec<double, L>& v)
+requires(L == 2 || L == 4) constexpr Vec<double, L> Sqrt(const Vec<double, L>& v)
 {
   if (std::is_constant_evaluated())
   {
-    Vec<float, L> result;
+    Vec<double, L> result;
     VEC_UNROLLED_LOOP(L, result[i] = Sqrt(v[i]));
     return result;
   }
   else
   {
 #ifdef ISA_AVX
-    if constexpr (L > 2)
+    if constexpr (L == 4)
     {
-      alignas(64) Vec<double, L> result;
-      _mm256_store_ps(result.data, _mm256_sqrt_pd(_mm256_load_ps(v.data)));
+      Vec<double, 4> result;
+      _mm256_store_pd(result.data, _mm256_sqrt_pd(_mm256_load_pd(v.data)));
       return result;
     }
     else
 #endif
     {
-      alignas(32) Vec<double, L> result;
+      alignas(16) Vec<double, L> result;
       _mm_store_pd(result.data, _mm_sqrt_pd(_mm_load_pd(v.data)));
+      if constexpr (L == 4) _mm_store_pd(result.data + 2, _mm_sqrt_pd(_mm_load_pd(v.data + 2)));
       return result;
     }
   }
@@ -199,18 +200,18 @@ constexpr Vec<T, L> RSqrt(const Vec<T, L>& v)
 }
 
 #ifdef ISA_SSE3
-template<size_t L>
-constexpr Vec<float, L> RSqrt(const Vec<float, 4>& v)
+template<>
+constexpr Vec<float, 4> RSqrt(const Vec<float, 4>& v)
 {
   if (std::is_constant_evaluated())
   {
-    Vec<float, L> result;
-    VEC_UNROLLED_LOOP(L, result[i] = RSqrt(v[i]));
+    Vec<float, 4> result;
+    VEC_UNROLLED_LOOP(4, result[i] = RSqrt(v[i]));
     return result;
   }
   else
   {
-    alignas(32) Vec<float, L> result;
+    Vec<float, 4> result;
     _mm_store_ps(result.data, _mm_rsqrt_ps(_mm_load_ps(v.data)));
     return result;
   }

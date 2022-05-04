@@ -251,6 +251,22 @@ TEST(Func_Common_Tests, Pow_Float_Int_Signed)
   EXPECT_EQ(1 / (1.5f * 1.5f * 1.5f), value);
 }
 
+TEST(Func_Common_Tests, Sqrt_Float)
+{
+  for (float i = 0; i < 1000; i += 0.5f)
+  {
+    EXPECT_EQ(Sqrt(i), std::sqrtf(i));
+  }
+}
+
+TEST(Func_Common_Tests, Sqrt_Double)
+{
+  for (double i = 0; i < 1000; i += 0.5f)
+  {
+    EXPECT_EQ(Sqrt(i), std::sqrt(i));
+  }
+}
+
 TEST(Func_Common_Tests, Sqrt_Float_CTEqRT)
 {
   constexpr auto ct_values = Generate<1000>(0.0f, 0.5f, [](float x) { return Sqrt(x); });

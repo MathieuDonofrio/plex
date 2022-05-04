@@ -40,15 +40,6 @@ namespace details
     return static_cast<long long>(x);
   }
 
-  template<typename T>
-  constexpr bool IsNear(T x, T y) noexcept
-  {
-    T diff = x - y;
-    if (diff < 0) diff = -diff;
-
-    return diff <= std::numeric_limits<T>::epsilon();
-  }
-
   constexpr float SqrtApprox(float x)
   {
     auto i = std::bit_cast<uint32_t>(x);
@@ -72,17 +63,17 @@ namespace details
     return SqrtApprox(static_cast<double>(x));
   }
 
-  template<typename T, size_t MaxIterations>
+  template<typename T>
   constexpr T SqrtBabylonian(T x) noexcept
   {
-    T current = SqrtApprox(x); // Initial guess
+    T result = SqrtApprox(x); // Initial guess
 
-    current = T(0.5) * (current + x / current);
-    current = T(0.5) * (current + x / current);
-    current = T(0.5) * (current + x / current);
-    current = T(0.5) * (current + x / current);
+    result = T(0.5) * (result + x / result);
+    result = T(0.5) * (result + x / result);
+    result = T(0.5) * (result + x / result);
+    result = T(0.5) * (result + x / result);
 
-    return current;
+    return result;
   }
 } // namespace details
 
@@ -128,7 +119,7 @@ namespace ctmath
     if (x == 0) return 0;
     if (x < 0 || x >= std::numeric_limits<T>::infinity()) return std::numeric_limits<T>::quiet_NaN();
 
-    return details::SqrtBabylonian<T, 4>(x);
+    return details::SqrtBabylonian<T>(x);
   }
 
   template<typename T>
@@ -188,7 +179,7 @@ namespace rtmath
   inline double Sqrt(double x) noexcept
   {
 #ifdef ISA_SSSE3
-    return _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(x), _mm_set_sd(0)));
+    return _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(0), _mm_set_sd(x)));
 #else
     return std::sqrt(x);
 #endif
