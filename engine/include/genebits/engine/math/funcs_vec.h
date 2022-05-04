@@ -101,17 +101,16 @@ inline Vec<T, L> Log2(const Vec<T, L>& v)
   return result;
 }
 
-template<typename T, typename U, size_t L>
-requires(std::same_as<U, int> || std::same_as<U, unsigned int>) constexpr Vec<T, L> Pow(
-  const Vec<T, L>& bases, const Vec<int, L>& exponents)
+template<typename T, std::integral U, size_t L>
+constexpr Vec<T, L> Pow(const Vec<T, L>& bases, const Vec<int, L>& exponents)
 {
   Vec<T, L> result;
   VEC_UNROLLED_LOOP(L, result[i] = Pow(bases[i], exponents[i]));
   return result;
 }
 
-template<typename T, typename U, size_t L>
-requires(std::same_as<U, int> || std::same_as<U, unsigned int>) constexpr Vec<T, L> Pow(const Vec<T, L>& bases, U exp)
+template<typename T, std::integral U, size_t L>
+constexpr Vec<T, L> Pow(const Vec<T, L>& bases, U exp)
 {
   Vec<T, L> result;
   VEC_UNROLLED_LOOP(L, result[i] = Pow(bases[i], exp));
@@ -135,12 +134,51 @@ inline Vec<T, L> Pow(const Vec<T, L>& bases, T exp)
 }
 
 template<typename T, size_t L>
-inline Vec<T, L> Sqrt(const Vec<T, L>& v)
+constexpr Vec<T, L> Sqrt(const Vec<T, L>& v)
 {
   Vec<T, L> result;
   VEC_UNROLLED_LOOP(L, result[i] = Sqrt(v[i]));
   return result;
 }
+
+#ifdef ISA_SSE3
+template<size_t L>
+constexpr Vec<float, L> Sqrt(const Vec<float, L>& v)
+{
+  if (std::is_constant_evaluated())
+  {
+    Vec<float, L> result;
+    VEC_UNROLLED_LOOP(L, result[i] = Sqrt(v[i]));
+    return result;
+  }
+  else
+  {
+    alignas(32) Vec<float, L> result;
+    _mm_store_ps(result.data, _mm_sqrt_ps(_mm_load_ps(v.data)));
+    return result;
+  }
+}
+#endif
+
+#ifdef ISA_SSE3
+template<size_t L>
+constexpr Vec<double, L> Sqrt(const Vec<double, L>& v)
+{
+  if (std::is_constant_evaluated())
+  {
+    Vec<float, L> result;
+    VEC_UNROLLED_LOOP(L, result[i] = Sqrt(v[i]));
+    return result;
+  }
+  else
+  {
+    alignas(32) Vec<double, L> result;
+    _mm_store_ps(result.data, _mm_sqrt_pd(_mm_load_ps(v.data)));
+    if constexpr (L > 2) _mm_store_ps(result.data + 2, _mm_sqrt_pd(_mm_load_ps(v.data + 2)));
+    return result;
+  }
+}
+#endif
 
 template<typename T, size_t L>
 constexpr Vec<T, L> RSqrt(const Vec<T, L>& v)

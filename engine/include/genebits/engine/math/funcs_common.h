@@ -39,26 +39,35 @@ namespace details
   {
     return static_cast<long long>(x);
   }
+
+  template<typename T>
+  constexpr bool IsNear(T x, T y) noexcept
+  {
+    T diff = x - y;
+    if (diff < 0) diff = -diff;
+
+    return diff <= std::numeric_limits<T>::epsilon();
+  }
+
+  template<typename T>
+  constexpr T SqrtNewtonRaphson(T x, T current, T previous = T(0)) noexcept
+  {
+    if (IsNear(current, previous)) return current;
+
+    const T next = T(0.5) * (current + x / current);
+
+    return SqrtNewtonRaphson(x, next, current);
+  }
 } // namespace details
 
 namespace ctmath
 {
+  // Math functions made to be run at compile-time
+
   template<typename T>
   constexpr T Abs(T x) noexcept
   {
     return x < 0 ? -x : x;
-  }
-
-  template<typename T>
-  constexpr T Max(T x, T y) noexcept
-  {
-    return x > y ? x : y;
-  }
-
-  template<typename T>
-  constexpr T Min(T x, T y) noexcept
-  {
-    return x < y ? x : y;
   }
 
   template<typename T>
@@ -88,7 +97,39 @@ namespace ctmath
   }
 
   template<typename T>
-  constexpr T Pow(T base, unsigned int exp) noexcept
+  constexpr T Sqrt(T x) noexcept
+  {
+    if (x == 0) return 0;
+    if (x < 0 || x >= std::numeric_limits<T>::infinity()) return std::numeric_limits<T>::quiet_NaN();
+
+    return details::SqrtNewtonRaphson(x, x);
+  }
+
+  template<typename T>
+  constexpr T RSqrt(T x) noexcept
+  {
+    return x == 0 ? std::numeric_limits<T>::infinity() : T(1) / Sqrt(x);
+  }
+} // namespace ctmath
+
+namespace rtmath
+{
+  // Math functions made to be run at runtime and maybe compile-time if declared constexpr.
+
+  template<typename T>
+  constexpr T Max(T x, T y) noexcept
+  {
+    return x > y ? x : y;
+  }
+
+  template<typename T>
+  constexpr T Min(T x, T y) noexcept
+  {
+    return x < y ? x : y;
+  }
+
+  template<typename T, std::unsigned_integral U>
+  constexpr T Pow(T base, U exp) noexcept
   {
     T result = 1;
     while (exp)
@@ -100,39 +141,57 @@ namespace ctmath
     return result;
   }
 
-  template<typename T>
-  constexpr T Pow(T base, int exp) noexcept
+  template<typename T, std::signed_integral U>
+  constexpr T Pow(T base, U exp) noexcept
   {
-    if (exp < 0) return T(1) / Pow(base, static_cast<unsigned int>(-exp));
+    using UT = std::make_unsigned_t<U>;
+    if (exp < 0) return T(1) / Pow(base, static_cast<UT>(-exp));
     else
-      return Pow(base, static_cast<unsigned int>(exp));
+      return Pow(base, static_cast<UT>(exp));
   }
 
-  constexpr float RSqrt(float x) noexcept
+  inline float Sqrt(float x) noexcept
   {
-    if (std::is_constant_evaluated())
-    {
-      auto y = std::bit_cast<float>(0x5F3759DF - (std::bit_cast<std::uint32_t>(x) >> 1));
-
-      for (int i = 0; i < 6; ++i)
-      {
-        y = y * (1.5f - (x * 0.5f * y * y)); // Extra precision during constant evaluation
-      }
-
-      return y;
-    }
-    else
-    {
-      // auto y = std::bit_cast<float>(0x5F3759DF - (std::bit_cast<std::uint32_t>(x) >> 1));
-      // return y * (1.5f - (x * 0.5f * y * y));
-
-      // This version is slightly more accurate than the above because the constants have been fine-tuned.
-      auto y = std::bit_cast<float>(0x5F1FFFF9 - (std::bit_cast<std::uint32_t>(x) >> 1));
-      return y * (0.703952253f * (2.38924456f - x * y * y));
-    }
+#ifdef ISA_SSSE3
+    return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ps1(x)));
+#else
+    return std::sqrtf(x);
+#endif
   }
 
-  constexpr double RSqrt(double x) noexcept
+  inline double Sqrt(double x) noexcept
+  {
+#ifdef ISA_SSSE3
+    return _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(x), {}));
+#else
+    return std::sqrt(x);
+#endif
+  }
+
+  inline long double Sqrt(long double x) noexcept
+  {
+#ifdef ISA_SSSE3
+    return _mm_cvtsd_f64(_mm_sqrt_sd(_mm_set_sd(static_cast<double>(x)), {}));
+#else
+    return std::sqrtl(x);
+#endif
+  }
+
+  inline float RSqrt(float x) noexcept
+  {
+#ifdef ISA_SSSE3
+    return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ps1(x))); // Slightly more accurate and faster
+#else
+    // auto y = std::bit_cast<float>(0x5F3759DF - (std::bit_cast<std::uint32_t>(x) >> 1));
+    // return y * (1.5f - (x * 0.5f * y * y));
+
+    // This version is slightly more accurate than the above because the constants have been fine-tuned.
+    auto y = std::bit_cast<float>(0x5F1FFFF9 - (std::bit_cast<std::uint32_t>(x) >> 1));
+    return y * (0.703952253f * (2.38924456f - x * y * y));
+#endif
+  }
+
+  inline double RSqrt(double x) noexcept
   {
     const double halfx = x * 0.5;
 
@@ -142,28 +201,12 @@ namespace ctmath
     y = y * (1.5 - (halfx * y * y));
     y = y * (1.5 - (halfx * y * y)); // Second iteration for better precision for doubles
 
-    if (std::is_constant_evaluated())
-    {
-      for (int i = 0; i < 4; ++i)
-      {
-        y = y * (1.5 - (halfx * y * y)); // Extra precision during constant evaluation
-      }
-    }
-
     return y;
   }
 
-} // namespace ctmath
-
-namespace rtmath
-{
-  inline float RSqrt(float x) noexcept
+  inline long double RSqrt(long double x) noexcept
   {
-#ifdef ISA_SSSE3
-    return _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ps1(x))); // Slightly more accurate and faster
-#else
-    return ctmath::RSqrt(x);
-#endif
+    return RSqrt(static_cast<double>(x));
   }
 } // namespace rtmath
 
@@ -184,11 +227,11 @@ constexpr long double Abs(long double x) MATH_GEN(std::fabsl, ctmath::Abs, x);
 
 // Maximum
 
-template<typename T> constexpr T Max(T x, T y) noexcept { return ctmath::Max(x, y); }
+template<typename T> constexpr T Max(T x, T y) noexcept { return rtmath::Max(x, y); }
 
 // Minimum
 
-template<typename T> constexpr T Min(T x, T y) noexcept { return ctmath::Min(x, y); }
+template<typename T> constexpr T Min(T x, T y) noexcept { return rtmath::Min(x, y); }
 
 // Ceiling
 
@@ -214,9 +257,9 @@ constexpr long double Round(long double x) MATH_GEN(std::roundl, ctmath::Round, 
 
 // Exp
 
-inline float Exp(float x) noexcept { return std::expf(x); }
-inline double Exp(double x) noexcept { return std::exp(x); }
-inline long double Exp(long double x) noexcept { return std::expl(x); }
+inline float Exp(float x) noexcept { return std::expf(x); };
+inline double Exp(double x) noexcept { return std::exp(x); };
+inline long double Exp(long double x) noexcept { return std::expl(x); };
 
 // Exp2
 
@@ -242,13 +285,7 @@ inline long double Log2(long double x) noexcept { return std::log2l(x); }
 
 // Power
 
-constexpr int Pow(int base, unsigned int exp) noexcept { return ctmath::Pow(base, exp); }
-constexpr int Pow(long base, unsigned int exp) noexcept { return ctmath::Pow(base, exp); }
-constexpr float Pow(float base, int exp) noexcept { return ctmath::Pow(base, exp); }
-constexpr double Pow(double base, unsigned int exp) noexcept { return ctmath::Pow(base, exp); }
-constexpr double Pow(double base, int exp) noexcept { return ctmath::Pow(base, exp); }
-constexpr long double Pow(long double base, unsigned int exp) noexcept { return ctmath::Pow(base, exp); }
-constexpr long double Pow(long double base, int exp) noexcept { return ctmath::Pow(base, exp); }
+template<typename T, std::integral U> constexpr T Pow(T base, U exp) noexcept { return rtmath::Pow(base, exp); }
 
 inline float Pow(float base, float exp) noexcept { return std::powf(base, exp); }
 inline double Pow(double base, double exp) noexcept { return std::pow(base, exp); }
@@ -256,15 +293,15 @@ inline long double Pow(long double base, long double exp) noexcept { return std:
 
 // Square Root
 
-inline float Sqrt(float x) noexcept { return std::sqrtf(x); }
-inline double Sqrt(double x) noexcept { return std::sqrt(x); }
-inline long double Sqrt(long double x) noexcept { return std::sqrtl(x); }
+constexpr float Sqrt(float x) MATH_GEN(rtmath::Sqrt, ctmath::Sqrt, x);
+constexpr double Sqrt(double x) MATH_GEN(rtmath::Sqrt, ctmath::Sqrt, x);
+constexpr long double Sqrt(long double x) MATH_GEN(rtmath::Sqrt, ctmath::Sqrt, x);
 
 // Approximate Reciprocal Square Root
 
 constexpr float RSqrt(float x) MATH_GEN(rtmath::RSqrt, ctmath::RSqrt, x);
-constexpr double RSqrt(double x) noexcept { return ctmath::RSqrt(x); }
-constexpr long double RSqrt(long double x) noexcept { return ctmath::RSqrt(static_cast<double>(x)); }
+constexpr double RSqrt(double x) MATH_GEN(rtmath::RSqrt, ctmath::RSqrt, x);
+constexpr long double RSqrt(long double x) MATH_GEN(rtmath::RSqrt, ctmath::RSqrt, x);
 
 //
 // Trigonometric functions
