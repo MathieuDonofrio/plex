@@ -48,14 +48,15 @@ public:
     T y, g, t;
   };
 
+public:
   ///
   /// Returns a pointer to the first element of the vector.
   ///
   /// @return A pointer to the first element of the vector.
   ///
-  [[nodiscard]] constexpr const T* data() const noexcept
+  [[nodiscard]] const T* data() const noexcept
   {
-    return &x;
+    return reinterpret_cast<const T*>(this);
   }
 
   ///
@@ -63,9 +64,55 @@ public:
   ///
   /// @return A pointer to the first element of the vector.
   ///
-  [[nodiscard]] constexpr T* data() noexcept
+  [[nodiscard]] T* data() noexcept
   {
-    return &x;
+    return reinterpret_cast<T*>(this);
+  }
+
+  ///
+  /// Subscript operator.
+  ///
+  /// @param[in] index The index of the component to access.
+  ///
+  [[nodiscard]] constexpr T operator[](size_t index) const noexcept
+  {
+    ASSERT(index < length, "Vector component out of range");
+    if (std::is_constant_evaluated())
+    {
+      switch (index)
+      {
+      default:
+      case 0: return x;
+      case 1: return y;
+      }
+    }
+    else
+    {
+      return data()[index];
+    }
+  }
+
+  ///
+  /// Subscript operator.
+  ///
+  /// @param[in] index The index of the component to access.
+  ///
+  [[nodiscard]] constexpr T& operator[](size_t index) noexcept
+  {
+    ASSERT(index < length, "Vector component out of range");
+    if (std::is_constant_evaluated())
+    {
+      switch (index)
+      {
+      default:
+      case 0: return x;
+      case 1: return y;
+      }
+    }
+    else
+    {
+      return data()[index];
+    }
   }
 
 public:
@@ -437,52 +484,6 @@ public:
   {
     Vec tmp(*this);
     return --(*this), tmp;
-  }
-
-  ///
-  /// Subscript operator.
-  ///
-  /// @param[in] index The index of the component to access.
-  ///
-  [[nodiscard]] constexpr T operator[](size_t index) const noexcept
-  {
-    ASSERT(index < length, "Vector component out of range");
-    if (std::is_constant_evaluated())
-    {
-      switch (index)
-      {
-      default:
-      case 0: return x;
-      case 1: return y;
-      }
-    }
-    else
-    {
-      return data()[index];
-    }
-  }
-
-  ///
-  /// Subscript operator.
-  ///
-  /// @param[in] index The index of the component to access.
-  ///
-  [[nodiscard]] constexpr T& operator[](size_t index) noexcept
-  {
-    ASSERT(index < length, "Vector component out of range");
-    if (std::is_constant_evaluated())
-    {
-      switch (index)
-      {
-      default:
-      case 0: return x;
-      case 1: return y;
-      }
-    }
-    else
-    {
-      return data()[index];
-    }
   }
 
   ///

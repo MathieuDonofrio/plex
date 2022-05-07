@@ -63,7 +63,7 @@ private:
   ///
   /// @return Pointer to the vector's data.
   ///
-  constexpr const T* data() const noexcept
+  const T* data() const noexcept
   {
     return reinterpret_cast<const T*>(this);
   }
@@ -75,7 +75,7 @@ private:
   ///
   /// @return Pointer to the vector's data.
   ///
-  constexpr T* data() noexcept
+  T* data() noexcept
   {
     return reinterpret_cast<T*>(this);
   }
@@ -86,7 +86,7 @@ public:
   ///
   /// @returns Reference to the component at the specified index.
   ///
-  [[nodiscard]] constexpr T& operator[](size_t index) noexcept
+  [[nodiscard]] T& operator[](size_t index) noexcept
   {
     return data()[SwizzleMap[index]];
   }
@@ -96,7 +96,7 @@ public:
   ///
   /// @returns Reference to the component at the specified index.
   ///
-  [[nodiscard]] constexpr T operator[](size_t index) const noexcept
+  [[nodiscard]] T operator[](size_t index) const noexcept
   {
     return data()[SwizzleMap[index]];
   }
@@ -106,7 +106,7 @@ public:
   ///
   /// @returns The vector.
   ///
-  constexpr operator Vec<T, SwizzleSize>() const noexcept
+  operator Vec<T, SwizzleSize>() const noexcept
   {
     return Vec<T, SwizzleSize>(data()[Args]...);
   }
@@ -119,7 +119,7 @@ public:
   ///
   /// @returns A copy of the vector with all components assigned to the specified value.
   ///
-  constexpr Vec<T, SwizzleSize> operator=(T scalar) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator=(T scalar) noexcept requires SwizzleNoDups
   {
     return Vec<T, SwizzleSize>((data()[Args] = scalar)...);
   }
@@ -131,7 +131,7 @@ public:
   ///
   /// @returns A copy of the vector with its components assigned to the specified vector's components.
   ///
-  constexpr Vec<T, SwizzleSize> operator=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
   {
     SWIZZLE_APPLY_VEC_OP(vec, =);
     return vec;
@@ -144,7 +144,7 @@ public:
   ///
   /// @returns A copy of the vector with its components incremented by the specified value.
   ///
-  constexpr Vec<T, SwizzleSize> operator+=(T scalar) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator+=(T scalar) noexcept requires SwizzleNoDups
   {
     return Vec<T, SwizzleSize>((data()[Args] += scalar)...);
   }
@@ -156,7 +156,7 @@ public:
   ///
   /// @returns A copy of the vector with its components incremented by the specified vector's components.
   ///
-  constexpr Vec<T, SwizzleSize> operator+=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator+=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
   {
     SWIZZLE_APPLY_VEC_OP(vec, +=);
     return vec;
@@ -169,7 +169,7 @@ public:
   ///
   /// @returns A copy of the vector with its components decremented by the specified value.
   ///
-  constexpr Vec<T, SwizzleSize> operator-=(T scalar) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator-=(T scalar) noexcept requires SwizzleNoDups
   {
     return Vec<T, SwizzleSize>((data()[Args] -= scalar)...);
   }
@@ -181,7 +181,7 @@ public:
   ///
   /// @returns A copy of the vector with its components decremented by the specified vector's components.
   ///
-  constexpr Vec<T, SwizzleSize> operator-=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator-=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
   {
     SWIZZLE_APPLY_VEC_OP(vec, -=);
     return vec;
@@ -194,7 +194,7 @@ public:
   ///
   /// @returns A copy of the vector with its components multiplied by the specified value.
   ///
-  constexpr Vec<T, SwizzleSize> operator*=(T scalar) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator*=(T scalar) noexcept requires SwizzleNoDups
   {
     return Vec<T, SwizzleSize>((data()[Args] *= scalar)...);
   }
@@ -206,7 +206,7 @@ public:
   ///
   /// @returns A copy of the vector with its components multiplied by the specified vector's components.
   ///
-  constexpr Vec<T, SwizzleSize> operator*=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator*=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
   {
     SWIZZLE_APPLY_VEC_OP(vec, *=);
     return vec;
@@ -219,7 +219,7 @@ public:
   ///
   /// @returns A copy of the vector with its components divided by the specified value.
   ///
-  constexpr Vec<T, SwizzleSize> operator/=(T scalar) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator/=(T scalar) noexcept requires SwizzleNoDups
   {
     return Vec<T, SwizzleSize>((data()[Args] /= scalar)...);
   }
@@ -231,7 +231,7 @@ public:
   ///
   /// @returns A copy of the vector with its components divided by the specified vector's components.
   ///
-  constexpr Vec<T, SwizzleSize> operator/=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
+  Vec<T, SwizzleSize> operator/=(Vec<T, SwizzleSize> vec) noexcept requires SwizzleNoDups
   {
     SWIZZLE_APPLY_VEC_OP(vec, /=);
     return vec;
