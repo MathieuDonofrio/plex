@@ -31,7 +31,6 @@ function(set_project_warnings project_name)
       /permissive- # standards conformance mode for MSVC compiler.
       /wd4146 # Allow unary minus operator
       /wd4324 # Allow alignment padding
-      /wd4201 # Allow nameless struct/union
       )
 
   set(CLANG_WARNINGS
@@ -50,8 +49,6 @@ function(set_project_warnings project_name)
       -Wnull-dereference # warn if a null dereference is detected
       -Wdouble-promotion # warn if float is implicit promoted to double
       -Wformat=2 # warn on security issues around functions that format output (ie printf)
-      -Wgnu-anonymous-struct # Allow anonymous structs
-      -Wnested-anon-types # Allow nested anonymous types
       )
 
   if (WARNINGS_AS_ERRORS)

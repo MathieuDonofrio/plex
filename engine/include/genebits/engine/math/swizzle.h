@@ -16,9 +16,9 @@ namespace genebits::engine
 template<typename Type, size_t... Args>
 struct Swizzle;
 
-#define SWIZZLE_APPLY_VEC_OP(vec, op)              \
-  size_t index = 0;                                \
-  ((this->data[Args] op(vec).data[index++]), ...); \
+#define SWIZZLE_APPLY_VEC_OP(vec, op)     \
+  size_t index = 0;                       \
+  ((data()[Args] op(vec)[index++]), ...); \
   (void)index;
 
 ///
@@ -56,7 +56,29 @@ private:
 
   static constexpr bool SwizzleNoDups = !HasDuplicateElements();
 
-  T data[Size];
+  ///
+  /// Returns a pointer to the vector's data.
+  ///
+  /// Swizzle must be declared as the first non-addressable element of the vector.
+  ///
+  /// @return Pointer to the vector's data.
+  ///
+  constexpr const T* data() const noexcept
+  {
+    return reinterpret_cast<const T*>(this);
+  }
+
+  ///
+  /// Returns a pointer to the vector's data.
+  ///
+  /// Swizzle must be declared as the first non-addressable element of the vector.
+  ///
+  /// @return Pointer to the vector's data.
+  ///
+  constexpr T* data() noexcept
+  {
+    return reinterpret_cast<T*>(this);
+  }
 
 public:
   ///
@@ -66,7 +88,7 @@ public:
   ///
   [[nodiscard]] constexpr T& operator[](size_t index) noexcept
   {
-    return data[SwizzleMap[index]];
+    return data()[SwizzleMap[index]];
   }
 
   ///
@@ -76,7 +98,7 @@ public:
   ///
   [[nodiscard]] constexpr T operator[](size_t index) const noexcept
   {
-    return data[SwizzleMap[index]];
+    return data()[SwizzleMap[index]];
   }
 
   ///
@@ -86,7 +108,7 @@ public:
   ///
   constexpr operator Vec<T, SwizzleSize>() const noexcept
   {
-    return Vec<T, SwizzleSize>(data[Args]...);
+    return Vec<T, SwizzleSize>(data()[Args]...);
   }
 
 public:
@@ -99,7 +121,7 @@ public:
   ///
   constexpr Vec<T, SwizzleSize> operator=(T scalar) noexcept requires SwizzleNoDups
   {
-    return Vec<T, SwizzleSize>((this->data[Args] = scalar)...);
+    return Vec<T, SwizzleSize>((data()[Args] = scalar)...);
   }
 
   ///
@@ -124,7 +146,7 @@ public:
   ///
   constexpr Vec<T, SwizzleSize> operator+=(T scalar) noexcept requires SwizzleNoDups
   {
-    return Vec<T, SwizzleSize>((this->data[Args] += scalar)...);
+    return Vec<T, SwizzleSize>((data()[Args] += scalar)...);
   }
 
   ///
@@ -149,7 +171,7 @@ public:
   ///
   constexpr Vec<T, SwizzleSize> operator-=(T scalar) noexcept requires SwizzleNoDups
   {
-    return Vec<T, SwizzleSize>((this->data[Args] -= scalar)...);
+    return Vec<T, SwizzleSize>((data()[Args] -= scalar)...);
   }
 
   ///
@@ -174,7 +196,7 @@ public:
   ///
   constexpr Vec<T, SwizzleSize> operator*=(T scalar) noexcept requires SwizzleNoDups
   {
-    return Vec<T, SwizzleSize>((this->data[Args] *= scalar)...);
+    return Vec<T, SwizzleSize>((data()[Args] *= scalar)...);
   }
 
   ///
@@ -199,7 +221,7 @@ public:
   ///
   constexpr Vec<T, SwizzleSize> operator/=(T scalar) noexcept requires SwizzleNoDups
   {
-    return Vec<T, SwizzleSize>((this->data[Args] /= scalar)...);
+    return Vec<T, SwizzleSize>((data()[Args] /= scalar)...);
   }
 
   ///
@@ -218,504 +240,504 @@ public:
 
 #undef SWIZZLE_APPLY_VEC_OP
 
-#define SWIZZLE_VEC2_TO_VEC2(Vec, A0, A1) \
-  Swizzle<Vec, 0, 0> A0##A0;              \
-  Swizzle<Vec, 0, 1> A0##A1;              \
-  Swizzle<Vec, 1, 0> A1##A0;              \
-  Swizzle<Vec, 1, 1> A1##A1;
+#define SWIZZLE_VEC2_TO_VEC2(Vec, A0, A1)          \
+  [[no_unique_address]] Swizzle<Vec, 0, 0> A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1> A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0> A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1> A1##A1;
 
-#define SWIZZLE_VEC2_TO_VEC3(Vec, A0, A1) \
-  Swizzle<Vec, 0, 0, 0> A0##A0##A0;       \
-  Swizzle<Vec, 0, 0, 1> A0##A0##A1;       \
-  Swizzle<Vec, 0, 1, 0> A0##A1##A0;       \
-  Swizzle<Vec, 0, 1, 1> A0##A1##A1;       \
-  Swizzle<Vec, 1, 0, 0> A1##A0##A0;       \
-  Swizzle<Vec, 1, 0, 1> A1##A0##A1;       \
-  Swizzle<Vec, 1, 1, 0> A1##A1##A0;       \
-  Swizzle<Vec, 1, 1, 1> A1##A1##A1;
+#define SWIZZLE_VEC2_TO_VEC3(Vec, A0, A1)                 \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0> A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1> A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0> A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1> A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0> A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1> A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0> A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1> A1##A1##A1;
 
-#define SWIZZLE_VEC2_TO_VEC4(Vec, A0, A1)  \
-  Swizzle<Vec, 0, 0, 0, 0> A0##A0##A0##A0; \
-  Swizzle<Vec, 0, 0, 0, 1> A0##A0##A0##A1; \
-  Swizzle<Vec, 0, 0, 1, 0> A0##A0##A1##A0; \
-  Swizzle<Vec, 0, 0, 1, 1> A0##A0##A1##A1; \
-  Swizzle<Vec, 0, 1, 0, 0> A0##A1##A0##A0; \
-  Swizzle<Vec, 0, 1, 0, 1> A0##A1##A0##A1; \
-  Swizzle<Vec, 0, 1, 1, 0> A0##A1##A1##A0; \
-  Swizzle<Vec, 0, 1, 1, 1> A0##A1##A1##A1; \
-  Swizzle<Vec, 1, 0, 0, 0> A1##A0##A0##A0; \
-  Swizzle<Vec, 1, 0, 0, 1> A1##A0##A0##A1; \
-  Swizzle<Vec, 1, 0, 1, 0> A1##A0##A1##A0; \
-  Swizzle<Vec, 1, 0, 1, 1> A1##A0##A1##A1; \
-  Swizzle<Vec, 1, 1, 0, 0> A1##A1##A0##A0; \
-  Swizzle<Vec, 1, 1, 0, 1> A1##A1##A0##A1; \
-  Swizzle<Vec, 1, 1, 1, 0> A1##A1##A1##A0; \
-  Swizzle<Vec, 1, 1, 1, 1> A1##A1##A1##A1;
+#define SWIZZLE_VEC2_TO_VEC4(Vec, A0, A1)                        \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 0> A0##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 1> A0##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 0> A0##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 1> A0##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 0> A0##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 1> A0##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 0> A0##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 1> A0##A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 0> A1##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 1> A1##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 0> A1##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 1> A1##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 0> A1##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 1> A1##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 0> A1##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 1> A1##A1##A1##A1;
 
-#define SWIZZLE_VEC3_TO_VEC2(Vec, A0, A1, A2) \
-  Swizzle<Vec, 0, 0> A0##A0;                  \
-  Swizzle<Vec, 0, 1> A0##A1;                  \
-  Swizzle<Vec, 0, 2> A0##A2;                  \
-  Swizzle<Vec, 1, 0> A1##A0;                  \
-  Swizzle<Vec, 1, 1> A1##A1;                  \
-  Swizzle<Vec, 1, 2> A1##A2;                  \
-  Swizzle<Vec, 2, 0> A2##A0;                  \
-  Swizzle<Vec, 2, 1> A2##A1;                  \
-  Swizzle<Vec, 2, 2> A2##A2;
+#define SWIZZLE_VEC3_TO_VEC2(Vec, A0, A1, A2)      \
+  [[no_unique_address]] Swizzle<Vec, 0, 0> A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1> A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2> A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0> A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1> A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2> A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0> A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1> A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2> A2##A2;
 
-#define SWIZZLE_VEC3_TO_VEC3(Vec, A0, A1, A2) \
-  Swizzle<Vec, 0, 0, 0> A0##A0##A0;           \
-  Swizzle<Vec, 0, 0, 1> A0##A0##A1;           \
-  Swizzle<Vec, 0, 0, 2> A0##A0##A2;           \
-  Swizzle<Vec, 0, 1, 0> A0##A1##A0;           \
-  Swizzle<Vec, 0, 1, 1> A0##A1##A1;           \
-  Swizzle<Vec, 0, 1, 2> A0##A1##A2;           \
-  Swizzle<Vec, 0, 2, 0> A0##A2##A0;           \
-  Swizzle<Vec, 0, 2, 1> A0##A2##A1;           \
-  Swizzle<Vec, 0, 2, 2> A0##A2##A2;           \
-  Swizzle<Vec, 1, 0, 0> A1##A0##A0;           \
-  Swizzle<Vec, 1, 0, 1> A1##A0##A1;           \
-  Swizzle<Vec, 1, 0, 2> A1##A0##A2;           \
-  Swizzle<Vec, 1, 1, 0> A1##A1##A0;           \
-  Swizzle<Vec, 1, 1, 1> A1##A1##A1;           \
-  Swizzle<Vec, 1, 1, 2> A1##A1##A2;           \
-  Swizzle<Vec, 1, 2, 0> A1##A2##A0;           \
-  Swizzle<Vec, 1, 2, 1> A1##A2##A1;           \
-  Swizzle<Vec, 1, 2, 2> A1##A2##A2;           \
-  Swizzle<Vec, 2, 0, 0> A2##A0##A0;           \
-  Swizzle<Vec, 2, 0, 1> A2##A0##A1;           \
-  Swizzle<Vec, 2, 0, 2> A2##A0##A2;           \
-  Swizzle<Vec, 2, 1, 0> A2##A1##A0;           \
-  Swizzle<Vec, 2, 1, 1> A2##A1##A1;           \
-  Swizzle<Vec, 2, 1, 2> A2##A1##A2;           \
-  Swizzle<Vec, 2, 2, 0> A2##A2##A0;           \
-  Swizzle<Vec, 2, 2, 1> A2##A2##A1;           \
-  Swizzle<Vec, 2, 2, 2> A2##A2##A2;
+#define SWIZZLE_VEC3_TO_VEC3(Vec, A0, A1, A2)             \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0> A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1> A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2> A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0> A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1> A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2> A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0> A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1> A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2> A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0> A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1> A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2> A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0> A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1> A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2> A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0> A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1> A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2> A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0> A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1> A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2> A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0> A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1> A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2> A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0> A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1> A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2> A2##A2##A2;
 
-#define SWIZZLE_VEC3_TO_VEC4(Vec, A0, A1, A2) \
-  Swizzle<Vec, 0, 0, 0, 0> A0##A0##A0##A0;    \
-  Swizzle<Vec, 0, 0, 0, 1> A0##A0##A0##A1;    \
-  Swizzle<Vec, 0, 0, 0, 2> A0##A0##A0##A2;    \
-  Swizzle<Vec, 0, 0, 1, 0> A0##A0##A1##A0;    \
-  Swizzle<Vec, 0, 0, 1, 1> A0##A0##A1##A1;    \
-  Swizzle<Vec, 0, 0, 1, 2> A0##A0##A1##A2;    \
-  Swizzle<Vec, 0, 0, 2, 0> A0##A0##A2##A0;    \
-  Swizzle<Vec, 0, 0, 2, 1> A0##A0##A2##A1;    \
-  Swizzle<Vec, 0, 0, 2, 2> A0##A0##A2##A2;    \
-  Swizzle<Vec, 0, 1, 0, 0> A0##A1##A0##A0;    \
-  Swizzle<Vec, 0, 1, 0, 1> A0##A1##A0##A1;    \
-  Swizzle<Vec, 0, 1, 0, 2> A0##A1##A0##A2;    \
-  Swizzle<Vec, 0, 1, 1, 0> A0##A1##A1##A0;    \
-  Swizzle<Vec, 0, 1, 1, 1> A0##A1##A1##A1;    \
-  Swizzle<Vec, 0, 1, 1, 2> A0##A1##A1##A2;    \
-  Swizzle<Vec, 0, 1, 2, 0> A0##A1##A2##A0;    \
-  Swizzle<Vec, 0, 1, 2, 1> A0##A1##A2##A1;    \
-  Swizzle<Vec, 0, 1, 2, 2> A0##A1##A2##A2;    \
-  Swizzle<Vec, 0, 2, 0, 0> A0##A2##A0##A0;    \
-  Swizzle<Vec, 0, 2, 0, 1> A0##A2##A0##A1;    \
-  Swizzle<Vec, 0, 2, 0, 2> A0##A2##A0##A2;    \
-  Swizzle<Vec, 0, 2, 1, 0> A0##A2##A1##A0;    \
-  Swizzle<Vec, 0, 2, 1, 1> A0##A2##A1##A1;    \
-  Swizzle<Vec, 0, 2, 1, 2> A0##A2##A1##A2;    \
-  Swizzle<Vec, 0, 2, 2, 0> A0##A2##A2##A0;    \
-  Swizzle<Vec, 0, 2, 2, 1> A0##A2##A2##A1;    \
-  Swizzle<Vec, 0, 2, 2, 2> A0##A2##A2##A2;    \
-  Swizzle<Vec, 1, 0, 0, 0> A1##A0##A0##A0;    \
-  Swizzle<Vec, 1, 0, 0, 1> A1##A0##A0##A1;    \
-  Swizzle<Vec, 1, 0, 0, 2> A1##A0##A0##A2;    \
-  Swizzle<Vec, 1, 0, 1, 0> A1##A0##A1##A0;    \
-  Swizzle<Vec, 1, 0, 1, 1> A1##A0##A1##A1;    \
-  Swizzle<Vec, 1, 0, 1, 2> A1##A0##A1##A2;    \
-  Swizzle<Vec, 1, 0, 2, 0> A1##A0##A2##A0;    \
-  Swizzle<Vec, 1, 0, 2, 1> A1##A0##A2##A1;    \
-  Swizzle<Vec, 1, 0, 2, 2> A1##A0##A2##A2;    \
-  Swizzle<Vec, 1, 1, 0, 0> A1##A1##A0##A0;    \
-  Swizzle<Vec, 1, 1, 0, 1> A1##A1##A0##A1;    \
-  Swizzle<Vec, 1, 1, 0, 2> A1##A1##A0##A2;    \
-  Swizzle<Vec, 1, 1, 1, 0> A1##A1##A1##A0;    \
-  Swizzle<Vec, 1, 1, 1, 1> A1##A1##A1##A1;    \
-  Swizzle<Vec, 1, 1, 1, 2> A1##A1##A1##A2;    \
-  Swizzle<Vec, 1, 1, 2, 0> A1##A1##A2##A0;    \
-  Swizzle<Vec, 1, 1, 2, 1> A1##A1##A2##A1;    \
-  Swizzle<Vec, 1, 1, 2, 2> A1##A1##A2##A2;    \
-  Swizzle<Vec, 1, 2, 0, 0> A1##A2##A0##A0;    \
-  Swizzle<Vec, 1, 2, 0, 1> A1##A2##A0##A1;    \
-  Swizzle<Vec, 1, 2, 0, 2> A1##A2##A0##A2;    \
-  Swizzle<Vec, 1, 2, 1, 0> A1##A2##A1##A0;    \
-  Swizzle<Vec, 1, 2, 1, 1> A1##A2##A1##A1;    \
-  Swizzle<Vec, 1, 2, 1, 2> A1##A2##A1##A2;    \
-  Swizzle<Vec, 1, 2, 2, 0> A1##A2##A2##A0;    \
-  Swizzle<Vec, 1, 2, 2, 1> A1##A2##A2##A1;    \
-  Swizzle<Vec, 1, 2, 2, 2> A1##A2##A2##A2;    \
-  Swizzle<Vec, 2, 0, 0, 0> A2##A0##A0##A0;    \
-  Swizzle<Vec, 2, 0, 0, 1> A2##A0##A0##A1;    \
-  Swizzle<Vec, 2, 0, 0, 2> A2##A0##A0##A2;    \
-  Swizzle<Vec, 2, 0, 1, 0> A2##A0##A1##A0;    \
-  Swizzle<Vec, 2, 0, 1, 1> A2##A0##A1##A1;    \
-  Swizzle<Vec, 2, 0, 1, 2> A2##A0##A1##A2;    \
-  Swizzle<Vec, 2, 0, 2, 0> A2##A0##A2##A0;    \
-  Swizzle<Vec, 2, 0, 2, 1> A2##A0##A2##A1;    \
-  Swizzle<Vec, 2, 0, 2, 2> A2##A0##A2##A2;    \
-  Swizzle<Vec, 2, 1, 0, 0> A2##A1##A0##A0;    \
-  Swizzle<Vec, 2, 1, 0, 1> A2##A1##A0##A1;    \
-  Swizzle<Vec, 2, 1, 0, 2> A2##A1##A0##A2;    \
-  Swizzle<Vec, 2, 1, 1, 0> A2##A1##A1##A0;    \
-  Swizzle<Vec, 2, 1, 1, 1> A2##A1##A1##A1;    \
-  Swizzle<Vec, 2, 1, 1, 2> A2##A1##A1##A2;    \
-  Swizzle<Vec, 2, 1, 2, 0> A2##A1##A2##A0;    \
-  Swizzle<Vec, 2, 1, 2, 1> A2##A1##A2##A1;    \
-  Swizzle<Vec, 2, 1, 2, 2> A2##A1##A2##A2;    \
-  Swizzle<Vec, 2, 2, 0, 0> A2##A2##A0##A0;    \
-  Swizzle<Vec, 2, 2, 0, 1> A2##A2##A0##A1;    \
-  Swizzle<Vec, 2, 2, 0, 2> A2##A2##A0##A2;    \
-  Swizzle<Vec, 2, 2, 1, 0> A2##A2##A1##A0;    \
-  Swizzle<Vec, 2, 2, 1, 1> A2##A2##A1##A1;    \
-  Swizzle<Vec, 2, 2, 1, 2> A2##A2##A1##A2;    \
-  Swizzle<Vec, 2, 2, 2, 0> A2##A2##A2##A0;    \
-  Swizzle<Vec, 2, 2, 2, 1> A2##A2##A2##A1;    \
-  Swizzle<Vec, 2, 2, 2, 2> A2##A2##A2##A2;
+#define SWIZZLE_VEC3_TO_VEC4(Vec, A0, A1, A2)                    \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 0> A0##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 1> A0##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 2> A0##A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 0> A0##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 1> A0##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 2> A0##A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2, 0> A0##A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2, 1> A0##A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2, 2> A0##A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 0> A0##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 1> A0##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 2> A0##A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 0> A0##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 1> A0##A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 2> A0##A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2, 0> A0##A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2, 1> A0##A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2, 2> A0##A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0, 0> A0##A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0, 1> A0##A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0, 2> A0##A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1, 0> A0##A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1, 1> A0##A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1, 2> A0##A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2, 0> A0##A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2, 1> A0##A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2, 2> A0##A2##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 0> A1##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 1> A1##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 2> A1##A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 0> A1##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 1> A1##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 2> A1##A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2, 0> A1##A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2, 1> A1##A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2, 2> A1##A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 0> A1##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 1> A1##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 2> A1##A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 0> A1##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 1> A1##A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 2> A1##A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2, 0> A1##A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2, 1> A1##A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2, 2> A1##A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0, 0> A1##A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0, 1> A1##A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0, 2> A1##A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1, 0> A1##A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1, 1> A1##A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1, 2> A1##A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2, 0> A1##A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2, 1> A1##A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2, 2> A1##A2##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0, 0> A2##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0, 1> A2##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0, 2> A2##A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1, 0> A2##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1, 1> A2##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1, 2> A2##A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2, 0> A2##A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2, 1> A2##A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2, 2> A2##A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0, 0> A2##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0, 1> A2##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0, 2> A2##A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1, 0> A2##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1, 1> A2##A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1, 2> A2##A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2, 0> A2##A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2, 1> A2##A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2, 2> A2##A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0, 0> A2##A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0, 1> A2##A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0, 2> A2##A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1, 0> A2##A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1, 1> A2##A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1, 2> A2##A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2, 0> A2##A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2, 1> A2##A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2, 2> A2##A2##A2##A2;
 
-#define SWIZZLE_VEC4_TO_VEC2(Vec, A0, A1, A2, A3) \
-  Swizzle<Vec, 0, 0> A0##A0;                      \
-  Swizzle<Vec, 0, 1> A0##A1;                      \
-  Swizzle<Vec, 0, 2> A0##A2;                      \
-  Swizzle<Vec, 0, 3> A0##A3;                      \
-  Swizzle<Vec, 1, 0> A1##A0;                      \
-  Swizzle<Vec, 1, 1> A1##A1;                      \
-  Swizzle<Vec, 1, 2> A1##A2;                      \
-  Swizzle<Vec, 1, 3> A1##A3;                      \
-  Swizzle<Vec, 2, 0> A2##A0;                      \
-  Swizzle<Vec, 2, 1> A2##A1;                      \
-  Swizzle<Vec, 2, 2> A2##A2;                      \
-  Swizzle<Vec, 2, 3> A2##A3;                      \
-  Swizzle<Vec, 3, 0> A3##A0;                      \
-  Swizzle<Vec, 3, 1> A3##A1;                      \
-  Swizzle<Vec, 3, 2> A3##A2;                      \
-  Swizzle<Vec, 3, 3> A3##A3;
+#define SWIZZLE_VEC4_TO_VEC2(Vec, A0, A1, A2, A3)  \
+  [[no_unique_address]] Swizzle<Vec, 0, 0> A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1> A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2> A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3> A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0> A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1> A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2> A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3> A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0> A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1> A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2> A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3> A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0> A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1> A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2> A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3> A3##A3;
 
-#define SWIZZLE_VEC4_TO_VEC3(Vec, A0, A1, A2, A3) \
-  Swizzle<Vec, 0, 0, 0> A0##A0##A0;               \
-  Swizzle<Vec, 0, 0, 1> A0##A0##A1;               \
-  Swizzle<Vec, 0, 0, 2> A0##A0##A2;               \
-  Swizzle<Vec, 0, 0, 3> A0##A0##A3;               \
-  Swizzle<Vec, 0, 1, 0> A0##A1##A0;               \
-  Swizzle<Vec, 0, 1, 1> A0##A1##A1;               \
-  Swizzle<Vec, 0, 1, 2> A0##A1##A2;               \
-  Swizzle<Vec, 0, 1, 3> A0##A1##A3;               \
-  Swizzle<Vec, 0, 2, 0> A0##A2##A0;               \
-  Swizzle<Vec, 0, 2, 1> A0##A2##A1;               \
-  Swizzle<Vec, 0, 2, 2> A0##A2##A2;               \
-  Swizzle<Vec, 0, 2, 3> A0##A2##A3;               \
-  Swizzle<Vec, 0, 3, 0> A0##A3##A0;               \
-  Swizzle<Vec, 0, 3, 1> A0##A3##A1;               \
-  Swizzle<Vec, 0, 3, 2> A0##A3##A2;               \
-  Swizzle<Vec, 0, 3, 3> A0##A3##A3;               \
-  Swizzle<Vec, 1, 0, 0> A1##A0##A0;               \
-  Swizzle<Vec, 1, 0, 1> A1##A0##A1;               \
-  Swizzle<Vec, 1, 0, 2> A1##A0##A2;               \
-  Swizzle<Vec, 1, 0, 3> A1##A0##A3;               \
-  Swizzle<Vec, 1, 1, 0> A1##A1##A0;               \
-  Swizzle<Vec, 1, 1, 1> A1##A1##A1;               \
-  Swizzle<Vec, 1, 1, 2> A1##A1##A2;               \
-  Swizzle<Vec, 1, 1, 3> A1##A1##A3;               \
-  Swizzle<Vec, 1, 2, 0> A1##A2##A0;               \
-  Swizzle<Vec, 1, 2, 1> A1##A2##A1;               \
-  Swizzle<Vec, 1, 2, 2> A1##A2##A2;               \
-  Swizzle<Vec, 1, 2, 3> A1##A2##A3;               \
-  Swizzle<Vec, 1, 3, 0> A1##A3##A0;               \
-  Swizzle<Vec, 1, 3, 1> A1##A3##A1;               \
-  Swizzle<Vec, 1, 3, 2> A1##A3##A2;               \
-  Swizzle<Vec, 1, 3, 3> A1##A3##A3;               \
-  Swizzle<Vec, 2, 0, 0> A2##A0##A0;               \
-  Swizzle<Vec, 2, 0, 1> A2##A0##A1;               \
-  Swizzle<Vec, 2, 0, 2> A2##A0##A2;               \
-  Swizzle<Vec, 2, 0, 3> A2##A0##A3;               \
-  Swizzle<Vec, 2, 1, 0> A2##A1##A0;               \
-  Swizzle<Vec, 2, 1, 1> A2##A1##A1;               \
-  Swizzle<Vec, 2, 1, 2> A2##A1##A2;               \
-  Swizzle<Vec, 2, 1, 3> A2##A1##A3;               \
-  Swizzle<Vec, 2, 2, 0> A2##A2##A0;               \
-  Swizzle<Vec, 2, 2, 1> A2##A2##A1;               \
-  Swizzle<Vec, 2, 2, 2> A2##A2##A2;               \
-  Swizzle<Vec, 2, 2, 3> A2##A2##A3;               \
-  Swizzle<Vec, 2, 3, 0> A2##A3##A0;               \
-  Swizzle<Vec, 2, 3, 1> A2##A3##A1;               \
-  Swizzle<Vec, 2, 3, 2> A2##A3##A2;               \
-  Swizzle<Vec, 2, 3, 3> A2##A3##A3;               \
-  Swizzle<Vec, 3, 0, 0> A3##A0##A0;               \
-  Swizzle<Vec, 3, 0, 1> A3##A0##A1;               \
-  Swizzle<Vec, 3, 0, 2> A3##A0##A2;               \
-  Swizzle<Vec, 3, 0, 3> A3##A0##A3;               \
-  Swizzle<Vec, 3, 1, 0> A3##A1##A0;               \
-  Swizzle<Vec, 3, 1, 1> A3##A1##A1;               \
-  Swizzle<Vec, 3, 1, 2> A3##A1##A2;               \
-  Swizzle<Vec, 3, 1, 3> A3##A1##A3;               \
-  Swizzle<Vec, 3, 2, 0> A3##A2##A0;               \
-  Swizzle<Vec, 3, 2, 1> A3##A2##A1;               \
-  Swizzle<Vec, 3, 2, 2> A3##A2##A2;               \
-  Swizzle<Vec, 3, 2, 3> A3##A2##A3;               \
-  Swizzle<Vec, 3, 3, 0> A3##A3##A0;               \
-  Swizzle<Vec, 3, 3, 1> A3##A3##A1;               \
-  Swizzle<Vec, 3, 3, 2> A3##A3##A2;               \
-  Swizzle<Vec, 3, 3, 3> A3##A3##A3;
+#define SWIZZLE_VEC4_TO_VEC3(Vec, A0, A1, A2, A3)         \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0> A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1> A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2> A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 3> A0##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0> A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1> A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2> A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 3> A0##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0> A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1> A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2> A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 3> A0##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 0> A0##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 1> A0##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 2> A0##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 3> A0##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0> A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1> A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2> A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 3> A1##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0> A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1> A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2> A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 3> A1##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0> A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1> A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2> A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 3> A1##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 0> A1##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 1> A1##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 2> A1##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 3> A1##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0> A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1> A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2> A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 3> A2##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0> A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1> A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2> A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 3> A2##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0> A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1> A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2> A2##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 3> A2##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 0> A2##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 1> A2##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 2> A2##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 3> A2##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 0> A3##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 1> A3##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 2> A3##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 3> A3##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 0> A3##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 1> A3##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 2> A3##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 3> A3##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 0> A3##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 1> A3##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 2> A3##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 3> A3##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 0> A3##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 1> A3##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 2> A3##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 3> A3##A3##A3;
 
-#define SWIZZLE_VEC4_TO_VEC4(Vec, A0, A1, A2, A3) \
-  Swizzle<Vec, 0, 0, 0, 0> A0##A0##A0##A0;        \
-  Swizzle<Vec, 0, 0, 0, 1> A0##A0##A0##A1;        \
-  Swizzle<Vec, 0, 0, 0, 2> A0##A0##A0##A2;        \
-  Swizzle<Vec, 0, 0, 0, 3> A0##A0##A0##A3;        \
-  Swizzle<Vec, 0, 0, 1, 0> A0##A0##A1##A0;        \
-  Swizzle<Vec, 0, 0, 1, 1> A0##A0##A1##A1;        \
-  Swizzle<Vec, 0, 0, 1, 2> A0##A0##A1##A2;        \
-  Swizzle<Vec, 0, 0, 1, 3> A0##A0##A1##A3;        \
-  Swizzle<Vec, 0, 0, 2, 0> A0##A0##A2##A0;        \
-  Swizzle<Vec, 0, 0, 2, 1> A0##A0##A2##A1;        \
-  Swizzle<Vec, 0, 0, 2, 2> A0##A0##A2##A2;        \
-  Swizzle<Vec, 0, 0, 2, 3> A0##A0##A2##A3;        \
-  Swizzle<Vec, 0, 0, 3, 0> A0##A0##A3##A0;        \
-  Swizzle<Vec, 0, 0, 3, 1> A0##A0##A3##A1;        \
-  Swizzle<Vec, 0, 0, 3, 2> A0##A0##A3##A2;        \
-  Swizzle<Vec, 0, 0, 3, 3> A0##A0##A3##A3;        \
-  Swizzle<Vec, 0, 1, 0, 0> A0##A1##A0##A0;        \
-  Swizzle<Vec, 0, 1, 0, 1> A0##A1##A0##A1;        \
-  Swizzle<Vec, 0, 1, 0, 2> A0##A1##A0##A2;        \
-  Swizzle<Vec, 0, 1, 0, 3> A0##A1##A0##A3;        \
-  Swizzle<Vec, 0, 1, 1, 0> A0##A1##A1##A0;        \
-  Swizzle<Vec, 0, 1, 1, 1> A0##A1##A1##A1;        \
-  Swizzle<Vec, 0, 1, 1, 2> A0##A1##A1##A2;        \
-  Swizzle<Vec, 0, 1, 1, 3> A0##A1##A1##A3;        \
-  Swizzle<Vec, 0, 1, 2, 0> A0##A1##A2##A0;        \
-  Swizzle<Vec, 0, 1, 2, 1> A0##A1##A2##A1;        \
-  Swizzle<Vec, 0, 1, 2, 2> A0##A1##A2##A2;        \
-  Swizzle<Vec, 0, 1, 2, 3> A0##A1##A2##A3;        \
-  Swizzle<Vec, 0, 1, 3, 0> A0##A1##A3##A0;        \
-  Swizzle<Vec, 0, 1, 3, 1> A0##A1##A3##A1;        \
-  Swizzle<Vec, 0, 1, 3, 2> A0##A1##A3##A2;        \
-  Swizzle<Vec, 0, 1, 3, 3> A0##A1##A3##A3;        \
-  Swizzle<Vec, 0, 2, 0, 0> A0##A2##A0##A0;        \
-  Swizzle<Vec, 0, 2, 0, 1> A0##A2##A0##A1;        \
-  Swizzle<Vec, 0, 2, 0, 2> A0##A2##A0##A2;        \
-  Swizzle<Vec, 0, 2, 0, 3> A0##A2##A0##A3;        \
-  Swizzle<Vec, 0, 2, 1, 0> A0##A2##A1##A0;        \
-  Swizzle<Vec, 0, 2, 1, 1> A0##A2##A1##A1;        \
-  Swizzle<Vec, 0, 2, 1, 2> A0##A2##A1##A2;        \
-  Swizzle<Vec, 0, 2, 1, 3> A0##A2##A1##A3;        \
-  Swizzle<Vec, 0, 2, 2, 0> A0##A2##A2##A0;        \
-  Swizzle<Vec, 0, 2, 2, 1> A0##A2##A2##A1;        \
-  Swizzle<Vec, 0, 2, 2, 2> A0##A2##A2##A2;        \
-  Swizzle<Vec, 0, 2, 2, 3> A0##A2##A2##A3;        \
-  Swizzle<Vec, 0, 2, 3, 0> A0##A2##A3##A0;        \
-  Swizzle<Vec, 0, 2, 3, 1> A0##A2##A3##A1;        \
-  Swizzle<Vec, 0, 2, 3, 2> A0##A2##A3##A2;        \
-  Swizzle<Vec, 0, 2, 3, 3> A0##A2##A3##A3;        \
-  Swizzle<Vec, 0, 3, 0, 0> A0##A3##A0##A0;        \
-  Swizzle<Vec, 0, 3, 0, 1> A0##A3##A0##A1;        \
-  Swizzle<Vec, 0, 3, 0, 2> A0##A3##A0##A2;        \
-  Swizzle<Vec, 0, 3, 0, 3> A0##A3##A0##A3;        \
-  Swizzle<Vec, 0, 3, 1, 0> A0##A3##A1##A0;        \
-  Swizzle<Vec, 0, 3, 1, 1> A0##A3##A1##A1;        \
-  Swizzle<Vec, 0, 3, 1, 2> A0##A3##A1##A2;        \
-  Swizzle<Vec, 0, 3, 1, 3> A0##A3##A1##A3;        \
-  Swizzle<Vec, 0, 3, 2, 0> A0##A3##A2##A0;        \
-  Swizzle<Vec, 0, 3, 2, 1> A0##A3##A2##A1;        \
-  Swizzle<Vec, 0, 3, 2, 2> A0##A3##A2##A2;        \
-  Swizzle<Vec, 0, 3, 2, 3> A0##A3##A2##A3;        \
-  Swizzle<Vec, 0, 3, 3, 0> A0##A3##A3##A0;        \
-  Swizzle<Vec, 0, 3, 3, 1> A0##A3##A3##A1;        \
-  Swizzle<Vec, 0, 3, 3, 2> A0##A3##A3##A2;        \
-  Swizzle<Vec, 0, 3, 3, 3> A0##A3##A3##A3;        \
-  Swizzle<Vec, 1, 0, 0, 0> A1##A0##A0##A0;        \
-  Swizzle<Vec, 1, 0, 0, 1> A1##A0##A0##A1;        \
-  Swizzle<Vec, 1, 0, 0, 2> A1##A0##A0##A2;        \
-  Swizzle<Vec, 1, 0, 0, 3> A1##A0##A0##A3;        \
-  Swizzle<Vec, 1, 0, 1, 0> A1##A0##A1##A0;        \
-  Swizzle<Vec, 1, 0, 1, 1> A1##A0##A1##A1;        \
-  Swizzle<Vec, 1, 0, 1, 2> A1##A0##A1##A2;        \
-  Swizzle<Vec, 1, 0, 1, 3> A1##A0##A1##A3;        \
-  Swizzle<Vec, 1, 0, 2, 0> A1##A0##A2##A0;        \
-  Swizzle<Vec, 1, 0, 2, 1> A1##A0##A2##A1;        \
-  Swizzle<Vec, 1, 0, 2, 2> A1##A0##A2##A2;        \
-  Swizzle<Vec, 1, 0, 2, 3> A1##A0##A2##A3;        \
-  Swizzle<Vec, 1, 0, 3, 0> A1##A0##A3##A0;        \
-  Swizzle<Vec, 1, 0, 3, 1> A1##A0##A3##A1;        \
-  Swizzle<Vec, 1, 0, 3, 2> A1##A0##A3##A2;        \
-  Swizzle<Vec, 1, 0, 3, 3> A1##A0##A3##A3;        \
-  Swizzle<Vec, 1, 1, 0, 0> A1##A1##A0##A0;        \
-  Swizzle<Vec, 1, 1, 0, 1> A1##A1##A0##A1;        \
-  Swizzle<Vec, 1, 1, 0, 2> A1##A1##A0##A2;        \
-  Swizzle<Vec, 1, 1, 0, 3> A1##A1##A0##A3;        \
-  Swizzle<Vec, 1, 1, 1, 0> A1##A1##A1##A0;        \
-  Swizzle<Vec, 1, 1, 1, 1> A1##A1##A1##A1;        \
-  Swizzle<Vec, 1, 1, 1, 2> A1##A1##A1##A2;        \
-  Swizzle<Vec, 1, 1, 1, 3> A1##A1##A1##A3;        \
-  Swizzle<Vec, 1, 1, 2, 0> A1##A1##A2##A0;        \
-  Swizzle<Vec, 1, 1, 2, 1> A1##A1##A2##A1;        \
-  Swizzle<Vec, 1, 1, 2, 2> A1##A1##A2##A2;        \
-  Swizzle<Vec, 1, 1, 2, 3> A1##A1##A2##A3;        \
-  Swizzle<Vec, 1, 1, 3, 0> A1##A1##A3##A0;        \
-  Swizzle<Vec, 1, 1, 3, 1> A1##A1##A3##A1;        \
-  Swizzle<Vec, 1, 1, 3, 2> A1##A1##A3##A2;        \
-  Swizzle<Vec, 1, 1, 3, 3> A1##A1##A3##A3;        \
-  Swizzle<Vec, 1, 2, 0, 0> A1##A2##A0##A0;        \
-  Swizzle<Vec, 1, 2, 0, 1> A1##A2##A0##A1;        \
-  Swizzle<Vec, 1, 2, 0, 2> A1##A2##A0##A2;        \
-  Swizzle<Vec, 1, 2, 0, 3> A1##A2##A0##A3;        \
-  Swizzle<Vec, 1, 2, 1, 0> A1##A2##A1##A0;        \
-  Swizzle<Vec, 1, 2, 1, 1> A1##A2##A1##A1;        \
-  Swizzle<Vec, 1, 2, 1, 2> A1##A2##A1##A2;        \
-  Swizzle<Vec, 1, 2, 1, 3> A1##A2##A1##A3;        \
-  Swizzle<Vec, 1, 2, 2, 0> A1##A2##A2##A0;        \
-  Swizzle<Vec, 1, 2, 2, 1> A1##A2##A2##A1;        \
-  Swizzle<Vec, 1, 2, 2, 2> A1##A2##A2##A2;        \
-  Swizzle<Vec, 1, 2, 2, 3> A1##A2##A2##A3;        \
-  Swizzle<Vec, 1, 2, 3, 0> A1##A2##A3##A0;        \
-  Swizzle<Vec, 1, 2, 3, 1> A1##A2##A3##A1;        \
-  Swizzle<Vec, 1, 2, 3, 2> A1##A2##A3##A2;        \
-  Swizzle<Vec, 1, 2, 3, 3> A1##A2##A3##A3;        \
-  Swizzle<Vec, 1, 3, 0, 0> A1##A3##A0##A0;        \
-  Swizzle<Vec, 1, 3, 0, 1> A1##A3##A0##A1;        \
-  Swizzle<Vec, 1, 3, 0, 2> A1##A3##A0##A2;        \
-  Swizzle<Vec, 1, 3, 0, 3> A1##A3##A0##A3;        \
-  Swizzle<Vec, 1, 3, 1, 0> A1##A3##A1##A0;        \
-  Swizzle<Vec, 1, 3, 1, 1> A1##A3##A1##A1;        \
-  Swizzle<Vec, 1, 3, 1, 2> A1##A3##A1##A2;        \
-  Swizzle<Vec, 1, 3, 1, 3> A1##A3##A1##A3;        \
-  Swizzle<Vec, 1, 3, 2, 0> A1##A3##A2##A0;        \
-  Swizzle<Vec, 1, 3, 2, 1> A1##A3##A2##A1;        \
-  Swizzle<Vec, 1, 3, 2, 2> A1##A3##A2##A2;        \
-  Swizzle<Vec, 1, 3, 2, 3> A1##A3##A2##A3;        \
-  Swizzle<Vec, 1, 3, 3, 0> A1##A3##A3##A0;        \
-  Swizzle<Vec, 1, 3, 3, 1> A1##A3##A3##A1;        \
-  Swizzle<Vec, 1, 3, 3, 2> A1##A3##A3##A2;        \
-  Swizzle<Vec, 1, 3, 3, 3> A1##A3##A3##A3;        \
-  Swizzle<Vec, 2, 0, 0, 0> A2##A0##A0##A0;        \
-  Swizzle<Vec, 2, 0, 0, 1> A2##A0##A0##A1;        \
-  Swizzle<Vec, 2, 0, 0, 2> A2##A0##A0##A2;        \
-  Swizzle<Vec, 2, 0, 0, 3> A2##A0##A0##A3;        \
-  Swizzle<Vec, 2, 0, 1, 0> A2##A0##A1##A0;        \
-  Swizzle<Vec, 2, 0, 1, 1> A2##A0##A1##A1;        \
-  Swizzle<Vec, 2, 0, 1, 2> A2##A0##A1##A2;        \
-  Swizzle<Vec, 2, 0, 1, 3> A2##A0##A1##A3;        \
-  Swizzle<Vec, 2, 0, 2, 0> A2##A0##A2##A0;        \
-  Swizzle<Vec, 2, 0, 2, 1> A2##A0##A2##A1;        \
-  Swizzle<Vec, 2, 0, 2, 2> A2##A0##A2##A2;        \
-  Swizzle<Vec, 2, 0, 2, 3> A2##A0##A2##A3;        \
-  Swizzle<Vec, 2, 0, 3, 0> A2##A0##A3##A0;        \
-  Swizzle<Vec, 2, 0, 3, 1> A2##A0##A3##A1;        \
-  Swizzle<Vec, 2, 0, 3, 2> A2##A0##A3##A2;        \
-  Swizzle<Vec, 2, 0, 3, 3> A2##A0##A3##A3;        \
-  Swizzle<Vec, 2, 1, 0, 0> A2##A1##A0##A0;        \
-  Swizzle<Vec, 2, 1, 0, 1> A2##A1##A0##A1;        \
-  Swizzle<Vec, 2, 1, 0, 2> A2##A1##A0##A2;        \
-  Swizzle<Vec, 2, 1, 0, 3> A2##A1##A0##A3;        \
-  Swizzle<Vec, 2, 1, 1, 0> A2##A1##A1##A0;        \
-  Swizzle<Vec, 2, 1, 1, 1> A2##A1##A1##A1;        \
-  Swizzle<Vec, 2, 1, 1, 2> A2##A1##A1##A2;        \
-  Swizzle<Vec, 2, 1, 1, 3> A2##A1##A1##A3;        \
-  Swizzle<Vec, 2, 1, 2, 0> A2##A1##A2##A0;        \
-  Swizzle<Vec, 2, 1, 2, 1> A2##A1##A2##A1;        \
-  Swizzle<Vec, 2, 1, 2, 2> A2##A1##A2##A2;        \
-  Swizzle<Vec, 2, 1, 2, 3> A2##A1##A2##A3;        \
-  Swizzle<Vec, 2, 1, 3, 0> A2##A1##A3##A0;        \
-  Swizzle<Vec, 2, 1, 3, 1> A2##A1##A3##A1;        \
-  Swizzle<Vec, 2, 1, 3, 2> A2##A1##A3##A2;        \
-  Swizzle<Vec, 2, 1, 3, 3> A2##A1##A3##A3;        \
-  Swizzle<Vec, 2, 2, 0, 0> A2##A2##A0##A0;        \
-  Swizzle<Vec, 2, 2, 0, 1> A2##A2##A0##A1;        \
-  Swizzle<Vec, 2, 2, 0, 2> A2##A2##A0##A2;        \
-  Swizzle<Vec, 2, 2, 0, 3> A2##A2##A0##A3;        \
-  Swizzle<Vec, 2, 2, 1, 0> A2##A2##A1##A0;        \
-  Swizzle<Vec, 2, 2, 1, 1> A2##A2##A1##A1;        \
-  Swizzle<Vec, 2, 2, 1, 2> A2##A2##A1##A2;        \
-  Swizzle<Vec, 2, 2, 1, 3> A2##A2##A1##A3;        \
-  Swizzle<Vec, 2, 2, 2, 0> A2##A2##A2##A0;        \
-  Swizzle<Vec, 2, 2, 2, 1> A2##A2##A2##A1;        \
-  Swizzle<Vec, 2, 2, 2, 2> A2##A2##A2##A2;        \
-  Swizzle<Vec, 2, 2, 2, 3> A2##A2##A2##A3;        \
-  Swizzle<Vec, 2, 2, 3, 0> A2##A2##A3##A0;        \
-  Swizzle<Vec, 2, 2, 3, 1> A2##A2##A3##A1;        \
-  Swizzle<Vec, 2, 2, 3, 2> A2##A2##A3##A2;        \
-  Swizzle<Vec, 2, 2, 3, 3> A2##A2##A3##A3;        \
-  Swizzle<Vec, 2, 3, 0, 0> A2##A3##A0##A0;        \
-  Swizzle<Vec, 2, 3, 0, 1> A2##A3##A0##A1;        \
-  Swizzle<Vec, 2, 3, 0, 2> A2##A3##A0##A2;        \
-  Swizzle<Vec, 2, 3, 0, 3> A2##A3##A0##A3;        \
-  Swizzle<Vec, 2, 3, 1, 0> A2##A3##A1##A0;        \
-  Swizzle<Vec, 2, 3, 1, 1> A2##A3##A1##A1;        \
-  Swizzle<Vec, 2, 3, 1, 2> A2##A3##A1##A2;        \
-  Swizzle<Vec, 2, 3, 1, 3> A2##A3##A1##A3;        \
-  Swizzle<Vec, 2, 3, 2, 0> A2##A3##A2##A0;        \
-  Swizzle<Vec, 2, 3, 2, 1> A2##A3##A2##A1;        \
-  Swizzle<Vec, 2, 3, 2, 2> A2##A3##A2##A2;        \
-  Swizzle<Vec, 2, 3, 2, 3> A2##A3##A2##A3;        \
-  Swizzle<Vec, 2, 3, 3, 0> A2##A3##A3##A0;        \
-  Swizzle<Vec, 2, 3, 3, 1> A2##A3##A3##A1;        \
-  Swizzle<Vec, 2, 3, 3, 2> A2##A3##A3##A2;        \
-  Swizzle<Vec, 2, 3, 3, 3> A2##A3##A3##A3;        \
-  Swizzle<Vec, 3, 0, 0, 0> A3##A0##A0##A0;        \
-  Swizzle<Vec, 3, 0, 0, 1> A3##A0##A0##A1;        \
-  Swizzle<Vec, 3, 0, 0, 2> A3##A0##A0##A2;        \
-  Swizzle<Vec, 3, 0, 0, 3> A3##A0##A0##A3;        \
-  Swizzle<Vec, 3, 0, 1, 0> A3##A0##A1##A0;        \
-  Swizzle<Vec, 3, 0, 1, 1> A3##A0##A1##A1;        \
-  Swizzle<Vec, 3, 0, 1, 2> A3##A0##A1##A2;        \
-  Swizzle<Vec, 3, 0, 1, 3> A3##A0##A1##A3;        \
-  Swizzle<Vec, 3, 0, 2, 0> A3##A0##A2##A0;        \
-  Swizzle<Vec, 3, 0, 2, 1> A3##A0##A2##A1;        \
-  Swizzle<Vec, 3, 0, 2, 2> A3##A0##A2##A2;        \
-  Swizzle<Vec, 3, 0, 2, 3> A3##A0##A2##A3;        \
-  Swizzle<Vec, 3, 0, 3, 0> A3##A0##A3##A0;        \
-  Swizzle<Vec, 3, 0, 3, 1> A3##A0##A3##A1;        \
-  Swizzle<Vec, 3, 0, 3, 2> A3##A0##A3##A2;        \
-  Swizzle<Vec, 3, 0, 3, 3> A3##A0##A3##A3;        \
-  Swizzle<Vec, 3, 1, 0, 0> A3##A1##A0##A0;        \
-  Swizzle<Vec, 3, 1, 0, 1> A3##A1##A0##A1;        \
-  Swizzle<Vec, 3, 1, 0, 2> A3##A1##A0##A2;        \
-  Swizzle<Vec, 3, 1, 0, 3> A3##A1##A0##A3;        \
-  Swizzle<Vec, 3, 1, 1, 0> A3##A1##A1##A0;        \
-  Swizzle<Vec, 3, 1, 1, 1> A3##A1##A1##A1;        \
-  Swizzle<Vec, 3, 1, 1, 2> A3##A1##A1##A2;        \
-  Swizzle<Vec, 3, 1, 1, 3> A3##A1##A1##A3;        \
-  Swizzle<Vec, 3, 1, 2, 0> A3##A1##A2##A0;        \
-  Swizzle<Vec, 3, 1, 2, 1> A3##A1##A2##A1;        \
-  Swizzle<Vec, 3, 1, 2, 2> A3##A1##A2##A2;        \
-  Swizzle<Vec, 3, 1, 2, 3> A3##A1##A2##A3;        \
-  Swizzle<Vec, 3, 1, 3, 0> A3##A1##A3##A0;        \
-  Swizzle<Vec, 3, 1, 3, 1> A3##A1##A3##A1;        \
-  Swizzle<Vec, 3, 1, 3, 2> A3##A1##A3##A2;        \
-  Swizzle<Vec, 3, 1, 3, 3> A3##A1##A3##A3;        \
-  Swizzle<Vec, 3, 2, 0, 0> A3##A2##A0##A0;        \
-  Swizzle<Vec, 3, 2, 0, 1> A3##A2##A0##A1;        \
-  Swizzle<Vec, 3, 2, 0, 2> A3##A2##A0##A2;        \
-  Swizzle<Vec, 3, 2, 0, 3> A3##A2##A0##A3;        \
-  Swizzle<Vec, 3, 2, 1, 0> A3##A2##A1##A0;        \
-  Swizzle<Vec, 3, 2, 1, 1> A3##A2##A1##A1;        \
-  Swizzle<Vec, 3, 2, 1, 2> A3##A2##A1##A2;        \
-  Swizzle<Vec, 3, 2, 1, 3> A3##A2##A1##A3;        \
-  Swizzle<Vec, 3, 2, 2, 0> A3##A2##A2##A0;        \
-  Swizzle<Vec, 3, 2, 2, 1> A3##A2##A2##A1;        \
-  Swizzle<Vec, 3, 2, 2, 2> A3##A2##A2##A2;        \
-  Swizzle<Vec, 3, 2, 2, 3> A3##A2##A2##A3;        \
-  Swizzle<Vec, 3, 2, 3, 0> A3##A2##A3##A0;        \
-  Swizzle<Vec, 3, 2, 3, 1> A3##A2##A3##A1;        \
-  Swizzle<Vec, 3, 2, 3, 2> A3##A2##A3##A2;        \
-  Swizzle<Vec, 3, 2, 3, 3> A3##A2##A3##A3;        \
-  Swizzle<Vec, 3, 3, 0, 0> A3##A3##A0##A0;        \
-  Swizzle<Vec, 3, 3, 0, 1> A3##A3##A0##A1;        \
-  Swizzle<Vec, 3, 3, 0, 2> A3##A3##A0##A2;        \
-  Swizzle<Vec, 3, 3, 0, 3> A3##A3##A0##A3;        \
-  Swizzle<Vec, 3, 3, 1, 0> A3##A3##A1##A0;        \
-  Swizzle<Vec, 3, 3, 1, 1> A3##A3##A1##A1;        \
-  Swizzle<Vec, 3, 3, 1, 2> A3##A3##A1##A2;        \
-  Swizzle<Vec, 3, 3, 1, 3> A3##A3##A1##A3;        \
-  Swizzle<Vec, 3, 3, 2, 0> A3##A3##A2##A0;        \
-  Swizzle<Vec, 3, 3, 2, 1> A3##A3##A2##A1;        \
-  Swizzle<Vec, 3, 3, 2, 2> A3##A3##A2##A2;        \
-  Swizzle<Vec, 3, 3, 2, 3> A3##A3##A2##A3;        \
-  Swizzle<Vec, 3, 3, 3, 0> A3##A3##A3##A0;        \
-  Swizzle<Vec, 3, 3, 3, 1> A3##A3##A3##A1;        \
-  Swizzle<Vec, 3, 3, 3, 2> A3##A3##A3##A2;        \
-  Swizzle<Vec, 3, 3, 3, 3> A3##A3##A3##A3;
+#define SWIZZLE_VEC4_TO_VEC4(Vec, A0, A1, A2, A3)                \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 0> A0##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 1> A0##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 2> A0##A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 0, 3> A0##A0##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 0> A0##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 1> A0##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 2> A0##A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 1, 3> A0##A0##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2, 0> A0##A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2, 1> A0##A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2, 2> A0##A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 2, 3> A0##A0##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 3, 0> A0##A0##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 3, 1> A0##A0##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 3, 2> A0##A0##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 0, 3, 3> A0##A0##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 0> A0##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 1> A0##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 2> A0##A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 0, 3> A0##A1##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 0> A0##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 1> A0##A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 2> A0##A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 1, 3> A0##A1##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2, 0> A0##A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2, 1> A0##A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2, 2> A0##A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 2, 3> A0##A1##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 3, 0> A0##A1##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 3, 1> A0##A1##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 3, 2> A0##A1##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 1, 3, 3> A0##A1##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0, 0> A0##A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0, 1> A0##A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0, 2> A0##A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 0, 3> A0##A2##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1, 0> A0##A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1, 1> A0##A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1, 2> A0##A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 1, 3> A0##A2##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2, 0> A0##A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2, 1> A0##A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2, 2> A0##A2##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 2, 3> A0##A2##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 3, 0> A0##A2##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 3, 1> A0##A2##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 3, 2> A0##A2##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 2, 3, 3> A0##A2##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 0, 0> A0##A3##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 0, 1> A0##A3##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 0, 2> A0##A3##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 0, 3> A0##A3##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 1, 0> A0##A3##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 1, 1> A0##A3##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 1, 2> A0##A3##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 1, 3> A0##A3##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 2, 0> A0##A3##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 2, 1> A0##A3##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 2, 2> A0##A3##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 2, 3> A0##A3##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 3, 0> A0##A3##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 3, 1> A0##A3##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 3, 2> A0##A3##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 0, 3, 3, 3> A0##A3##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 0> A1##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 1> A1##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 2> A1##A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 0, 3> A1##A0##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 0> A1##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 1> A1##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 2> A1##A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 1, 3> A1##A0##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2, 0> A1##A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2, 1> A1##A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2, 2> A1##A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 2, 3> A1##A0##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 3, 0> A1##A0##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 3, 1> A1##A0##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 3, 2> A1##A0##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 0, 3, 3> A1##A0##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 0> A1##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 1> A1##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 2> A1##A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 0, 3> A1##A1##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 0> A1##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 1> A1##A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 2> A1##A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 1, 3> A1##A1##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2, 0> A1##A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2, 1> A1##A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2, 2> A1##A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 2, 3> A1##A1##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 3, 0> A1##A1##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 3, 1> A1##A1##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 3, 2> A1##A1##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 1, 3, 3> A1##A1##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0, 0> A1##A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0, 1> A1##A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0, 2> A1##A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 0, 3> A1##A2##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1, 0> A1##A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1, 1> A1##A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1, 2> A1##A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 1, 3> A1##A2##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2, 0> A1##A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2, 1> A1##A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2, 2> A1##A2##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 2, 3> A1##A2##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 3, 0> A1##A2##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 3, 1> A1##A2##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 3, 2> A1##A2##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 2, 3, 3> A1##A2##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 0, 0> A1##A3##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 0, 1> A1##A3##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 0, 2> A1##A3##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 0, 3> A1##A3##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 1, 0> A1##A3##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 1, 1> A1##A3##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 1, 2> A1##A3##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 1, 3> A1##A3##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 2, 0> A1##A3##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 2, 1> A1##A3##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 2, 2> A1##A3##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 2, 3> A1##A3##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 3, 0> A1##A3##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 3, 1> A1##A3##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 3, 2> A1##A3##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 1, 3, 3, 3> A1##A3##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0, 0> A2##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0, 1> A2##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0, 2> A2##A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 0, 3> A2##A0##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1, 0> A2##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1, 1> A2##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1, 2> A2##A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 1, 3> A2##A0##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2, 0> A2##A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2, 1> A2##A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2, 2> A2##A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 2, 3> A2##A0##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 3, 0> A2##A0##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 3, 1> A2##A0##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 3, 2> A2##A0##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 0, 3, 3> A2##A0##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0, 0> A2##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0, 1> A2##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0, 2> A2##A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 0, 3> A2##A1##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1, 0> A2##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1, 1> A2##A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1, 2> A2##A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 1, 3> A2##A1##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2, 0> A2##A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2, 1> A2##A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2, 2> A2##A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 2, 3> A2##A1##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 3, 0> A2##A1##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 3, 1> A2##A1##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 3, 2> A2##A1##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 1, 3, 3> A2##A1##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0, 0> A2##A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0, 1> A2##A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0, 2> A2##A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 0, 3> A2##A2##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1, 0> A2##A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1, 1> A2##A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1, 2> A2##A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 1, 3> A2##A2##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2, 0> A2##A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2, 1> A2##A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2, 2> A2##A2##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 2, 3> A2##A2##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 3, 0> A2##A2##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 3, 1> A2##A2##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 3, 2> A2##A2##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 2, 3, 3> A2##A2##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 0, 0> A2##A3##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 0, 1> A2##A3##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 0, 2> A2##A3##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 0, 3> A2##A3##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 1, 0> A2##A3##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 1, 1> A2##A3##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 1, 2> A2##A3##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 1, 3> A2##A3##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 2, 0> A2##A3##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 2, 1> A2##A3##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 2, 2> A2##A3##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 2, 3> A2##A3##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 3, 0> A2##A3##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 3, 1> A2##A3##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 3, 2> A2##A3##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 2, 3, 3, 3> A2##A3##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 0, 0> A3##A0##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 0, 1> A3##A0##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 0, 2> A3##A0##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 0, 3> A3##A0##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 1, 0> A3##A0##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 1, 1> A3##A0##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 1, 2> A3##A0##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 1, 3> A3##A0##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 2, 0> A3##A0##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 2, 1> A3##A0##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 2, 2> A3##A0##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 2, 3> A3##A0##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 3, 0> A3##A0##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 3, 1> A3##A0##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 3, 2> A3##A0##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 0, 3, 3> A3##A0##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 0, 0> A3##A1##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 0, 1> A3##A1##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 0, 2> A3##A1##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 0, 3> A3##A1##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 1, 0> A3##A1##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 1, 1> A3##A1##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 1, 2> A3##A1##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 1, 3> A3##A1##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 2, 0> A3##A1##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 2, 1> A3##A1##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 2, 2> A3##A1##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 2, 3> A3##A1##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 3, 0> A3##A1##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 3, 1> A3##A1##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 3, 2> A3##A1##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 1, 3, 3> A3##A1##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 0, 0> A3##A2##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 0, 1> A3##A2##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 0, 2> A3##A2##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 0, 3> A3##A2##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 1, 0> A3##A2##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 1, 1> A3##A2##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 1, 2> A3##A2##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 1, 3> A3##A2##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 2, 0> A3##A2##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 2, 1> A3##A2##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 2, 2> A3##A2##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 2, 3> A3##A2##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 3, 0> A3##A2##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 3, 1> A3##A2##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 3, 2> A3##A2##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 2, 3, 3> A3##A2##A3##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 0, 0> A3##A3##A0##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 0, 1> A3##A3##A0##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 0, 2> A3##A3##A0##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 0, 3> A3##A3##A0##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 1, 0> A3##A3##A1##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 1, 1> A3##A3##A1##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 1, 2> A3##A3##A1##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 1, 3> A3##A3##A1##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 2, 0> A3##A3##A2##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 2, 1> A3##A3##A2##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 2, 2> A3##A3##A2##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 2, 3> A3##A3##A2##A3; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 3, 0> A3##A3##A3##A0; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 3, 1> A3##A3##A3##A1; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 3, 2> A3##A3##A3##A2; \
+  [[no_unique_address]] Swizzle<Vec, 3, 3, 3, 3> A3##A3##A3##A3;
 } // namespace genebits::engine
 
 #endif

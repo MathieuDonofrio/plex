@@ -28,22 +28,7 @@ public:
 
   union
   {
-    T data[length];
-
-    struct
-    {
-      T x, y, z;
-    };
-
-    struct
-    {
-      T r, g, b;
-    };
-
-    struct
-    {
-      T s, t, p;
-    };
+    T x, r, s;
 
     SWIZZLE_VEC3_TO_VEC2(Vec, x, y, z);
     SWIZZLE_VEC3_TO_VEC2(Vec, r, g, b);
@@ -57,6 +42,36 @@ public:
     SWIZZLE_VEC3_TO_VEC4(Vec, r, g, b);
     SWIZZLE_VEC3_TO_VEC4(Vec, s, t, p);
   };
+
+  union
+  {
+    T y, g, t;
+  };
+
+  union
+  {
+    T z, b, p;
+  };
+
+  ///
+  /// Returns a pointer to the first element of the vector.
+  ///
+  /// @return A pointer to the first element of the vector.
+  ///
+  [[nodiscard]] constexpr const T* data() const noexcept
+  {
+    return &x;
+  }
+
+  ///
+  /// Returns a pointer to the first element of the vector.
+  ///
+  /// @return A pointer to the first element of the vector.
+  ///
+  [[nodiscard]] constexpr T* data() noexcept
+  {
+    return &x;
+  }
 
 public:
   ///
@@ -474,7 +489,7 @@ public:
     }
     else
     {
-      return data[index];
+      return data()[index];
     }
   }
 
@@ -499,7 +514,7 @@ public:
     }
     else
     {
-      return data[index];
+      return data()[index];
     }
   }
 

@@ -154,7 +154,7 @@ constexpr Vec<float, 4> Sqrt(const Vec<float, 4>& v)
   else
   {
     Vec<float, 4> result;
-    _mm_store_ps(result.data, _mm_sqrt_ps(_mm_load_ps(v.data)));
+    _mm_store_ps(result.data(), _mm_sqrt_ps(_mm_load_ps(v.data())));
     return result;
   }
 }
@@ -176,15 +176,15 @@ requires(L == 2 || L == 4) constexpr Vec<double, L> Sqrt(const Vec<double, L>& v
     if constexpr (L == 4)
     {
       Vec<double, 4> result;
-      _mm256_store_pd(result.data, _mm256_sqrt_pd(_mm256_load_pd(v.data)));
+      _mm256_store_pd(result.data(), _mm256_sqrt_pd(_mm256_load_pd(v.data())));
       return result;
     }
     else
 #endif
     {
       alignas(16) Vec<double, L> result;
-      _mm_store_pd(result.data, _mm_sqrt_pd(_mm_load_pd(v.data)));
-      if constexpr (L == 4) _mm_store_pd(result.data + 2, _mm_sqrt_pd(_mm_load_pd(v.data + 2)));
+      _mm_store_pd(result.data(), _mm_sqrt_pd(_mm_load_pd(v.data())));
+      if constexpr (L == 4) _mm_store_pd(result.data() + 2, _mm_sqrt_pd(_mm_load_pd(v.data() + 2)));
       return result;
     }
   }
@@ -212,7 +212,7 @@ constexpr Vec<float, 4> RSqrt(const Vec<float, 4>& v)
   else
   {
     Vec<float, 4> result;
-    _mm_store_ps(result.data, _mm_rsqrt_ps(_mm_load_ps(v.data)));
+    _mm_store_ps(result.data(), _mm_rsqrt_ps(_mm_load_ps(v.data())));
     return result;
   }
 }

@@ -302,8 +302,6 @@ TYPED_TEST(Swizzle_Tests, AddAsign_Vec)
   EXPECT_EQ(vec3.x, 6);
 }
 
-//
-
 TYPED_TEST(Swizzle_Tests, MultAssign_Scalar)
 {
   using Vec2 = Vec<TypeParam, 2>;

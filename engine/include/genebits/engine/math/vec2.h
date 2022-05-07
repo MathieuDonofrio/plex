@@ -28,22 +28,7 @@ public:
 
   union
   {
-    T data[length];
-
-    struct
-    {
-      T x, y;
-    };
-
-    struct
-    {
-      T r, g;
-    };
-
-    struct
-    {
-      T s, t;
-    };
+    T x, r, s;
 
     SWIZZLE_VEC2_TO_VEC2(Vec, x, y);
     SWIZZLE_VEC2_TO_VEC2(Vec, r, g);
@@ -57,6 +42,31 @@ public:
     SWIZZLE_VEC2_TO_VEC4(Vec, r, g);
     SWIZZLE_VEC2_TO_VEC4(Vec, s, t);
   };
+
+  union
+  {
+    T y, g, t;
+  };
+
+  ///
+  /// Returns a pointer to the first element of the vector.
+  ///
+  /// @return A pointer to the first element of the vector.
+  ///
+  [[nodiscard]] constexpr const T* data() const noexcept
+  {
+    return &x;
+  }
+
+  ///
+  /// Returns a pointer to the first element of the vector.
+  ///
+  /// @return A pointer to the first element of the vector.
+  ///
+  [[nodiscard]] constexpr T* data() noexcept
+  {
+    return &x;
+  }
 
 public:
   ///
@@ -439,7 +449,6 @@ public:
     ASSERT(index < length, "Vector component out of range");
     if (std::is_constant_evaluated())
     {
-      // Avoids non-active union member access during constant evaluation.
       switch (index)
       {
       default:
@@ -449,7 +458,7 @@ public:
     }
     else
     {
-      return data[index];
+      return data()[index];
     }
   }
 
@@ -463,7 +472,6 @@ public:
     ASSERT(index < length, "Vector component out of range");
     if (std::is_constant_evaluated())
     {
-      // Avoids non-active union member access during constant evaluation.
       switch (index)
       {
       default:
@@ -473,7 +481,7 @@ public:
     }
     else
     {
-      return data[index];
+      return data()[index];
     }
   }
 
