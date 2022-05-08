@@ -21,6 +21,13 @@ namespace genebits::engine
   VEC_UNROLLED_LOOP_ITERATION((L), 2, expression) \
   VEC_UNROLLED_LOOP_ITERATION((L), 3, expression)
 
+///
+/// Returns the absolute value of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the absolute value of.
+///
+/// @return The absolute value of all components of the vector-type.
+///
 template<typename T, size_t L>
 constexpr Vec<T, L> Abs(const Vec<T, L>& v)
 {
@@ -29,6 +36,13 @@ constexpr Vec<T, L> Abs(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the maximum value of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the maximum value of.
+///
+/// @return The maximum value of all components of the vector-type.
+///
 template<typename T, size_t L>
 constexpr Vec<T, L> Max(const Vec<T, L>& v1, const Vec<T, L>& v2)
 {
@@ -37,6 +51,13 @@ constexpr Vec<T, L> Max(const Vec<T, L>& v1, const Vec<T, L>& v2)
   return result;
 }
 
+///
+/// Returns the minimum value of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the minimum value of.
+///
+/// @return The minimum value of all components of the vector-type.
+///
 template<typename T, size_t L>
 constexpr Vec<T, L> Min(const Vec<T, L>& v1, const Vec<T, L>& v2)
 {
@@ -45,6 +66,13 @@ constexpr Vec<T, L> Min(const Vec<T, L>& v1, const Vec<T, L>& v2)
   return result;
 }
 
+///
+/// Returns the ceiled value of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the ceiled value of.
+///
+/// @return The ceiled value of all components of the vector-type.
+///
 template<typename T, size_t L>
 constexpr Vec<T, L> Ceil(const Vec<T, L>& v)
 {
@@ -53,6 +81,13 @@ constexpr Vec<T, L> Ceil(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the floored value of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the floored value of.
+///
+/// @return The floored value of all components of the vector-type.
+///
 template<typename T, size_t L>
 constexpr Vec<T, L> Floor(const Vec<T, L>& v)
 {
@@ -61,6 +96,13 @@ constexpr Vec<T, L> Floor(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the rounded value of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the rounded value of.
+///
+/// @return The rounded value of all components of the vector-type.
+///
 template<typename T, size_t L>
 constexpr Vec<T, L> Round(const Vec<T, L>& v)
 {
@@ -69,6 +111,13 @@ constexpr Vec<T, L> Round(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the exponentiated value of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the exponentiated value of.
+///
+/// @return The exponentiated value of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Exp(const Vec<T, L>& v)
 {
@@ -77,6 +126,13 @@ inline Vec<T, L> Exp(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the 2-exponentiated value of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the 2-exponentiated value of.
+///
+/// @return The 2-exponentiated value of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Exp2(const Vec<T, L>& v)
 {
@@ -85,6 +141,13 @@ inline Vec<T, L> Exp2(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the natural logarithm of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the natural logarithm of.
+///
+/// @return The natural logarithm of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Log(const Vec<T, L>& v)
 {
@@ -93,6 +156,13 @@ inline Vec<T, L> Log(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the base-2 logarithm of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the base-2 logarithm of.
+///
+/// @return The base-2 logarithm of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Log2(const Vec<T, L>& v)
 {
@@ -101,6 +171,29 @@ inline Vec<T, L> Log2(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the base-10 logarithm of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the base-2 logarithm of.
+///
+/// @return The base-10 logarithm of all components of the vector-type.
+///
+template<typename T, size_t L>
+inline Vec<T, L> Log10(const Vec<T, L>& v)
+{
+  Vec<T, L> result;
+  VEC_UNROLLED_LOOP(L, result[i] = Log10(v[i]));
+  return result;
+}
+
+///
+/// Returns the base raised to the exponent of all components of the bases vector-type and the exponents vector-type.
+///
+/// @param[in] bases The vector-type to get the base raised to the exponent of.
+/// @param[in] exponents The vector-type to get the exponent of.
+///
+/// @return The base raised to the exponent of all components of the bases vector-type and the exponents vector-type.
+///
 template<typename T, std::integral U, size_t L>
 constexpr Vec<T, L> Pow(const Vec<T, L>& bases, const Vec<int, L>& exponents)
 {
@@ -109,6 +202,14 @@ constexpr Vec<T, L> Pow(const Vec<T, L>& bases, const Vec<int, L>& exponents)
   return result;
 }
 
+///
+/// Returns the base raised to the exponent of all components of the bases vector-type and exponent.
+///
+/// @param[in] bases The vector-type to get the base raised to the exponent of.
+/// @param[in] exp The exponent.
+///
+/// @return The base raised to the exponent of all components of the bases vector-type and exponent.
+///
 template<typename T, std::integral U, size_t L>
 constexpr Vec<T, L> Pow(const Vec<T, L>& bases, U exp)
 {
@@ -117,6 +218,14 @@ constexpr Vec<T, L> Pow(const Vec<T, L>& bases, U exp)
   return result;
 }
 
+///
+/// Returns the base raised to the exponent of all components of the bases vector-type and the exponents vector-type.
+///
+/// @param[in] bases The vector-type to get the base raised to the exponent of.
+/// @param[in] exponents The vector-type to get the exponent of.
+///
+/// @return The base raised to the exponent of all components of the bases vector-type and the exponents vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Pow(const Vec<T, L>& bases, const Vec<T, L>& exponents)
 {
@@ -125,6 +234,14 @@ inline Vec<T, L> Pow(const Vec<T, L>& bases, const Vec<T, L>& exponents)
   return result;
 }
 
+///
+/// Returns the base raised to the exponent of all components of the bases vector-type and exponent.
+///
+/// @param[in] bases The vector-type to get the base raised to the exponent of.
+/// @param[in] exp The exponent.
+///
+/// @return The base raised to the exponent of all components of the bases vector-type and exponent.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Pow(const Vec<T, L>& bases, T exp)
 {
@@ -133,6 +250,13 @@ inline Vec<T, L> Pow(const Vec<T, L>& bases, T exp)
   return result;
 }
 
+///
+/// Returns the square root of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the square root of.
+///
+/// @return The square root of all components of the vector-type.
+///
 template<typename T, size_t L>
 constexpr Vec<T, L> Sqrt(const Vec<T, L>& v)
 {
@@ -191,6 +315,13 @@ requires(L == 2 || L == 4) constexpr Vec<double, L> Sqrt(const Vec<double, L>& v
 }
 #endif
 
+///
+/// Returns the approximate reciprocal square root of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the reciprocal square root of.
+///
+/// @return The approximate reciprocal square root of all components of the vector-type.
+///
 template<typename T, size_t L>
 constexpr Vec<T, L> RSqrt(const Vec<T, L>& v)
 {
@@ -218,6 +349,13 @@ constexpr Vec<float, 4> RSqrt(const Vec<float, 4>& v)
 }
 #endif
 
+///
+/// Returns the sin of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the sin of.
+///
+/// @return The sin of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Sin(const Vec<T, L>& v)
 {
@@ -226,6 +364,13 @@ inline Vec<T, L> Sin(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the cos of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the cos of.
+///
+/// @return The cos of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Cos(const Vec<T, L>& v)
 {
@@ -234,6 +379,13 @@ inline Vec<T, L> Cos(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the tan of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the tan of.
+///
+/// @return The tan of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> Tan(const Vec<T, L>& v)
 {
@@ -242,6 +394,13 @@ inline Vec<T, L> Tan(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the arcsin of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the arcsin of.
+///
+/// @return The arcsin of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> ASin(const Vec<T, L>& v)
 {
@@ -250,6 +409,13 @@ inline Vec<T, L> ASin(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the arccos of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the arccos of.
+///
+/// @return The arccos of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> ACos(const Vec<T, L>& v)
 {
@@ -258,6 +424,13 @@ inline Vec<T, L> ACos(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the arctan of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the arctan of.
+///
+/// @return The arctan of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> ATan(const Vec<T, L>& v)
 {
@@ -266,6 +439,13 @@ inline Vec<T, L> ATan(const Vec<T, L>& v)
   return result;
 }
 
+///
+/// Returns the arctan2 of all components of the vector-type.
+///
+/// @param[in] x The vector-type to get the arctan2 of.
+///
+/// @return The arctan2 of all components of the vector-type.
+///
 template<typename T, size_t L>
 inline Vec<T, L> ATan(const Vec<T, L>& v1, const Vec<T, L>& v2)
 {

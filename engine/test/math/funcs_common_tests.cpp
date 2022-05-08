@@ -23,7 +23,24 @@ namespace
   }
 
   template<typename T, typename Iterator>
-  void ExpectNearRange(Iterator begin, Iterator otherBegin, Iterator end, long long tolerance = 1)
+  void ExpectEQRange(Iterator begin, Iterator otherBegin, Iterator end)
+  {
+    for (Iterator it = begin; it != end; ++it, ++otherBegin)
+    {
+      if constexpr (std::is_same_v<T, float>) EXPECT_FLOAT_EQ(*it, *otherBegin);
+      else if constexpr (std::is_same_v<T, double> || std::is_same_v<T, long double>)
+      {
+        EXPECT_DOUBLE_EQ(*it, *otherBegin);
+      }
+      else
+      {
+        EXPECT_EQ(*it, *otherBegin);
+      }
+    }
+  }
+
+  template<std::floating_point T, typename Iterator>
+  void ExpectNearRange(Iterator begin, Iterator otherBegin, Iterator end, T tolerance = 0.00001)
   {
     for (Iterator it = begin; it != end; ++it, ++otherBegin)
     {
@@ -34,15 +51,8 @@ namespace
       }
       else
       {
-        if (Abs(*it - *otherBegin) > std::numeric_limits<T>::epsilon() && Abs(*otherBegin) > 0.000001)
-        {
-          auto sum = Abs(*it + *otherBegin);
-          if (sum < 1) sum = 1;
-
-          auto allowed_diff = std::numeric_limits<T>::epsilon() * sum * tolerance;
-
-          EXPECT_NEAR(*it, *otherBegin, allowed_diff);
-        }
+        T error = Abs(1 - *it / *otherBegin);
+        EXPECT_LE(error, tolerance); // Allow 0.07% error
       }
     }
   }
@@ -272,7 +282,7 @@ TEST(Func_Common_Tests, Sqrt_Float_CTEqRT)
   constexpr auto ct_values = Generate<1000>(0.0f, 0.5f, [](float x) { return Sqrt(x); });
   auto rt_values = Generate<1000>(0.0f, 0.5f, [](float x) { return Sqrt(x); });
 
-  ExpectNearRange<float>(ct_values.begin(), rt_values.cbegin(), ct_values.end());
+  ExpectEQRange<float>(ct_values.begin(), rt_values.cbegin(), ct_values.end());
 }
 
 TEST(Func_Common_Tests, Sqrt_Double_CTEqRT)
@@ -280,7 +290,7 @@ TEST(Func_Common_Tests, Sqrt_Double_CTEqRT)
   constexpr auto ct_values = Generate<1000>(0.0, 0.5, [](double x) { return Sqrt(x); });
   auto rt_values = Generate<1000>(0.0, 0.5, [](double x) { return Sqrt(x); });
 
-  ExpectNearRange<double>(ct_values.begin(), rt_values.cbegin(), ct_values.end());
+  ExpectEQRange<double>(ct_values.begin(), rt_values.cbegin(), ct_values.end());
 }
 
 TEST(Func_Common_Tests, RSqrt_Float_CTEqRT)
@@ -288,7 +298,7 @@ TEST(Func_Common_Tests, RSqrt_Float_CTEqRT)
   constexpr auto ct_values = Generate<1000>(0.0f, 0.5f, [](float x) { return RSqrt(x); });
   auto rt_values = Generate<1000>(0.0f, 0.5f, [](float x) { return RSqrt(x); });
 
-  ExpectNearRange<float>(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 1400);
+  ExpectNearRange<float>(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 0.007f);
 }
 
 TEST(Func_Common_Tests, RSqrt_Double_CTEqRT)
@@ -296,108 +306,90 @@ TEST(Func_Common_Tests, RSqrt_Double_CTEqRT)
   constexpr auto ct_values = Generate<1000>(0.0, 0.5, [](double x) { return RSqrt(x); });
   auto rt_values = Generate<1000>(0.0, 0.5, [](double x) { return RSqrt(x); });
 
-  ExpectNearRange<double>(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 11000000000ll);
+  ExpectNearRange<double>(ct_values.begin(), rt_values.cbegin(), ct_values.end(), 0.00001);
 }
 
 TEST(Func_Common_Tests, RSqrt_Float_SmallAccuracy)
 {
-  for (float x = -10.0f; x < 10.0f; x += 0.01f)
+  for (float x = 0.01f; x < 10.0f; x += 0.01f)
   {
     float value1 = RSqrt(x);
     float value2 = std::sqrt(x);
 
-    if (!std::isnan(value1) && !std::isnan(1.0f / value2) && !std::isinf(value1) && !std::isinf(1.0f / value2))
-    {
-      float error = Abs(1 - value1 * value2);
-      EXPECT_LE(error, 0.0007); // Allow 0.07% error
+    float error = Abs(1 - value1 * value2);
+    EXPECT_LE(error, 0.0007); // Allow 0.07% error
 
-      EXPECT_NEAR(value1, 1.0f / value2, 0.06f); // Extra
-    }
+    EXPECT_NEAR(value1, 1.0f / value2, 0.06f); // Extra
   }
 }
 
 TEST(Func_Common_Tests, RSqrt_Float_MediumAccuracy)
 {
-  for (float x = -10000.0f; x < 10000.0f; x += 0.1f)
+  for (float x = 0.1f; x < 10000.0f; x += 0.1f)
   {
     float value1 = RSqrt(x);
     float value2 = std::sqrt(x);
 
-    if (!std::isnan(value1) && !std::isnan(1.0f / value2) && !std::isinf(value1) && !std::isinf(1.0f / value2))
-    {
-      float error = Abs(1 - value1 * value2);
-      EXPECT_LE(error, 0.0007); // Allow 0.07% error
+    float error = Abs(1 - value1 * value2);
+    EXPECT_LE(error, 0.0007); // Allow 0.07% error
 
-      EXPECT_NEAR(value1, 1.0f / value2, 0.01f); // Extra
-    }
+    EXPECT_NEAR(value1, 1.0f / value2, 0.01f); // Extra
   }
 }
 
 TEST(Func_Common_Tests, RSqrt_Float_LargeAccuracy)
 {
-  for (float x = -1000000.0f; x < 1000000.0f; x += 10)
+  for (float x = 10; x < 1000000.0f; x += 10)
   {
     float value1 = RSqrt(x);
     float value2 = std::sqrt(x);
 
-    if (!std::isnan(value1) && !std::isnan(1.0f / value2) && !std::isinf(value1) && !std::isinf(1.0f / value2))
-    {
-      float error = Abs(1 - value1 * value2);
-      EXPECT_LE(error, 0.0007); // Allow 0.07% error
+    float error = Abs(1 - value1 * value2);
+    EXPECT_LE(error, 0.0007); // Allow 0.07% error
 
-      EXPECT_NEAR(value1, 1.0f / value2, 0.01f); // Extra
-    }
+    EXPECT_NEAR(value1, 1.0f / value2, 0.01f); // Extra
   }
 }
 
 TEST(Func_Common_Tests, RSqrt_Double_SmallAccuracy)
 {
-  for (double x = -10.0; x < 10.0; x += 0.01)
+  for (double x = 0.01; x < 10.0; x += 0.01)
   {
     double value1 = RSqrt(x);
     double value2 = std::sqrt(x);
 
-    if (!std::isnan(value1) && !std::isnan(1.0 / value2) && !std::isinf(value1) && !std::isinf(1.0 / value2))
-    {
-      double error = Abs(1 - value1 * value2);
-      EXPECT_LE(error, 0.00001); // Allow 0.001% error
+    double error = Abs(1 - value1 * value2);
+    EXPECT_LE(error, 0.00001); // Allow 0.001% error
 
-      EXPECT_NEAR(value1, 1.0 / value2, 0.001); // Extra
-    }
+    EXPECT_NEAR(value1, 1.0 / value2, 0.001); // Extra
   }
 }
 
 TEST(Func_Common_Tests, RSqrt_Double_MediumAccuracy)
 {
-  for (double x = -10000.0; x < 10000.0; x += 0.1)
+  for (double x = 0.1; x < 10000.0; x += 0.1)
   {
     double value1 = RSqrt(x);
     double value2 = std::sqrt(x);
 
-    if (!std::isnan(value1) && !std::isnan(1.0 / value2) && !std::isinf(value1) && !std::isinf(1.0 / value2))
-    {
-      double error = Abs(1 - value1 * value2);
-      EXPECT_LE(error, 0.00001); // Allow 0.001% error
+    double error = Abs(1 - value1 * value2);
+    EXPECT_LE(error, 0.00001); // Allow 0.001% error
 
-      EXPECT_NEAR(value1, 1.0 / value2, 0.001); // Extra
-    }
+    EXPECT_NEAR(value1, 1.0 / value2, 0.001); // Extra
   }
 }
 
 TEST(Func_Common_Tests, RSqrt_Double_LargeAccuracy)
 {
-  for (double x = -1000000.0; x < 1000000.0; x += 10)
+  for (double x = 10; x < 1000000.0; x += 10)
   {
     double value1 = RSqrt(x);
     double value2 = std::sqrt(x);
 
-    if (!std::isnan(value1) && !std::isnan(1.0 / value2) && !std::isinf(value1) && !std::isinf(1.0 / value2))
-    {
-      double error = Abs(1 - value1 * value2);
-      EXPECT_LE(error, 0.00001); // Allow 0.001% error
+    double error = Abs(1 - value1 * value2);
+    EXPECT_LE(error, 0.00001); // Allow 0.001% error
 
-      EXPECT_NEAR(value1, 1.0 / value2, 0.001); // Extra
-    }
+    EXPECT_NEAR(value1, 1.0 / value2, 0.001); // Extra
   }
 }
 
