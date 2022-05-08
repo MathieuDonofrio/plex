@@ -1,4 +1,5 @@
 #include "genebits/engine/containers/vector.h"
+#include "genebits/engine/utilities/ref.h"
 
 #include <benchmark/benchmark.h>
 
@@ -80,6 +81,38 @@ static void Vector_STD_Vector_PushBack(benchmark::State& state)
 }
 
 BENCHMARK(Vector_STD_Vector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+
+static void Vector_STD_Vector_Ref_PushBack(benchmark::State& state)
+{
+  const size_t amount = state.range(0);
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    std::vector<Ref<size_t>> items;
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      items.push_back(MakeRef<size_t>(i));
+    }
+
+    std::vector<Ref<size_t>> vector;
+
+    benchmark::DoNotOptimize(vector);
+
+    state.ResumeTiming();
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      vector.push_back(items[i]);
+    }
+  }
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(Vector_STD_Vector_Ref_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void Vector_STD_Vector_NonTrivial_PushBack(benchmark::State& state)
 {
@@ -182,6 +215,38 @@ static void Vector_PushBack(benchmark::State& state)
 }
 
 BENCHMARK(Vector_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+
+static void Vector_Ref_PushBack(benchmark::State& state)
+{
+  const size_t amount = state.range(0);
+
+  for (auto _ : state)
+  {
+    state.PauseTiming();
+
+    Vector<Ref<size_t>> items;
+
+    for (size_t i = 0; i != amount; i++)
+    {
+      items.PushBack(MakeRef<size_t>(i));
+    }
+
+    Vector<Ref<size_t>> vector;
+
+    benchmark::DoNotOptimize(vector);
+
+    state.ResumeTiming();
+
+    for (size_t i = 0; i != amount; i++)
+    {
+      vector.PushBack(items[i]);
+    }
+  }
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(Vector_Ref_PushBack)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 
 static void Vector_NonTrivial_PushBack(benchmark::State& state)
 {

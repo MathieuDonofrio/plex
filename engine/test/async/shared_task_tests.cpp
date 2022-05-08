@@ -58,35 +58,9 @@ TEST(SharedTask_Tests, CoAwait_Result_ReadyAndCorrectValue)
 
 TEST(SharedTask_Tests, CoAwait_MultipleSync_NoStackOverflow)
 {
-  const size_t amount = 1'000'000; // More than this and we risk getting a stack overflow
+  const size_t amount = 1'000'000;
 
   auto make_task = [&]() -> SharedTask<int> { co_return 1; };
-
-  size_t result = 0;
-
-  SyncWait(
-    [&]() -> Task<>
-    {
-      for (size_t i = 0; i < amount; ++i)
-      {
-        result += co_await make_task();
-      }
-    }());
-
-  EXPECT_EQ(result, amount);
-}
-
-TEST(SharedTask_Tests, CoAwait_MultipleAsync_NoStackOverflow)
-{
-  const size_t amount = 100'000;
-
-  ThreadPool pool;
-
-  auto make_task = [&]() -> SharedTask<int>
-  {
-    co_await pool.Schedule();
-    co_return 1;
-  };
 
   size_t result = 0;
 

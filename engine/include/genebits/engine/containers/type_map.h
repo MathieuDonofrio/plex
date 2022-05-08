@@ -16,11 +16,11 @@ template<typename Type>
 concept TypeMapValueType = VectorType<Type> && std::is_default_constructible_v<Type>;
 
 ///
-/// Map used to map types to values where the type is the key.
+/// Maps types to values where the type is used efficiently generate a runtime key based off the type name.
 ///
 /// The key is obtained from type using TypeInfo unique identifiers.
 ///
-/// Much faster than using a normal map.
+/// Much faster than using a normal map when a type is required as a key.
 ///
 /// @tparam Value Value to map types with.
 ///
@@ -44,7 +44,7 @@ public:
 
     if (values_.size() <= index) [[unlikely]]
     {
-      ASSERT(index < 100000, "To many types"); // Highly unlikely the map exceeds 100k types, probably a bug.
+      ASSERT(index < 100000, "To many types, probably a bug"); // Highly unlikely the map exceeds 100k types
 
       values_.Resize(index + 1);
     }
@@ -57,7 +57,7 @@ public:
   ///
   /// @warning
   ///     Make sure Assure was called at least once for this type. Or else
-  ///     this method is undefined behaviour.
+  ///     this method's behaviour is undefined.
   ///
   /// @tparam Type The type to use as key.
   ///
@@ -75,7 +75,8 @@ public:
   /// Returns the value reference for the type key.
   ///
   /// @warning
-  ///     Make sure Assure was called at least once for this type. Otherwise, behaviour is undefined.
+  ///     Make sure Assure was called at least once for this type. Or else
+  ///     this method's behaviour is undefined.
   ///
   /// @tparam Type The type to use as key.
   ///
@@ -90,6 +91,10 @@ public:
 private:
   ///
   /// Obtains the key for a type.
+  ///
+  /// Uses TypeInfo to generate an identifier for the type from the TypeMap<Value> sequence. Identifiers for the type
+  /// are not the same as the ones from the global sequence. This means that the sequence used for the map is less
+  /// "polluted" than using a naive approach, resulting in less memory overhead and cache misses.
   ///
   /// @tparam Type The type to obtain key for.
   ///

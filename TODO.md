@@ -30,15 +30,57 @@ OS
 ECS
 
 - [ ] Archetype swapping
+- [ ] Hierarchies
+- [ ] Scripts
+- [ ] Resources
+- [ ] Pipelined parallel systems
 - [ ] Phase parallelization statistics (for debug/profiling)
 - [ ] Phase dynamic reordering optimization?
+- [ ] For large components (or medium non-relocatable) use pointer-based storage. (Maybe)
+
+Events
+
+- [ ] Rewrite event system to be integrated with ECS
 
 Async
 
 - [ ] WhenAll/WhenAllReady optimizations and benchmarks
+- [ ] Thread local storage
+
+IO
+
+- [ ] Serialization/Deserialization
+- [ ] YAML Parser
+- [ ] JSON Parser
+- [ ] XML Parser
+
+Audio
+
+- [ ] OpenAL Integration
+
+Physics
+
+- [ ] Custom Top-Down 2D Physics
+- [ ] Box2D Integration (2D)
+- [ ] Nvidia PhysX Integration (3D)
+
+Editor
+
+- [ ] IMGUI Integration
+
+Math
+
+- [ ] Non-square matrices
+- [ ] Optimize matrix computations
+- [ ] Improve matrix and vector hashing
+- [ ] Make exponential functions constexpr
+- [ ] Make power functions constexpr
+- [ ] Make trigonometric functions constexpr
+- [ ] Add documentation
 
 Containers
 
+- [ ] Bitset (SIMD optimized)
 - [ ] Map
 - [ ] Set
 - [ ] Vector range operations
@@ -49,9 +91,11 @@ Utilities
 
 - [ ] TypeInfo PrettyName (Same for every compiler)
 - [ ] TypeInfo UniqueId Investigation & Cross-Boundaries tests
+- [ ] TypeInfo use class static vs function static (2x performance on prototype)
 - [ ] Smart pointer casting
 - [ ] Intrusive to non-intrusive ref conversion. (Would allow better type erasure)
 - [ ] AllocateRef, AllocateRefWithDeleter and MakeRefWithDeleter
+- [ ] UUID
 
 Other
 
@@ -59,6 +103,8 @@ Other
 - [ ] Precompiled headers
 - [ ] Added info about tests and benchmark to style guide
 - [ ] Add CONTRIBUTING.md
+- [ ] Sanitizers
+- [ ] cppcheck
 
 Official C++ 20 Support
 
