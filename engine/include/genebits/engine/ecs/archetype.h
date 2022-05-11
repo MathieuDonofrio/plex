@@ -3,11 +3,10 @@
 
 #include <algorithm>
 #include <memory>
-#include <mutex>
-#include <type_traits>
 
 #include "genebits/engine/containers/vector.h"
 #include "genebits/engine/utilities/type_info.h"
+#include "genebits/engine/utilities/type_traits.h"
 
 namespace genebits::engine
 {
@@ -175,19 +174,19 @@ using ViewId = uint_fast32_t;
 using ArchetypeId = uint_fast32_t;
 
 ///
-/// Tag used for the unique id sequence of component types.
+/// Tag used for the unique id sequence of components.
 ///
 struct ComponentIdTag
 {};
 
 ///
-/// Tag used for the unique id sequence of archetype types.
+/// Tag used for the unique id sequence of archetypes.
 ///
 struct ArchetypeIdTag
 {};
 
 ///
-/// Tag used for the unique id sequence of view types.
+/// Tag used for the unique id sequence of views.
 ///
 struct ViewIdTag
 {};
