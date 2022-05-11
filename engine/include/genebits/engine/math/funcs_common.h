@@ -281,7 +281,7 @@ namespace rtmath
   ///
   inline long double Sqrt(long double x) noexcept
   {
-    return Sqrt(static_cast<float>(x));
+    return Sqrt(static_cast<double>(x));
   }
 
   ///
