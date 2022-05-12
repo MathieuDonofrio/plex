@@ -14,8 +14,6 @@ namespace details
 {
   // Type meta programing for sorting variadic templates.
 
-  // Style exception: STL
-
   ///
   /// Lexically compares the two types.
   ///
@@ -129,8 +127,6 @@ namespace details
       std::conditional_t<Compare<T2, T1>::value, Sorted<SortedTypes..., T2, T1>, Sorted<SortedTypes..., T1, T2>>;
   };
 
-  // Could be possible to add more specializations for optimal solution sorting. This may reduce compile-time.
-
   template<typename... SortedTypes,
     template<typename...>
     class Sorted,
@@ -201,7 +197,7 @@ struct ViewIdTag
 /// @return Component identifier.
 ///
 template<typename Component>
-ComponentId GetComponentId()
+ComponentId GetComponentId() noexcept
 {
   return static_cast<ComponentId>(TypeInfo<Component>::template Index<ComponentIdTag>());
 }
@@ -218,7 +214,7 @@ ComponentId GetComponentId()
 /// @return Archetype identifier.
 ///
 template<typename... Components>
-ArchetypeId GetArchetypeId()
+ArchetypeId GetArchetypeId() noexcept
 {
   return static_cast<ArchetypeId>(TypeInfo<ComponentList<Components...>>::template Index<ArchetypeIdTag>());
 }
@@ -235,7 +231,7 @@ ArchetypeId GetArchetypeId()
 /// @return View identifier.
 ///
 template<typename... Components>
-ViewId GetViewId()
+ViewId GetViewId() noexcept
 {
   return static_cast<ViewId>(TypeInfo<ComponentList<Components...>>::template Index<ViewIdTag>());
 }

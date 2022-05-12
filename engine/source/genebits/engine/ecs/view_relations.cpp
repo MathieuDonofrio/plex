@@ -1,4 +1,3 @@
-
 #include "genebits/engine/ecs/view_relations.h"
 
 namespace genebits::engine

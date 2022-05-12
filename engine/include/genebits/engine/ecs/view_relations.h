@@ -1,6 +1,8 @@
 #ifndef GENEBITS_ENGINE_ECS_VIEW_RELATIONS_H
 #define GENEBITS_ENGINE_ECS_VIEW_RELATIONS_H
 
+#include <mutex>
+
 #include "genebits/engine/ecs/archetype.h"
 
 namespace genebits::engine

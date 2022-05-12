@@ -189,9 +189,9 @@ public:
   /// @param[in] first First iterator.
   /// @param[in] last Last iterator.
   ///
-  template<typename Iterator>
-  requires std::same_as<typename std::iterator_traits<Iterator>::value_type, Type>
-  constexpr Vector(Iterator first, Iterator last) noexcept
+  template<std::input_or_output_iterator Iterator>
+  requires std::same_as<typename std::iterator_traits<Iterator>::value_type, Type> Vector(Iterator first, Iterator last)
+  noexcept
   {
     AssignToEmpty(first, last);
   }
@@ -202,7 +202,7 @@ public:
   /// @param source Range to copy from.
   ///
   template<std::ranges::range Range>
-  constexpr Vector(const Range& source) noexcept : Vector(std::ranges::begin(source), std::ranges::end(source))
+  Vector(const Range& source) noexcept : Vector(std::ranges::begin(source), std::ranges::end(source))
   {}
 
   ///
