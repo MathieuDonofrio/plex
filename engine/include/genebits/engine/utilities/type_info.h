@@ -29,7 +29,6 @@ consteval const char* F() // Keep char* return and small name for faster compile
 // Get the templated function name of void type and use that to find the start and offset of the type.
 
 constexpr std::string_view cProbe = F<void>();
-
 constexpr size_t cStart = cProbe.find("void");
 constexpr size_t cOffset = cProbe.length() - 4;
 } // namespace fsig
@@ -50,6 +49,22 @@ namespace details
   /// @return size_t The unique id for the type name and sequence.
   ///
   size_t TypeIndex(std::string_view type_name, std::string_view tag_name);
+
+  ///
+  /// Returns a unique index for the type and a tag. Indexes obtained from the same tag use the same index
+  /// sequence.
+  ///
+  /// @tparam Type The type to get index for.
+  /// @tparam Tag The tag to obtain the index sequence from.
+  ///
+  /// @return size_t The unique id for the type and sequence.
+  ///
+  template<typename Type, typename Tag>
+  size_t TypeIndex()
+  {
+    return TypeIndex(TypeInfo<Type>::Name(), TypeInfo<Tag>::Name());
+  }
+
 } // namespace details
 
 ///
@@ -117,7 +132,7 @@ public:
   template<typename Tag = void>
   static size_t Index()
   {
-    static const size_t value = engine::details::TypeIndex(Name(), TypeInfo<Tag>::Name());
+    static const size_t value = details::TypeIndex<Type, Tag>();
 
     return value;
   }
