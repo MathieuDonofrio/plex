@@ -84,8 +84,10 @@ public:
   using const_pointer = const T*;
 
   // Forward iterator creation methods.
-  [[nodiscard]] constexpr iterator begin() { return reinterpret_cast<iterator>(this); }
-  [[nodiscard]] constexpr const_iterator begin() const { return reinterpret_cast<iterator>(this); }
+  [[nodiscard]] constexpr iterator begin()
+  { if constexpr (N == 0) return std::bit_cast<iterator>(this); else return data_; }
+  [[nodiscard]] constexpr const_iterator begin() const
+  { if constexpr (N == 0) return std::bit_cast<iterator>(this); else return data_;  }
   [[nodiscard]] constexpr iterator end() { return begin() + Size; }
   [[nodiscard]] constexpr const_iterator end() const { return begin() + Size; }
 
