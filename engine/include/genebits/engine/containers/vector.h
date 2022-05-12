@@ -2,11 +2,10 @@
 #define GENEBITS_ENGINE_CONTAINERS_VECTOR_H
 
 #include <iterator>
-#include <memory>
-#include <type_traits>
+#include <ranges>
 #include <utility>
 
-#include "genebits/engine/containers/c_array.h"
+#include "genebits/engine/containers/array.h"
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/os/memory.h"
 #include "genebits/engine/utilities/type_traits.h"
@@ -36,8 +35,8 @@ concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_construc
 /// - Carefully crafted to try and take advantage of heap elision. (Works well on clang)
 /// - Built-in optimized unordered operations.
 ///
-/// @tparam[in] Type Value type to contain.
-/// @tparam[in] AllocatorType Allocator type to allocate memory with.
+/// @tparam Type Value type to contain.
+/// @tparam AllocatorType Allocator type to allocate memory with.
 ///
 template<VectorType Type, typename AllocatorType = std::allocator<Type>>
 class Vector : private AllocatorType
@@ -180,6 +179,30 @@ public:
   ///
   template<std::same_as<EmptyCArray> Source = EmptyCArray>
   constexpr Vector(Source) noexcept : Vector()
+  {}
+
+  ///
+  /// Constructs vector using iterators.
+  ///
+  /// @tparam Iterator Iterator type.
+  ///
+  /// @param[in] first First iterator.
+  /// @param[in] last Last iterator.
+  ///
+  template<typename Iterator>
+  requires std::same_as<typename std::iterator_traits<Iterator>::value_type, Type>
+  constexpr Vector(Iterator first, Iterator last) noexcept
+  {
+    AssignToEmpty(first, last);
+  }
+
+  ///
+  /// Constructs vector using a range
+  ///
+  /// @param source Range to copy from.
+  ///
+  template<std::ranges::range Range>
+  constexpr Vector(const Range& source) noexcept : Vector(std::ranges::begin(source), std::ranges::end(source))
   {}
 
   ///
@@ -612,6 +635,26 @@ protected:
     capacity_ = block.count;
 
     UninitializedRelocate(source, static_cast<Type*>(source) + Size, array_);
+  }
+
+  ///
+  /// Iterator contents to an empty vector.
+  ///
+  /// @param[in] first Iterator to first element.
+  /// @param[in] last Iterator to last element.
+  ///
+  template<typename Iterator>
+  void AssignToEmpty(Iterator first, Iterator last) noexcept
+  {
+    const auto size = static_cast<uint32_t>(std::distance(first, last));
+
+    Block block = AllocateAtLeast(size);
+
+    array_ = block.ptr;
+    size_ = size;
+    capacity_ = block.count;
+
+    std::uninitialized_copy(first, last, array_);
   }
 
 private:

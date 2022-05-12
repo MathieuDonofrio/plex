@@ -89,6 +89,34 @@ TEST(Vector_Tests, ConstructorCArray_Trivial_ManyElements_CorrectValues)
   EXPECT_EQ(vector[2], 0.1);
 }
 
+TEST(Vector_Tests, ConstructorIterator_Trivial_ManyElements_CorrectValues)
+{
+  Vector<double> values({ 0.5, 0.4, 0.1 });
+
+  Vector<double> vector(values.begin(), values.end());
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 3);
+
+  EXPECT_EQ(vector[0], 0.5);
+  EXPECT_EQ(vector[1], 0.4);
+  EXPECT_EQ(vector[2], 0.1);
+}
+
+TEST(Vector_Tests, ConstructorRanges_Trivial_ManyElements_CorrectValues)
+{
+  Vector<double> values({ 0.5, 0.4, 0.1 });
+
+  Vector<double> vector(values);
+
+  EXPECT_FALSE(vector.empty());
+  EXPECT_EQ(vector.size(), 3);
+
+  EXPECT_EQ(vector[0], 0.5);
+  EXPECT_EQ(vector[1], 0.4);
+  EXPECT_EQ(vector[2], 0.1);
+}
+
 TEST(Vector_Tests, PushBack_Trivial_Single_SizeIncrease)
 {
   Vector<double> vector;
