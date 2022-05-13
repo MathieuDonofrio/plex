@@ -38,7 +38,7 @@ public:
   /// @return Reference to the value mapped by the type.
   ///
   template<typename Type>
-  Value& Assure() noexcept
+  Value& Assure()
   {
     const size_t index = Key<Type>();
 
@@ -50,6 +50,41 @@ public:
     }
 
     return values_[index];
+  }
+
+  ///
+  /// Sets the value for the type key to the default value.
+  ///
+  /// This is essentially the way to remove a value from the map. Can be used in combination
+  /// with ContainsNonDefault().
+  ///
+  /// @tparam[in] Type The type to use as key.
+  ///
+  template<typename Type>
+  void SetDefault() noexcept(noexcept(Value()))
+  {
+    new (std::addressof(Get<Type>())) Value();
+  }
+
+  ///
+  /// Returns whether or not a mapping exists and the value is not the default constructed value.
+  ///
+  /// There is no other way to check if the map contains a type or not. If your values can contain the default
+  /// constructed value, you can always wrap the value using an indirection like a pointer, or something like
+  /// std::optional.
+  ///
+  /// @note The value type must be equality comparable to use this method.
+  ///
+  /// @tparam Type The type to use as key.
+  ///
+  /// @return True if the type exists in the map, false otherwise.
+  ///
+  template<typename Type>
+  [[nodiscard]] bool ContainsNonDefault() const noexcept requires std::equality_comparable<Value>
+  {
+    const auto key = Key<Type>();
+
+    return values_.size() > key && values_[key] != cDefaultValue;
   }
 
   ///
@@ -89,6 +124,10 @@ public:
   }
 
 private:
+  using DefaultValueType = std::conditional_t<std::equality_comparable<Value>, Value, void*>;
+
+  static inline const DefaultValueType cDefaultValue {};
+
   ///
   /// Obtains the key for a type.
   ///

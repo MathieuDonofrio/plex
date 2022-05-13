@@ -8,7 +8,19 @@ namespace
 {
   struct TestValue
   {
-    size_t value = 0;
+    TestValue() : value(0) {}
+
+    size_t value;
+
+    friend bool operator==(const TestValue& lhs, const TestValue& rhs)
+    {
+      return lhs.value == rhs.value;
+    }
+
+    friend bool operator!=(const TestValue& lhs, const TestValue& rhs)
+    {
+      return !(lhs == rhs);
+    }
   };
 
   template<size_t Tag = 0>
@@ -90,4 +102,38 @@ TEST(TypeMap_Tests, Get_AfterAssureStoreOfDifferentType_Zero)
   EXPECT_EQ(map.Get<TestKey<1>>().value, 0);
 }
 
+TEST(TypeMap_Tests, ContainsNonDefault_Empty_False)
+{
+  TypeMap<TestValue> map;
+
+  EXPECT_FALSE(map.ContainsNonDefault<TestKey<0>>());
+}
+
+TEST(TypeMap_Tests, ContainsNonDefault_ContainsWithDefault_False)
+{
+  TypeMap<TestValue> map;
+
+  map.Assure<TestKey<0>>();
+
+  EXPECT_FALSE(map.ContainsNonDefault<TestKey<0>>());
+}
+
+TEST(TypeMap_Tests, ContainsNonDefault_ContainsWithValue_True)
+{
+  TypeMap<TestValue> map;
+
+  map.Assure<TestKey<0>>().value = 10;
+
+  EXPECT_TRUE(map.ContainsNonDefault<TestKey<0>>());
+}
+
+TEST(TypeMap_Tests, SetDefault_WithValue_DoesNotContain)
+{
+  TypeMap<TestValue> map;
+
+  map.Assure<TestKey<0>>().value = 10;
+  map.SetDefault<TestKey<0>>();
+
+  EXPECT_FALSE(map.ContainsNonDefault<TestKey<0>>());
+}
 } // namespace genebits::engine::tests
