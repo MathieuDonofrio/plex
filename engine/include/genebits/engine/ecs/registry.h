@@ -8,6 +8,7 @@
 
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/entity_manager.h"
+#include "genebits/engine/ecs/resource_manager.h"
 #include "genebits/engine/ecs/storage.h"
 #include "genebits/engine/ecs/view_relations.h"
 
@@ -76,9 +77,9 @@ public:
   template<typename... Components>
   Entity Create(Components&&... components)
   {
-    const Entity entity = manager_.Obtain();
+    const Entity entity = entity_manager_.Obtain();
 
-    Assure<Components...>().template Insert<Components...>(entity, std::forward<Components>(components)...);
+    GetStorage<Components...>().template Insert<Components...>(entity, std::forward<Components>(components)...);
 
     return entity;
   }
@@ -118,21 +119,6 @@ public:
   }
 
   ///
-  /// Iterates all entities with the provided components and invokes the function with the unpacked
-  /// component data.
-  ///
-  /// @tparam Components Component types to unpack.
-  /// @tparam Function Function to invoke.
-  ///
-  /// @param[in] function Function to invoke for every iteration.
-  ///
-  template<typename... Components, typename Function>
-  void ForEach(Function function)
-  {
-    return View<Components...>().ForEach(function);
-  }
-
-  ///
   /// Returns a reference to the component data for the entity.
   ///
   /// This operation is O(n) where n is the amount of archetypes with the component.
@@ -153,19 +139,6 @@ public:
   }
 
   ///
-  /// Returns the amount of entities with the specified components.
-  ///
-  /// @tparam Components Component types to check size for.
-  ///
-  /// @return Amount of entities with provided component types.
-  ///
-  template<typename... Components>
-  requires(sizeof...(Components) > 0) [[nodiscard]] size_t Size()
-  {
-    return View<Components...>().Size();
-  }
-
-  ///
   /// Returns whether or not the entity has all of the specified components.
   ///
   /// @tparam Components Required component types.
@@ -181,6 +154,19 @@ public:
   }
 
   ///
+  /// Returns the amount of entities with the specified components.
+  ///
+  /// @tparam Components Component types to check size for.
+  ///
+  /// @return Amount of entities with provided component types.
+  ///
+  template<typename... Components>
+  requires(sizeof...(Components) > 0) [[nodiscard]] size_t EntityCount() noexcept
+  {
+    return View<Components...>().Size();
+  }
+
+  ///
   /// Returns the total amount of entities in the registry.
   ///
   /// This is the sum of the sizes of every storage (every archetype) in the registry.
@@ -189,9 +175,9 @@ public:
   ///
   /// @return Amount of entities in the registry.
   ///
-  [[nodiscard]] size_t Size() const noexcept
+  [[nodiscard]] size_t EntityCount() const noexcept
   {
-    return manager_.CirculatingCount();
+    return entity_manager_.CirculatingCount();
   }
 
   ///
@@ -207,21 +193,137 @@ public:
     return PolyView<Components...>(*this);
   }
 
+  ///
+  /// Inserts a new resource into the manager.
+  ///
+  /// If there is already a resource of the same type, the old resource will be replaced.
+  ///
+  /// @tparam ResourceType The type of resource to insert.
+  /// @tparam Args Argument types to pass to the resource constructor.
+  ///
+  /// @param[in] args Arguments to pass to the resource constructor.
+  ///
+  template<typename ResourceType, typename... Args>
+  void EmplaceResource(Args&&... args)
+  {
+    resource_manager_.template Emplace<ResourceType>(std::forward<Args>(args)...);
+  }
+
+  ///
+  /// Inserts a new resource into the manager.
+  ///
+  /// If there is already a resource of the same type, the old resource will be replaced.
+  ///
+  /// @tparam ResourceType The type of resource to insert.
+  ///
+  /// @param[in] resource Pointer to the resource to insert.
+  /// @param[in] deleter Custom deleter to use when destroying the resource.
+  ///
+  template<typename ResourceType>
+  void InsertResource(ResourceType* resource, void (*deleter)(void*))
+  {
+    resource_manager_.template Insert<ResourceType>(resource, deleter);
+  }
+
+  ///
+  /// Inserts a new resource into the registry.
+  ///
+  /// If there is already a resource of the same type, the old resource will be replaced.
+  ///
+  /// @tparam ResourceType The type of resource to insert.
+  ///
+  /// @param[in] resource Pointer to the resource to insert.
+  ///
+  template<typename ResourceType>
+  void InsertResource(ResourceType* resource)
+  {
+    resource_manager_.template Insert<ResourceType>(resource);
+  }
+
+  ///
+  /// Removes a resource from the registry.
+  ///
+  /// @warning The resource must exist, otherwise the behaviour is undefined.
+  ///
+  /// @tparam ResourceType The type of resource to remove.
+  ///
+  template<typename ResourceType>
+  void RemoveResource()
+  {
+    resource_manager_.template Remove<ResourceType>();
+  }
+
+  ///
+  /// Returns a reference to the resource of the given type.
+  ///
+  /// @warning The resource must exist, otherwise the behaviour is undefined.
+  ///
+  /// @tparam ResourceType The type of resource to return.
+  ///
+  /// @return Reference to the resource.
+  ///
+  template<typename ResourceType>
+  const ResourceType& GetResource() const noexcept
+  {
+    return resource_manager_.template Get<ResourceType>();
+  }
+
+  ///
+  /// Returns a reference to the resource of the given type.
+  ///
+  /// @warning The resource must exist, otherwise the behaviour is undefined.
+  ///
+  /// @tparam ResourceType The type of resource to return.
+  ///
+  /// @return Reference to the resource.
+  ///
+  template<typename ResourceType>
+  ResourceType& GetResource() noexcept
+  {
+    return resource_manager_.template Get<ResourceType>();
+  }
+
+  ///
+  /// Returns whether or not the manager contains a resource of the given type.
+  ///
+  /// @tparam ResourceType The type of resource to check for.
+  ///
+  /// @return True if the manager contains the resource, false otherwise.
+  ///
+  template<typename ResourceType>
+  [[nodiscard]] bool ContainsResource() const noexcept
+  {
+    return resource_manager_.template Contains<ResourceType>();
+  }
+
+  ///
+  /// Returns the number of resources managed by the manager.
+  ///
+  /// @return The number of resources.
+  ///
+  [[nodiscard]] constexpr size_t ResourceCount() const noexcept
+  {
+    return resource_manager_.Size();
+  }
+
 private:
   template<typename...>
   friend class PolyView;
 
   ///
-  /// Assures the storage for the archetype.
+  /// Returns the storage for the archetype.
   ///
   /// Will properly initialize the storage if it does not exist.
+  ///
+  /// This method should be used instead of accessing the storage directly, unless you can guarantee that the storage
+  /// was initialized.
   ///
   /// @tparam Components Component types that compose the archetype.
   ///
   /// @return Reference to assured storage.
   ///
   template<typename... Components>
-  Storage<Entity>& Assure()
+  Storage<Entity>& GetStorage()
   {
     const ArchetypeId archetype = relations_.template AssureArchetype<Components...>();
 
@@ -240,10 +342,10 @@ private:
 
 private:
   SharedSparseArray<Entity> mappings_;
-  EntityManager<Entity> manager_;
+  EntityManager<Entity> entity_manager_;
   ViewRelations relations_;
-
   Vector<Storage<Entity>*> storages_;
+  ResourceManager resource_manager_;
 };
 
 ///
@@ -846,7 +948,7 @@ public:
       {
         storage->Erase(entity);
 
-        registry_.manager_.Release(entity);
+        registry_.entity_manager_.Release(entity);
 
         return;
       }
@@ -871,17 +973,17 @@ public:
       {
         for (auto entity : *storage)
         {
-          registry_.manager_.Release(entity);
+          registry_.entity_manager_.Release(entity);
         }
       }
 
       storage->Clear();
     }
 
-    if constexpr (cNoComponents) registry_.manager_.ReleaseAll(); // Release everything
-    else if (registry_.Size() == 0)
+    if constexpr (cNoComponents) registry_.entity_manager_.ReleaseAll(); // Release everything
+    else if (registry_.EntityCount() == 0)
     {
-      registry_.manager_.ReleaseAll(); // Good because it clears the queue and resets the generator.
+      registry_.entity_manager_.ReleaseAll(); // Ok because it clears the queue and resets the generator.
     }
   }
 
@@ -930,7 +1032,7 @@ public:
     }
     else
     {
-      return registry_.Size();
+      return registry_.EntityCount();
     }
   }
 

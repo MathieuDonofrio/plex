@@ -4,28 +4,28 @@
 
 namespace genebits::engine::tests
 {
-TEST(Registry_Tests, Size_AfterInitialization_Zero)
+TEST(Registry_Tests, EntityCount_AfterInitialization_Zero)
 {
   Registry registry;
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ(registry.EntityCount(), 0);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
+  EXPECT_EQ(registry.EntityCount<double>(), 0);
 }
 
-TEST(Registry_Tests, Create_AfterInitialization_IncreaseSize)
+TEST(Registry_Tests, Create_AfterInitialization_IncreaseEntityCount)
 {
   Registry registry;
 
   auto entity = registry.Create<int>(10);
 
-  EXPECT_EQ(registry.Size(), 1);
-  EXPECT_EQ(registry.Size<int>(), 1);
-  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ(registry.EntityCount(), 1);
+  EXPECT_EQ(registry.EntityCount<int>(), 1);
+  EXPECT_EQ(registry.EntityCount<double>(), 0);
   EXPECT_EQ(entity, 0u);
 }
 
-TEST(Registry_Tests, Create_Multiple_IncreaseSize)
+TEST(Registry_Tests, Create_Multiple_IncreaseEntityCount)
 {
   Registry registry;
 
@@ -34,31 +34,31 @@ TEST(Registry_Tests, Create_Multiple_IncreaseSize)
     EXPECT_EQ(registry.Create<size_t>(size_t(i)), i);
   }
 
-  EXPECT_EQ(registry.Size(), 10);
-  EXPECT_EQ(registry.Size<size_t>(), 10);
-  EXPECT_EQ(registry.Size<double>(), 0);
+  EXPECT_EQ(registry.EntityCount(), 10);
+  EXPECT_EQ(registry.EntityCount<size_t>(), 10);
+  EXPECT_EQ(registry.EntityCount<double>(), 0);
 }
 
-TEST(Registry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseSize)
+TEST(Registry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseEntityCount)
 {
   Registry registry;
 
   auto entity1 = registry.Create<int, double, float>(10, 0.5, 0.2f);
   auto entity2 = registry.Create<int, float>(11, 0.8f);
 
-  EXPECT_EQ(registry.Size(), 2);
-  EXPECT_EQ(registry.Size<int>(), 2);
-  EXPECT_EQ(registry.Size<double>(), 1);
-  EXPECT_EQ(registry.Size<float>(), 2);
-  EXPECT_EQ((registry.Size<int, float>()), 2);
-  EXPECT_EQ((registry.Size<int, double>()), 1);
-  EXPECT_EQ((registry.Size<int, double, float>()), 1);
-  EXPECT_EQ((registry.Size<bool>()), 0);
+  EXPECT_EQ(registry.EntityCount(), 2);
+  EXPECT_EQ(registry.EntityCount<int>(), 2);
+  EXPECT_EQ(registry.EntityCount<double>(), 1);
+  EXPECT_EQ(registry.EntityCount<float>(), 2);
+  EXPECT_EQ((registry.EntityCount<int, float>()), 2);
+  EXPECT_EQ((registry.EntityCount<int, double>()), 1);
+  EXPECT_EQ((registry.EntityCount<int, double, float>()), 1);
+  EXPECT_EQ((registry.EntityCount<bool>()), 0);
   EXPECT_EQ(entity1, 0u);
   EXPECT_EQ(entity2, 1u);
 }
 
-TEST(Registry_Tests, Destroy_Single_DecreaseSize)
+TEST(Registry_Tests, Destroy_Single_DecreaseEntityCount)
 {
   Registry registry;
 
@@ -66,11 +66,11 @@ TEST(Registry_Tests, Destroy_Single_DecreaseSize)
 
   registry.Destroy(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.EntityCount(), 0);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
 }
 
-TEST(Registry_Tests, Destroy_WithView_DecreaseSize)
+TEST(Registry_Tests, Destroy_WithView_DecreaseEntityCount)
 {
   Registry registry;
 
@@ -78,11 +78,11 @@ TEST(Registry_Tests, Destroy_WithView_DecreaseSize)
 
   registry.Destroy<int>(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
+  EXPECT_EQ(registry.EntityCount(), 0);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
 }
 
-TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseSize)
+TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseEntityCount)
 {
   Registry registry;
 
@@ -90,13 +90,13 @@ TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseSize)
 
   registry.Destroy(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<double>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.EntityCount(), 0);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
+  EXPECT_EQ(registry.EntityCount<double>(), 0);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 0);
 }
 
-TEST(Registry_Tests, Destroy_WithPartialView_DecreaseSize)
+TEST(Registry_Tests, Destroy_WithPartialView_DecreaseEntityCount)
 {
   Registry registry;
 
@@ -104,13 +104,13 @@ TEST(Registry_Tests, Destroy_WithPartialView_DecreaseSize)
 
   registry.Destroy<double>(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<double>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.EntityCount(), 0);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
+  EXPECT_EQ(registry.EntityCount<double>(), 0);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 0);
 }
 
-TEST(Registry_Tests, Destroy_WithExactView_DecreaseSize)
+TEST(Registry_Tests, Destroy_WithExactView_DecreaseEntityCount)
 {
   Registry registry;
 
@@ -118,10 +118,10 @@ TEST(Registry_Tests, Destroy_WithExactView_DecreaseSize)
 
   registry.Destroy<int, double>(entity);
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<double>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
+  EXPECT_EQ(registry.EntityCount(), 0);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
+  EXPECT_EQ(registry.EntityCount<double>(), 0);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 0);
 }
 
 TEST(Registry_Tests, Create_AfterDestroy_Restore)
@@ -134,16 +134,16 @@ TEST(Registry_Tests, Create_AfterDestroy_Restore)
 
   auto entity2 = registry.Create<int, double>(10, 0.5);
 
-  EXPECT_EQ(registry.Size(), 1);
-  EXPECT_EQ(registry.Size<int>(), 1);
-  EXPECT_EQ(registry.Size<double>(), 1);
-  EXPECT_EQ((registry.Size<double, int>()), 1);
-  EXPECT_EQ(registry.Size<float>(), 0);
+  EXPECT_EQ(registry.EntityCount(), 1);
+  EXPECT_EQ(registry.EntityCount<int>(), 1);
+  EXPECT_EQ(registry.EntityCount<double>(), 1);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 1);
+  EXPECT_EQ(registry.EntityCount<float>(), 0);
 
   EXPECT_EQ(entity1, entity2);
 }
 
-TEST(Registry_Tests, DestroyAll_MultipleEntities_DecreaseSize)
+TEST(Registry_Tests, DestroyAll_MultipleEntities_DecreaseEntityCount)
 {
   Registry registry;
 
@@ -152,22 +152,22 @@ TEST(Registry_Tests, DestroyAll_MultipleEntities_DecreaseSize)
   registry.Create<double>(0.5);
   registry.Create<float>(0.5);
 
-  EXPECT_EQ(registry.Size(), 4);
-  EXPECT_EQ(registry.Size<int>(), 2);
-  EXPECT_EQ((registry.Size<double, int>()), 1);
-  EXPECT_EQ((registry.Size<double>()), 2);
-  EXPECT_EQ((registry.Size<float>()), 1);
+  EXPECT_EQ(registry.EntityCount(), 4);
+  EXPECT_EQ(registry.EntityCount<int>(), 2);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 1);
+  EXPECT_EQ((registry.EntityCount<double>()), 2);
+  EXPECT_EQ((registry.EntityCount<float>()), 1);
 
   registry.DestroyAll();
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
-  EXPECT_EQ((registry.Size<double>()), 0);
-  EXPECT_EQ((registry.Size<float>()), 0);
+  EXPECT_EQ(registry.EntityCount(), 0);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 0);
+  EXPECT_EQ((registry.EntityCount<double>()), 0);
+  EXPECT_EQ((registry.EntityCount<float>()), 0);
 }
 
-TEST(Registry_Tests, DestroyAll_WithView_DecreaseSizeCorrectly)
+TEST(Registry_Tests, DestroyAll_WithView_DecreaseEntityCountCorrectly)
 {
   Registry registry;
 
@@ -178,136 +178,27 @@ TEST(Registry_Tests, DestroyAll_WithView_DecreaseSizeCorrectly)
 
   registry.DestroyAll<double>();
 
-  EXPECT_EQ(registry.Size(), 2);
-  EXPECT_EQ(registry.Size<int>(), 1);
-  EXPECT_EQ(registry.Size<float>(), 1);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
-  EXPECT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ(registry.EntityCount(), 2);
+  EXPECT_EQ(registry.EntityCount<int>(), 1);
+  EXPECT_EQ(registry.EntityCount<float>(), 1);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 0);
+  EXPECT_EQ((registry.EntityCount<double>()), 0);
 
   registry.DestroyAll<int>();
 
-  EXPECT_EQ(registry.Size(), 1);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<float>(), 1);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
-  EXPECT_EQ((registry.Size<double>()), 0);
+  EXPECT_EQ(registry.EntityCount(), 1);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
+  EXPECT_EQ(registry.EntityCount<float>(), 1);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 0);
+  EXPECT_EQ((registry.EntityCount<double>()), 0);
 
   registry.DestroyAll<float>();
 
-  EXPECT_EQ(registry.Size(), 0);
-  EXPECT_EQ(registry.Size<int>(), 0);
-  EXPECT_EQ(registry.Size<float>(), 0);
-  EXPECT_EQ((registry.Size<double, int>()), 0);
-  EXPECT_EQ((registry.Size<double>()), 0);
-}
-
-TEST(Registry_Tests, ForEach_EntireRegistrySingleEntity_CorrectEntity)
-{
-  Registry registry;
-
-  auto created_entity = registry.Create<int>(10);
-
-  size_t iterations = 0;
-
-  registry.ForEach(
-    [&](const Entity entity)
-    {
-      EXPECT_EQ(entity, created_entity);
-      iterations++;
-    });
-
-  EXPECT_EQ(registry.Size(), iterations);
-}
-
-TEST(Registry_Tests, ForEach_EntireRegistryMultipleEntities_CorrectAmountEntities)
-{
-  Registry registry;
-
-  constexpr size_t amount = 100;
-
-  for (size_t i = 0; i < amount; i++)
-  {
-    registry.Create<size_t>(10);
-  }
-
-  size_t iterations = 0;
-
-  registry.ForEach([&](const Entity) { iterations++; });
-
-  EXPECT_EQ(registry.Size(), iterations);
-  EXPECT_EQ(registry.Size(), amount);
-}
-
-TEST(Registry_Tests, ForEach_UnpackNothing_CorrectIterations)
-{
-  Registry registry;
-
-  registry.Create<int>(10);
-
-  size_t iterations = 0;
-
-  registry.ForEach([&]() { iterations++; });
-
-  EXPECT_EQ(registry.Size(), iterations);
-}
-
-TEST(Registry_Tests, ForEach_UnpackOneComponent_Correct)
-{
-  Registry registry;
-
-  auto created_entity = registry.Create<int>(10);
-
-  size_t iterations = 0;
-
-  registry.ForEach<int>(
-    [&](auto entity, int component)
-    {
-      EXPECT_EQ(entity, created_entity);
-      EXPECT_EQ(component, 10);
-      iterations++;
-    });
-
-  EXPECT_EQ(registry.Size(), iterations);
-}
-
-TEST(Registry_Tests, ForEach_UnpackTwoComponents_Correct)
-{
-  Registry registry;
-
-  auto created_entity = registry.Create<int, double>(10, 0.5);
-
-  size_t iterations = 0;
-
-  registry.ForEach<int, double>(
-    [&](auto entity, int c1, double c2)
-    {
-      EXPECT_EQ(entity, created_entity);
-      EXPECT_EQ(c1, 10);
-      EXPECT_EQ(c2, 0.5);
-      iterations++;
-    });
-
-  EXPECT_EQ(registry.Size(), iterations);
-}
-
-TEST(Registry_Tests, ForEach_UnpackTwoComponentsConst_Correct)
-{
-  Registry registry;
-
-  auto created_entity = registry.Create<int, double>(10, 0.5);
-
-  size_t iterations = 0;
-
-  registry.ForEach<int, const double>(
-    [&](const Entity entity, int c1, const double& c2)
-    {
-      EXPECT_EQ(entity, created_entity);
-      EXPECT_EQ(c1, 10);
-      EXPECT_EQ(c2, 0.5);
-      iterations++;
-    });
-
-  EXPECT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.EntityCount(), 0);
+  EXPECT_EQ(registry.EntityCount<int>(), 0);
+  EXPECT_EQ(registry.EntityCount<float>(), 0);
+  EXPECT_EQ((registry.EntityCount<double, int>()), 0);
+  EXPECT_EQ((registry.EntityCount<double>()), 0);
 }
 
 TEST(Registry_Tests, Unpack_Single_Correct)
@@ -376,102 +267,48 @@ TEST(Registry_Tests, HasComponents_Multiple_False)
   EXPECT_TRUE((registry.HasComponents<int, double, float>(created_entity)));
 }
 
-TEST(Registry_Tests, ForEach_UnpackThreeComponents_Correct)
+TEST(Registry_Tests, EmplaceResource_Simple_ContainsResource)
 {
   Registry registry;
 
-  auto created_entity = registry.Create<int, double, float>(10, 0.5, 0.2f);
+  registry.EmplaceResource<int>(10);
 
-  size_t iterations = 0;
-
-  registry.ForEach<int, double, float>(
-    [&](const size_t entity, int c1, double c2, float c3)
-    {
-      EXPECT_EQ(entity, created_entity);
-      EXPECT_EQ(c1, 10);
-      EXPECT_EQ(c2, 0.5);
-      EXPECT_EQ(c3, 0.2f);
-      iterations++;
-    });
-
-  EXPECT_EQ(registry.Size(), iterations);
+  EXPECT_EQ(registry.ResourceCount(), 1);
+  EXPECT_TRUE(registry.ContainsResource<int>());
+  EXPECT_EQ(registry.GetResource<int>(), 10);
 }
 
-TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectAmountIterations)
+TEST(Registry_Tests, InsertResource_Instance_ContainsResource)
 {
   Registry registry;
 
-  registry.Create<int, double, float>(10, 0.5, 0.2f);
-  registry.Create<int, double>(11, 0.5);
-  registry.Create<float, double>(0.2f, 0.5);
-  registry.Create<int>(12);
+  registry.InsertResource<int>(new int(10));
 
-  size_t iterations = 0;
-
-  registry.ForEach<int>([&](int) { iterations++; });
-
-  EXPECT_EQ(iterations, 3);
-
-  iterations = 0;
-
-  registry.ForEach<int, double>([&](int, double) { iterations++; });
-
-  EXPECT_EQ(iterations, 2);
-
-  iterations = 0;
-
-  registry.ForEach<int, float>([&](int, float) { iterations++; });
-
-  EXPECT_EQ(iterations, 1);
-
-  iterations = 0;
-
-  registry.ForEach<float>([&](float) { iterations++; });
-
-  EXPECT_EQ(iterations, 2);
-
-  iterations = 0;
-
-  registry.ForEach<float>([&](float) { iterations++; });
-
-  EXPECT_EQ(iterations, 2);
-
-  iterations = 0;
-
-  registry.ForEach<double>([&](double) { iterations++; });
-
-  EXPECT_EQ(iterations, 3);
-
-  iterations = 0;
-
-  registry.ForEach<double, float>([&](double, float) { iterations++; });
-
-  EXPECT_EQ(iterations, 2);
+  EXPECT_EQ(registry.ResourceCount(), 1);
+  EXPECT_TRUE(registry.ContainsResource<int>());
+  EXPECT_EQ(registry.GetResource<int>(), 10);
 }
 
-TEST(Registry_Tests, ForEach_MultipleArchetypes_CorrectUnpackedValues)
+TEST(Registry_Tests, InsertResource_InstanceAndDeleter_ContainsResource)
 {
   Registry registry;
 
-  std::map<size_t, double> mappings;
+  registry.InsertResource<int>(new int(10), [](void* resource) { delete static_cast<int*>(resource); });
 
-  registry.Create<int>(11);
-  mappings[registry.Create<int, double, float>(10, 0.5, 0.25f)] = 0.5;
-  mappings[registry.Create<double, float>(0.1, 0.25f)] = 0.1;
-  registry.Create<int, bool>(11, false);
-  mappings[registry.Create<double>(0.2)] = 0.2;
-  registry.Create<float>(0.25f);
+  EXPECT_EQ(registry.ResourceCount(), 1);
+  EXPECT_TRUE(registry.ContainsResource<int>());
+  EXPECT_EQ(registry.GetResource<int>(), 10);
+}
 
-  size_t iterations = 0;
+TEST(Registry_Tests, RemoveResource_ExistingResource_DoesNotContainsResource)
+{
+  Registry registry;
 
-  registry.ForEach<double>(
-    [&](const size_t entity, double c1)
-    {
-      EXPECT_EQ(c1, mappings[entity]);
-      iterations++;
-    });
+  registry.EmplaceResource<int>(10);
+  registry.RemoveResource<int>();
 
-  EXPECT_EQ(iterations, 3);
+  EXPECT_EQ(registry.ResourceCount(), 0);
+  EXPECT_FALSE(registry.ContainsResource<int>());
 }
 
 TEST(PolyViewIterator_Tests, PreIncrement_Empty_NoIterations)
@@ -766,7 +603,7 @@ TEST(MonoView_Tests, Contains_SingleDestroyed_False)
   EXPECT_FALSE(mono_view.Contains(entity));
 }
 
-TEST(MonoView_Tests, Size_Multiple_CorrectSize)
+TEST(MonoView_Tests, EntityCount_Multiple_CorrectEntityCount)
 {
   Registry registry;
 
