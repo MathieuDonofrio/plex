@@ -8,36 +8,24 @@ namespace genebits::engine::tests
 {
 namespace
 {
-  struct TestBase
+  struct TestPoly
   {
-    virtual ~TestBase() = default;
+    virtual ~TestPoly() = default;
+
+    virtual size_t Test() const = 0;
   };
 
-  struct Test1Base
+  template<size_t id>
+  struct TestPolyType : public TestPoly
   {
-    virtual size_t Test1() const = 0;
-  };
-
-  struct Test2Base
-  {
-    virtual size_t Test2() const = 0;
-  };
-
-  struct TestType : Test1Base, Test2Base, TestBase
-  {
-    size_t Test1() const override
+    size_t Test() const override
     {
-      return 10;
-    }
-
-    size_t Test2() const override
-    {
-      return 20;
+      return id;
     }
   };
 } // namespace
 
-TEST(ErasedPtr_Tests, DefaultConstructor_Default_DefaultState)
+TEST(ErasedPtr_Tests, DefaultConstructor_Trivial_DefaultState)
 {
   ErasedPtr<void> ptr;
 
@@ -46,12 +34,48 @@ TEST(ErasedPtr_Tests, DefaultConstructor_Default_DefaultState)
 
 TEST(ErasedPtr_Tests, ParametricConstructor_Trivial_NotNull)
 {
-  ErasedPtr<void> ptr(new size_t(10));
+  ErasedPtr<size_t> ptr(new size_t(10));
 
   EXPECT_TRUE(ptr);
 }
 
 TEST(ErasedPtr_Tests, MoveConstructor_Trivial_CorrectValue)
+{
+  ErasedPtr<size_t> original(new size_t(10));
+
+  ErasedPtr<size_t> moved(std::move(original));
+
+  EXPECT_TRUE(moved);
+  EXPECT_FALSE(original);
+  EXPECT_EQ(*moved.Get(), 10u);
+}
+
+TEST(ErasedPtr_Tests, MoveAssignment_Trivial_CorrectValue)
+{
+  ErasedPtr<size_t> original(new size_t(10));
+
+  ErasedPtr<size_t> moved = std::move(original);
+
+  EXPECT_TRUE(moved);
+  EXPECT_FALSE(original);
+  EXPECT_EQ(*moved.Get(), 10u);
+}
+
+TEST(ErasedPtr_Tests, DefaultConstructor_Void_DefaultState)
+{
+  ErasedPtr<void> ptr;
+
+  EXPECT_FALSE(ptr);
+}
+
+TEST(ErasedPtr_Tests, ParametricConstructor_Void_NotNull)
+{
+  ErasedPtr<void> ptr(new size_t(10));
+
+  EXPECT_TRUE(ptr);
+}
+
+TEST(ErasedPtr_Tests, MoveConstructor_Void_CorrectValue)
 {
   ErasedPtr<void> original(new size_t(10));
 
@@ -62,7 +86,7 @@ TEST(ErasedPtr_Tests, MoveConstructor_Trivial_CorrectValue)
   EXPECT_EQ(*static_cast<size_t*>(moved.Get()), 10u);
 }
 
-TEST(ErasedPtr_Tests, MoveAssignment_Trivial_CorrectValue)
+TEST(ErasedPtr_Tests, MoveAssignment_Void_CorrectValue)
 {
   ErasedPtr<void> original(new size_t(10));
 
@@ -71,6 +95,42 @@ TEST(ErasedPtr_Tests, MoveAssignment_Trivial_CorrectValue)
   EXPECT_TRUE(moved);
   EXPECT_FALSE(original);
   EXPECT_EQ(*static_cast<size_t*>(moved.Get()), 10u);
+}
+
+TEST(ErasedPtr_Tests, DefaultConstructor_Poly_DefaultState)
+{
+  ErasedPtr<TestPoly> ptr;
+
+  EXPECT_FALSE(ptr);
+}
+
+TEST(ErasedPtr_Tests, ParametricConstructor_Poly_NotNull)
+{
+  ErasedPtr<TestPoly> ptr(new TestPolyType<0>());
+
+  EXPECT_TRUE(ptr);
+}
+
+TEST(ErasedPtr_Tests, MoveConstructor_Poly_CorrectValue)
+{
+  ErasedPtr<TestPoly> original(new TestPolyType<10>());
+
+  ErasedPtr<TestPoly> moved(std::move(original));
+
+  EXPECT_TRUE(moved);
+  EXPECT_FALSE(original);
+  EXPECT_EQ(moved.Get()->Test(), 10);
+}
+
+TEST(ErasedPtr_Tests, MoveAssignment_Poly_CorrectValue)
+{
+  ErasedPtr<TestPoly> original(new TestPolyType<10>());
+
+  ErasedPtr<TestPoly> moved(std::move(original));
+
+  EXPECT_TRUE(moved);
+  EXPECT_FALSE(original);
+  EXPECT_EQ(moved.Get()->Test(), 10);
 }
 
 } // namespace genebits::engine::tests

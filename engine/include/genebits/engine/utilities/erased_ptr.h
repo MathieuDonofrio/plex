@@ -6,7 +6,7 @@
 namespace genebits::engine
 {
 ///
-/// Concept used to determine whether or not two erased ptr's can be implicitly casted.
+/// Concept used to determine whether or not two erased pointers can be implicitly casted.
 ///
 /// @tparam From Type casted from.
 /// @tparam To Type to cast to.
@@ -83,6 +83,14 @@ public:
   ///
   /// Parametric Constructor
   ///
+  /// @param[in] instance Instance to handle.
+  /// @param[in] deleter The custom deleter to delete the managed instance with.
+  ///
+  constexpr ErasedPtr(Type* instance, void (*deleter)(void*)) noexcept : ptr_(instance), deleter_(deleter) {}
+
+  ///
+  /// Parametric Constructor
+  ///
   /// @tparam T The type to store, must be same or derived from erased type base.
   ///
   /// @param[in] instance Instance to handle.
@@ -102,6 +110,15 @@ public:
   template<AssignableErasedPtr<Type> T>
   constexpr explicit ErasedPtr(T* instance) noexcept
     : ErasedPtr(instance, [](void* instance) { delete static_cast<T*>(instance); })
+  {}
+
+  ///
+  /// Parametric Constructor. Uses default deleter.
+  ///
+  /// @param[in] instance Instance to handle.
+  ///
+  constexpr explicit ErasedPtr(Type* instance) noexcept
+    : ErasedPtr(instance, [](void* instance) { delete static_cast<Type*>(instance); })
   {}
 
   ///
