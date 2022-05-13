@@ -7,6 +7,11 @@
 namespace genebits::engine
 {
 ///
+/// Type-erased handle to a system function.
+///
+using SystemHandle = void*;
+
+///
 /// Checks wither or not a type is a system.
 ///
 /// A type is a system if all its arguments are queries.
@@ -140,7 +145,7 @@ public:
   ///
   template<System SystemType>
   constexpr SystemExecutor(SystemType system) noexcept
-    : system_(std::bit_cast<void*>(system)), executor_(SystemExecutor::Execute<decltype(system)>)
+    : system_(std::bit_cast<SystemHandle>(system)), executor_(SystemExecutor::Execute<decltype(system)>)
   {}
 
   SystemExecutor(const SystemExecutor&) = default;
@@ -162,7 +167,7 @@ public:
   ///
   /// @return The system.
   ///
-  [[nodiscard]] void* Handle() const noexcept
+  [[nodiscard]] SystemHandle Handle() const noexcept
   {
     return system_;
   }
@@ -180,14 +185,14 @@ private:
   /// @return The task of the system invocation.
   ///
   template<typename SystemType>
-  static Task<> Execute(Registry& registry, void* system)
+  static Task<> Execute(Registry& registry, SystemHandle system)
   {
     return SystemTraits<SystemType>::Invoke(std::bit_cast<SystemType>(system), registry);
   }
 
 private:
-  void* system_;
-  Task<> (*executor_)(Registry&, void*);
+  SystemHandle system_;
+  Task<> (*executor_)(Registry&, SystemHandle);
 };
 
 ///
@@ -239,7 +244,7 @@ public:
   ///
   /// @return The system handle.
   ///
-  [[nodiscard]] void* Handle() const noexcept
+  [[nodiscard]] SystemHandle Handle() const noexcept
   {
     return executor_.Handle();
   }
