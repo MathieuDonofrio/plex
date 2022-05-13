@@ -190,7 +190,7 @@ public:
   /// @param[in] last Last iterator.
   ///
   template<std::input_or_output_iterator Iterator>
-  requires std::same_as<typename std::iterator_traits<Iterator>::value_type, Type> Vector(Iterator first, Iterator last)
+  Vector(Iterator first, Iterator last)
   {
     AssignToEmpty(first, last);
   }
@@ -663,6 +663,9 @@ private:
   uint32_t size_;
   uint32_t capacity_;
 };
+
+template<std::input_or_output_iterator Iterator>
+Vector(Iterator first, Iterator last) -> Vector<typename std::allocator_traits<Iterator>::value_type>;
 
 template<typename Type, typename Allocator>
 struct IsTriviallyRelocatable<Vector<Type, Allocator>>
