@@ -40,7 +40,7 @@ namespace details
 ///
 template<typename Type>
 struct IsTriviallyRelocatable
-  : std::bool_constant<
+  : public std::bool_constant<
       details::Detect_IsTriviallyRelocatable<Type> || // Note that there is no way to inherit the trait, watch
                                                       // P1144r5 for this feature in the future.
       std::is_empty_v<Type> || // For cases like std::allocator
@@ -52,16 +52,16 @@ struct IsTriviallyRelocatable
 
 template<typename... Types>
 struct IsTriviallyRelocatable<std::tuple<Types...>>
-  : std::bool_constant<std::conjunction_v<IsTriviallyRelocatable<Types>...>>
+  : public std::bool_constant<std::conjunction_v<IsTriviallyRelocatable<Types>...>>
 {};
 
 template<typename First, typename Second>
 struct IsTriviallyRelocatable<std::pair<First, Second>>
-  : std::conjunction<IsTriviallyRelocatable<First>, IsTriviallyRelocatable<Second>>
+  : public std::conjunction<IsTriviallyRelocatable<First>, IsTriviallyRelocatable<Second>>
 {};
 
 template<typename Type>
-struct IsTriviallyRelocatable<std::unique_ptr<Type>> : std::true_type
+struct IsTriviallyRelocatable<std::unique_ptr<Type>> : public std::true_type
 {};
 
 ///
@@ -75,8 +75,8 @@ struct IsTriviallyRelocatable<std::unique_ptr<Type>> : std::true_type
 /// @tparam[in] Type Type to check for thread-safety.
 ///
 template<typename Type>
-struct IsThreadSafe : std::bool_constant<details::Detect_IsThreadSafe<Type> // Using tag
-                                         || std::is_empty_v<Type> // If there is no data it must be thread safe
+struct IsThreadSafe : public std::bool_constant<details::Detect_IsThreadSafe<Type> // Using tag
+                                                || std::is_empty_v<Type> // If there is no data it must be thread safe
                         >
 {};
 
