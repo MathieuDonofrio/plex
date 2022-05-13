@@ -1,50 +1,11 @@
 #ifndef GENEBITS_ENGINE_ECS_SYSTEM_H
 #define GENEBITS_ENGINE_ECS_SYSTEM_H
 
-#include "genebits/engine/async/async_latch.h"
-#include "genebits/engine/async/shared_task.h"
 #include "genebits/engine/async/task.h"
-#include "genebits/engine/async/thread_pool.h"
-#include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/debug/logging.h"
-#include "genebits/engine/ecs/archetype.h"
-#include "genebits/engine/ecs/registry.h"
-#include "genebits/engine/utilities/ref.h"
+#include "genebits/engine/ecs/query.h"
 
 namespace genebits::engine
 {
-///
-/// Structure containing the information about a single data access of a system.
-///
-/// Systems contain zero or more data accesses. Depending on the nature of the data access, the execution order of the
-/// system can vary.
-///
-struct SystemDataAccess
-{
-  std::string_view name; // Name of the data obtained using: TypeInfo<Type>::Name()
-  uint32_t category_id; // Category of the data.
-
-  // Flags
-  bool read_only; // Whether the data is read-only or not.
-  bool thread_safe; // Whether the data is thread-safe or not.
-};
-
-///
-/// Query concept for systems.
-///
-/// Queries dispatched during the invocation of a system. They are used to fetch specified data from the registry.
-///
-/// @tparam Type Type to check.
-///
-template<typename Type>
-concept Query = requires(Registry& registry)
-{
-  { std::remove_cvref_t<Type>::GetDataAccess() }; // TODO check return is a Array<SystemDataAccess, sizeof...(Types)>
-  {
-    std::remove_cvref_t<Type>::Get(registry)
-    } -> std::same_as<std::remove_cvref_t<Type>>;
-};
-
 ///
 /// Checks wither or not a type is a system.
 ///
@@ -168,6 +129,8 @@ class SystemTraits<Return (*)(Args...)> : public SystemTraits<Return(Args...)>
 class SystemExecutor
 {
 public:
+  using IsTriviallyRelocatable = std::true_type;
+
   ///
   /// Constructor.
   ///
@@ -235,6 +198,8 @@ private:
 class SystemObject
 {
 public:
+  using IsTriviallyRelocatable = std::true_type;
+
   ///
   /// Constructor.
   ///
@@ -316,8 +281,6 @@ private:
   struct Info
   {
     Vector<SystemDataAccess> data_access;
-
-    // TODO estimated execution time
   };
 
 private:
@@ -325,102 +288,6 @@ private:
 
   std::unique_ptr<Info> info_;
 };
-
-// Standard Queries
-
-///
-/// Implementation of the GetDataAccess requirement of a query.
-///
-/// Uses const qualification to check if a type is read-only.
-/// Uses IsThreadSafe trait to check if a type is thread-safe.
-///
-/// @tparam Types The types to check.
-///
-template<size_t Category, typename... Types>
-struct StandardQueryDataAccessFactory
-{
-  static consteval Array<SystemDataAccess, sizeof...(Types)> GetDataAccess() noexcept
-  {
-    return { SystemDataAccess {
-      TypeInfo<Types>::Name(), // Name of the type
-      Category, // Query category
-      std::is_const_v<Types>, // Check const qualifier to see if the access is read-only.
-      IsThreadSafe<Types>::value // Check ThreadSafe trait to see if the access is thread-safe.
-    }... };
-  }
-};
-
-///
-/// Query categories are unique identifiers that identify where the query is getting its data from. This is used to
-/// determine data dependencies.
-///
-/// Here are some examples:
-/// - Two queries that obtain data from entity components are in the same category because we need to determine the data
-///   dependencies between the two queries.
-/// - The same data type stored as a resource and as a component should not create a data dependency because they are
-///   stored differently. This means that the queries would be in different categories.
-///
-/// There is also the special 'None' category (id = 0) that is used to represent queries that don't have a category.
-/// This means that they cannot produce data dependencies.
-///
-struct QueryCategory
-{
-  enum
-  {
-    None = 0, // Does not belong to any category. Cannot have any data dependencies.
-    Resource = 1,
-    Component = 2,
-  };
-
-  static constexpr const uint32_t LastReservedId = 127;
-
-  ///
-  /// Checks whether or not the given id is reserved.
-  ///
-  /// Ids in range [0, 127] are reserved.
-  ///
-  /// @param[in] category The id to check.
-  ///
-  /// @return Whether or not the id is reserved.
-  ///
-  static constexpr bool IsReserved(size_t category) noexcept
-  {
-    return category <= LastReservedId;
-  }
-};
-
-// TODO make queries better
-
-template<typename... Types>
-struct Resources : public StandardQueryDataAccessFactory<QueryCategory::Resource, Types...>
-{
-  // TODO tuple or something
-
-  static Resources Get([[maybe_unused]] Registry& registry)
-  {
-    // TODO fetch ressources
-
-    return Resources();
-  }
-};
-
-template<typename... Components>
-struct Entities : public StandardQueryDataAccessFactory<QueryCategory::Component, Components...>
-{
-  // TODO actually make this good
-
-  // PolyView<Components...> view;
-
-  static Entities Get([[maybe_unused]] Registry& registry)
-  {
-    Entities entities;
-
-    // entities.view = registry.View<Components...>();
-
-    return entities;
-  }
-};
-
 } // namespace genebits::engine
 
 #endif
