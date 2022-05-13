@@ -189,7 +189,7 @@ constexpr Array<T, N + M> operator+(const Array<T, N>& lhs, const Array<T, M>& r
 }
 
 template<typename Type, size_t N>
-struct IsTriviallyRelocatable<Array<Type, N>> : std::bool_constant<IsTriviallyRelocatable<Type>::value>
+struct IsTriviallyRelocatable<Array<Type, N>> : public std::bool_constant<IsTriviallyRelocatable<Type>::value>
 {};
 } // namespace genebits::engine
 

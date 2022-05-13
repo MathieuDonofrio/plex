@@ -315,7 +315,7 @@ ErasedPtr<Type> MakeErased(Args&&... args)
 }
 
 template<typename Type>
-struct IsTriviallyRelocatable<ErasedPtr<Type>> : std::true_type
+struct IsTriviallyRelocatable<ErasedPtr<Type>> : public std::true_type
 {};
 } // namespace genebits::engine
 

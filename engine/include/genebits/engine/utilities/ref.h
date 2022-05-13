@@ -942,7 +942,7 @@ Ref<Type> MakeRef(Args&&... args)
 }
 
 template<typename Type>
-struct IsTriviallyRelocatable<Ref<Type>> : std::true_type
+struct IsTriviallyRelocatable<Ref<Type>> : public std::true_type
 {};
 } // namespace genebits::engine
 

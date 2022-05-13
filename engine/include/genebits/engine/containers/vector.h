@@ -667,7 +667,7 @@ private:
 
 template<typename Type, typename Allocator>
 struct IsTriviallyRelocatable<Vector<Type, Allocator>>
-  : std::bool_constant<IsTriviallyRelocatable<Type>::value && IsTriviallyRelocatable<Allocator>::value>
+  : public std::bool_constant<IsTriviallyRelocatable<Type>::value && IsTriviallyRelocatable<Allocator>::value>
 {};
 
 } // namespace genebits::engine

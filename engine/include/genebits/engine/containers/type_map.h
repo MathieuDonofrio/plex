@@ -111,7 +111,7 @@ private:
 };
 
 template<typename Type>
-struct IsTriviallyRelocatable<TypeMap<Type>> : IsTriviallyRelocatable<Vector<Type>>
+struct IsTriviallyRelocatable<TypeMap<Type>> : public IsTriviallyRelocatable<Vector<Type>>
 {};
 } // namespace genebits::engine
 
