@@ -150,7 +150,7 @@ public:
   ///
   /// @return Allocator.
   ///
-  allocator_type get_allocator() const noexcept
+  constexpr allocator_type get_allocator() const noexcept
   {
     return *this;
   }
@@ -169,7 +169,7 @@ public:
   /// @param[in] source Array.
   ///
   template<size_t Size>
-  Vector(CArray<Type, Size>&& source) noexcept
+  Vector(CArray<Type, Size>&& source)
   {
     AssignToEmpty(std::move(source));
   }
@@ -191,7 +191,6 @@ public:
   ///
   template<std::input_or_output_iterator Iterator>
   requires std::same_as<typename std::iterator_traits<Iterator>::value_type, Type> Vector(Iterator first, Iterator last)
-  noexcept
   {
     AssignToEmpty(first, last);
   }
@@ -202,7 +201,7 @@ public:
   /// @param source Range to copy from.
   ///
   template<std::ranges::range Range>
-  Vector(const Range& source) noexcept : Vector(std::ranges::begin(source), std::ranges::end(source))
+  Vector(const Range& source) : Vector(std::ranges::begin(source), std::ranges::end(source))
   {}
 
   ///
@@ -327,7 +326,7 @@ public:
   ///
   /// @param[in] value Element to add
   ///
-  void PushBack(const Type& value) noexcept
+  void PushBack(const Type& value)
   {
     EmplaceBack(value);
   }
@@ -337,7 +336,7 @@ public:
   ///
   /// @param[in] value Element to add
   ///
-  void PushBack(Type&& value) noexcept
+  void PushBack(Type&& value)
   {
     EmplaceBack(std::move(value));
   }
@@ -390,7 +389,7 @@ public:
   ///
   /// @param[in] new_size New size of the vector
   ///
-  void Resize(const size_t new_size) noexcept
+  void Resize(const size_t new_size)
   {
     Reserve(new_size);
 
@@ -409,7 +408,7 @@ public:
   /// @param[in] new_size New size of the vector.
   /// @param[in] value The value to copy.
   ///
-  void Resize(const size_t new_size, const Type& value) noexcept
+  void Resize(const size_t new_size, const Type& value)
   {
     Reserve(new_size);
 
@@ -503,7 +502,7 @@ protected:
   ///
   /// @return The allocated block.
   ///
-  Block AllocateAtLeast(size_t capacity) noexcept
+  Block AllocateAtLeast(size_t capacity)
   {
     // C++ 23 allocate_at_least should yield major performance benefits over regular allocation for containers.
     // It is a suitable replacement for realloc.
@@ -612,7 +611,7 @@ protected:
   /// @param[in] args Arguments.
   ///
   template<typename... Args>
-  void ConstructOneAtEnd(Args&&... args) noexcept
+  void ConstructOneAtEnd(Args&&... args) noexcept(noexcept(Type(std::forward<Args>(args)...)))
   {
     new (end()) Type(std::forward<Args>(args)...);
     ++size_;
@@ -626,7 +625,7 @@ protected:
   /// @param[in] source CArray source.
   ///
   template<size_t Size>
-  void AssignToEmpty(CArray<Type, Size>&& source) noexcept
+  void AssignToEmpty(CArray<Type, Size>&& source)
   {
     Block block = AllocateAtLeast(Size);
 
@@ -644,7 +643,7 @@ protected:
   /// @param[in] last Iterator to last element.
   ///
   template<typename Iterator>
-  void AssignToEmpty(Iterator first, Iterator last) noexcept
+  void AssignToEmpty(Iterator first, Iterator last)
   {
     const auto size = static_cast<uint32_t>(std::distance(first, last));
 
