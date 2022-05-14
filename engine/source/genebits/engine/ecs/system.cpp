@@ -4,9 +4,9 @@ namespace genebits::engine
 {
 namespace
 {
-  bool HasWriteDependency(const Vector<SystemDataAccess>& access, std::string_view name, uint32_t category_id) noexcept
+  bool HasWriteDependency(const Vector<QueryDataAccess>& access, std::string_view name, uint32_t category_id) noexcept
   {
-    for (SystemDataAccess data : access)
+    for (const QueryDataAccess& data : access)
     {
       if (data.category_id == category_id && data.name == name) return !data.read_only;
     }
@@ -14,9 +14,9 @@ namespace
     return false;
   }
 
-  bool HasReadDependency(const Vector<SystemDataAccess>& access, std::string_view name, uint32_t category_id) noexcept
+  bool HasReadDependency(const Vector<QueryDataAccess>& access, std::string_view name, uint32_t category_id) noexcept
   {
-    for (SystemDataAccess data : access)
+    for (const QueryDataAccess& data : access)
     {
       if (data.category_id == category_id && data.name == name) return true;
     }
@@ -27,10 +27,10 @@ namespace
 
 [[nodiscard]] bool SystemObject::HasDependency(const SystemObject& system) const noexcept
 {
-  for (const SystemDataAccess& data : info_->data_access)
+  for (const QueryDataAccess& data : info_->data_access)
   {
     if (data.thread_safe) continue;
-    if (data.category_id == QueryCategory::None) continue;
+    if (data.category_id == QueryCategory::None) continue; // Special case: Ignore dependencies
 
     if (data.read_only)
     {

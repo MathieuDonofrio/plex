@@ -115,7 +115,7 @@ public:
   ///
   static consteval auto GetDataAccess() noexcept
   {
-    if constexpr (sizeof...(Queries) == 0) return Array<SystemDataAccess, 0> {};
+    if constexpr (sizeof...(Queries) == 0) return Array<QueryDataAccess, 0> {};
     else
     {
       return (... + std::remove_cvref_t<Queries>::GetDataAccess());
@@ -286,7 +286,7 @@ private:
   ///
   struct Info
   {
-    Vector<SystemDataAccess> data_access;
+    Vector<QueryDataAccess> data_access;
   };
 
 private:

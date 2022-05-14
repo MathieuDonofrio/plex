@@ -34,14 +34,14 @@ static_assert(Query<QueryMock<>&&>);
 
 TEST(QueryDataAccessFactoryTests, GetDataAccess_Nothing_ReturnsEmpty)
 {
-  SystemDataAccessList auto array = QueryMock<>::GetDataAccess();
+  QueryDataAccessList auto array = QueryMock<>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 0);
 }
 
 TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadOnly_CorrectDataAccess)
 {
-  SystemDataAccessList auto array = QueryMock<const int>::GetDataAccess();
+  QueryDataAccessList auto array = QueryMock<const int>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 1);
 
@@ -53,7 +53,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadOnly_CorrectDataAccess
 
 TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadWrite_CorrectDataAccessy)
 {
-  SystemDataAccessList auto array = QueryMock<int>::GetDataAccess();
+  QueryDataAccessList auto array = QueryMock<int>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 1);
 
@@ -65,7 +65,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadWrite_CorrectDataAcces
 
 TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleThreadSafe_CorrectDataAccessy)
 {
-  SystemDataAccessList auto array = QueryMock<ThreadSafeType>::GetDataAccess();
+  QueryDataAccessList auto array = QueryMock<ThreadSafeType>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 1);
 
@@ -77,7 +77,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleThreadSafe_CorrectDataAcce
 
 TEST(QueryDataAccessFactoryTests, GetDataAccess_Multiple_CorrectDataAccesses)
 {
-  SystemDataAccessList auto array = QueryMock<const int, float, const ThreadSafeType>::GetDataAccess();
+  QueryDataAccessList auto array = QueryMock<const int, float, const ThreadSafeType>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 3);
 

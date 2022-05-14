@@ -33,15 +33,15 @@ struct QueryCategory
 };
 
 ///
-/// Structure containing the information about a single data access of a system.
+/// Structure containing the information about a single data access of a query.
 ///
-/// Systems contain zero or more data accesses. Depending on the nature of the data access, the execution order of the
-/// system can vary.
+/// Queries contain zero or more data accesses. Depending on the nature of the data access, the execution order of the
+/// queries can vary.
 ///
-struct SystemDataAccess
+struct QueryDataAccess
 {
   std::string_view name; // Name of the data obtained using: TypeInfo<Type>::Name()
-  uint32_t category_id; // Category of the data.
+  uint32_t category_id; // Category of the data. (Query category)
 
   // Flags
   bool read_only; // Whether the data is read-only or not.
@@ -51,33 +51,33 @@ struct SystemDataAccess
 namespace details
 {
   ///
-  /// Checks whether or not a type is a valid system data access list.
+  /// Checks whether or not a type is a valid query data access list.
   ///
   /// @tparam Type Type to check.
   ///
   template<typename Type>
-  struct IsValidSystemDataAccessList : std::false_type
+  struct IsValidQueryDataAccessList : std::false_type
   {};
 
   ///
-  /// Checks whether or not a type is a valid system data access list.
+  /// Checks whether or not a type is a valid query data access list.
   ///
   /// Specialization for arrays.
   ///
   /// @tparam N Number of elements for array.
   ///
   template<size_t N>
-  struct IsValidSystemDataAccessList<Array<SystemDataAccess, N>> : std::true_type
+  struct IsValidQueryDataAccessList<Array<QueryDataAccess, N>> : std::true_type
   {};
 } // namespace details
 
 ///
-/// Concept used to determine whether or not a type is a valid list of SystemDataAccess.
+/// Concept used to determine whether or not a type is a valid list of QueryDataAccess.
 ///
 /// @tparam Type The type to check.
 ///
 template<typename Type>
-concept SystemDataAccessList = details::IsValidSystemDataAccessList<Type>::value;
+concept QueryDataAccessList = details::IsValidQueryDataAccessList<Type>::value;
 
 ///
 /// Query concept for systems.
@@ -91,7 +91,7 @@ concept Query = requires(Registry& registry)
 {
   {
     std::remove_cvref_t<Type>::GetDataAccess()
-    } -> SystemDataAccessList;
+    } -> QueryDataAccessList;
   {
     std::remove_cvref_t<Type>::Get(registry)
     } -> std::same_as<std::remove_cvref_t<Type>>;
@@ -110,9 +110,9 @@ concept Query = requires(Registry& registry)
 template<size_t Category, typename... Types>
 struct QueryDataAccessFactory
 {
-  static consteval Array<SystemDataAccess, sizeof...(Types)> GetDataAccess() noexcept
+  static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
   {
-    return { SystemDataAccess {
+    return { QueryDataAccess {
       TypeInfo<Types>::Name(), // Name of the type
       Category, // Query category
       std::is_const_v<Types>, // Check const qualifier to see if the access is read-only.
