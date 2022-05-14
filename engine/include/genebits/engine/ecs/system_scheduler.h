@@ -1,8 +1,9 @@
 #ifndef GENEBITS_ENGINE_ECS_SYSTEM_SCHEDULER_H
 #define GENEBITS_ENGINE_ECS_SYSTEM_SCHEDULER_H
 
+#include "genebits/engine/async/shared_task.h"
+#include "genebits/engine/async/when_all.h"
 #include "genebits/engine/ecs/system_graph.h"
-#include <genebits/engine/async/when_all.h>
 
 namespace genebits::engine
 {

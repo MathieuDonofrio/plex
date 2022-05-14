@@ -3,6 +3,7 @@
 
 #include "genebits/engine/async/task.h"
 #include "genebits/engine/ecs/query.h"
+#include "genebits/engine/utilities/ref.h"
 
 namespace genebits::engine
 {
@@ -200,7 +201,7 @@ private:
 ///
 /// Contains executor and extra information about the system.
 ///
-class SystemObject
+class SystemObject : public RefCounted
 {
 public:
   using IsTriviallyRelocatable = std::true_type;

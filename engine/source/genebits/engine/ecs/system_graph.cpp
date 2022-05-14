@@ -23,7 +23,7 @@ void SystemGraph::ComputeDependencies()
   {
     for (auto other_it = nodes_.begin(); other_it != it; ++other_it)
     {
-      if (it->stage == other_it->stage && !it->stage->IsAfter(*other_it->system, *it->system))
+      if (it->stage == other_it->stage && !it->stage->HasExplicitOrder(other_it->system, it->system))
       {
         // If we are from the same stage and there was no explicit order between the two systems,
         // we are free to reorder these systems however we want, therefore there is no dependency.

@@ -253,9 +253,10 @@ public:
   {
     ASSERT(initialized_, "Not initialized");
     ASSERT(!Contains(entity), "Entity already exists");
-
-#ifndef NDEBUG
     ASSERT(sizeof...(Components) == components_.size(), "Invalid amount of components");
+
+    // Runtime check that the components are the same as the ones used to initialize the storage
+#ifndef NDEBUG // Because of parameter pack
     ((ASSERT(HasComponent<std::remove_cvref_t<Components>>(), "Component type not valid")), ...);
 #endif
 

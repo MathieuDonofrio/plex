@@ -1,10 +1,10 @@
 #ifndef GENEBITS_ENGINE_ECS_SYSTEM_GRAPH_H
 #define GENEBITS_ENGINE_ECS_SYSTEM_GRAPH_H
 
+#include "genebits/engine/async/when_all.h"
 #include "genebits/engine/containers/vector.h"
 #include "genebits/engine/ecs/stage.h"
 #include "genebits/engine/utilities/delegate.h"
-#include <genebits/engine/async/when_all.h>
 
 namespace genebits::engine
 {
@@ -47,8 +47,8 @@ private:
   void Compact();
 
 private:
-  Vector<Node> nodes_;
   Vector<CompactNode> compact_nodes_;
+  Vector<Node> nodes_;
 };
 } // namespace genebits::engine
 
