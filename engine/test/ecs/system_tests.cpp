@@ -13,36 +13,35 @@ namespace
   size_t resources_mock_get_call_counter;
   size_t entities_mock_get_call_counter;
 
-  template<typename... Components>
-  struct VoidQueryMock : public QueryDataAccessFactory<QueryCategory::None, Components...>
-  {
-    static VoidQueryMock Get([[maybe_unused]] Registry& registry)
-    {
-      void_query_mock_get_call_counter++;
-
-      return VoidQueryMock();
-    }
-  };
-
   template<typename... Types>
-  struct ResourcesMock : public QueryDataAccessFactory<QueryCategory::Resource, Types...>
+  struct ResourcesMock : public QueryDataAccessFactory<ResourcesMock<Types...>, Types...>
   {
-    static ResourcesMock Get([[maybe_unused]] Registry& registry)
+    static ResourcesMock FetchData([[maybe_unused]] Context& context)
     {
       resources_mock_get_call_counter++;
 
       return ResourcesMock();
     }
+
+    static constexpr std::string_view GetCategory()
+    {
+      return "resources";
+    }
   };
 
   template<typename... Components>
-  struct EntitiesMock : public QueryDataAccessFactory<QueryCategory::Component, Components...>
+  struct EntitiesMock : public QueryDataAccessFactory<EntitiesMock<Components...>, Components...>
   {
-    static EntitiesMock Get([[maybe_unused]] Registry& registry)
+    static EntitiesMock FetchData([[maybe_unused]] Context& context)
     {
       entities_mock_get_call_counter++;
 
       return EntitiesMock();
+    }
+
+    static constexpr std::string_view GetCategory()
+    {
+      return "components";
     }
   };
 
@@ -86,8 +85,6 @@ static_assert(System<decltype(SystemMock2<EntitiesMock<>, EntitiesMock<>, Resour
 static_assert(System<decltype(SystemMock2<EntitiesMock<int>, ResourcesMock<float>>)>);
 static_assert(System<
   decltype(SystemMock2<EntitiesMock<int>, ResourcesMock<float, double>, ResourcesMock<float>, EntitiesMock<long>>)>);
-static_assert(
-  System<decltype(SystemMock2<EntitiesMock<int>, ResourcesMock<float, double>, VoidQueryMock<>, EntitiesMock<long>>)>);
 
 static_assert(SystemTraits<decltype(SystemMock1<>)>::IsCoroutine == true);
 static_assert(SystemTraits<decltype(SystemMock2<>)>::IsCoroutine == false);
@@ -131,11 +128,11 @@ TEST(SystemTraits, Invoke_NoQueries_SystemCalled)
 {
   system_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock1<>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -146,11 +143,11 @@ TEST(SystemTraits, Invoke_VoidReturnAndNoQueries_SystemCalled)
 {
   system_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock2<>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -161,11 +158,11 @@ TEST(SystemTraits, Invoke_EmptyEntitiesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock1<EntitiesMock<>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -176,11 +173,11 @@ TEST(SystemTraits, Invoke_EmptyResourcesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock1<ResourcesMock<>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -191,11 +188,11 @@ TEST(SystemTraits, Invoke_EmptyEntitiesAndResourcesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock1<EntitiesMock<>, ResourcesMock<>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -206,11 +203,11 @@ TEST(SystemTraits, Invoke_EntitiesWithComponentsQuery_SystemCalled)
 {
   system_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock1<EntitiesMock<int>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -221,11 +218,11 @@ TEST(SystemTraits, Invoke_EntitiesWithComponentsAndResourcesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock1<EntitiesMock<int, long>, ResourcesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -236,11 +233,11 @@ TEST(SystemTraits, Invoke_VoidReturnEntitiesWithComponentsAndResourcesQuery_Syst
 {
   system_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock2<EntitiesMock<int, long>, ResourcesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -251,11 +248,11 @@ TEST(SystemTraits, Invoke_SingleQuery_QueryGetCalled)
 {
   resources_mock_get_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock2<ResourcesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -266,11 +263,11 @@ TEST(SystemTraits, Invoke_DoubleQuerySameType_QueryGetCalled)
 {
   resources_mock_get_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock2<ResourcesMock<float>, ResourcesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
@@ -282,35 +279,16 @@ TEST(SystemTraits, Invoke_DoubleQueryDifferent_QueryGetCalled)
   resources_mock_get_call_counter = 0;
   entities_mock_get_call_counter = 0;
 
-  Registry registry;
+  Context context;
 
   auto system = SystemMock2<ResourcesMock<float>, EntitiesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
 
   SyncWait(task);
 
   EXPECT_EQ(resources_mock_get_call_counter, 1);
   EXPECT_EQ(entities_mock_get_call_counter, 1);
-}
-
-TEST(SystemTraits, Invoke_TripleQueryDifferent_QueryGetCalled)
-{
-  resources_mock_get_call_counter = 0;
-  entities_mock_get_call_counter = 0;
-  void_query_mock_get_call_counter = 0;
-
-  Registry registry;
-
-  auto system = SystemMock2<ResourcesMock<>, EntitiesMock<>, VoidQueryMock<>>;
-
-  auto task = SystemTraits<decltype(system)>::Invoke(system, registry);
-
-  SyncWait(task);
-
-  EXPECT_EQ(resources_mock_get_call_counter, 1);
-  EXPECT_EQ(entities_mock_get_call_counter, 1);
-  EXPECT_EQ(void_query_mock_get_call_counter, 1);
 }
 
 TEST(SystemExecutor, Constructor_Coroutine)
@@ -339,9 +317,9 @@ TEST(SystemExecutor, Execute_NoData_SystemCalled)
 
   SystemExecutor executor(system);
 
-  Registry registry;
+  Context context;
 
-  auto task = executor(registry);
+  auto task = executor(context);
 
   SyncWait(task);
 
@@ -356,9 +334,9 @@ TEST(SystemExecutor, Execute_WithData_SystemCalled)
 
   SystemExecutor executor(system);
 
-  Registry registry;
+  Context context;
 
-  auto task = executor(registry);
+  auto task = executor(context);
 
   SyncWait(task);
 
@@ -464,28 +442,6 @@ TEST(SystemObject, HasDependency_WriteWriteDifferentCategory_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<int>, EntitiesMock<>>;
   auto system2 = SystemMock2<ResourcesMock<>, EntitiesMock<int>>;
-
-  SystemObject object1(system1);
-  SystemObject object2(system2);
-
-  EXPECT_FALSE(object1.HasDependency(object2));
-}
-
-TEST(SystemObject, HasDependency_WriteWriteNoneCategoryAndOther_NoDependency)
-{
-  auto system1 = SystemMock2<VoidQueryMock<int>>;
-  auto system2 = SystemMock2<ResourcesMock<int>>;
-
-  SystemObject object1(system1);
-  SystemObject object2(system2);
-
-  EXPECT_FALSE(object1.HasDependency(object2));
-}
-
-TEST(SystemObject, HasDependency_WriteWriteBothNoneCategory_NoDependency)
-{
-  auto system1 = SystemMock2<VoidQueryMock<int>>;
-  auto system2 = SystemMock2<VoidQueryMock<int>>;
 
   SystemObject object1(system1);
   SystemObject object2(system2);

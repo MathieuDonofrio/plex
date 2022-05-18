@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/resource_manager.h"
+#include "genebits/engine/ecs/context.h"
 
 #include <gtest/gtest.h>
 
@@ -26,59 +26,59 @@ namespace
   };
 } // namespace
 
-TEST(ResourceManager_Tests, DefaultConstructor_Nothing_Empty)
+TEST(Context_Tests, DefaultConstructor_Nothing_Empty)
 {
-  ResourceManager manager;
+  Context manager;
 
   EXPECT_EQ(manager.Size(), 0);
 }
 
-TEST(ResourceManager_Tests, Contains_Nothing_False)
+TEST(Context_Tests, Contains_Nothing_False)
 {
-  ResourceManager manager;
+  Context manager;
 
   EXPECT_FALSE(manager.Contains<TestResource<0>>());
 }
 
-TEST(ResourceManager_Tests, Insert_Single_SizeIncrease)
+TEST(Context_Tests, Insert_Single_SizeIncrease)
 {
-  ResourceManager manager;
+  Context manager;
 
   manager.Emplace<TestResource<0>>();
 
   EXPECT_EQ(manager.Size(), 1);
 }
 
-TEST(ResourceManager_Tests, Contains_Exists_True)
+TEST(Context_Tests, Contains_Exists_True)
 {
-  ResourceManager manager;
+  Context manager;
 
   manager.Emplace<TestResource<0>>();
 
   EXPECT_TRUE(manager.Contains<TestResource<0>>());
 }
 
-TEST(ResourceManager_Tests, Emplace_DefaultConstructed_DefaultValue)
+TEST(Context_Tests, Emplace_DefaultConstructed_DefaultValue)
 {
-  ResourceManager manager;
+  Context manager;
 
   manager.Emplace<TestResource<0>>();
 
   EXPECT_EQ(manager.Get<TestResource<0>>(), 0);
 }
 
-TEST(ResourceManager_Tests, Emplace_ValueConstructed_Value)
+TEST(Context_Tests, Emplace_ValueConstructed_Value)
 {
-  ResourceManager manager;
+  Context manager;
 
   manager.Emplace<TestResource<0>>(10);
 
   EXPECT_EQ(manager.Get<TestResource<0>>(), 10);
 }
 
-TEST(ResourceManager_Tests, Insert_ExistingResource_Value)
+TEST(Context_Tests, Insert_ExistingResource_Value)
 {
-  ResourceManager manager;
+  Context manager;
 
   auto resource = new TestResource<0>(10);
   manager.Insert<TestResource<0>>(resource);
@@ -86,9 +86,9 @@ TEST(ResourceManager_Tests, Insert_ExistingResource_Value)
   EXPECT_EQ(manager.Get<TestResource<0>>(), 10);
 }
 
-TEST(ResourceManager_Tests, Insert_ExistingResourceWithDestructor_Value)
+TEST(Context_Tests, Insert_ExistingResourceWithDestructor_Value)
 {
-  ResourceManager manager;
+  Context manager;
 
   auto resource = new TestResource<0>(10);
   manager.Insert<TestResource<0>>(resource, [](void* resource) { delete static_cast<TestResource<0>*>(resource); });
@@ -96,9 +96,9 @@ TEST(ResourceManager_Tests, Insert_ExistingResourceWithDestructor_Value)
   EXPECT_EQ(manager.Get<TestResource<0>>(), 10);
 }
 
-TEST(ResourceManager_Tests, Remove_ExistingResource_DoesNotContain)
+TEST(Context_Tests, Remove_ExistingResource_DoesNotContain)
 {
-  ResourceManager manager;
+  Context manager;
 
   manager.Emplace<TestResource<0>>();
   manager.Remove<TestResource<0>>();
@@ -106,9 +106,9 @@ TEST(ResourceManager_Tests, Remove_ExistingResource_DoesNotContain)
   EXPECT_FALSE(manager.Contains<TestResource<0>>());
 }
 
-TEST(ResourceManager_Tests, Emplace_Multiple_CorrectValues)
+TEST(Context_Tests, Emplace_Multiple_CorrectValues)
 {
-  ResourceManager manager;
+  Context manager;
 
   manager.Emplace<TestResource<1>>(1);
   EXPECT_EQ(manager.Get<TestResource<1>>(), 1);

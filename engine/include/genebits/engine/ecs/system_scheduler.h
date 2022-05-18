@@ -116,9 +116,11 @@ public:
   /// Creates an aggregate task of update tasks for every system in the phase with proper order and parallelism
   /// potential.
   ///
+  /// @param[in] context The context to run systems with.
+  ///
   /// @return Task that runs all the system tasks in the correct order.
   ///
-  Task<> RunAll(Registry& registry);
+  Task<> RunAll(Context& context);
 
   ///
   /// Schedules the stage to be run.
@@ -139,11 +141,11 @@ private:
   /// Creates a shared task from a step. Will first wait for all its dependencies to finish, then will
   /// execute the system update.
   ///
-  /// @param[in] step The step to make the task for.
+  /// @param[in] context The context to run systems with.
   ///
   /// @return Shared task that waits for its dependencies then executes system update.
   ///
-  SharedTask<> MakeSystemTask(const SystemGraph::CompactNode& step, Registry& registry);
+  SharedTask<> MakeSystemTask(const SystemGraph::CompactNode& step, Context& context);
 
 private:
   Vector<SharedTask<>> tasks_;

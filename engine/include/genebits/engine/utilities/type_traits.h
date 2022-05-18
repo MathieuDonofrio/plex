@@ -80,6 +80,27 @@ struct IsThreadSafe : public std::bool_constant<details::Detect_IsThreadSafe<Typ
                         >
 {};
 
+///
+/// Returns whether or not all the types in the variadic template are unique.
+///
+/// @tparam Types Types to check for uniqueness.
+///
+template<typename... Types>
+struct IsUniqueTypes : std::true_type
+{};
+
+template<typename Type, typename... Types>
+struct IsUniqueTypes<Type, Types...>
+  : std::conjunction<std::negation<std::disjunction<std::is_same<Type, Types>...>>, IsUniqueTypes<Types...>>
+{};
+
+///
+/// Returns whether or not all the types in the variadic template are unique.
+///
+/// @tparam Types Types to check for uniqueness.
+///
+template<typename... Types>
+concept UniqueTypes = IsUniqueTypes<Types...>::value;
 } // namespace genebits::engine
 
 #endif

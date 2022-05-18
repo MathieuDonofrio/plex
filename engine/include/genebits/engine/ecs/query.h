@@ -1,37 +1,13 @@
 #ifndef GENEBITS_ENGINE_ECS_QUERY_H
 #define GENEBITS_ENGINE_ECS_QUERY_H
 
-#include "genebits/engine/ecs/registry.h"
+#include <string_view>
+
+#include "genebits/engine/containers/array.h"
+#include "genebits/engine/ecs/context.h"
 
 namespace genebits::engine
 {
-///
-/// Query categories are unique identifiers that identify where the query is getting its data from. This is used to
-/// determine data dependencies.
-///
-/// @note Ids from [0, 255] are reserved.
-///
-/// Here are some examples:
-/// - Two queries that obtain data from entity components are in the same category because we need to determine the data
-///   dependencies between the two queries.
-/// - The same data type stored as a resource and as a component should not create a data dependency because they are
-///   stored differently. This means that the queries would be in different categories.
-///
-/// There is also the special 'None' category (id = 0) that is used to represent queries that don't have a category.
-/// This means that they cannot produce data dependencies.
-///
-struct QueryCategory
-{
-  enum : std::uint32_t
-  {
-    None = 0, // Does not belong to any category. Cannot have any data dependencies.
-    Resource = 1,
-    Component = 2,
-  };
-
-  static constexpr const uint32_t LastReservedId = 255;
-};
-
 ///
 /// Structure containing the information about a single data access of a query.
 ///
@@ -41,7 +17,7 @@ struct QueryCategory
 struct QueryDataAccess
 {
   std::string_view name; // Name of the data obtained using: TypeInfo<Type>::Name()
-  uint32_t category_id; // Category of the data. (Query category)
+  std::string_view category; // Category of the data obtained using: Type::GetCategory()
 
   // Flags
   bool read_only; // Whether the data is read-only or not.
@@ -69,6 +45,22 @@ namespace details
   template<size_t N>
   struct IsValidQueryDataAccessList<Array<QueryDataAccess, N>> : std::true_type
   {};
+
+  ///
+  /// Obtains the return type of the function.
+  ///
+  /// @warning Does not work for overloaded functions.
+  ///
+  /// @tparam Function Function to obtain the return type of.
+  ///
+  template<typename Function>
+  struct ReturnTypeOf;
+
+  template<typename R, typename... Args>
+  struct ReturnTypeOf<R (*)(Args...)>
+  {
+    using Type = R;
+  };
 } // namespace details
 
 ///
@@ -87,13 +79,16 @@ concept QueryDataAccessList = details::IsValidQueryDataAccessList<Type>::value;
 /// @tparam Type Type to check.
 ///
 template<typename Type>
-concept Query = requires(Registry& registry)
+concept Query = requires(Context& data_sources)
 {
+  {
+    std::remove_cvref_t<Type>::GetCategory()
+    } -> std::convertible_to<std::string_view>;
   {
     std::remove_cvref_t<Type>::GetDataAccess()
     } -> QueryDataAccessList;
   {
-    std::remove_cvref_t<Type>::Get(registry)
+    std::remove_cvref_t<Type>::FetchData(data_sources)
     } -> std::same_as<std::remove_cvref_t<Type>>;
 };
 
@@ -105,16 +100,24 @@ concept Query = requires(Registry& registry)
 /// Uses const qualification to check if a type is read-only.
 /// Uses IsThreadSafe trait to check if a type is thread-safe.
 ///
+/// @tparam Query The query type.
 /// @tparam Types The types to check.
 ///
-template<size_t Category, typename... Types>
+template<typename Query, typename... Types>
 struct QueryDataAccessFactory
 {
+  ///
+  /// Returns all the data accesses for the query at compile-time.
+  ///
+  /// @return Array of data accesses.
+  ///
   static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
   {
+    const std::string_view category = Query::GetCategory();
+
     return { QueryDataAccess {
       TypeInfo<Types>::Name(), // Name of the type
-      Category, // Query category
+      category, // Query category
       std::is_const_v<Types>, // Check const qualifier to see if the access is read-only.
       IsThreadSafe<Types>::value // Check ThreadSafe trait to see if the access is thread-safe.
     }... };

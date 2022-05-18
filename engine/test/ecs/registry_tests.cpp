@@ -267,50 +267,6 @@ TEST(Registry_Tests, HasComponents_Multiple_False)
   EXPECT_TRUE((registry.HasComponents<int, double, float>(created_entity)));
 }
 
-TEST(Registry_Tests, EmplaceResource_Simple_ContainsResource)
-{
-  Registry registry;
-
-  registry.EmplaceResource<int>(10);
-
-  EXPECT_EQ(registry.ResourceCount(), 1);
-  EXPECT_TRUE(registry.ContainsResource<int>());
-  EXPECT_EQ(registry.GetResource<int>(), 10);
-}
-
-TEST(Registry_Tests, InsertResource_Instance_ContainsResource)
-{
-  Registry registry;
-
-  registry.InsertResource<int>(new int(10));
-
-  EXPECT_EQ(registry.ResourceCount(), 1);
-  EXPECT_TRUE(registry.ContainsResource<int>());
-  EXPECT_EQ(registry.GetResource<int>(), 10);
-}
-
-TEST(Registry_Tests, InsertResource_InstanceAndDeleter_ContainsResource)
-{
-  Registry registry;
-
-  registry.InsertResource<int>(new int(10), [](void* resource) { delete static_cast<int*>(resource); });
-
-  EXPECT_EQ(registry.ResourceCount(), 1);
-  EXPECT_TRUE(registry.ContainsResource<int>());
-  EXPECT_EQ(registry.GetResource<int>(), 10);
-}
-
-TEST(Registry_Tests, RemoveResource_ExistingResource_DoesNotContainsResource)
-{
-  Registry registry;
-
-  registry.EmplaceResource<int>(10);
-  registry.RemoveResource<int>();
-
-  EXPECT_EQ(registry.ResourceCount(), 0);
-  EXPECT_FALSE(registry.ContainsResource<int>());
-}
-
 TEST(PolyViewIterator_Tests, PreIncrement_Empty_NoIterations)
 {
   Registry registry;

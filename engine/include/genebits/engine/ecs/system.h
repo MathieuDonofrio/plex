@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_ECS_SYSTEM_H
 
 #include "genebits/engine/async/task.h"
+#include "genebits/engine/ecs/context.h"
 #include "genebits/engine/ecs/query.h"
 #include "genebits/engine/utilities/ref.h"
 
@@ -88,22 +89,25 @@ public:
   ///
   /// Invokes the system with the specified registry.
   ///
-  /// Will create all system queries for the registry, then call the system function with the queries.
+  /// Will create all the queries fetching the data from various context data sources.
+  ///
+  /// @warning Data sources should contain all the necessary data sources for the possibly used queries, otherwise
+  /// behaviour might be undefined.
   ///
   /// Always returns a void coroutine task. If the system was a couroutine, it will be awaited, otherwise, the system
   /// will be invoked and returned as a task.
   ///
   /// @param[in] system The system to invoke.
-  /// @param[in] registry The registry to use.
+  /// @param[in] context Context to use, containing all the data sources.
   ///
   /// @return Coroutine task of the system invocation.
   ///
-  static Task<> Invoke(SystemType* system, Registry& registry)
+  static Task<> Invoke(SystemType* system, Context& context)
   {
-    if constexpr (IsCoroutine) { co_await system(std::remove_cvref_t<Queries>::Get(registry)...); }
+    if constexpr (IsCoroutine) { co_await system(std::remove_cvref_t<Queries>::FetchData(context)...); }
     else
     {
-      system(std::remove_cvref_t<Queries>::Get(registry)...);
+      system(std::remove_cvref_t<Queries>::FetchData(context)...);
       co_return;
     }
   }
@@ -152,15 +156,17 @@ public:
   SystemExecutor(const SystemExecutor&) = default;
 
   ///
-  /// Executes the system.
+  /// Executes the system for the context.
+  ///
+  /// @warning The context should contain all the required data sources for the queries.
   ///
   /// @param[in] registry The registry to use.
   ///
   /// @return The task of the system invocation.
   ///
-  Task<> operator()(Registry& registry) const
+  Task<> operator()(Context& context) const
   {
-    return executor_(registry, system_);
+    return executor_(context, system_);
   }
 
   ///
@@ -179,21 +185,20 @@ private:
   ///
   /// @tparam SystemType The system type.
   ///
-  /// @param[in] registry The registry to use.
-  ///
+  /// @param[in] context The context to use.
   /// @param[in] system The system to invoke.
   ///
   /// @return The task of the system invocation.
   ///
   template<typename SystemType>
-  static Task<> Execute(Registry& registry, SystemHandle system)
+  static Task<> Execute(Context& context, SystemHandle system)
   {
-    return SystemTraits<SystemType>::Invoke(std::bit_cast<SystemType>(system), registry);
+    return SystemTraits<SystemType>::Invoke(std::bit_cast<SystemType>(system), context);
   }
 
 private:
   SystemHandle system_;
-  Task<> (*executor_)(Registry&, SystemHandle);
+  Task<> (*executor_)(Context&, SystemHandle);
 };
 
 ///

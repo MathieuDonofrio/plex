@@ -99,7 +99,7 @@ namespace details
   }
 } // namespace details
 
-Task<> SystemScheduler::RunAll(Registry& registry)
+Task<> SystemScheduler::RunAll(Context& context)
 {
   tasks_.Clear();
   triggers_.Clear();
@@ -108,7 +108,7 @@ Task<> SystemScheduler::RunAll(Registry& registry)
 
   for (const auto& step : steps)
   {
-    tasks_.PushBack(MakeSystemTask(step, registry));
+    tasks_.PushBack(MakeSystemTask(step, context));
   }
 
   co_await WhenAll(tasks_);
@@ -119,7 +119,7 @@ void SystemScheduler::Schedule(const Ref<Stage>& stage)
   cache_.Add(stage);
 }
 
-SharedTask<> SystemScheduler::MakeSystemTask(const SystemGraph::CompactNode& step, Registry& registry)
+SharedTask<> SystemScheduler::MakeSystemTask(const SystemGraph::CompactNode& step, Context& context)
 {
   const size_t amount = step.dependencies.size();
 
@@ -136,7 +136,7 @@ SharedTask<> SystemScheduler::MakeSystemTask(const SystemGraph::CompactNode& ste
     co_await counter;
   }
 
-  co_await step.executor(registry);
+  co_await step.executor(context);
 }
 
 } // namespace genebits::engine

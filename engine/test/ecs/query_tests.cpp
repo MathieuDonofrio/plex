@@ -7,11 +7,16 @@ namespace genebits::engine::tests
 namespace
 {
   template<typename... Components>
-  struct QueryMock : public QueryDataAccessFactory<QueryCategory::None, Components...>
+  struct QueryMock : public QueryDataAccessFactory<QueryMock<Components...>, Components...>
   {
-    static QueryMock Get([[maybe_unused]] Registry& registry)
+    static QueryMock FetchData([[maybe_unused]] Context& context)
     {
       return QueryMock();
+    }
+
+    static constexpr std::string_view GetCategory()
+    {
+      return "Test";
     }
   };
 
@@ -46,7 +51,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadOnly_CorrectDataAccess
   EXPECT_EQ(array.size(), 1);
 
   EXPECT_EQ(array[0].name, TypeInfo<const int>::Name());
-  EXPECT_EQ(array[0].category_id, QueryCategory::None);
+  EXPECT_EQ(array[0].category, "Test");
   EXPECT_TRUE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
 }
@@ -58,7 +63,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadWrite_CorrectDataAcces
   EXPECT_EQ(array.size(), 1);
 
   EXPECT_EQ(array[0].name, TypeInfo<int>::Name());
-  EXPECT_EQ(array[0].category_id, QueryCategory::None);
+  EXPECT_EQ(array[0].category, "Test");
   EXPECT_FALSE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
 }
@@ -70,7 +75,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleThreadSafe_CorrectDataAcce
   EXPECT_EQ(array.size(), 1);
 
   EXPECT_EQ(array[0].name, TypeInfo<ThreadSafeType>::Name());
-  EXPECT_EQ(array[0].category_id, QueryCategory::None);
+  EXPECT_EQ(array[0].category, "Test");
   EXPECT_FALSE(array[0].read_only);
   EXPECT_TRUE(array[0].thread_safe);
 }
@@ -82,17 +87,17 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_Multiple_CorrectDataAccesses)
   EXPECT_EQ(array.size(), 3);
 
   EXPECT_EQ(array[0].name, TypeInfo<const int>::Name());
-  EXPECT_EQ(array[0].category_id, QueryCategory::None);
+  EXPECT_EQ(array[0].category, "Test");
   EXPECT_TRUE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
 
   EXPECT_EQ(array[1].name, TypeInfo<float>::Name());
-  EXPECT_EQ(array[1].category_id, QueryCategory::None);
+  EXPECT_EQ(array[1].category, "Test");
   EXPECT_FALSE(array[1].read_only);
   EXPECT_FALSE(array[1].thread_safe);
 
   EXPECT_EQ(array[2].name, TypeInfo<const ThreadSafeType>::Name());
-  EXPECT_EQ(array[2].category_id, QueryCategory::None);
+  EXPECT_EQ(array[2].category, "Test");
   EXPECT_TRUE(array[2].read_only);
   EXPECT_TRUE(array[2].thread_safe);
 }

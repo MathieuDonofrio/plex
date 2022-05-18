@@ -8,7 +8,6 @@
 
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/entity_manager.h"
-#include "genebits/engine/ecs/resource_manager.h"
 #include "genebits/engine/ecs/storage.h"
 #include "genebits/engine/ecs/view_relations.h"
 
@@ -193,119 +192,6 @@ public:
     return PolyView<Components...>(*this);
   }
 
-  ///
-  /// Inserts a new resource into the manager.
-  ///
-  /// If there is already a resource of the same type, the old resource will be replaced.
-  ///
-  /// @tparam ResourceType The type of resource to insert.
-  /// @tparam Args Argument types to pass to the resource constructor.
-  ///
-  /// @param[in] args Arguments to pass to the resource constructor.
-  ///
-  template<typename ResourceType, typename... Args>
-  void EmplaceResource(Args&&... args)
-  {
-    resource_manager_.template Emplace<ResourceType>(std::forward<Args>(args)...);
-  }
-
-  ///
-  /// Inserts a new resource into the manager.
-  ///
-  /// If there is already a resource of the same type, the old resource will be replaced.
-  ///
-  /// @tparam ResourceType The type of resource to insert.
-  ///
-  /// @param[in] resource Pointer to the resource to insert.
-  /// @param[in] deleter Custom deleter to use when destroying the resource.
-  ///
-  template<typename ResourceType>
-  void InsertResource(ResourceType* resource, void (*deleter)(void*))
-  {
-    resource_manager_.template Insert<ResourceType>(resource, deleter);
-  }
-
-  ///
-  /// Inserts a new resource into the registry.
-  ///
-  /// If there is already a resource of the same type, the old resource will be replaced.
-  ///
-  /// @tparam ResourceType The type of resource to insert.
-  ///
-  /// @param[in] resource Pointer to the resource to insert.
-  ///
-  template<typename ResourceType>
-  void InsertResource(ResourceType* resource)
-  {
-    resource_manager_.template Insert<ResourceType>(resource);
-  }
-
-  ///
-  /// Removes a resource from the registry.
-  ///
-  /// @warning The resource must exist, otherwise the behaviour is undefined.
-  ///
-  /// @tparam ResourceType The type of resource to remove.
-  ///
-  template<typename ResourceType>
-  void RemoveResource()
-  {
-    resource_manager_.template Remove<ResourceType>();
-  }
-
-  ///
-  /// Returns a reference to the resource of the given type.
-  ///
-  /// @warning The resource must exist, otherwise the behaviour is undefined.
-  ///
-  /// @tparam ResourceType The type of resource to return.
-  ///
-  /// @return Reference to the resource.
-  ///
-  template<typename ResourceType>
-  const ResourceType& GetResource() const noexcept
-  {
-    return resource_manager_.template Get<ResourceType>();
-  }
-
-  ///
-  /// Returns a reference to the resource of the given type.
-  ///
-  /// @warning The resource must exist, otherwise the behaviour is undefined.
-  ///
-  /// @tparam ResourceType The type of resource to return.
-  ///
-  /// @return Reference to the resource.
-  ///
-  template<typename ResourceType>
-  ResourceType& GetResource() noexcept
-  {
-    return resource_manager_.template Get<ResourceType>();
-  }
-
-  ///
-  /// Returns whether or not the manager contains a resource of the given type.
-  ///
-  /// @tparam ResourceType The type of resource to check for.
-  ///
-  /// @return True if the manager contains the resource, false otherwise.
-  ///
-  template<typename ResourceType>
-  [[nodiscard]] bool ContainsResource() const noexcept
-  {
-    return resource_manager_.template Contains<ResourceType>();
-  }
-
-  ///
-  /// Returns the number of resources managed by the manager.
-  ///
-  /// @return The number of resources.
-  ///
-  [[nodiscard]] constexpr size_t ResourceCount() const noexcept
-  {
-    return resource_manager_.Size();
-  }
-
 private:
   template<typename...>
   friend class PolyView;
@@ -344,8 +230,8 @@ private:
   SharedSparseArray<Entity> mappings_;
   EntityManager<Entity> entity_manager_;
   ViewRelations relations_;
+
   Vector<Storage<Entity>*> storages_;
-  ResourceManager resource_manager_;
 };
 
 ///
