@@ -72,8 +72,6 @@ namespace details
       std::swap(handle_, other.handle_);
     }
 
-    // TODO operator == & !=
-
   protected:
     ///
     /// Returns the typed coroutine handle.

@@ -57,9 +57,9 @@ TEST(Phase_Tests, Compile_0Systems_Empty)
 
   auto group = MakeRef<SystemGroup>();
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
-  EXPECT_EQ(phase.Count(), 0);
+  EXPECT_EQ(phase->Count(), 0);
 }
 
 TEST(Phase_Tests, Compile_1Systems_HasOneSystem)
@@ -72,9 +72,9 @@ TEST(Phase_Tests, Compile_1Systems_HasOneSystem)
 
   group->Add(system);
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
-  EXPECT_EQ(phase.Count(), 1);
+  EXPECT_EQ(phase->Count(), 1);
 }
 
 TEST(Phase_Tests, Compile_2SystemsNoDeps_NoDeps)
@@ -89,12 +89,12 @@ TEST(Phase_Tests, Compile_2SystemsNoDeps_NoDeps)
   group->Add(system1);
   group->Add(system2);
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
-  EXPECT_EQ(phase.Count(), 2);
+  EXPECT_EQ(phase->Count(), 2);
 
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system1.Get()));
 }
 
 TEST(Phase_Tests, Compile_2SystemsWithDeps_CorrectDeps)
@@ -109,10 +109,10 @@ TEST(Phase_Tests, Compile_2SystemsWithDeps_CorrectDeps)
   group->Add(system1);
   group->Add(system2);
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system2.Get()));
-  EXPECT_TRUE(phase.CheckDependency(system2.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system2.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system2.Get(), system1.Get()));
 }
 
 TEST(Phase_Tests, Run_SingleSystem_Update)
@@ -125,16 +125,16 @@ TEST(Phase_Tests, Run_SingleSystem_Update)
 
   group->Add(system);
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   UpdateNotifier notifier;
 
-  EXPECT_CALL(*system.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&notifier, pool, 10));
+  EXPECT_CALL(*system.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&notifier, pool, 1));
 
   EXPECT_CALL(notifier, NotifyStart).Times(1);
   EXPECT_CALL(notifier, NotifyEnd).Times(1);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 }
 
 TEST(Phase_Tests, Run_2Systems_UpdateAll)
@@ -149,20 +149,20 @@ TEST(Phase_Tests, Run_2Systems_UpdateAll)
   group->Add(system1);
   group->Add(system2);
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 10));
-  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 10));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
+  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 1));
 
   EXPECT_CALL(s1n, NotifyStart).Times(1);
   EXPECT_CALL(s1n, NotifyEnd).Times(1);
   EXPECT_CALL(s2n, NotifyStart).Times(1);
   EXPECT_CALL(s2n, NotifyEnd).Times(1);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 }
 
 TEST(Phase_Tests, Run_2SystemsNoDeps_QuickestFinishesFirst)
@@ -177,20 +177,20 @@ TEST(Phase_Tests, Run_2SystemsNoDeps_QuickestFinishesFirst)
   group->Add(system1);
   group->Add(system2);
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   // System 1
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system2.Get()));
 
   // System 2
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system2.Get()));
 
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
   EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s2n));
 
   ::testing::Sequence s1;
@@ -200,7 +200,7 @@ TEST(Phase_Tests, Run_2SystemsNoDeps_QuickestFinishesFirst)
   EXPECT_CALL(s2n, NotifyEnd).Times(1).InSequence(s1); // System 2 if faster
   EXPECT_CALL(s1n, NotifyEnd).Times(1).InSequence(s1);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 }
 
 TEST(Phase_Tests, Run_2SystemsWithDeps_UpdateInSeq)
@@ -215,20 +215,20 @@ TEST(Phase_Tests, Run_2SystemsWithDeps_UpdateInSeq)
   group->Add(system1);
   group->Add(system2);
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   // System 1
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system2.Get()));
 
   // System 2
-  EXPECT_TRUE(phase.CheckDependency(system2.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system2.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system2.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system2.Get()));
 
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
   EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s2n));
 
   ::testing::Sequence s1;
@@ -238,7 +238,7 @@ TEST(Phase_Tests, Run_2SystemsWithDeps_UpdateInSeq)
   EXPECT_CALL(s2n, NotifyStart).Times(1).InSequence(s1);
   EXPECT_CALL(s2n, NotifyEnd).Times(1).InSequence(s1);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 }
 
 TEST(Phase_Tests, Run_5SystemsWithDeps_UpdateInSeq)
@@ -259,49 +259,49 @@ TEST(Phase_Tests, Run_5SystemsWithDeps_UpdateInSeq)
   group->Add(system4);
   group->Add(system5);
 
-  Phase phase = Phase::Compile(group);
+  Ref<Phase> phase = Phase::Compile(group);
 
   // System 1
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system3.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system5.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system3.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system5.Get()));
 
   // System 2
-  EXPECT_TRUE(phase.CheckDependency(system2.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system3.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system5.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system2.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system3.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system5.Get()));
 
   // System 3
-  EXPECT_TRUE(phase.CheckDependency(system3.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system3.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system3.Get(), system3.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system3.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system3.Get(), system5.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system3.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system3.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system3.Get(), system3.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system3.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system3.Get(), system5.Get()));
 
   // System 4
-  EXPECT_FALSE(phase.CheckDependency(system4.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system4.Get(), system2.Get()));
-  EXPECT_TRUE(phase.CheckDependency(system4.Get(), system3.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system4.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system4.Get(), system5.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system4.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system4.Get(), system2.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system4.Get(), system3.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system4.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system4.Get(), system5.Get()));
 
   // System 5
-  EXPECT_FALSE(phase.CheckDependency(system5.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system5.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system5.Get(), system3.Get()));
-  EXPECT_TRUE(phase.CheckDependency(system5.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system5.Get(), system5.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system5.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system5.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system5.Get(), system3.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system5.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system5.Get(), system5.Get()));
 
   UpdateNotifier s1n, s2n, s3n, s4n, s5n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
-  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 50));
-  EXPECT_CALL(*system3.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s3n, pool, 75));
-  EXPECT_CALL(*system4.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s4n, pool, 50));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 3));
+  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 1));
+  EXPECT_CALL(*system3.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s3n, pool, 2));
+  EXPECT_CALL(*system4.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s4n, pool, 1));
   EXPECT_CALL(*system5.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s5n));
 
   ::testing::Sequence s1, s2, s3;
@@ -317,7 +317,7 @@ TEST(Phase_Tests, Run_5SystemsWithDeps_UpdateInSeq)
   EXPECT_CALL(s5n, NotifyStart).Times(1).InSequence(s2);
   EXPECT_CALL(s5n, NotifyEnd).Times(1).InSequence(s2);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 }
 
 TEST(Phase_Tests, Run_2Systems2GroupsNoDeps_QuickestFinishesFirst)
@@ -333,20 +333,20 @@ TEST(Phase_Tests, Run_2Systems2GroupsNoDeps_QuickestFinishesFirst)
   group1->Add(system1);
   group2->Add(system2);
 
-  Phase phase = Phase::Compile(group1, group2);
+  Ref<Phase> phase = Phase::Compile(group1, group2);
 
   // System 1
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system2.Get()));
 
   // System 2
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system2.Get()));
 
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
   EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s2n));
 
   ::testing::Sequence s1;
@@ -356,7 +356,7 @@ TEST(Phase_Tests, Run_2Systems2GroupsNoDeps_QuickestFinishesFirst)
   EXPECT_CALL(s2n, NotifyEnd).Times(1).InSequence(s1); // System 2 if faster
   EXPECT_CALL(s1n, NotifyEnd).Times(1).InSequence(s1);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 }
 
 TEST(Phase_Tests, Run_2Systems2GroupsWithDeps_UpdateInSeq)
@@ -372,20 +372,20 @@ TEST(Phase_Tests, Run_2Systems2GroupsWithDeps_UpdateInSeq)
   group1->Add(system1);
   group2->Add(system2);
 
-  Phase phase = Phase::Compile(group1, group2);
+  Ref<Phase> phase = Phase::Compile(group1, group2);
 
   // System 1
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system2.Get()));
 
   // System 2
-  EXPECT_TRUE(phase.CheckDependency(system2.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system2.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system2.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system2.Get()));
 
   UpdateNotifier s1n;
   UpdateNotifier s2n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 1));
   EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s2n));
 
   ::testing::Sequence s1;
@@ -395,7 +395,7 @@ TEST(Phase_Tests, Run_2Systems2GroupsWithDeps_UpdateInSeq)
   EXPECT_CALL(s2n, NotifyStart).Times(1).InSequence(s1);
   EXPECT_CALL(s2n, NotifyEnd).Times(1).InSequence(s1);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 }
 
 TEST(Phase_Tests, Run_5Systems3GroupsWithDeps_UpdateInSeq)
@@ -418,49 +418,49 @@ TEST(Phase_Tests, Run_5Systems3GroupsWithDeps_UpdateInSeq)
   group3->Add(system4);
   group3->Add(system5);
 
-  Phase phase = Phase::Compile(group1, group2, group3);
+  Ref<Phase> phase = Phase::Compile(group1, group2, group3);
 
   // System 1
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system3.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system1.Get(), system5.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system3.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system1.Get(), system5.Get()));
 
   // System 2
-  EXPECT_TRUE(phase.CheckDependency(system2.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system3.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system2.Get(), system5.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system2.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system3.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system2.Get(), system5.Get()));
 
   // System 3
-  EXPECT_TRUE(phase.CheckDependency(system3.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system3.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system3.Get(), system3.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system3.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system3.Get(), system5.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system3.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system3.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system3.Get(), system3.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system3.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system3.Get(), system5.Get()));
 
   // System 4
-  EXPECT_FALSE(phase.CheckDependency(system4.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system4.Get(), system2.Get()));
-  EXPECT_TRUE(phase.CheckDependency(system4.Get(), system3.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system4.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system4.Get(), system5.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system4.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system4.Get(), system2.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system4.Get(), system3.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system4.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system4.Get(), system5.Get()));
 
   // System 5
-  EXPECT_FALSE(phase.CheckDependency(system5.Get(), system1.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system5.Get(), system2.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system5.Get(), system3.Get()));
-  EXPECT_TRUE(phase.CheckDependency(system5.Get(), system4.Get()));
-  EXPECT_FALSE(phase.CheckDependency(system5.Get(), system5.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system5.Get(), system1.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system5.Get(), system2.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system5.Get(), system3.Get()));
+  EXPECT_TRUE(phase->CheckDependency(system5.Get(), system4.Get()));
+  EXPECT_FALSE(phase->CheckDependency(system5.Get(), system5.Get()));
 
   UpdateNotifier s1n, s2n, s3n, s4n, s5n;
 
-  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 100));
-  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 50));
-  EXPECT_CALL(*system3.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s3n, pool, 75));
-  EXPECT_CALL(*system4.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s4n, pool, 50));
+  EXPECT_CALL(*system1.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s1n, pool, 3));
+  EXPECT_CALL(*system2.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s2n, pool, 1));
+  EXPECT_CALL(*system3.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s3n, pool, 2));
+  EXPECT_CALL(*system4.Get(), OnUpdate).Times(1).WillOnce(SLEEP_TASK(&s4n, pool, 1));
   EXPECT_CALL(*system5.Get(), OnUpdate).Times(1).WillOnce(QUICK_TASK(&s5n));
 
   ::testing::Sequence s1, s2, s3;
@@ -476,7 +476,7 @@ TEST(Phase_Tests, Run_5Systems3GroupsWithDeps_UpdateInSeq)
   EXPECT_CALL(s5n, NotifyStart).Times(1).InSequence(s2);
   EXPECT_CALL(s5n, NotifyEnd).Times(1).InSequence(s2);
 
-  SyncWait(phase.Run());
+  SyncWait(phase->Run());
 }
 
 } // namespace genebits::engine::tests

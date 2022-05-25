@@ -28,7 +28,7 @@ public:
   ///
   /// Default constructor
   ///
-  constexpr PCG() : PCG(0) {}
+  constexpr PCG() noexcept : PCG(0) {}
 
   ///
   /// Constructor with user specified seed.

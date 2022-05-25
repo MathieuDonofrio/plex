@@ -93,7 +93,7 @@ public:
   /// @return Phase compiled with system groups.
   ///
   template<std::same_as<SystemGroup>... Groups>
-  static Phase Compile(Ref<Groups>... groups)
+  static Ref<Phase> Compile(Ref<Groups>... groups)
   {
     Vector<Ref<SystemGroup>> vector;
     vector.Reserve(sizeof...(Groups));
@@ -112,7 +112,7 @@ public:
   ///
   /// @return Phase compiled with system groups.
   ///
-  static Phase Compile(const Vector<Ref<SystemGroup>>& groups);
+  static Ref<Phase> Compile(const Vector<Ref<SystemGroup>>& groups);
 
 public:
   ///
@@ -124,7 +124,6 @@ public:
     Vector<size_t> dependencies; // As indexes
   };
 
-private:
   ///
   /// Internal constructor.
   ///
@@ -186,6 +185,148 @@ private:
   Vector<TriggerTask<void, WhenAllCounter>> triggers_;
 };
 
+///
+/// Builder pattern class that facilitates the efficient creation of phases.
+///
+/// Made to be reused multiple times by caching unique phases to avoid the overhead of phase compiling.
+///
+class PhaseBuilder
+{
+public:
+  ///
+  /// Default constructor.
+  ///
+  PhaseBuilder();
+
+  ///
+  /// Destructor
+  ///
+  ~PhaseBuilder();
+
+  ///
+  /// Returns the phase built for all builder operations since last reset.
+  ///
+  /// Unique phases are kept in a cache.
+  ///
+  /// @return The built phase.
+  ///
+  Ref<Phase>& BuildPhase()
+  {
+    ASSERT(current_ != nullptr, "Builder not prepared");
+
+    auto& phase = current_->phase;
+
+    if (phase) [[likely]] { return phase; }
+    else // SlowPath
+    {
+      return BakePhase(); // Cache the phase
+    };
+  }
+
+  ///
+  /// Adds a system group to the building process of the phase.
+  ///
+  /// @param[in] group Group to add to phase.
+  ///
+  void AddSystemGroup(Ref<SystemGroup> group)
+  {
+    Node* child = TryGet(group);
+
+    if (child != nullptr) [[likely]] { current_ = child; }
+    else // SlowPath
+    {
+      NewPath(group);
+    }
+  }
+
+  ///
+  /// Clears the cache and resets the builder.
+  ///
+  void ClearCache()
+  {
+    DestroyNode(&root_);
+    Reset();
+  }
+
+  ///
+  /// Resets the builder to be ready for the construction of a new phase.
+  ///
+  void Reset()
+  {
+    current_ = &root_;
+  }
+
+private:
+  ///
+  /// Node used to store information about a step used to build a phase.
+  ///
+  struct Node
+  {
+    Node* parent;
+    Vector<Node*> children;
+
+    Ref<SystemGroup> system_group;
+    Ref<Phase> phase;
+  };
+
+  ///
+  /// Returns a newly compiled phase for the current node.
+  ///
+  /// Sets the cache of the node to the new phase.
+  ///
+  /// @return Phase for current node.
+  ///
+  Ref<Phase>& BakePhase();
+
+  ///
+  /// Destroys a node and all its children recursively.
+  ///
+  /// Does not destroy the node if it is root.
+  ///
+  /// @param[in] Node Node to destroy subtree for.
+  ///
+  void DestroyNode(Node* node);
+
+  ///
+  /// Returns the cached node for the step of the build process, if no node could be found, returns nullptr.
+  ///
+  /// Tries to obtain a node for the system group based of current build steps. If there is no node for the group, it
+  /// means that this sequence of build steps is unique.
+  ///
+  /// @param[in] group Group to get next node for.
+  ///
+  /// @return Node for next step or nullptr if step is unique.
+  ///
+  Node* TryGet(Ref<SystemGroup>& group)
+  {
+    for (Node* child : current_->children)
+    {
+      if (child->system_group == group) return child;
+    }
+
+    return nullptr;
+  }
+
+  ///
+  /// Creates an caches a new node representing the new build sequence for the group.
+  ///
+  /// @param[in] group Group to create new path for.
+  ///
+  void NewPath(Ref<SystemGroup>& group)
+  {
+    Node* node = new Node;
+    node->parent = current_;
+    node->system_group = group;
+
+    current_->children.PushBack(node);
+
+    current_ = node;
+  }
+
+private:
+  Node root_;
+  Node* current_;
+};
 } // namespace genebits::engine
 
 #endif

@@ -46,7 +46,7 @@ void ThreadPool::RunWorker()
 
         op->Execute();
 
-        // Spin for a little while util we think we have more work to do.
+        // Spin for a little while until we think we have more work to do.
         // Avoids putting the worker to sleep only to wake up again.
         ExponentialBackoff backoff;
 
