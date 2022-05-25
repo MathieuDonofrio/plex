@@ -49,7 +49,7 @@ bool VulkanInstance::Initialize(VulkanCapableWindow* window)
   app_info.applicationVersion = VK_MAKE_VERSION(GENEBITS_VERSION_MAJOR, GENEBITS_VERSION_MINOR, GENEBITS_VERSION_PATCH);
   app_info.pEngineName = "Engine"; // TODO change name when engine name is found
   app_info.engineVersion = VK_MAKE_VERSION(GENEBITS_VERSION_MAJOR, GENEBITS_VERSION_MINOR, GENEBITS_VERSION_PATCH);
-  app_info.apiVersion = VK_API_VERSION_1_0;
+  app_info.apiVersion = VK_API_VERSION_1_3;
 
   std::vector<const char*> extensions = window->GetRequiredInstanceExtensions();
 
