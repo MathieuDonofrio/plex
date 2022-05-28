@@ -338,7 +338,7 @@ public:
   ///
   void PushBack(Type&& value)
   {
-    EmplaceBack(std::move(value));
+    EmplaceBack(std::forward<Type>(value));
   }
 
   ///
