@@ -198,8 +198,8 @@ private:
   };
 
 private:
-  Vector<InstanceInfo> instances_;
   TypeMap<void*> map_;
+  Vector<InstanceInfo> instances_;
 };
 
 } // namespace genebits::engine

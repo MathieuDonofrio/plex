@@ -32,7 +32,7 @@ namespace details
   /// @tparam Type Type to check.
   ///
   template<typename Type>
-  struct IsValidQueryDataAccessList : std::false_type
+  struct IsValidQueryDataAccessList : public std::false_type
   {};
 
   ///
@@ -43,24 +43,8 @@ namespace details
   /// @tparam N Number of elements for array.
   ///
   template<size_t N>
-  struct IsValidQueryDataAccessList<Array<QueryDataAccess, N>> : std::true_type
+  struct IsValidQueryDataAccessList<Array<QueryDataAccess, N>> : public std::true_type
   {};
-
-  ///
-  /// Obtains the return type of the function.
-  ///
-  /// @warning Does not work for overloaded functions.
-  ///
-  /// @tparam Function Function to obtain the return type of.
-  ///
-  template<typename Function>
-  struct ReturnTypeOf;
-
-  template<typename R, typename... Args>
-  struct ReturnTypeOf<R (*)(Args...)>
-  {
-    using Type = R;
-  };
 } // namespace details
 
 ///
