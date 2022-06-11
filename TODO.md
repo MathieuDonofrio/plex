@@ -32,6 +32,7 @@ ECS
 - [ ] Archetype swapping
 - [ ] Hierarchies
 - [ ] Scripts
+- [ ] Const views
 - [ ] Resources
 - [ ] Pipelined parallel systems
 - [ ] Phase parallelization statistics (for debug/profiling)

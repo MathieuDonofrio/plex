@@ -1,5 +1,4 @@
 #include "genebits/engine/math/vec2.h"
-#include "genebits/engine/math/vec4.h"
 
 #include <gtest/gtest.h>
 
