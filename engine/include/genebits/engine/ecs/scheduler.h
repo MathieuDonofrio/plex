@@ -110,14 +110,11 @@ private:
     {
       ASSERT(current_ != nullptr, "Builder not prepared");
 
-      if (current_->baked) [[likely]]
-      {
-        return current_->steps;
-      }
-      else // SlowPath
-      {
-        return Bake(); // Cache the phase
-      };
+      const auto& steps = current_->baked ? current_->steps : Bake();
+
+      current_ = &root_;
+
+      return steps;
     }
 
     ///
@@ -182,6 +179,19 @@ private:
 
   Cache cache_;
 };
+
+///
+/// Using the stages in the order provided, computes the scheduler step data.
+///
+/// Steps are ordered optimally for parallelism.
+///
+/// @warning This is a very expensive computation and results should be cached.
+///
+/// @param[in] stages
+///
+/// @return Scheduler steps.
+///
+Vector<Scheduler::Step> ComputeSchedulerData(const Vector<Stage*>& stages);
 
 } // namespace genebits::engine
 

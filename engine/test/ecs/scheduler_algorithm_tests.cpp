@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/scheduler/algorithm.h"
+#include "genebits/engine/ecs/scheduler.h"
 
 #include <gtest/gtest.h>
 
@@ -40,10 +40,9 @@ namespace
   }
 
   template<size_t id, Query... queries>
-  Task<void> SystemMock([[maybe_unused]] queries... q)
+  void SystemMock([[maybe_unused]] queries... q)
   {
     SystemMockCallCount<id>()++;
-    co_return;
   }
 
   template<System SystemType>
