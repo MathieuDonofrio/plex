@@ -1,155 +1,19 @@
-#ifndef GENEBITS_ENGINE_ECS_SYSTEM_SCHEDULER_H
-#define GENEBITS_ENGINE_ECS_SYSTEM_SCHEDULER_H
+#ifndef GENEBITS_ENGINE_ECS_SCHEDULER_H
+#define GENEBITS_ENGINE_ECS_SCHEDULER_H
 
 #include "genebits/engine/async/shared_task.h"
 #include "genebits/engine/async/when_all.h"
 #include "genebits/engine/ecs/stage.h"
 #include "genebits/engine/ecs/system.h"
+#include "genebits/engine/utilities/ref.h"
 
 namespace genebits::engine
 {
-namespace details
-{
-  class SystemGraph
-  {
-  public:
-    // TODO move compact nodes to cache?
-    struct CompactNode
-    {
-      SystemExecutor executor;
-      Vector<size_t> dependencies; // As indexes
-    };
-
-    struct Node
-    {
-      Ref<SystemObject> system;
-      Ref<Stage> stage;
-
-      Vector<Node*> dependencies;
-    };
-
-  public:
-    template<std::same_as<Ref<Stage>>... Stages>
-    SystemGraph(Stages&&... stages) : SystemGraph(Vector<Ref<Stage>> { std::forward<Stage>(stages)... })
-    {}
-
-    SystemGraph(const Vector<Ref<Stage>>& stages);
-
-    const Vector<CompactNode>& GetCompactNodes()
-    {
-      return compact_nodes_;
-    }
-
-  private:
-    void ComputeDependencies();
-
-    void PruneDependencies();
-
-    void Compact();
-
-  private:
-    Vector<CompactNode> compact_nodes_;
-    Vector<Node> nodes_;
-  };
-
-  ///
-  /// Builder pattern class that facilitates the efficient creation of system graphs.
-  ///
-  /// Made to be reused multiple times by caching unique phases to avoid the overhead of making the graph.
-  ///
-  class SystemGraphCache
-  {
-  public:
-    ///
-    /// Default constructor.
-    ///
-    SystemGraphCache();
-
-    ///
-    /// Destructor
-    ///
-    ~SystemGraphCache();
-
-    ///
-    /// Returns the phase built for all builder operations since last reset.
-    ///
-    /// Unique phases are kept in a cache.
-    ///
-    /// @return The built phase.
-    ///
-    Ref<SystemGraph>& Build();
-
-    ///
-    /// Adds a stage to the building process of the graph.
-    ///
-    /// @param[in] stage Stage to add to graph.
-    ///
-    void Add(Ref<Stage> stage);
-
-    ///
-    /// Resets the builder to be ready for the construction of a new phase.
-    ///
-    void Reset() noexcept
-    {
-      current_ = &root_;
-    }
-
-  private:
-    ///
-    /// Node used to store information about a step used to build a phase.
-    ///
-    struct Node
-    {
-      Node* parent;
-      Vector<Node*> children;
-
-      Ref<SystemGraph> system_graph;
-      Ref<Stage> stage;
-    };
-
-    ///
-    /// Returns a newly created graph for the current node.
-    ///
-    /// Sets the cache of the node to the new graph.
-    ///
-    /// @return Graph for current node.
-    ///
-    Ref<SystemGraph>& BakeGraph();
-
-    ///
-    /// Destroys a node and all its children recursively.
-    ///
-    /// Does not destroy the node if it is root.
-    ///
-    /// @param[in] Node Node to destroy subtree for.
-    ///
-    void DestroyNode(Node* node);
-
-    ///
-    /// Returns the cached node for the step of the build process, if no node could be found, returns nullptr.
-    ///
-    /// Tries to obtain a node for the stage based of current build steps. If there is no node for the stage, it
-    /// means that this sequence of build steps is unique.
-    ///
-    /// @param[in] stage Stage to get next node for.
-    ///
-    /// @return Node for next step or nullptr if step is unique.
-    ///
-    Node* TryGet(Ref<Stage>& stage);
-
-    ///
-    /// Creates an caches a new node representing the new build sequence for the stage.
-    ///
-    /// @param[in] stage Stage to create new path for.
-    ///
-    void NewPath(Ref<Stage>& stage);
-
-  private:
-    Node root_;
-    Node* current_;
-  };
-} // namespace details
-
+///
+/// Scheduler class responsible for running systems.
+///
+/// Will attempt to parallelize the execution of systems as much as possible.
+///
 class Scheduler
 {
 public:
@@ -172,29 +36,151 @@ public:
   ///
   /// A stage implicitly acts as a barrier for the system order of execution and parallelism. A system cannot be
   /// executed before a other system from a different stage that shares a common dependency (Example: Writes to the same
-  /// component/resource). Systems from the same stage can be reordered freely unless order was made explicit and there
+  /// component). Systems from the same stage can be reordered freely unless order was made explicit and there
   /// is a common dependency.
   ///
   /// @param[in] stage Stage to schedule.
   ///
-  void Schedule(const Ref<Stage>& stage);
+  template<typename StageType>
+  void Schedule()
+  {
+    cache_.Add(&stages_.Assure<StageType>());
+  }
+
+  ///
+  /// Adds a system to the scheduler for the given stage.
+  ///
+  /// @tparam StageType The stage to add system to.
+  /// @tparam SystemType Type of the system to add.
+  ///
+  /// @param[in] system The system to add.
+  ///
+  /// @return Builder-pattern style interface for ordering the added system.
+  ///
+  template<typename StageType, typename SystemType>
+  Stage::SystemOrder AddSystem(SystemType system)
+  {
+    return stages_.Assure<StageType>().AddSystem(system);
+  }
+
+public:
+  ///
+  /// A scheduler step.
+  ///
+  struct Step
+  {
+    SystemExecutor executor;
+    Vector<size_t> dependencies; // As indexes
+  };
 
 private:
   ///
   /// Creates a shared task from a step. Will first wait for all its dependencies to finish, then will
   /// execute the system update.
   ///
+  /// @param[in] step Information about the system to execute.
   /// @param[in] context The context to run systems with.
   ///
   /// @return Shared task that waits for its dependencies then executes system update.
   ///
-  SharedTask<> MakeSystemTask(const details::SystemGraph::CompactNode& step, Context& context);
+  SharedTask<> MakeSystemTask(const Step& step, Context& context);
 
 private:
+  ///
+  /// Builder pattern class that facilitates the efficient creation of scheduler data.
+  ///
+  /// Records every unique sequence of stages and builds the scheduler steps for each sequence only once by caching the
+  /// results.
+  ///
+  class Cache
+  {
+  public:
+    Cache();
+
+    ~Cache();
+
+    ///
+    /// Returns the scheduler steps for the current sequence of added stages.
+    ///
+    /// Will first attempt to retrieve the cached steps, if none, the steps will be built.
+    ///
+    /// @return Scheduler steps for the current sequence of added stages.
+    ///
+    const Vector<Scheduler::Step>& Build()
+    {
+      ASSERT(current_ != nullptr, "Builder not prepared");
+
+      if (current_->baked) [[likely]]
+      {
+        return current_->steps;
+      }
+      else // SlowPath
+      {
+        return Bake(); // Cache the phase
+      };
+    }
+
+    ///
+    /// Add a stage to the sequence of stages.
+    ///
+    /// @param[in] stage The stage to add.
+    ///
+    void Add(Stage* stage)
+    {
+      Node* child = TryGet(stage);
+
+      if (child != nullptr) [[likely]]
+      {
+        current_ = child;
+      }
+      else // SlowPath
+      {
+        NewPath(stage);
+      }
+    }
+
+  private:
+    struct Node
+    {
+      using IsTriviallyRelocatable = std::true_type;
+
+      Node* parent;
+      Vector<Node*> children;
+
+      Stage* stage;
+
+      bool baked;
+
+      Vector<Scheduler::Step> steps;
+    };
+
+    const Vector<Scheduler::Step>& Bake();
+
+    void DestroyNode(Node* node);
+
+    void NewPath(Stage* stage);
+
+    Node* TryGet(Stage* stage)
+    {
+      for (Node* child : current_->children)
+      {
+        if (child->stage == stage) return child;
+      }
+
+      return nullptr;
+    }
+
+  private:
+    Node root_;
+    Node* current_;
+  };
+
   Vector<SharedTask<>> tasks_;
   Vector<TriggerTask<void, WhenAllCounter>> triggers_;
 
-  details::SystemGraphCache cache_;
+  TypeMap<Stage> stages_;
+
+  Cache cache_;
 };
 
 } // namespace genebits::engine

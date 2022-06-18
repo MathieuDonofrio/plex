@@ -104,7 +104,10 @@ public:
   ///
   static Task<> Invoke(SystemType* system, Context& context)
   {
-    if constexpr (IsCoroutine) { co_await system(std::remove_cvref_t<Queries>::FetchData(context)...); }
+    if constexpr (IsCoroutine)
+    {
+      co_await system(std::remove_cvref_t<Queries>::FetchData(context)...);
+    }
     else
     {
       system(std::remove_cvref_t<Queries>::FetchData(context)...);
@@ -206,7 +209,7 @@ private:
 ///
 /// Contains executor and extra information about the system.
 ///
-class SystemObject : public RefCounted
+class SystemObject
 {
 public:
   using IsTriviallyRelocatable = std::true_type;

@@ -160,7 +160,7 @@ namespace details
 } // namespace details
 
 ///
-/// Alias that sorts a component type list into a single orderless type.
+/// Alias that sorts a component type list into a single order agnostic type.
 ///
 template<typename... Components>
 using ComponentList = typename details::Combined<Components...>::Sorted;

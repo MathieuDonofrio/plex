@@ -21,7 +21,7 @@ void ViewRelations::AddView(ViewId id)
 
         if (view_components.size() == archetype_components.size())
         {
-          // Always put exact match first in the list. This can make some operations faster.
+          // Guarantee exact match O(1) operations
           std::swap(view_archetypes_[id].front(), view_archetypes_[id].back());
         }
       }
@@ -46,7 +46,7 @@ void ViewRelations::AddArchetype(ArchetypeId id)
 
         if (view_components.size() == archetype_components.size())
         {
-          // Always put exact match first in the list. This can make some operations faster.
+          // Guarantee exact match O(1) operations
           std::swap(view_archetypes_[i].front(), view_archetypes_[i].back());
         }
       }

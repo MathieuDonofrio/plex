@@ -1,8 +1,6 @@
 #ifndef GENEBITS_ENGINE_ECS_STAGE_H
 #define GENEBITS_ENGINE_ECS_STAGE_H
 
-#include <span>
-
 #include "genebits/engine/containers/vector.h"
 #include "genebits/engine/ecs/system.h"
 #include "genebits/engine/utilities/ref.h"
@@ -12,7 +10,7 @@ namespace genebits::engine
 ///
 /// The stage object is a container for systems.
 ///
-class Stage : public RefCounted
+class Stage
 {
 private:
   ///
@@ -25,6 +23,8 @@ private:
   };
 
 public:
+  using IsTriviallyRelocatable = std::true_type;
+
   ///
   /// Builder-pattern style interface for explicitly ordering an added system.
   ///
@@ -97,7 +97,7 @@ public:
   {
     ASSERT(ContainsSystem(system) == false, "System already exists in stage");
 
-    registered_systems_.PushBack(MakeRef<SystemObject>(system));
+    registered_systems_.PushBack(std::make_unique<SystemObject>(system));
     system_infos_.EmplaceBack();
 
     return SystemOrder(*this, registered_systems_.size() - 1);
@@ -118,7 +118,7 @@ public:
   ///
   /// @return Whether or not the two systems are explicitly ordered.
   ///
-  [[nodiscard]] bool HasExplicitOrder(const Ref<SystemObject>& before, const Ref<SystemObject>& after) const;
+  [[nodiscard]] bool HasExplicitOrder(const SystemObject& before, const SystemObject& after) const;
 
   ///
   /// Returns the managed system object for the system handle provided or nullptr if the system is not registered.
@@ -127,14 +127,7 @@ public:
   ///
   /// @return The managed system object for the system handle provided or nullptr if the system is not registered.
   ///
-  [[nodiscard]] Ref<SystemObject> GetSystem(SystemHandle handle) const;
-
-  ///
-  /// Returns a span of all the registered systems.
-  ///
-  /// @return A span of all the registered systems.
-  ///
-  [[nodiscard]] std::span<Ref<SystemObject>> GetSystems();
+  [[nodiscard]] const SystemObject* GetSystemObject(SystemHandle handle) const;
 
   ///
   /// Returns the managed system object for the system provided or nullptr if the system is not registered.
@@ -146,9 +139,9 @@ public:
   /// @return The managed system object for the system provided or nullptr if the system is not registered.
   ///
   template<typename SystemType>
-  [[nodiscard]] Ref<SystemObject> GetSystem(SystemType system) const
+  [[nodiscard]] const SystemObject* GetSystemObject(SystemType system) const
   {
-    return GetSystem(std::bit_cast<SystemHandle>(system));
+    return GetSystemObject(std::bit_cast<SystemHandle>(system));
   }
 
   ///
@@ -163,7 +156,17 @@ public:
   template<typename SystemType>
   [[nodiscard]] bool ContainsSystem(SystemType system) const
   {
-    return GetSystem(system) != nullptr;
+    return GetSystemObject(system) != nullptr;
+  }
+
+  ///
+  /// Returns all the system objects currently owned by the stage.
+  ///
+  /// @return All stage system objects.
+  ///
+  const Vector<std::unique_ptr<SystemObject>>& GetSystemObjects() const
+  {
+    return registered_systems_;
   }
 
   ///
@@ -177,7 +180,7 @@ public:
   }
 
 private:
-  Vector<Ref<SystemObject>> registered_systems_;
+  Vector<std::unique_ptr<SystemObject>> registered_systems_;
   Vector<SystemInfo> system_infos_;
 };
 } // namespace genebits::engine

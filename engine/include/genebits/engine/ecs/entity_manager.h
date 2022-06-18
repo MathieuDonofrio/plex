@@ -81,11 +81,6 @@ public:
   ///
   /// Releases all the entity identifiers and resets the generator sequence to 0.
   ///
-  /// This operation is O(1).
-  ///
-  /// @note This method should be preferred to releasing every entity one by one.
-  ///
-  ///
   void ReleaseAll() noexcept
   {
     recycled_.Clear();
@@ -105,9 +100,6 @@ public:
 
   ///
   /// Returns the amount of entity identifiers ready to be reused.
-  ///
-  /// While this is bigger than 0, no new identifier will be generating when
-  /// obtaining unless explicitly generated.
   ///
   /// @return Amount of entity identifiers currently recycled.
   ///

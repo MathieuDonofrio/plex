@@ -35,7 +35,7 @@ public:
 
     if (id >= view_states_.size() || !view_states_[id]) [[unlikely]]
     {
-      std::scoped_lock lock_(mutex_);
+      std::lock_guard lg(mutex_);
 
       if (Initialize<ViewId, Components...>(view_components_, view_states_, id)) AddView(id);
     }
@@ -59,7 +59,7 @@ public:
 
     if (id >= archetype_states_.size() || !archetype_states_[id]) [[unlikely]]
     {
-      std::scoped_lock lock_(mutex_);
+      std::lock_guard lg(mutex_);
 
       if (Initialize<ArchetypeId, Components...>(archetype_components_, archetype_states_, id)) AddArchetype(id);
     }

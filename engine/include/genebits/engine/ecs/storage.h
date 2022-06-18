@@ -14,10 +14,9 @@ namespace genebits::engine
 ///
 /// Very quick entity to index mappings used for the storage to create a sparse set.
 ///
-/// The sparse array can be shared between storages that use the same entity generator sequence as long as
-/// no entity can be in more than one storage. Since there is one storage per archetype this is guaranteed.
-/// Sharing the sparse array reduces overall memory use by a substantial amount. For example, if there are
-/// 10 archetypes, sharing the sparse array could save up to 9 times the memory of one sparse array.
+/// The sparse array can be shared between storages that use the same entity manager. Sharing the sparse array can
+/// reduce memory usage. For example, if there are 10 archetypes, sharing the sparse array could save up to 9 times the
+/// lookup table memory, making it more cache friendly.
 ///
 /// @tparam Entity The type of entity to use.
 /// @tparam AllocatorImpl Allocator to allocate memory with.
