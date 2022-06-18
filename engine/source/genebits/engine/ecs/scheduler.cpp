@@ -257,7 +257,7 @@ Vector<Scheduler::Step> ComputeExecutionGraph(
 
       if (intermediate_step.system->HasDependency(*other_intermediate_step.system))
       {
-        // if (!TransitiveReduction::IsRedundant(steps, dependencies, j))
+        if (!TransitiveReduction::IsRedundant(steps, dependencies, j))
         {
           dependencies.PushBack(j);
         }
@@ -272,8 +272,6 @@ Vector<Scheduler::Step> ComputeExecutionGraph(
 
 Vector<Scheduler::Step> ComputeSchedulerData(const Vector<Stage*>& stages)
 {
-  // O(N^2)
-
   auto intermediate_steps = ComputeDependencyGraph(stages);
   auto order = TopologicalSort(intermediate_steps);
   auto steps = ComputeExecutionGraph(intermediate_steps, order);
