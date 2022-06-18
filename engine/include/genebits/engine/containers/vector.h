@@ -279,7 +279,10 @@ public:
   template<typename... Args>
   void Emplace(iterator pos, Args&&... args)
   {
-    if (size_ < capacity_ && pos == end()) { ConstructOneAtEnd(std::forward<Args>(args)...); }
+    if (size_ < capacity_ && pos == end())
+    {
+      ConstructOneAtEnd(std::forward<Args>(args)...);
+    }
     else // Slow path
     {
       SlowEmplace(pos, std::forward<Args>(args)...);
@@ -314,7 +317,10 @@ public:
   template<typename... Args>
   void EmplaceBack(Args&&... args)
   {
-    if (size_ < capacity_) [[likely]] { ConstructOneAtEnd(std::forward<Args>(args)...); }
+    if (size_ < capacity_) [[likely]]
+    {
+      ConstructOneAtEnd(std::forward<Args>(args)...);
+    }
     else // Slow path
     {
       SlowEmplaceBack(std::forward<Args>(args)...);
@@ -338,7 +344,7 @@ public:
   ///
   void PushBack(Type&& value)
   {
-    EmplaceBack(std::forward<Type>(value));
+    EmplaceBack(std::move(value));
   }
 
   ///
@@ -379,7 +385,10 @@ public:
     ASSERT(size_ > 0, "Vector is empty");
 
     it->~Type();
-    if (--size_) [[likely]] { RelocateAt(end(), it); }
+    if (--size_) [[likely]]
+    {
+      RelocateAt(end(), it);
+    }
   }
 
   ///
@@ -468,7 +477,7 @@ public:
   [[nodiscard]] constexpr bool operator==(const Vector<Type, AllocatorType>& other) const noexcept
   {
     if (this->array_ == other.array_) return true; // Checks for same instance or two empty vectors.
-    if (this->size_ != other.size_ || this->capacity_ != other.capacity_) return false;
+    if (this->size_ != other.size_) return false;
 
     return std::equal(this->begin(), this->end(), other.begin());
   }
