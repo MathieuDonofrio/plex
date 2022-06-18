@@ -378,4 +378,109 @@ static void Scheduler_AsyncWork_10Stages8SystemsEach(benchmark::State& state)
 
 BENCHMARK(Scheduler_AsyncWork_10Stages8SystemsEach);
 
+static void Scheduler_Reference_10Stages16SystemsEach(benchmark::State& state)
+{
+  static constexpr size_t Stages = 10;
+  static constexpr size_t SystemsPerStage = 16;
+  static constexpr bool Async = false;
+
+  Context context;
+
+  Scheduler scheduler;
+
+  Vector<std::unique_ptr<Stage>> stages;
+
+  StageGenerator<Stages, SystemsPerStage, Async>::MakeStages(stages);
+
+  Vector<Stage*> raw_ptr_stages;
+
+  for (auto& stage : stages)
+  {
+    raw_ptr_stages.PushBack(stage.get());
+  }
+
+  auto steps = ComputeSchedulerData(raw_ptr_stages);
+
+  for (auto _ : state)
+  {
+    for (auto& step : steps)
+    {
+      auto task = step.executor(context);
+
+      task.Eject();
+
+      benchmark::DoNotOptimize(task);
+    }
+  }
+
+  benchmark::DoNotOptimize(steps);
+
+  benchmark::DoNotOptimize(scheduler);
+}
+
+BENCHMARK(Scheduler_Reference_10Stages16SystemsEach);
+
+static void Scheduler_SyncWork_10Stages16SystemsEach(benchmark::State& state)
+{
+  static constexpr size_t Stages = 10;
+  static constexpr size_t SystemsPerStage = 16;
+  static constexpr bool Async = false;
+
+  Context context;
+
+  Scheduler scheduler;
+
+  StageGenerator<Stages, SystemsPerStage, Async>::AddSystems(scheduler);
+
+  // Run once to cache results
+  StageScheduler<Stages>::ScheduleStages(scheduler);
+  SyncWait(scheduler.RunAll(context));
+
+  for (auto _ : state)
+  {
+    StageScheduler<Stages>::ScheduleStages(scheduler);
+
+    auto task = scheduler.RunAll(context);
+
+    benchmark::DoNotOptimize(task);
+
+    SyncWait(task);
+  }
+
+  benchmark::DoNotOptimize(scheduler);
+}
+
+BENCHMARK(Scheduler_SyncWork_10Stages16SystemsEach);
+
+static void Scheduler_AsyncWork_10Stages16SystemsEach(benchmark::State& state)
+{
+  static constexpr size_t Stages = 10;
+  static constexpr size_t SystemsPerStage = 16;
+  static constexpr bool Async = true;
+
+  Context context;
+
+  Scheduler scheduler;
+
+  StageGenerator<Stages, SystemsPerStage, Async>::AddSystems(scheduler);
+
+  // Run once to cache results
+  StageScheduler<Stages>::ScheduleStages(scheduler);
+  SyncWait(scheduler.RunAll(context));
+
+  for (auto _ : state)
+  {
+    StageScheduler<Stages>::ScheduleStages(scheduler);
+
+    auto task = scheduler.RunAll(context);
+
+    benchmark::DoNotOptimize(task);
+
+    SyncWait(task);
+  }
+
+  benchmark::DoNotOptimize(scheduler);
+}
+
+BENCHMARK(Scheduler_AsyncWork_10Stages16SystemsEach);
 } // namespace genebits::engine::bench
