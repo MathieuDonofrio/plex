@@ -8,7 +8,10 @@ namespace
 {
   template<size_t id>
   void SystemMock()
-  {}
+  {
+    [[maybe_unused]] std::atomic_size_t vid = 0;
+    vid = id;
+  }
 } // namespace
 
 TEST(Stage_Tests, Constructor_Nothing_NoSystems)

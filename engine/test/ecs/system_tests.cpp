@@ -16,7 +16,7 @@ namespace
   template<typename... Types>
   struct ResourcesMock : public QueryDataAccessFactory<ResourcesMock<Types...>, Types...>
   {
-    static ResourcesMock FetchData([[maybe_unused]] Context& context)
+    static ResourcesMock FetchData([[maybe_unused]] Context& context, void*)
     {
       resources_mock_get_call_counter++;
 
@@ -32,7 +32,7 @@ namespace
   template<typename... Components>
   struct EntitiesMock : public QueryDataAccessFactory<EntitiesMock<Components...>, Components...>
   {
-    static EntitiesMock FetchData([[maybe_unused]] Context& context)
+    static EntitiesMock FetchData([[maybe_unused]] Context& context, void*)
     {
       entities_mock_get_call_counter++;
 

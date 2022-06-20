@@ -57,8 +57,8 @@ public:
   ///
   /// @return Builder-pattern style interface for ordering the added system.
   ///
-  template<typename StageType, typename SystemType>
-  Stage::SystemOrder AddSystem(SystemType system)
+  template<typename StageType, System SystemType>
+  Stage::SystemOrder AddSystem(SystemType* system)
   {
     return stages_.Assure<StageType>().AddSystem(system);
   }
@@ -130,7 +130,7 @@ private:
       {
         current_ = child;
       }
-      else // SlowPath
+      else
       {
         NewPath(stage);
       }
@@ -151,12 +151,34 @@ private:
       Vector<Scheduler::Step> steps;
     };
 
+    ///
+    /// Creates the scheduler steps and caches them.
+    ///
+    /// @return The scheduler steps.
+    ///
     const Vector<Scheduler::Step>& Bake();
 
+    ///
+    /// Recursively destroys the node and its children.
+    ///
+    /// @param[in] node Node to destroy.
+    ///
     void DestroyNode(Node* node);
 
+    ///
+    /// Forks the sequence of steps and creates a new path with the given stage.
+    ///
+    /// @param[in] stage Stage to create new path with.
+    ///
     void NewPath(Stage* stage);
 
+    ///
+    /// Attempts to find an existing path for the stage, returns nullptr if no path was found.
+    ///
+    /// @param[in] stage Stage to attempt to find path for.
+    ///
+    /// @return The node for the path, or nullptr if no path was found.
+    ///
     Node* TryGet(Stage* stage)
     {
       for (Node* child : current_->children)

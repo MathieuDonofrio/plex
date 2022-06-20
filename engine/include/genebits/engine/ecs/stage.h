@@ -33,6 +33,8 @@ public:
   class SystemOrder
   {
   public:
+    SystemOrder(const SystemOrder&) = default;
+
     ///
     /// Specifies that a system should run after some other system.
     ///
@@ -42,8 +44,8 @@ public:
     ///
     /// @return SystemOrder builder instance.
     ///
-    template<typename SystemType>
-    SystemOrder After(SystemType system)
+    template<System SystemType>
+    SystemOrder After(SystemType* system)
     {
       stage_.system_infos_[index_].run_after.PushBack(std::bit_cast<SystemHandle>(system));
       return *this;
@@ -58,8 +60,8 @@ public:
     ///
     /// @return SystemOrder builder instance.
     ///
-    template<typename SystemType>
-    SystemOrder Before(SystemType system)
+    template<System SystemType>
+    SystemOrder Before(SystemType* system)
     {
       stage_.system_infos_[index_].run_before.PushBack(std::bit_cast<SystemHandle>(system));
       return *this;
@@ -76,8 +78,6 @@ public:
     ///
     constexpr SystemOrder(Stage& stage, size_t index) noexcept : stage_(stage), index_(index) {}
 
-    SystemOrder(const SystemOrder& other) = default;
-
     Stage& stage_;
     size_t index_;
   };
@@ -92,8 +92,8 @@ public:
   ///
   /// @return Builder-pattern style interface for ordering the added system.
   ///
-  template<typename SystemType>
-  SystemOrder AddSystem(SystemType system)
+  template<System SystemType>
+  SystemOrder AddSystem(SystemType* system)
   {
     ASSERT(ContainsSystem(system) == false, "System already exists in stage");
 
@@ -138,8 +138,8 @@ public:
   ///
   /// @return The managed system object for the system provided or nullptr if the system is not registered.
   ///
-  template<typename SystemType>
-  [[nodiscard]] const SystemObject* GetSystemObject(SystemType system) const
+  template<System SystemType>
+  [[nodiscard]] const SystemObject* GetSystemObject(SystemType* system) const
   {
     return GetSystemObject(std::bit_cast<SystemHandle>(system));
   }
@@ -153,8 +153,8 @@ public:
   ///
   /// @return Whether or not the system is registered.
   ///
-  template<typename SystemType>
-  [[nodiscard]] bool ContainsSystem(SystemType system) const
+  template<System SystemType>
+  [[nodiscard]] bool ContainsSystem(SystemType* system) const
   {
     return GetSystemObject(system) != nullptr;
   }
@@ -164,7 +164,7 @@ public:
   ///
   /// @return All stage system objects.
   ///
-  const Vector<std::unique_ptr<SystemObject>>& GetSystemObjects() const
+  [[nodiscard]] const Vector<std::unique_ptr<SystemObject>>& GetSystemObjects() const
   {
     return registered_systems_;
   }

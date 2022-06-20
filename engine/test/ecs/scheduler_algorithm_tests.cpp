@@ -21,7 +21,7 @@ namespace
   template<typename... Components>
   struct MockQuery : public QueryDataAccessFactory<MockQuery<Components...>, Components...>
   {
-    static MockQuery FetchData([[maybe_unused]] Context& context)
+    static MockQuery FetchData([[maybe_unused]] Context& context, void*)
     {
       return MockQuery();
     }

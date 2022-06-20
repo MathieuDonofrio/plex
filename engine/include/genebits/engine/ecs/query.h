@@ -63,18 +63,18 @@ concept QueryDataAccessList = details::IsValidQueryDataAccessList<Type>::value;
 /// @tparam Type Type to check.
 ///
 template<typename Type>
-concept Query = requires(Context& data_sources)
+concept Query = requires(Context& data_sources, void* handle) // clang-format off
 {
-  {
-    std::remove_cvref_t<Type>::GetCategory()
-    } -> std::convertible_to<std::string_view>;
-  {
-    std::remove_cvref_t<Type>::GetDataAccess()
-    } -> QueryDataAccessList;
-  {
-    std::remove_cvref_t<Type>::FetchData(data_sources)
-    } -> std::same_as<std::remove_cvref_t<Type>>;
-};
+// Returns the data category of the query.
+// This allows different query types to use the same data type.
+{ std::remove_cvref_t<Type>::GetCategory() } -> std::convertible_to<std::string_view>;
+
+// Returns information about every data access.
+{ std::remove_cvref_t<Type>::GetDataAccess() } -> QueryDataAccessList;
+
+// Obtains the data from the data sources context for the query handle (Usually the system).
+{ std::remove_cvref_t<Type>::FetchData(data_sources, handle) } -> std::same_as<std::remove_cvref_t<Type>>;
+}; // clang-format on
 
 ///
 /// Implementation of the GetDataAccess requirement of a query.
@@ -100,7 +100,7 @@ struct QueryDataAccessFactory
     const std::string_view category = Query::GetCategory();
 
     return { QueryDataAccess {
-      TypeInfo<Types>::Name(), // Name of the type
+      TypeName<Types>(), // Name of the type
       category, // Query category
       std::is_const_v<Types>, // Check const qualifier to see if the access is read-only.
       IsThreadSafe<Types>::value // Check ThreadSafe trait to see if the access is thread-safe.

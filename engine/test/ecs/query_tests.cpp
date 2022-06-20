@@ -9,7 +9,7 @@ namespace
   template<typename... Components>
   struct QueryMock : public QueryDataAccessFactory<QueryMock<Components...>, Components...>
   {
-    static QueryMock FetchData([[maybe_unused]] Context& context)
+    static QueryMock FetchData([[maybe_unused]] Context& context, void*)
     {
       return QueryMock();
     }
@@ -50,7 +50,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadOnly_CorrectDataAccess
 
   EXPECT_EQ(array.size(), 1);
 
-  EXPECT_EQ(array[0].name, TypeInfo<const int>::Name());
+  EXPECT_EQ(array[0].name, TypeName<const int>());
   EXPECT_EQ(array[0].category, "Test");
   EXPECT_TRUE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
@@ -62,7 +62,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadWrite_CorrectDataAcces
 
   EXPECT_EQ(array.size(), 1);
 
-  EXPECT_EQ(array[0].name, TypeInfo<int>::Name());
+  EXPECT_EQ(array[0].name, TypeName<int>());
   EXPECT_EQ(array[0].category, "Test");
   EXPECT_FALSE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
@@ -74,7 +74,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleThreadSafe_CorrectDataAcce
 
   EXPECT_EQ(array.size(), 1);
 
-  EXPECT_EQ(array[0].name, TypeInfo<ThreadSafeType>::Name());
+  EXPECT_EQ(array[0].name, TypeName<ThreadSafeType>());
   EXPECT_EQ(array[0].category, "Test");
   EXPECT_FALSE(array[0].read_only);
   EXPECT_TRUE(array[0].thread_safe);
@@ -86,17 +86,17 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_Multiple_CorrectDataAccesses)
 
   EXPECT_EQ(array.size(), 3);
 
-  EXPECT_EQ(array[0].name, TypeInfo<const int>::Name());
+  EXPECT_EQ(array[0].name, TypeName<const int>());
   EXPECT_EQ(array[0].category, "Test");
   EXPECT_TRUE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
 
-  EXPECT_EQ(array[1].name, TypeInfo<float>::Name());
+  EXPECT_EQ(array[1].name, TypeName<float>());
   EXPECT_EQ(array[1].category, "Test");
   EXPECT_FALSE(array[1].read_only);
   EXPECT_FALSE(array[1].thread_safe);
 
-  EXPECT_EQ(array[2].name, TypeInfo<const ThreadSafeType>::Name());
+  EXPECT_EQ(array[2].name, TypeName<const ThreadSafeType>());
   EXPECT_EQ(array[2].category, "Test");
   EXPECT_TRUE(array[2].read_only);
   EXPECT_TRUE(array[2].thread_safe);

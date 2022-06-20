@@ -104,13 +104,15 @@ public:
   ///
   static Task<> Invoke(SystemType* system, Context& context)
   {
+    const SystemHandle handle = std::bit_cast<SystemHandle>(system);
+
     if constexpr (IsCoroutine)
     {
-      co_await system(std::remove_cvref_t<Queries>::FetchData(context)...);
+      co_await system(std::remove_cvref_t<Queries>::FetchData(context, handle)...);
     }
     else
     {
-      system(std::remove_cvref_t<Queries>::FetchData(context)...);
+      system(std::remove_cvref_t<Queries>::FetchData(context, handle)...);
       co_return;
     }
   }

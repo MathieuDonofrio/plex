@@ -27,9 +27,13 @@ namespace genebits::engine
 
 const SystemObject* Stage::GetSystemObject(SystemHandle handle) const
 {
-  auto it = std::ranges::find_if(registered_systems_, [&](auto& system) { return system->Handle() == handle; });
-
-  if (it != registered_systems_.end()) return &**it;
+  for (const auto& system_object : registered_systems_)
+  {
+    if (system_object->Handle() == handle)
+    {
+      return system_object.get();
+    }
+  }
 
   return nullptr;
 }
