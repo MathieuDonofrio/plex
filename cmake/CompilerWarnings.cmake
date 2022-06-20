@@ -31,6 +31,7 @@ function(set_project_warnings project_name)
       /permissive- # standards conformance mode for MSVC compiler.
       /wd4146 # Allow unary minus operator
       /wd4324 # Allow alignment padding
+      /wd5030 # Allow unrecognized attributes
       )
 
   set(CLANG_WARNINGS
