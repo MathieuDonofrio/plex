@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <mutex>
 
 #include "genebits/engine/containers/vector.h"
 #include "genebits/engine/utilities/type_info.h"
@@ -23,7 +24,7 @@ namespace details
   template<typename T1, typename T2>
   struct Compare
   {
-    static constexpr bool value = TypeInfo<T1>::Name().compare(TypeInfo<T2>::Name()) < 0;
+    static constexpr bool value = TypeName<T1>().compare(TypeName<T2>()) < 0;
 
     using type = std::conditional_t<value, T1, T2>;
   };
@@ -199,7 +200,7 @@ struct ViewIdTag
 template<typename Component>
 ComponentId GetComponentId() noexcept
 {
-  return static_cast<ComponentId>(TypeInfo<Component>::template Index<ComponentIdTag>());
+  return static_cast<ComponentId>(TypeIndex<Component, ComponentIdTag>());
 }
 
 ///
@@ -216,7 +217,7 @@ ComponentId GetComponentId() noexcept
 template<typename... Components>
 ArchetypeId GetArchetypeId() noexcept
 {
-  return static_cast<ArchetypeId>(TypeInfo<ComponentList<Components...>>::template Index<ArchetypeIdTag>());
+  return static_cast<ArchetypeId>(TypeIndex<ComponentList<Components...>, ArchetypeIdTag>());
 }
 
 ///
@@ -233,7 +234,7 @@ ArchetypeId GetArchetypeId() noexcept
 template<typename... Components>
 ViewId GetViewId() noexcept
 {
-  return static_cast<ViewId>(TypeInfo<ComponentList<Components...>>::template Index<ViewIdTag>());
+  return static_cast<ViewId>(TypeIndex<ComponentList<Components...>, ViewIdTag>());
 }
 
 namespace details
@@ -282,6 +283,189 @@ const Vector<ComponentId>& GetComponentIds()
 
   return components;
 }
+
+///
+/// Keeps track of what archetypes are in every view in an array ready for lookup.
+///
+class ViewRelations final
+{
+public:
+  ViewRelations()
+  {
+    archetype_states_.Resize(MaxArchetypes);
+    view_states_.Resize(MaxViews);
+
+    // Assure the empty view. This guarantees that it will be first in the arrays.
+    AssureView();
+  }
+
+  ///
+  /// If the view never existed it will be baked into the flattened graph for quick access.
+  ///
+  /// @note Thread-safe
+  ///
+  /// @tparam Components Unordered list of component types.
+  ///
+  /// @return The view id that was assured.
+  ///
+  template<typename... Components>
+  ViewId AssureView()
+  {
+    const ViewId id = GetViewId<std::remove_cvref_t<Components>...>();
+
+    if (!view_states_[id]) [[unlikely]]
+    {
+      InitializeView<Components...>();
+    }
+
+    return id;
+  }
+
+  ///
+  /// If the archetype never existed it will be baked into the flattened graph for quick access.
+  ///
+  /// @note Thread-safe
+  ///
+  /// @tparam Components Unordered list of component types.
+  ///
+  /// @return The archetype id that was assured.
+  ///
+  template<typename... Components>
+  ArchetypeId AssureArchetype()
+  {
+    const ArchetypeId id = GetArchetypeId<std::remove_cvref_t<Components>...>();
+
+    if (!archetype_states_[id]) [[unlikely]]
+    {
+      InitializeArchetype<Components...>();
+    }
+
+    return id;
+  }
+
+  ///
+  /// Returns the list of the ids of all archetypes that the view can see.
+  ///
+  /// Very fast, simply a single lookup.
+  ///
+  /// @param[in] id View identifier.
+  ///
+  /// @return List of archetypes for the view.
+  ///
+  [[nodiscard]] constexpr const Vector<ArchetypeId>& ViewArchetypes(const ViewId id) const noexcept
+  {
+    ASSERT(view_states_[id], "View not initialized");
+
+    return view_archetypes_[id];
+  }
+
+private:
+  ///
+  /// Initializes an unordered list of components and states for a given id.
+  ///
+  /// Components and states are seperated for SoA access cache performance benefits.
+  ///
+  /// @tparam IdType Type of identifier.
+  /// @tparam Components List of component types.
+  ///
+  /// @param[in] components The components list.
+  /// @param[in] states The states list.
+  /// @param[in] id The id to initialize for.
+  ///
+  /// @return True if already initialized, false otherwise.
+  ///
+  template<std::unsigned_integral IdType, typename... Components>
+  static bool Initialize(Vector<Vector<ComponentId>>& components, Vector<bool>& states, const IdType id)
+  {
+    if (id >= components.size())
+    {
+      components.Resize(id + 1);
+    }
+
+    components[id] = GetComponentIds<std::remove_cvref_t<Components>...>();
+
+    states[id] = true;
+
+    return true;
+  }
+
+  ///
+  /// Initializes the view for the id and the component types.
+  ///
+  /// @tparam Components The component types of the view.
+  ///
+  /// @param[in] id The view id.
+  ///
+  template<typename... Components>
+  COLD_SECTION NO_INLINE void InitializeView()
+  {
+    const ViewId id = GetViewId<std::remove_cvref_t<Components>...>();
+
+    ASSERT(id < MaxViews, "Too many views.");
+
+    std::lock_guard lg(mutex_);
+
+    if (!view_states_[id])
+    {
+      Initialize<ViewId, Components...>(view_components_, view_states_, id);
+      AddView(id);
+    }
+  }
+
+  ///
+  /// Initializes the archetype for the id and the component types.
+  ///
+  /// @tparam Components The component types of the archetype.
+  ///
+  /// @param[in] id The archetype id.
+  ///
+  template<typename... Components>
+  COLD_SECTION NO_INLINE void InitializeArchetype()
+  {
+    const ArchetypeId id = GetArchetypeId<std::remove_cvref_t<Components>...>();
+
+    ASSERT(id < MaxArchetypes, "Too many archetypes.");
+
+    std::lock_guard lg(mutex_);
+
+    if (!archetype_states_[id])
+    {
+      Initialize<ArchetypeId, Components...>(archetype_components_, archetype_states_, id);
+      AddArchetype(id);
+    }
+  }
+
+  ///
+  /// Bakes the view into the graph.
+  ///
+  /// @warning
+  ///    Only call once after initialization.
+  ///
+  /// @param[in] id Identifier of the view to add.
+  ///
+  void AddView(ViewId id);
+
+  ///
+  /// Bakes the archetype into the graph.
+  ///
+  /// @warning
+  ///    Only call once after initialization.
+  ///
+  /// @param[in] id Identifier of the archetype to add.
+  ///
+  void AddArchetype(ArchetypeId id);
+
+private:
+  Vector<Vector<ArchetypeId>> view_archetypes_;
+
+  Vector<Vector<ComponentId>> archetype_components_;
+  Vector<Vector<ComponentId>> view_components_;
+
+  std::mutex mutex_;
+
+  Vector<bool> archetype_states_;
+  Vector<bool> view_states_;
+};
 
 } // namespace genebits::engine
 

@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/view_relations.h"
+#include "genebits/engine/ecs/archetype.h"
 
 namespace genebits::engine
 {
@@ -8,7 +8,7 @@ void ViewRelations::AddView(ViewId id)
 
   auto& view_components = view_components_[id];
 
-  for (ArchetypeId i = 0; i < archetype_states_.size(); i++)
+  for (ArchetypeId i = 0; i < archetype_components_.size(); i++)
   {
     if (archetype_states_[i])
     {
@@ -33,7 +33,7 @@ void ViewRelations::AddArchetype(ArchetypeId id)
 {
   auto& archetype_components = archetype_components_[id];
 
-  for (ViewId i = 0; i < view_states_.size(); i++)
+  for (ViewId i = 0; i < view_components_.size(); i++)
   {
     if (view_states_[i])
     {

@@ -229,7 +229,7 @@ public:
 
 #ifndef NDEBUG
     // When debugging it is useful to have the list of components used at initialization.
-    ((components_.PushBack(TypeInfo<Components>::HashCode())), ...);
+    ((components_.PushBack(TypeName<Components>())), ...);
     initialized_ = true;
 #endif
   }
@@ -413,7 +413,7 @@ private:
   template<typename Component>
   [[nodiscard]] bool HasComponent() const noexcept
   {
-    return std::ranges::find(components_, TypeInfo<Component>::HashCode()) != components_.end();
+    return std::ranges::find(components_, TypeName<Component>()) != components_.end();
   }
 #endif
 
@@ -448,7 +448,7 @@ private:
   // Used for debugging purposes
 #ifndef NDEBUG
   bool initialized_ = false;
-  Vector<size_t> components_;
+  Vector<std::string_view> components_;
 #endif
 };
 

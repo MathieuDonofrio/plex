@@ -80,7 +80,8 @@ public:
   /// @return True if the type exists in the map, false otherwise.
   ///
   template<typename Type>
-  [[nodiscard]] bool ContainsNonDefault() const noexcept requires std::equality_comparable<Value>
+  [[nodiscard]] bool ContainsNonDefault() const noexcept
+  requires std::equality_comparable<Value>
   {
     const auto key = Key<Type>();
 
@@ -142,7 +143,7 @@ private:
   template<typename Type>
   [[nodiscard]] static size_t Key() noexcept
   {
-    return TypeInfo<Type>::template Index<TypeMap>();
+    return TypeIndex<Type, TypeMap>();
   }
 
 private:

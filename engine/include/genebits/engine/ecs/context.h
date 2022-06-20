@@ -75,7 +75,7 @@ public:
     ASSERT(Contains<Type>(), "Instance of given type not found");
 
     map_.Get<Type>() = nullptr;
-    instances_.UnorderedErase(FindByName(TypeInfo<Type>::Name()));
+    instances_.UnorderedErase(FindByName(TypeName<Type>()));
   }
 
   ///
@@ -167,7 +167,7 @@ private:
   template<typename Type>
   void InsertOrReplace(ErasedPtr<void>&& instance)
   {
-    static const constexpr auto name = TypeInfo<Type>::Name();
+    const constexpr auto name = TypeName<Type>();
 
     const bool already_exists = Contains<Type>();
 

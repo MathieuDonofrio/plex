@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/view_relations.h"
+#include "genebits/engine/ecs/archetype.h"
 
 #include <gtest/gtest.h>
 
