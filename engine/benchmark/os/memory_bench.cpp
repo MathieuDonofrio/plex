@@ -2,6 +2,8 @@
 
 #include <benchmark/benchmark.h>
 
+#include <new>
+
 namespace genebits::engine::bench
 {
 static void Memory_STD_Memcpy(benchmark::State& state)

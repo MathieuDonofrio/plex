@@ -6,7 +6,7 @@
 
 namespace genebits::engine::bench
 {
-static void ErasedPtr_STD_SharedPtr_Cast(benchmark::State& state)
+static void ErasedPtr_STD_Reference_SharedPtr_Cast(benchmark::State& state)
 {
   for (auto _ : state)
   {
@@ -18,7 +18,7 @@ static void ErasedPtr_STD_SharedPtr_Cast(benchmark::State& state)
   }
 }
 
-BENCHMARK(ErasedPtr_STD_SharedPtr_Cast);
+BENCHMARK(ErasedPtr_STD_Reference_SharedPtr_Cast);
 
 static void ErasedPtr_Cast(benchmark::State& state)
 {
