@@ -9,7 +9,6 @@
 #include "genebits/engine/ecs/archetype.h"
 #include "genebits/engine/ecs/entity_manager.h"
 #include "genebits/engine/ecs/storage.h"
-#include "genebits/engine/ecs/view_relations.h"
 
 namespace genebits::engine
 {
@@ -38,7 +37,10 @@ public:
   ///
   /// Constructor.
   ///
-  Registry() = default;
+  Registry()
+  {
+    storages_.Resize(MaxArchetypes);
+  }
 
   ///
   /// Destructor.
@@ -78,7 +80,7 @@ public:
   {
     const Entity entity = entity_manager_.Obtain();
 
-    GetStorage<Components...>().template Insert<Components...>(entity, std::forward<Components>(components)...);
+    AssureStorage<Components...>().template Insert<Components...>(entity, std::forward<Components>(components)...);
 
     return entity;
   }
@@ -160,7 +162,8 @@ public:
   /// @return Amount of entities with provided component types.
   ///
   template<typename... Components>
-  requires(sizeof...(Components) > 0) [[nodiscard]] size_t EntityCount() noexcept
+  requires(sizeof...(Components) > 0) [
+    [nodiscard]] size_t EntityCount() noexcept
   {
     return View<Components...>().Size();
   }
@@ -209,21 +212,36 @@ private:
   /// @return Reference to assured storage.
   ///
   template<typename... Components>
-  Storage<Entity>& GetStorage()
+  Storage<Entity>& AssureStorage()
+  {
+    const ArchetypeId id = relations_.template AssureArchetype<Components...>();
+
+    auto storage = storages_[id];
+
+    if (storage) [[likely]]
+    {
+      return *storage;
+    }
+    else
+    {
+      return InitializeStorage<Components...>();
+    }
+  }
+
+  ///
+  /// Initializes the storage for the archetype.
+  ///
+  /// @tparam Components Components that make up the archetype.
+  ///
+  template<typename... Components>
+  COLD_SECTION NO_INLINE Storage<Entity>& InitializeStorage()
   {
     const ArchetypeId archetype = relations_.template AssureArchetype<Components...>();
 
-    if (storages_.size() <= archetype) storages_.Resize(archetype + 1, nullptr);
+    storages_[archetype] = new Storage<Entity>(&mappings_);
+    storages_[archetype]->template Initialize<std::remove_cvref_t<Components>...>();
 
-    auto storage = storages_[archetype];
-
-    if (!storage)
-    {
-      storages_[archetype] = storage = new Storage<Entity>(&mappings_);
-      storage->template Initialize<std::remove_cvref_t<Components>...>();
-    }
-
-    return *storage;
+    return *storages_[archetype];
   }
 
 private:
@@ -254,10 +272,9 @@ using EntityData = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
 /// @tparam Components Component types.
 ///
 template<typename Functor, typename... Components>
-concept EntityExtendedFunctor = requires(Functor functor, Entity entity, Components... components)
-{
-  functor(std::forward<Entity>(entity), std::forward<Components>(components)...);
-};
+concept EntityExtendedFunctor = requires(Functor functor, Entity entity, Components... components) {
+                                  functor(std::forward<Entity>(entity), std::forward<Components>(components)...);
+                                };
 
 ///
 /// Concept used to determine if an functor can be used as an reduced entity apply functor.
@@ -268,10 +285,8 @@ concept EntityExtendedFunctor = requires(Functor functor, Entity entity, Compone
 /// @tparam Components Component types.
 ///
 template<typename Functor, typename... Components>
-concept EntityReducedFunctor = requires(Functor functor, Components... components)
-{
-  functor(std::forward<Components>(components)...);
-};
+concept EntityReducedFunctor =
+  requires(Functor functor, Components... components) { functor(std::forward<Components>(components)...); };
 
 ///
 /// Concept used to determine if an functor can be used as an entity apply functor.

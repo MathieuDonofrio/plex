@@ -44,9 +44,7 @@ public:
 
     if (values_.size() <= index) [[unlikely]]
     {
-      ASSERT(index < 100000, "To many types, probably a bug"); // Highly unlikely the map exceeds 100k types
-
-      values_.Resize(index + 1);
+      ResizeFor(index);
     }
 
     return values_[index];
@@ -128,6 +126,18 @@ private:
   using DefaultValueType = std::conditional_t<std::equality_comparable<Value>, Value, void*>;
 
   static inline const DefaultValueType cDefaultValue {};
+
+  ///
+  /// Resizes the internal array to make sure the index is valid.
+  ///
+  /// @param[in] index The index to resize for.
+  ///
+  COLD_SECTION NO_INLINE void ResizeFor(const size_t index)
+  {
+    ASSERT(index < 100000, "To many types, probably a bug"); // Highly unlikely the map exceeds 100k types
+
+    values_.Resize(index + 1);
+  }
 
   ///
   /// Obtains the key for a type.

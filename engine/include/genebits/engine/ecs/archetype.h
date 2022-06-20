@@ -170,6 +170,9 @@ using ComponentId = uint_fast32_t;
 using ViewId = uint_fast32_t;
 using ArchetypeId = uint_fast32_t;
 
+static constexpr size_t MaxArchetypes = 4096;
+static constexpr size_t MaxViews = 4096;
+
 ///
 /// Tag used for the unique id sequence of components.
 ///

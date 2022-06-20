@@ -215,7 +215,7 @@ public:
   ///
   template<typename... Components>
   requires UniqueTypes<Components...>
-  void Initialize() noexcept
+  COLD_SECTION NO_INLINE void Initialize() noexcept
   {
     ASSERT(!initialized_, "Already initialized");
 
