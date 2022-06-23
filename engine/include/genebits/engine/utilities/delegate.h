@@ -8,15 +8,17 @@
 
 namespace genebits::engine
 {
+// clang-format off
+
 ///
-/// Concept used to determine if an Invokable is eligible to be bound to an EventHandler.
+/// Concept used to determine if an Invokable is eligible to be bound to an Delegate.
 ///
 /// This concept is more restrictive than invokable binding for other delegates like
 /// std::function. The justification is because we do not want to create additional overhead
 /// for something we will rarely use.
 ///
-/// To meet the requirements of an event handler invokable, the invokable must define a valid invoke
-/// operator with the event type as an argument. Also, the invokable cannot be larger than the size
+/// To meet the requirements of an delegate invokable, the invokable must define a valid invoke
+/// operator with the argument types. Also, the invokable cannot be larger than the size
 /// of a pointer (8 bytes on 64 bit) and must be trivially destructible.
 ///
 /// @tparam Invokable Type of the invokable (usually a lambda).
@@ -30,6 +32,8 @@ concept DelegateInvocable = std::is_trivially_destructible_v<Invocable> && sizeo
     invocable(std::forward<Args>(args)...)
     } -> std::convertible_to<Return>;
 };
+
+// clang-format on
 
 #define DELEGATE_INVOKE_AND_TRY_RETURN(expression)                        \
   if constexpr (std::is_same_v<decltype(expression), void>) (expression); \
@@ -135,7 +139,7 @@ public:
   }
 
   ///
-  /// Invokes the stored function with the specified event.
+  /// Invokes the stored function with the given arguments.
   ///
   /// @warning
   ///     Undefined behaviour if no function is bound to this delegate.
@@ -150,7 +154,7 @@ public:
   }
 
   ///
-  /// Invokes the stored function with the specified event.
+  /// Invokes the stored function with the given arguments.
   ///
   /// @warning
   ///     Undefined behaviour if no function is bound to this delegate.
