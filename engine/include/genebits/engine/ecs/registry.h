@@ -19,21 +19,26 @@ namespace genebits::engine
 ///
 using Entity = uint_fast32_t;
 
-template<typename... Components>
-class PolyView;
+template<typename...>
+class View;
 
 ///
-/// High level container for entities of different archetypes.
+/// Registry is where all entities and their components are stored and managed.
 ///
-/// The registry is the main interface for using the entity component system. It combines many clever underlying
-/// components to create a fast container for entities.
+/// This registry is an archetype aware ECS container. It organizes entities and components based on their archetype.
+/// Archetypes are simply the set of components that an entity has.
 ///
-/// The registry organizes entities and component data into archetypes. Archetypes are an unordered set of components.
-/// Using archetypes allows us to optimize memory layout to make operations faster in most cases.
+/// Every archetype has its own storage. Each storage is a SOA, where each component in the archetype has its
+/// own densely packed array.
+///
+/// To access data from the registry, you must create a view of the registry with the desired components.
 ///
 class Registry final
 {
 public:
+  template<typename...>
+  friend class View;
+
   ///
   /// Constructor.
   ///
@@ -59,43 +64,38 @@ public:
   Registry& operator=(Registry&&) = delete;
 
   ///
-  /// Creates a new component for the given component data.
-  ///
-  /// The initial archetype of the component is setup for the list of component types used
-  /// during creation.
-  ///
-  /// This operation is O(1) and very fast.
+  /// Creates a new entity and with the given components.
   ///
   /// @note
-  ///    It is recommended that the entity is always created with the exact archetype of its lifetime.
+  ///    The fastest way to create a component is to initialize all its components during creation, this avoids
+  ///    archetype swapping.
   ///
   /// @tparam Components List of component types used as initial archetype.
   ///
   /// @param[in] components Component data to create entity with.
   ///
-  /// @return Identifier of the created entity.
+  /// @return Unique identifier of the created entity.
   ///
   template<typename... Components>
   Entity Create(Components&&... components)
   {
     const Entity entity = entity_manager_.Obtain();
 
-    AssureStorage<Components...>().template Insert<Components...>(entity, std::forward<Components>(components)...);
+    AssureStorage<Components...>().Insert(entity, std::forward<Components>(components)...);
 
     return entity;
   }
 
   ///
-  /// Destroys the entity and all its associated component data.
+  /// Destroys the entity and all its attached components.
   ///
-  /// If some or all of the types belonging to the entity's archetype can be provided to reduce the search
-  /// space.
-  ///
-  /// This operation is O(1) all the component types for the entity's archetype are provided. Otherwise,
-  /// his operation is O(n) where n is the amount of archetypes with the provided components.
+  /// @note If some or all the component types of the entity are known during destruction, they can be provided as
+  /// template arguments to reduce the overhead of finding the correct storage for the entity. If the exact archetype is
+  /// provided, there will be no overhead for finding the storage. In most cases, this is not worth doing, as the
+  /// overhead is usually very small.
   ///
   /// @warning
-  ///    If the specified component types do not belong to the entity, the behaviour of this method
+  ///    If the provided templated component types do not belong to the entity, the behaviour of this method
   ///    is undefined.
   ///
   /// @tparam Components Optional partial or complete list of component types of the entity's archetype.
@@ -105,7 +105,7 @@ public:
   template<typename... Components>
   void Destroy(const Entity entity)
   {
-    View<Components...>().Destroy(entity);
+    ViewFor<Components...>().Destroy(entity);
   }
 
   ///
@@ -116,13 +116,11 @@ public:
   template<typename... Components>
   void DestroyAll()
   {
-    View<Components...>().DestroyAll();
+    ViewFor<Components...>().DestroyAll();
   }
 
   ///
-  /// Returns a reference to the component data for the entity.
-  ///
-  /// This operation is O(n) where n is the amount of archetypes with the component.
+  /// Returns a reference to the component data of the given component type for given entity.
   ///
   /// @note
   ///    Prefer obtaining unpacked components directly from iterating when possible.
@@ -136,7 +134,7 @@ public:
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity)
   {
-    return View<Component>().template Unpack<Component>(entity);
+    return ViewFor<Component>().template Unpack<Component>(entity);
   }
 
   ///
@@ -151,7 +149,7 @@ public:
   template<typename... Components>
   bool HasComponents(Entity entity)
   {
-    return View<Components...>().Contains(entity);
+    return ViewFor<Components...>().Contains(entity);
   }
 
   ///
@@ -165,15 +163,13 @@ public:
   requires(sizeof...(Components) > 0) [
     [nodiscard]] size_t EntityCount() noexcept
   {
-    return View<Components...>().Size();
+    return ViewFor<Components...>().Size();
   }
 
   ///
   /// Returns the total amount of entities in the registry.
   ///
   /// This is the sum of the sizes of every storage (every archetype) in the registry.
-  ///
-  /// This operation is O(1) and very fast.
   ///
   /// @return Amount of entities in the registry.
   ///
@@ -190,22 +186,16 @@ public:
   /// @return Basic view of the registry for the component types.
   ///
   template<typename... Components>
-  [[nodiscard]] PolyView<Components...> View()
+  [[nodiscard]] View<Components...> ViewFor()
   {
-    return PolyView<Components...>(*this);
+    return View<Components...>(*this);
   }
 
 private:
-  template<typename...>
-  friend class PolyView;
-
   ///
   /// Returns the storage for the archetype.
   ///
   /// Will properly initialize the storage if it does not exist.
-  ///
-  /// This method should be used instead of accessing the storage directly, unless you can guarantee that the storage
-  /// was initialized.
   ///
   /// @tparam Components Component types that compose the archetype.
   ///
@@ -214,7 +204,7 @@ private:
   template<typename... Components>
   Storage<Entity>& AssureStorage()
   {
-    const ArchetypeId id = relations_.template AssureArchetype<Components...>();
+    const ArchetypeId id = relations_.template AssureArchetype<std::remove_cvref_t<Components>...>();
 
     auto storage = storages_[id];
 
@@ -224,7 +214,7 @@ private:
     }
     else
     {
-      return InitializeStorage<Components...>();
+      return InitializeStorage<std::remove_cvref_t<Components>...>();
     }
   }
 
@@ -239,7 +229,7 @@ private:
     const ArchetypeId archetype = relations_.template AssureArchetype<Components...>();
 
     storages_[archetype] = new Storage<Entity>(&mappings_);
-    storages_[archetype]->template Initialize<std::remove_cvref_t<Components>...>();
+    storages_[archetype]->template Initialize<Components...>();
 
     return *storages_[archetype];
   }
@@ -263,6 +253,17 @@ template<typename... Components>
 using EntityData = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
 
 ///
+/// Concept used to determine if an functor can be used as an reduced entity apply functor.
+///
+/// To meet the requirements, the functor operator must not contain the entity identifier.
+///
+/// @tparam Functor Functor type.
+/// @tparam Components Component types.
+///
+template<typename Functor, typename... Components>
+concept EntityReducedFunctor = requires(Functor functor, Components... components) { functor(components...); };
+
+///
 /// Concept used to determine if an functor can be used as an extended entity apply functor.
 ///
 /// To meet the requirements, the functor operator must contain the entity identifier type as
@@ -272,21 +273,8 @@ using EntityData = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
 /// @tparam Components Component types.
 ///
 template<typename Functor, typename... Components>
-concept EntityExtendedFunctor = requires(Functor functor, Entity entity, Components... components) {
-                                  functor(std::forward<Entity>(entity), std::forward<Components>(components)...);
-                                };
-
-///
-/// Concept used to determine if an functor can be used as an reduced entity apply functor.
-///
-/// To meet the requirements, the functor operator must not contain the entity identifier.
-///
-/// @tparam Functor Functor type.
-/// @tparam Components Component types.
-///
-template<typename Functor, typename... Components>
-concept EntityReducedFunctor =
-  requires(Functor functor, Components... components) { functor(std::forward<Components>(components)...); };
+concept EntityExtendedFunctor =
+  requires(Functor functor, Entity entity, Components... components) { functor(entity, components...); };
 
 ///
 /// Concept used to determine if an functor can be used as an entity apply functor.
@@ -351,7 +339,7 @@ template<class Type, typename... Components>
 constexpr void EntityApply(
   void (Type::*func)(Entity, Components...) const, Type* instance, EntityData<Components...>& data)
 {
-  instance->*func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+  (instance->*func)(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
 }
 
 ///
@@ -369,7 +357,7 @@ constexpr void EntityApply(
 template<class Type, typename... Components>
 constexpr void EntityApply(void (Type::*func)(Entity, Components...), Type* instance, EntityData<Components...>& data)
 {
-  instance->*func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+  (instance->*func)(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
 }
 
 ///
@@ -387,7 +375,7 @@ constexpr void EntityApply(void (Type::*func)(Entity, Components...), Type* inst
 template<class Type, typename... Components>
 constexpr void EntityApply(void (Type::*func)(Components...) const, Type* instance, EntityData<Components...>& data)
 {
-  instance->*func(*std::get<std::remove_cvref_t<Components>*>(data)...);
+  (instance->*func)(*std::get<std::remove_cvref_t<Components>*>(data)...);
 }
 
 ///
@@ -405,7 +393,7 @@ constexpr void EntityApply(void (Type::*func)(Components...) const, Type* instan
 template<class Type, typename... Components>
 constexpr void EntityApply(void (Type::*func)(Components...), Type* instance, EntityData<Components...>& data)
 {
-  instance->*func(*std::get<std::remove_cvref_t<Components>*>(data)...);
+  (instance->*func)(*std::get<std::remove_cvref_t<Components>*>(data)...);
 }
 
 ///
@@ -441,18 +429,18 @@ constexpr void EntityApply(void (*func)(Components...), EntityData<Components...
 }
 
 ///
-/// View that contains entities of a single archetype that contains all the components in the view.
+/// Sub view contains entities and component data of a single archetype.
+///
+/// Can be thought of as a view over a single storage in the registry.
 ///
 /// @tparam Components Component types of the view.
 ///
 template<typename... Components>
-class MonoView
+class SubView
 {
 public:
   ///
-  /// Iterates all entities in the view, unpacks the component data efficiently and invokes the function.
-  ///
-  /// Iteration is very fast with near vector speeds.
+  /// Iterates all entities in the view, for each one, unpacks the component data and invokes the function.
   ///
   /// @tparam Function Function type to invoke for each entity.
   ///
@@ -475,7 +463,7 @@ public:
   ///
   /// @returns True if the entity exists in the view, false otherwise.
   ///
-  bool Contains(const Entity entity) const noexcept
+  [[nodiscard]] bool Contains(const Entity entity) const noexcept
   {
     return storage_->Contains(entity);
   }
@@ -491,9 +479,7 @@ public:
   }
 
   ///
-  /// Returns a reference to the component data for the entity.
-  ///
-  /// This operation is O(n) where n is the amount of archetypes in the view.
+  /// Returns a const reference to the component data for the entity.
   ///
   /// @note
   ///    Prefer obtaining unpacked components directly from iterating when possible.
@@ -502,7 +488,7 @@ public:
   ///
   /// @param[in] entity Entity to unpack data for.
   ///
-  /// @return The unpacked component data.
+  /// @return Reference to the unpacked component data.
   ///
   template<typename Component>
   [[nodiscard]] const Component& Unpack(const Entity entity) const noexcept
@@ -515,8 +501,6 @@ public:
   ///
   /// Returns a reference to the component data for the entity.
   ///
-  /// This operation is O(n) where n is the amount of archetypes in the view.
-  ///
   /// @note
   ///    Prefer obtaining unpacked components directly from iterating when possible.
   ///
@@ -524,12 +508,12 @@ public:
   ///
   /// @param[in] entity Entity to unpack data for.
   ///
-  /// @return The unpacked component data.
+  /// @return Reference to the unpacked component data.
   ///
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity) noexcept
   {
-    return const_cast<Component&>(static_cast<const MonoView*>(this)->Unpack<Component>(entity));
+    return const_cast<Component&>(static_cast<const SubView*>(this)->Unpack<Component>(entity));
   }
 
 public:
@@ -729,7 +713,7 @@ public:
 
   private:
     template<typename...>
-    friend class MonoView;
+    friend class SubView;
 
     ///
     /// Constructs an entity iterator using a storage and an offset.
@@ -759,32 +743,33 @@ public:
 
 private:
   template<typename...>
-  friend class PolyView;
+  friend class View;
 
   ///
   /// Constructs a view from a storage.
   ///
   /// @param[in] storage Storage to construct view with.
   ///
-  constexpr MonoView(Storage<Entity>* storage) : storage_(storage) {}
+  constexpr SubView(Storage<Entity>* storage) : storage_(storage) {}
 
 private:
   Storage<Entity>* storage_;
 };
 
 ///
-/// View that contains entities of all archetypes that contain all the components in the view.
+/// View contains entities of possibly different archetypes.
+///
+/// Can be thought of as a view over the entire registry for the given components.
 ///
 /// @warning
-///     This view only guarantees that it will contain the archetypes that meet its requirements
-///     at the time of creation. If a new archetype is created with all the required components after
-///     this view was created, it will not be in the view. For this reason, it is good practice to
-///     recreate views when needed.
+///     The view only guarantees that it will contain the archetypes that meet its requirements at the time of creation.
+///     For example, if a new archetype is created with all the required components after this view was created, it will
+///     not be in the view. For this reason, it is good practice to recreate views when needed.
 ///
 /// @tparam Components Required component types for the view.
 ///
 template<typename... Components>
-class PolyView
+class View
 {
 public:
   static constexpr bool cNoComponents = sizeof...(Components) == 0;
@@ -794,18 +779,18 @@ public:
   ///
   /// @param[in] registry Registry to construct view for.
   ///
-  constexpr explicit PolyView(Registry& registry)
+  constexpr explicit View(Registry& registry)
     : registry_(registry),
       archetypes_(registry.relations_.ViewArchetypes(registry.relations_.template AssureView<Components...>()))
   {}
 
   ///
-  /// Iterates all entities in the view, unpacks the component data efficiently and invokes the function.
+  /// Iterates all entities in the view, for each one, unpacks the component data and invokes the function.
   ///
-  /// Iteration is very fast with near vector speeds.
-  ///
-  /// There is some overhead due to having multiple storages to iterate on. This causes "gaps" between contiguous blocks
-  /// of memory and may cause cache misses in views with a high archetype to entity ratio.
+  /// @note The iteration speed is near that of a contiguous array, there is some overhead over arrays due to possibly
+  /// having multiple storages to iterate on. Multiple storages causes slight memory fragmentation, and this can have an
+  /// effect on iteration speed due to things like cache misses. Normally this is an incredibly small overhead and is
+  /// not something to worry about.
   ///
   /// @tparam Function Function type to invoke for each entity.
   ///
@@ -815,9 +800,9 @@ public:
   requires EntityFunctor<Function, Components...>
   void ForEach(Function function)
   {
-    for (auto mono_view : *this)
+    for (auto sub_view : *this)
     {
-      for (auto& data : mono_view)
+      for (auto& data : sub_view)
       {
         EntityApply<Function, Components...>(function, data);
       }
@@ -825,10 +810,7 @@ public:
   }
 
   ///
-  /// Destroys the entity and all its associated component data.
-  ///
-  /// This operation is O(n) where n is the amount of archetypes in the view. A reordering optimization
-  /// ensures that the operation is O(1) if the view has the exact components of the entity to destroy.
+  /// Destroys the entity and all its attached components.
   ///
   /// @warning
   ///    If the view does not contain the entity, the behaviour of this method is undefined.
@@ -859,9 +841,6 @@ public:
   ///
   /// Destroys all entities in the view.
   ///
-  /// This operation is O(n) most of the time. If the view has no components this operation can be O(1) if every
-  /// component in the registry is trivially destructible.
-  ///
   void DestroyAll()
   {
     for (const auto archetype : archetypes_)
@@ -870,7 +849,7 @@ public:
 
       ASSERT(storage, "Storage not initialized");
 
-      if constexpr (!cNoComponents)
+      if constexpr (!cNoComponents) // Release all later
       {
         for (auto entity : *storage)
         {
@@ -881,10 +860,10 @@ public:
       storage->Clear();
     }
 
-    if constexpr (cNoComponents) registry_.entity_manager_.ReleaseAll(); // Release everything
-    else if (registry_.EntityCount() == 0)
+    if constexpr (cNoComponents)
     {
-      registry_.entity_manager_.ReleaseAll(); // Ok because it clears the queue and resets the generator.
+      // This releases everything at once very cheaply.
+      registry_.entity_manager_.ReleaseAll();
     }
   }
 
@@ -895,7 +874,7 @@ public:
   ///
   /// @returns True if the entity exists in the view, false otherwise.
   ///
-  bool Contains(const Entity entity) const noexcept
+  [[nodiscard]] bool Contains(const Entity entity) const noexcept
   {
     for (const auto archetype : archetypes_)
     {
@@ -989,7 +968,7 @@ public:
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity) noexcept
   {
-    return const_cast<Component&>(static_cast<const PolyView*>(this)->Unpack<Component>(entity));
+    return const_cast<Component&>(static_cast<const View*>(this)->Unpack<Component>(entity));
   }
 
 public:
@@ -1090,9 +1069,9 @@ public:
     ///
     /// @return Storage reference.
     ///
-    constexpr MonoView<Components...> operator*() const noexcept
+    constexpr SubView<Components...> operator*() const noexcept
     {
-      return MonoView<Components...> { registry_.storages_[*archetype_] };
+      return SubView<Components...> { registry_.storages_[*archetype_] };
     }
 
     ///
@@ -1121,7 +1100,7 @@ public:
 
   private:
     template<typename...>
-    friend class PolyView;
+    friend class View;
 
     ///
     /// Constructs an iterator with the archetype array and a registry reference.

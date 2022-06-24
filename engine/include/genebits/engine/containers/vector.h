@@ -2,6 +2,7 @@
 #define GENEBITS_ENGINE_CONTAINERS_VECTOR_H
 
 #include <iterator>
+#include <memory_resource>
 #include <ranges>
 #include <utility>
 
@@ -19,9 +20,6 @@ namespace genebits::engine
 ///
 template<typename Type>
 concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
-
-// Currently, only stateless and default constructed allocators are really supported. Once we have a compressed pair, we
-// could correctly implement allocators with empty base optimization.
 
 ///
 /// General purpose vector implementation optimized for speed.
@@ -159,7 +157,9 @@ public:
   ///
   /// Default constructor
   ///
-  constexpr Vector() noexcept : array_(nullptr), size_(0), capacity_(0) {}
+  constexpr Vector() noexcept(std::is_nothrow_default_constructible_v<AllocatorType>)
+    : array_(nullptr), size_(0), capacity_(0)
+  {}
 
   ///
   /// Constructs vector using c-array style initializer list.
@@ -178,7 +178,7 @@ public:
   /// Empty c-array constructor. Default constructs the vector.
   ///
   template<std::same_as<EmptyCArray> Source = EmptyCArray>
-  constexpr Vector(Source) noexcept : Vector()
+  constexpr Vector(Source) noexcept(noexcept(Vector())) : Vector()
   {}
 
   ///
@@ -234,7 +234,7 @@ public:
   ///
   /// @param[in] other Vector to copy from.
   ///
-  Vector(const Vector<Type, AllocatorType>& other) noexcept : size_(other.size_)
+  Vector(const Vector<Type, AllocatorType>& other) : size_(other.size_)
   {
     Block block = AllocateAtLeast(size_);
 
@@ -264,7 +264,7 @@ public:
   ///
   /// @return Reference to this vector.
   ///
-  Vector& operator=(const Vector<Type, AllocatorType>& other) noexcept
+  Vector& operator=(const Vector<Type, AllocatorType>& other)
   {
     Vector<Type, AllocatorType>(other).Swap(*this);
     return *this;
@@ -363,7 +363,7 @@ public:
   ///
   /// @param[in] it Iterator for element to erase
   ///
-  void Erase(iterator it) noexcept
+  void Erase(iterator it)
   {
     ASSERT(size_ > 0, "Vector is empty");
 
@@ -380,7 +380,7 @@ public:
   ///
   /// @param[in] it Iterator for element to erase
   ///
-  void UnorderedErase(iterator it) noexcept
+  void UnorderedErase(iterator it)
   {
     ASSERT(size_ > 0, "Vector is empty");
 
@@ -434,7 +434,7 @@ public:
   ///
   /// @param[in] min_capacity Minimum capacity the vector should have.
   ///
-  void Reserve(const size_t min_capacity) noexcept
+  void Reserve(const size_t min_capacity)
   {
     if (static_cast<uint32_t>(min_capacity) > capacity_) [[likely]]
     {
@@ -474,7 +474,7 @@ public:
   ///
   /// @return True if vectors are equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator==(const Vector<Type, AllocatorType>& other) const noexcept
+  [[nodiscard]] constexpr bool operator==(const Vector<Type, AllocatorType>& other) const
   {
     if (this->array_ == other.array_) return true; // Checks for same instance or two empty vectors.
     if (this->size_ != other.size_) return false;
@@ -489,7 +489,7 @@ public:
   ///
   /// @return True if vectors are not equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator!=(const Vector<Type, AllocatorType>& other) const noexcept
+  [[nodiscard]] constexpr bool operator!=(const Vector<Type, AllocatorType>& other) const
   {
     return !(*this == other);
   }
@@ -517,10 +517,11 @@ protected:
     // It is a suitable replacement for realloc.
     // Proposal: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0401r6.html
 #ifdef __cpp_lib_allocate_at_least
-    const auto result = get_allocator().allocate_at_least(capacity);
-    return { result.ptr, static_cast<uint32_t>(result.count) };
+    auto block = get_allocator().allocate_at_least(capacity);
+    return { std::to_address(block.ptr), static_cast<uint32_t>(block.count) };
 #else
-    return { get_allocator().allocate(capacity), static_cast<uint32_t>(capacity) };
+    auto ptr = get_allocator().allocate(capacity);
+    return { std::to_address(ptr), static_cast<uint32_t>(capacity) };
 #endif
   }
 
@@ -681,6 +682,11 @@ struct IsTriviallyRelocatable<Vector<Type, Allocator>>
   : public std::bool_constant<IsTriviallyRelocatable<Type>::value && IsTriviallyRelocatable<Allocator>::value>
 {};
 
+namespace pmr
+{
+  template<typename Type>
+  using Vector = Vector<Type, std::pmr::polymorphic_allocator<Type>>;
+}
 } // namespace genebits::engine
 
 namespace std

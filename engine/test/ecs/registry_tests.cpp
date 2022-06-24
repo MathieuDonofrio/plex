@@ -267,11 +267,11 @@ TEST(Registry_Tests, HasComponents_Multiple_False)
   EXPECT_TRUE((registry.HasComponents<int, double, float>(created_entity)));
 }
 
-TEST(PolyViewIterator_Tests, PreIncrement_Empty_NoIterations)
+TEST(ViewIterator_Tests, PreIncrement_Empty_NoIterations)
 {
   Registry registry;
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -283,13 +283,13 @@ TEST(PolyViewIterator_Tests, PreIncrement_Empty_NoIterations)
   EXPECT_EQ(iterations, 0);
 }
 
-TEST(PolyViewIterator_Tests, PreIncrement_Single_OneIteration)
+TEST(ViewIterator_Tests, PreIncrement_Single_OneIteration)
 {
   Registry registry;
 
   registry.Create<int>(0);
 
-  PolyView view = registry.View();
+  auto view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -301,14 +301,14 @@ TEST(PolyViewIterator_Tests, PreIncrement_Single_OneIteration)
   EXPECT_EQ(iterations, 1);
 }
 
-TEST(PolyViewIterator_Tests, PreIncrement_Double_CorrectIterations)
+TEST(ViewIterator_Tests, PreIncrement_Double_CorrectIterations)
 {
   Registry registry;
 
   registry.Create<int>(0);
   registry.Create<double>(0);
 
-  PolyView view = registry.View();
+  auto view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -320,7 +320,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_Double_CorrectIterations)
   EXPECT_EQ(iterations, 2);
 }
 
-TEST(PolyViewIterator_Tests, PreIncrement_Multiple_CorrectIterations)
+TEST(ViewIterator_Tests, PreIncrement_Multiple_CorrectIterations)
 {
   Registry registry;
 
@@ -329,7 +329,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_Multiple_CorrectIterations)
   registry.Create<double>(0);
   registry.Create<long>(0);
 
-  PolyView view = registry.View();
+  auto view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -341,7 +341,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_Multiple_CorrectIterations)
   EXPECT_EQ(iterations, 4);
 }
 
-TEST(PolyViewIterator_Tests, PreIncrement_WithMultipleEntities_CorrectIterations)
+TEST(ViewIterator_Tests, PreIncrement_WithMultipleEntities_CorrectIterations)
 {
   Registry registry;
 
@@ -351,7 +351,7 @@ TEST(PolyViewIterator_Tests, PreIncrement_WithMultipleEntities_CorrectIterations
   registry.Create<double>(0);
   registry.Create<double>(0);
 
-  PolyView view = registry.View();
+  auto view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -363,13 +363,13 @@ TEST(PolyViewIterator_Tests, PreIncrement_WithMultipleEntities_CorrectIterations
   EXPECT_EQ(iterations, 2);
 }
 
-TEST(PolyViewIterator_Tests, PostIncrement_Single_OneIteration)
+TEST(ViewIterator_Tests, PostIncrement_Single_OneIteration)
 {
   Registry registry;
 
   registry.Create<int>(0);
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -381,7 +381,7 @@ TEST(PolyViewIterator_Tests, PostIncrement_Single_OneIteration)
   EXPECT_EQ(iterations, 1);
 }
 
-TEST(PolyViewIterator_Tests, PostIncrement_Multiple_CorrectIterations)
+TEST(ViewIterator_Tests, PostIncrement_Multiple_CorrectIterations)
 {
   Registry registry;
 
@@ -390,7 +390,7 @@ TEST(PolyViewIterator_Tests, PostIncrement_Multiple_CorrectIterations)
   registry.Create<double>(0);
   registry.Create<long>(0);
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -402,13 +402,13 @@ TEST(PolyViewIterator_Tests, PostIncrement_Multiple_CorrectIterations)
   EXPECT_EQ(iterations, 4);
 }
 
-TEST(PolyViewIterator_Tests, PreDecrement_Single_OneIteration)
+TEST(ViewIterator_Tests, PreDecrement_Single_OneIteration)
 {
   Registry registry;
 
   registry.Create<int>(0);
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -420,7 +420,7 @@ TEST(PolyViewIterator_Tests, PreDecrement_Single_OneIteration)
   EXPECT_EQ(iterations, 1);
 }
 
-TEST(PolyViewIterator_Tests, PostDecrement_Multiple_CorrectIterations)
+TEST(ViewIterator_Tests, PostDecrement_Multiple_CorrectIterations)
 {
   Registry registry;
 
@@ -429,7 +429,7 @@ TEST(PolyViewIterator_Tests, PostDecrement_Multiple_CorrectIterations)
   registry.Create<double>(0);
   registry.Create<long>(0);
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   size_t iterations = 0;
 
@@ -441,7 +441,7 @@ TEST(PolyViewIterator_Tests, PostDecrement_Multiple_CorrectIterations)
   EXPECT_EQ(iterations, 4);
 }
 
-TEST(PolyViewIterator_Tests, AddAssign_Multiple_CorrectIterations)
+TEST(ViewIterator_Tests, AddAssign_Multiple_CorrectIterations)
 {
   Registry registry;
 
@@ -450,7 +450,7 @@ TEST(PolyViewIterator_Tests, AddAssign_Multiple_CorrectIterations)
   registry.Create<double>(0);
   registry.Create<long>(0);
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   auto it = view.begin();
   it += 3;
@@ -465,7 +465,7 @@ TEST(PolyViewIterator_Tests, AddAssign_Multiple_CorrectIterations)
   EXPECT_EQ(iterations, 1);
 }
 
-TEST(PolyViewIterator_Tests, SubtractAssign_Multiple_CorrectIterations)
+TEST(ViewIterator_Tests, SubtractAssign_Multiple_CorrectIterations)
 {
   Registry registry;
 
@@ -474,7 +474,7 @@ TEST(PolyViewIterator_Tests, SubtractAssign_Multiple_CorrectIterations)
   registry.Create<double>(0);
   registry.Create<long>(0);
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   auto it = view.begin();
   it += 3;
@@ -490,7 +490,7 @@ TEST(PolyViewIterator_Tests, SubtractAssign_Multiple_CorrectIterations)
   EXPECT_EQ(iterations, 3);
 }
 
-TEST(PolyViewIterator_Tests, Add_Multiple_CorrectIterations)
+TEST(ViewIterator_Tests, Add_Multiple_CorrectIterations)
 {
   Registry registry;
 
@@ -499,7 +499,7 @@ TEST(PolyViewIterator_Tests, Add_Multiple_CorrectIterations)
   registry.Create<double>(0);
   registry.Create<long>(0);
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   auto it = view.begin() + 3;
 
@@ -513,7 +513,7 @@ TEST(PolyViewIterator_Tests, Add_Multiple_CorrectIterations)
   EXPECT_EQ(iterations, 1);
 }
 
-TEST(PolyViewIterator_Tests, Subtract_Multiple_CorrectIterations)
+TEST(ViewIterator_Tests, Subtract_Multiple_CorrectIterations)
 {
   Registry registry;
 
@@ -522,7 +522,7 @@ TEST(PolyViewIterator_Tests, Subtract_Multiple_CorrectIterations)
   registry.Create<double>(0);
   registry.Create<long>(0);
 
-  PolyView view = registry.View();
+  View view = registry.ViewFor();
 
   auto it = (view.begin() + 3) - 2;
 
@@ -536,30 +536,30 @@ TEST(PolyViewIterator_Tests, Subtract_Multiple_CorrectIterations)
   EXPECT_EQ(iterations, 3);
 }
 
-TEST(MonoView_Tests, Contains_SingleExact_True)
+TEST(SubView_Tests, Contains_SingleExact_True)
 {
   Registry registry;
 
   auto entity = registry.Create<int>(0);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   EXPECT_TRUE(mono_view.Contains(entity));
 }
 
-TEST(MonoView_Tests, Contains_SingleDestroyed_False)
+TEST(SubView_Tests, Contains_SingleDestroyed_False)
 {
   Registry registry;
 
   auto entity = registry.Create<int>(0);
   registry.Destroy(entity);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   EXPECT_FALSE(mono_view.Contains(entity));
 }
 
-TEST(MonoView_Tests, EntityCount_Multiple_CorrectEntityCount)
+TEST(SubView_Tests, EntityCount_Multiple_CorrectEntityCount)
 {
   Registry registry;
 
@@ -567,31 +567,31 @@ TEST(MonoView_Tests, EntityCount_Multiple_CorrectEntityCount)
   registry.Create<int>(0);
   registry.Create<int>(0);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   EXPECT_EQ(mono_view.Size(), 3);
 }
 
-TEST(MonoView_Tests, Unpack_Single_CorrectValue)
+TEST(SubView_Tests, Unpack_Single_CorrectValue)
 {
   Registry registry;
 
   auto entity = registry.Create<int>(10);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   EXPECT_EQ(mono_view.Unpack<int>(entity), 10);
 }
 
-TEST(MonoView_Tests, ForEach_None_NoIteration)
+TEST(SubView_Tests, ForEach_None_NoIteration)
 {
   Registry registry;
 
   registry.Destroy(registry.Create<int>(0));
 
-  PolyView<int> poly_view = registry.View<int>();
+  View<int> poly_view = registry.ViewFor<int>();
 
-  MonoView<int> mono_view = *poly_view.begin();
+  SubView<int> mono_view = *poly_view.begin();
 
   size_t iterations = 0;
 
@@ -600,15 +600,15 @@ TEST(MonoView_Tests, ForEach_None_NoIteration)
   EXPECT_EQ(iterations, 0);
 }
 
-TEST(MonoView_Tests, ForEach_Single_OneIteration)
+TEST(SubView_Tests, ForEach_Single_OneIteration)
 {
   Registry registry;
 
   auto entity = registry.Create<int>(0);
 
-  PolyView poly_view = registry.View<int>();
+  View poly_view = registry.ViewFor<int>();
 
-  MonoView mono_view = *poly_view.begin();
+  SubView mono_view = *poly_view.begin();
 
   size_t iterations = 0;
 
@@ -622,16 +622,16 @@ TEST(MonoView_Tests, ForEach_Single_OneIteration)
   EXPECT_EQ(iterations, 1);
 }
 
-TEST(MonoView_Tests, ForEach_Double_TwoIterations)
+TEST(SubView_Tests, ForEach_Double_TwoIterations)
 {
   Registry registry;
 
   registry.Create<int>(0);
   registry.Create<int>(0);
 
-  PolyView poly_view = registry.View<int>();
+  View poly_view = registry.ViewFor<int>();
 
-  MonoView mono_view = *poly_view.begin();
+  SubView mono_view = *poly_view.begin();
 
   size_t iterations = 0;
 
@@ -640,7 +640,7 @@ TEST(MonoView_Tests, ForEach_Double_TwoIterations)
   EXPECT_EQ(iterations, 2);
 }
 
-TEST(MonoView_Tests, ForEach_Multiple_CorrectIterations)
+TEST(SubView_Tests, ForEach_Multiple_CorrectIterations)
 {
   Registry registry;
 
@@ -654,8 +654,8 @@ TEST(MonoView_Tests, ForEach_Multiple_CorrectIterations)
   registry.Create<double>(0);
   registry.Create<double>(0);
 
-  MonoView mono_view1 = *registry.View<int>().begin();
-  MonoView mono_view2 = *(registry.View<double>().begin());
+  SubView mono_view1 = *registry.ViewFor<int>().begin();
+  SubView mono_view2 = *(registry.ViewFor<double>().begin());
 
   size_t iterations = 0;
 
@@ -670,13 +670,13 @@ TEST(MonoView_Tests, ForEach_Multiple_CorrectIterations)
   EXPECT_EQ(iterations, 2);
 }
 
-TEST(MonoViewIterator_Tests, Dereference_Single_CorrectEntity)
+TEST(SubViewIterator_Tests, Dereference_Single_CorrectEntity)
 {
   Registry registry;
 
   registry.Create<int>(99);
 
-  MonoView<int> mono_view = *registry.View<int>().begin();
+  SubView<int> mono_view = *registry.ViewFor<int>().begin();
 
   auto it = mono_view.begin();
 
@@ -685,14 +685,14 @@ TEST(MonoViewIterator_Tests, Dereference_Single_CorrectEntity)
   EXPECT_EQ(value, 99);
 }
 
-TEST(MonoViewIterator_Tests, PreIncrement_Double_CorrectEntities)
+TEST(SubViewIterator_Tests, PreIncrement_Double_CorrectEntities)
 {
   Registry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   int value1 = *std::get<int*>(*mono_view.begin());
   int value2 = *std::get<int*>(*(++mono_view.begin()));
@@ -700,14 +700,14 @@ TEST(MonoViewIterator_Tests, PreIncrement_Double_CorrectEntities)
   EXPECT_EQ(value1 + value2, 3);
 }
 
-TEST(MonoViewIterator_Tests, PreDecrement_Double_CorrectEntities)
+TEST(SubViewIterator_Tests, PreDecrement_Double_CorrectEntities)
 {
   Registry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   auto incremented = ++mono_view.begin();
 
@@ -717,14 +717,14 @@ TEST(MonoViewIterator_Tests, PreDecrement_Double_CorrectEntities)
   EXPECT_EQ(value1 + value2, 3);
 }
 
-TEST(MonoViewIterator_Tests, PostIncrement_Double_CorrectEntities)
+TEST(SubViewIterator_Tests, PostIncrement_Double_CorrectEntities)
 {
   Registry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   auto value = mono_view.begin();
 
@@ -737,14 +737,14 @@ TEST(MonoViewIterator_Tests, PostIncrement_Double_CorrectEntities)
   EXPECT_EQ(value1 + value2, 3);
 }
 
-TEST(MonoViewIterator_Tests, PostDecrement_Double_CorrectEntities)
+TEST(SubViewIterator_Tests, PostDecrement_Double_CorrectEntities)
 {
   Registry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   auto value = ++mono_view.begin();
 
@@ -757,7 +757,7 @@ TEST(MonoViewIterator_Tests, PostDecrement_Double_CorrectEntities)
   EXPECT_EQ(value1 + value2, 3);
 }
 
-TEST(MonoViewIterator_Tests, AddAssign_Multiple_CorrectEntities)
+TEST(SubViewIterator_Tests, AddAssign_Multiple_CorrectEntities)
 {
   Registry registry;
 
@@ -765,7 +765,7 @@ TEST(MonoViewIterator_Tests, AddAssign_Multiple_CorrectEntities)
   registry.Create<int>(2);
   registry.Create<int>(3);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   auto value = mono_view.begin();
 
@@ -778,7 +778,7 @@ TEST(MonoViewIterator_Tests, AddAssign_Multiple_CorrectEntities)
   EXPECT_EQ(value1 + value2, 4);
 }
 
-TEST(MonoViewIterator_Tests, SubstractAssign_Multiple_CorrectEntities)
+TEST(SubViewIterator_Tests, SubstractAssign_Multiple_CorrectEntities)
 {
   Registry registry;
 
@@ -786,7 +786,7 @@ TEST(MonoViewIterator_Tests, SubstractAssign_Multiple_CorrectEntities)
   registry.Create<int>(2);
   registry.Create<int>(3);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   auto value = ++(++mono_view.begin());
 
@@ -799,7 +799,7 @@ TEST(MonoViewIterator_Tests, SubstractAssign_Multiple_CorrectEntities)
   EXPECT_EQ(value1 + value2, 4);
 }
 
-TEST(MonoViewIterator_Tests, Add_Multiple_CorrectEntities)
+TEST(SubViewIterator_Tests, Add_Multiple_CorrectEntities)
 {
   Registry registry;
 
@@ -807,7 +807,7 @@ TEST(MonoViewIterator_Tests, Add_Multiple_CorrectEntities)
   registry.Create<int>(2);
   registry.Create<int>(3);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   int value1 = *std::get<int*>(*(mono_view.begin() + 1));
   int value2 = *std::get<int*>(*(mono_view.begin() + 2));
@@ -815,7 +815,7 @@ TEST(MonoViewIterator_Tests, Add_Multiple_CorrectEntities)
   EXPECT_EQ(value1 + value2, 5);
 }
 
-TEST(MonoViewIterator_Tests, Subtract_Multiple_CorrectEntities)
+TEST(SubViewIterator_Tests, Subtract_Multiple_CorrectEntities)
 {
   Registry registry;
 
@@ -823,7 +823,7 @@ TEST(MonoViewIterator_Tests, Subtract_Multiple_CorrectEntities)
   registry.Create<int>(2);
   registry.Create<int>(3);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   auto value = mono_view.begin() + 2;
 
@@ -833,15 +833,15 @@ TEST(MonoViewIterator_Tests, Subtract_Multiple_CorrectEntities)
   EXPECT_EQ(value1 + value2, 3);
 }
 
-TEST(MonoViewIterator_Tests, CopyAssign_Single_CorrectEntity)
+TEST(SubViewIterator_Tests, CopyAssign_Single_CorrectEntity)
 {
   Registry registry;
 
   registry.Create<int>(99);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
-  MonoView<int>::Iterator it = mono_view.begin();
+  SubView<int>::Iterator it = mono_view.begin();
 
   ++it;
 
@@ -852,14 +852,14 @@ TEST(MonoViewIterator_Tests, CopyAssign_Single_CorrectEntity)
   EXPECT_EQ(value, 99);
 }
 
-TEST(MonoViewEntityIterator_Tests, Increment_Double_CorrectEntities)
+TEST(SubViewEntityIterator_Tests, Increment_Double_CorrectEntities)
 {
   Registry registry;
 
   auto entity1 = registry.Create<int>(1);
   auto entity2 = registry.Create<int>(2);
 
-  MonoView mono_view = *registry.View<int>().begin();
+  SubView mono_view = *registry.ViewFor<int>().begin();
 
   int iterations = 0;
 
@@ -879,6 +879,264 @@ TEST(MonoViewEntityIterator_Tests, Increment_Double_CorrectEntities)
   }
 
   EXPECT_EQ(iterations, 2);
+}
+
+TEST(EntityApply_Tests, FreeFunction_Reduced_CallsFunction)
+{
+  static size_t call_count = 0;
+
+  static constexpr int value = 99;
+
+  struct TestClass
+  {
+    static void function(int actual)
+    {
+      call_count++;
+
+      EXPECT_EQ(value, actual);
+    }
+  };
+
+  Registry registry;
+
+  registry.Create(value);
+  registry.Create(value);
+
+  for (auto sub_view : registry.ViewFor<int>())
+  {
+    for (auto& data : sub_view)
+    {
+      EntityApply<int>(&TestClass::function, data);
+    }
+  }
+
+  EXPECT_EQ(call_count, 2);
+}
+
+TEST(EntityApply_Tests, FreeFunction_Extended_CallsFunction)
+{
+  static size_t call_count = 0;
+
+  static constexpr int value = 99;
+
+  struct TestClass
+  {
+    static void function(Entity, int actual)
+    {
+      call_count++;
+
+      EXPECT_EQ(value, actual);
+    }
+  };
+
+  Registry registry;
+
+  registry.Create(value);
+  registry.Create(value);
+
+  for (auto sub_view : registry.ViewFor<int>())
+  {
+    for (auto& data : sub_view)
+    {
+      EntityApply<int>(&TestClass::function, data);
+    }
+  }
+
+  EXPECT_EQ(call_count, 2);
+}
+
+TEST(EntityApply_Tests, Lambda_Reduced_CallsFunction)
+{
+  static size_t call_count = 0;
+
+  static constexpr int value = 99;
+
+  Registry registry;
+
+  registry.Create(value);
+  registry.Create(value);
+
+  auto function = [](int actual)
+  {
+    call_count++;
+
+    EXPECT_EQ(value, actual);
+  };
+
+  for (auto sub_view : registry.ViewFor<int>())
+  {
+    for (auto& data : sub_view)
+    {
+      EntityApply<decltype(function), int>(function, data);
+    }
+  }
+
+  EXPECT_EQ(call_count, 2);
+}
+
+TEST(EntityApply_Tests, Lambda_Extended_CallsFunction)
+{
+  static size_t call_count = 0;
+
+  static constexpr int value = 99;
+
+  Registry registry;
+
+  registry.Create(value);
+  registry.Create(value);
+
+  auto function = [](int actual)
+  {
+    call_count++;
+
+    EXPECT_EQ(value, actual);
+  };
+
+  for (auto sub_view : registry.ViewFor<int>())
+  {
+    for (auto& data : sub_view)
+    {
+      EntityApply<decltype(function), int>(function, data);
+    }
+  }
+
+  EXPECT_EQ(call_count, 2);
+}
+
+TEST(EntityApply_Tests, MemberFunction_Reduced_CallsFunction)
+{
+  static size_t call_count = 0;
+
+  static constexpr int value = 99;
+
+  struct TestClass
+  {
+    void function(int actual)
+    {
+      call_count++;
+
+      EXPECT_EQ(value, actual);
+    }
+  };
+
+  TestClass instance;
+
+  Registry registry;
+
+  registry.Create(value);
+  registry.Create(value);
+
+  for (auto sub_view : registry.ViewFor<int>())
+  {
+    for (auto& data : sub_view)
+    {
+      EntityApply<TestClass, int>(&TestClass::function, &instance, data);
+    }
+  }
+
+  EXPECT_EQ(call_count, 2);
+}
+
+TEST(EntityApply_Tests, MemberFunction_Extended_CallsFunction)
+{
+  static size_t call_count = 0;
+
+  static constexpr int value = 99;
+
+  struct TestClass
+  {
+    void function(Entity, int actual)
+    {
+      call_count++;
+
+      EXPECT_EQ(value, actual);
+    }
+  };
+
+  TestClass instance;
+
+  Registry registry;
+
+  registry.Create(value);
+  registry.Create(value);
+
+  for (auto sub_view : registry.ViewFor<int>())
+  {
+    for (auto& data : sub_view)
+    {
+      EntityApply<TestClass, int>(&TestClass::function, &instance, data);
+    }
+  }
+
+  EXPECT_EQ(call_count, 2);
+}
+
+TEST(EntityApply_Tests, ConstMemberFunction_Reduced_CallsFunction)
+{
+  static size_t call_count = 0;
+
+  static constexpr int value = 99;
+
+  struct TestClass
+  {
+    void function(int actual)
+    {
+      call_count++;
+
+      EXPECT_EQ(value, actual);
+    }
+  };
+
+  TestClass instance;
+
+  Registry registry;
+
+  registry.Create(value);
+  registry.Create(value);
+
+  for (auto sub_view : registry.ViewFor<int>())
+  {
+    for (auto& data : sub_view)
+    {
+      EntityApply<TestClass, int>(&TestClass::function, &instance, data);
+    }
+  }
+
+  EXPECT_EQ(call_count, 2);
+}
+
+TEST(EntityApply_Tests, ConstMemberFunction_Extended_CallsFunction)
+{
+  static size_t call_count = 0;
+
+  static constexpr int value = 99;
+
+  struct TestClass
+  {
+    void function(Entity, int actual)
+    {
+      call_count++;
+
+      EXPECT_EQ(value, actual);
+    }
+  };
+
+  TestClass instance;
+
+  Registry registry;
+
+  registry.Create(value);
+  registry.Create(value);
+
+  for (auto sub_view : registry.ViewFor<int>())
+  {
+    for (auto& data : sub_view)
+    {
+      EntityApply<TestClass, int>(&TestClass::function, &instance, data);
+    }
+  }
+
+  EXPECT_EQ(call_count, 2);
 }
 
 } // namespace genebits::engine::tests

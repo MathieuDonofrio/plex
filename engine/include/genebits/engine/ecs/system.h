@@ -124,11 +124,7 @@ public:
   ///
   static consteval auto GetDataAccess() noexcept
   {
-    if constexpr (sizeof...(Queries) == 0) return Array<QueryDataAccess, 0> {};
-    else
-    {
-      return (... + std::remove_cvref_t<Queries>::GetDataAccess());
-    }
+    return ConcatArrays<QueryDataAccess>(std::remove_cvref_t<Queries>::GetDataAccess()...);
   }
 };
 
@@ -224,10 +220,9 @@ public:
   /// @param[in] system The system to wrap.
   ///
   template<System SystemType>
-  SystemObject(SystemType system) noexcept : executor_(system), info_(std::make_unique<Info>())
-  {
-    info_->data_access = SystemTraits<SystemType>::GetDataAccess();
-  }
+  SystemObject(SystemType system) noexcept
+    : executor_(system), info_(std::make_unique<Info>(SystemTraits<SystemType>::GetDataAccess()))
+  {}
 
   ///
   /// Checks whether or not one system object has a data dependency on another.

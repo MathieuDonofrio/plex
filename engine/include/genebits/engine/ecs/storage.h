@@ -104,11 +104,13 @@ private:
 ///
 /// Basically a sparse set, but optimized for storing extra type erased data, in this case component data.
 ///
-/// Component data is contiguously stored in memory and can achieve near vector iteration speeds.
+/// Components are stores as SOA, and every component array is dense.
+///
 /// Insertion and erasing is constant time.
 ///
-/// @warning
-///  Never assume any order. Storage reserves freedom of moving entities around at any time.
+/// @warning There is no pointer stability, never store a pointer to a component.
+///
+/// @warning Never assume any kind of order. Storage reserves the right to reorder entities and components.
 ///
 template<std::unsigned_integral Entity>
 class Storage
@@ -214,18 +216,22 @@ public:
   /// @tparam Components List of component types.
   ///
   template<typename... Components>
-  requires UniqueTypes<Components...>
-  COLD_SECTION NO_INLINE void Initialize() noexcept
+  requires UniqueTypes<std::remove_cvref_t<Components>
+    ...>
+    COLD_SECTION NO_INLINE void Initialize() noexcept
   {
     ASSERT(!initialized_, "Already initialized");
 
     // Set up all the component arrays with type erased vectors.
-    ((component_arrays_.template Assure<Components>() = std::move(MakeErased<Vector<Components>>())), ...);
+    ((component_arrays_.template Assure<std::remove_cvref_t<Components>>() =
+         std::move(MakeErased<Vector<std::remove_cvref_t<Components>>>())),
+      ...);
 
     // Store functors for the operations that need type information and don't have it.
     erase_function_ = []([[maybe_unused]] auto* storage, [[maybe_unused]] const size_t index)
-    { (AccessAndEraseAt<Components>(storage, index), ...); };
-    clear_function_ = []([[maybe_unused]] auto storage) { ((storage->template Access<Components>().Clear()), ...); };
+    { (AccessAndEraseAt<std::remove_cvref_t<Components>>(storage, index), ...); };
+    clear_function_ = []([[maybe_unused]] auto storage)
+    { ((storage->template Access<std::remove_cvref_t<Components>>().Clear()), ...); };
 
 #ifndef NDEBUG
     // When debugging it is useful to have the list of components used at initialization.
@@ -246,8 +252,9 @@ public:
   /// @param[in] components Component data to move into the storage.
   ///
   template<typename... Components>
-  requires UniqueTypes<Components...>
-  void Insert(const Entity entity, Components&&... components) noexcept
+  requires UniqueTypes<std::remove_cvref_t<Components>
+    ...> void
+    Insert(const Entity entity, Components&&... components) noexcept
   {
     ASSERT(initialized_, "Not initialized");
     ASSERT(!Contains(entity), "Entity already exists");

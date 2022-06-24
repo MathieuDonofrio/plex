@@ -33,7 +33,7 @@ namespace details
   /// @tparam N The size of the array.
   ///
   template<typename T, size_t N>
-  struct ArrayBase
+  struct ArrayTypeSelector
   {
     using CArrayType = CArray<T, N>;
   };
@@ -46,9 +46,9 @@ namespace details
   /// @tparam T The type of the array.
   ///
   template<typename T>
-  struct ArrayBase<T, 0>
+  struct ArrayTypeSelector<T, 0>
   {
-    using CArrayType = EmptyCArray;
+    using CArrayType = CArray<T, 1>;
   };
 } // namespace details
 
@@ -59,10 +59,10 @@ namespace details
 /// @tparam N The size of the array.
 ///
 template<typename T, size_t N>
-class Array : public details::ArrayBase<T, N>
+class Array
 {
 public:
-  using CArrayType = typename details::ArrayBase<T, N>::CArrayType;
+  using CArrayType = typename details::ArrayTypeSelector<T, N>::CArrayType;
   static constexpr size_t Size = N;
 
 public:
@@ -83,11 +83,11 @@ public:
   using pointer = T*;
   using const_pointer = const T*;
 
+  static constexpr iterator zero_sized_iterator{};
+
   // Forward iterator creation methods.
-  [[nodiscard]] constexpr iterator begin()
-  { if constexpr (N == 0) return std::bit_cast<iterator>(this); else return data_; }
-  [[nodiscard]] constexpr const_iterator begin() const
-  { if constexpr (N == 0) return std::bit_cast<iterator>(this); else return data_;  }
+  [[nodiscard]] constexpr iterator begin() { return data_; }
+  [[nodiscard]] constexpr const_iterator begin() const { return data_; }
   [[nodiscard]] constexpr iterator end() { return begin() + Size; }
   [[nodiscard]] constexpr const_iterator end() const { return begin() + Size; }
 
@@ -161,31 +161,41 @@ public:
   constexpr Array(Types&&... args) noexcept : data_ { std::forward<Types>(args)... }
   {}
 
+  constexpr auto operator<=>(const Array&) const = default;
+
 private:
   CArrayType data_;
 };
 
 ///
-/// Concatenates two arrays.
+/// Concatenates arrays in given order.
 ///
-/// @tparam T The type of the array.
-/// @tparam N Size of first array.
-/// @tparam M Size of second array.
+/// @tparam Type The type of array to concatenate
 ///
-/// @param[in] lhs First array.
-/// @param[in] rhs Second array.
+/// @tparam Lengths The lengths of every array to concatenate.
 ///
-/// @return Concatenated array.
+/// @param[in] arrays The arrays to concatenate.
 ///
-template<typename T, size_t N, size_t M>
-constexpr Array<T, N + M> operator+(const Array<T, N>& lhs, const Array<T, M>& rhs) noexcept
+/// @return Result of concatenation.
+///
+template<typename Type, size_t... Lengths>
+constexpr auto ConcatArrays(const Array<Type, Lengths>&... arrays)
 {
-  Array<T, N + M> result;
+  if constexpr (sizeof...(Lengths) != 0)
+  {
+    constexpr size_t total_length = (... + Lengths);
 
-  if constexpr (N > 0) std::copy(lhs.begin(), lhs.end(), result.begin());
-  if constexpr (M > 0) std::copy(rhs.begin(), rhs.end(), result.begin() + N);
+    Array<Type, total_length> result;
 
-  return result;
+    auto it = result.begin();
+    ((it = std::copy(arrays.begin(), arrays.end(), it)), ...);
+
+    return result;
+  }
+  else
+  {
+    return Array<Type, 0> {};
+  }
 }
 
 template<typename Type, size_t N>

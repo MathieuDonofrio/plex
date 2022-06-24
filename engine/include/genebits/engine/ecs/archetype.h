@@ -170,7 +170,20 @@ using ComponentId = uint_fast32_t;
 using ViewId = uint_fast32_t;
 using ArchetypeId = uint_fast32_t;
 
+///
+/// Maximum amount of archetypes allowed.
+///
+/// @note Having a cap defined allows us to avoid some branches in certain hot paths. This is purely for optimization
+/// purposes and is not a limitation.
+///
 static constexpr size_t MaxArchetypes = 4096;
+
+///
+/// Maximum amount of views allowed.
+///
+/// @note Having a cap defined allows us to avoid some branches in certain hot paths. This is purely for optimization
+/// purposes and is not a limitation.
+///
 static constexpr size_t MaxViews = 4096;
 
 ///
@@ -439,20 +452,14 @@ private:
   }
 
   ///
-  /// Bakes the view into the graph.
-  ///
-  /// @warning
-  ///    Only call once after initialization.
+  /// Adds the view into the graph. To be called once per view during initialization.
   ///
   /// @param[in] id Identifier of the view to add.
   ///
   void AddView(ViewId id);
 
   ///
-  /// Bakes the archetype into the graph.
-  ///
-  /// @warning
-  ///    Only call once after initialization.
+  /// Adds the archetype into the graph. To be called once per archetype during initialization.
   ///
   /// @param[in] id Identifier of the archetype to add.
   ///
