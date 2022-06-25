@@ -14,16 +14,7 @@
 
 namespace genebits::engine
 {
-///
-/// Default reference counter.
-///
-/// Chooses the fastest unsigned integer that is at least 16 bits.
-///
-/// We do not need a lot of bits for reference counting. Most ref counts de no exceed 64. Most common are 1-3.
-/// R. Shahriyar. Down for the Count? https://dl.acm.org/doi/pdf/10.1145/2258996.2259008
-///
-using FastRefCounter = uint_fast16_t;
-
+// clang-format off
 ///
 /// Concept used to determine whether or not a type can be intrusively referenced.
 ///
@@ -34,16 +25,12 @@ using FastRefCounter = uint_fast16_t;
 template<typename Type>
 concept IntrusiveRefType = requires(const Type instance, size_t amount)
 {
-  // Style Exception: STL
-  // clang-format off
-
   instance.IntrusiveAddRef();
   {instance.IntrusiveDropRef() } -> std::convertible_to<bool>;
   {instance.IntrusiveUniqueRef()} -> std::convertible_to<bool>;
   {instance.IntrusiveRefCount()} -> std::convertible_to<size_t>;
-
-  // clang-format on
 };
+// clang-format on
 
 ///
 /// Concept used to determine whether or not two references can be implicitly casted.
@@ -52,7 +39,7 @@ concept IntrusiveRefType = requires(const Type instance, size_t amount)
 /// @tparam To Type to cast to.
 ///
 template<typename From, typename To>
-concept AssignableRef = std::is_base_of_v<To, From> &&(IntrusiveRefType<To> == IntrusiveRefType<From>);
+concept AssignableRef = std::is_base_of_v<To, From> && (IntrusiveRefType<To> == IntrusiveRefType<From>);
 
 ///
 /// Correctly defines methods for an atomic intrusive ref.
@@ -125,10 +112,6 @@ concept AssignableRef = std::is_base_of_v<To, From> &&(IntrusiveRefType<To> == I
 class AtomicRefCounted
 {
 public:
-  template<typename Type>
-  friend class Ref;
-
-public:
   ///
   /// Default constructor.
   ///
@@ -152,7 +135,7 @@ public:
   ATOMIC_INTRUSIVE_REF_METHODS(counter_);
 
 private:
-  mutable std::atomic<FastRefCounter> counter_;
+  mutable std::atomic<size_t> counter_;
 };
 
 ///
@@ -163,9 +146,6 @@ private:
 class RefCounted
 {
 public:
-  template<typename Type>
-  friend class Ref;
-
   ///
   /// Default constructor.
   ///
@@ -189,7 +169,7 @@ public:
   INTRUSIVE_REF_METHODS(counter_, this);
 
 private:
-  mutable FastRefCounter counter_;
+  mutable size_t counter_;
 
   LOCAL_THREAD_DECLARE;
 };
@@ -203,7 +183,7 @@ namespace details
   ///
   struct RefControlBlock
   {
-    FastRefCounter counter;
+    size_t counter;
     void (*deleter)(void*, RefControlBlock*);
 
     // Validator initialized here for Ref to have same size in debug and release.
@@ -245,8 +225,8 @@ public:
   /// @param[in] deleter The custom deleter to delete the managed instance with.
   ///
   template<typename T, typename Deleter>
-  requires(std::is_base_of_v<Type, T>) Ref(T* instance, Deleter&& deleter)
-  noexcept : ptr_(static_cast<Type*>(instance))
+  requires(std::is_base_of_v<Type, T>)
+  Ref(T* instance, Deleter&& deleter) noexcept : ptr_(static_cast<Type*>(instance))
   {
     struct RefControlBlockWithDeleter : public details::RefControlBlock
     {
@@ -276,7 +256,8 @@ public:
   /// @param[in] instance The instance to construct the reference with.
   ///
   template<typename T>
-  requires(std::is_base_of_v<Type, T>) explicit Ref(T* instance) noexcept : ptr_(static_cast<Type*>(instance))
+  requires(std::is_base_of_v<Type, T>)
+  explicit Ref(T* instance) noexcept : ptr_(static_cast<Type*>(instance))
   {
     control_ = static_cast<details::RefControlBlock*>(::operator new(sizeof(details::RefControlBlock)));
     control_->counter = 0;
@@ -589,8 +570,8 @@ public:
   /// @param[in] deleter The custom deleter to delete the managed instance with.
   ///
   template<typename T>
-  requires(std::is_base_of_v<Type, T>) constexpr Ref(T* instance, void (*deleter)(void*)) noexcept
-    : ptr_(static_cast<Type*>(instance)), deleter_(deleter)
+  requires(std::is_base_of_v<Type, T>)
+  constexpr Ref(T* instance, void (*deleter)(void*)) noexcept : ptr_(static_cast<Type*>(instance)), deleter_(deleter)
   {
 #ifndef NDEBUG
     if (!std::is_constant_evaluated())

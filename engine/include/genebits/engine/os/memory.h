@@ -13,20 +13,6 @@
 namespace genebits::engine
 {
 ///
-/// Tries to put memory in cache.
-///
-/// @param[in] source Memory address.
-///
-constexpr void Prefetch(void* source)
-{
-  if (!std::is_constant_evaluated())
-  {
-    // We should always use NTA
-    _mm_prefetch(static_cast<const char*>(source), _MM_HINT_NTA);
-  }
-}
-
-///
 /// Relocates an element into uninitialized memory. Equivalent to moving source to destination then destroying source.
 ///
 /// Optimizes destructive move with bitwise memory copy when possible.

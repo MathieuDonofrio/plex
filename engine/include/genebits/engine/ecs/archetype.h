@@ -13,7 +13,7 @@ namespace genebits::engine
 {
 namespace details
 {
-  // Type meta programing for sorting variadic templates.
+  // Utility for sorting list of types
 
   ///
   /// Lexically compares the two types.

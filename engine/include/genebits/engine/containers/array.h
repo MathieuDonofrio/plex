@@ -83,8 +83,6 @@ public:
   using pointer = T*;
   using const_pointer = const T*;
 
-  static constexpr iterator zero_sized_iterator{};
-
   // Forward iterator creation methods.
   [[nodiscard]] constexpr iterator begin() { return data_; }
   [[nodiscard]] constexpr const_iterator begin() const { return data_; }
