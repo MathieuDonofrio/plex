@@ -1,4 +1,4 @@
-# Genebits TODO
+# TODO Checklist
 
 Completed tasks are marked with and 'x', they will be removed at the next release.
 
@@ -16,37 +16,48 @@ These tasks may be minor bug fixes or optimizations. They do not change the inte
 
 These tasks are small or large updates that are non-breaking for non deprecated functionalities.
 
+Async
+
+- [x] None
+
+Config
+
+- [ ] Split compiler.h
+
+Containers
+
+- [ ] Bitset (SIMD optimized)
+- [ ] Dequeue
+- [ ] Map
+- [ ] Set
+
 Debug
 
-- [ ] Implement stack tracing for GCC
-- [ ] Implement stack tracing for Clang
-- [ ] Verify logging functionality for linux (gcc and clang)
+- [ ] Implement stack tracing for linux
+- [ ] Verify logging functionality for linux
 
 OS
 
-- [ ] Implement CPUInfo for linux
-- [ ] Very thread utilities for linux
+- [ ] CPUInfo for linux
+- [ ] Thread utilities for linux
 
 ECS
 
 - [ ] Archetype swapping
+- [ ] Empty type optimizations
 - [ ] Hierarchies
 - [ ] Scripts
 - [ ] Const views
-- [ ] Resources
-- [ ] Pipelined parallel systems
-- [ ] Phase parallelization statistics (for debug/profiling)
-- [ ] Phase dynamic reordering optimization?
-- [ ] For large components (or medium non-relocatable) use pointer-based storage. (Maybe)
+- [ ] Storage extra indirection for very large components. (Speeds up insert/destroy/swapping)
+- [ ] Optimize scheduler graph computations
+- [ ] Optimize scheduler execution
+- [ ] Scheduler dynamic reordering
+- [ ] Scheduler debug info & statistics
 
 Events
 
 - [ ] Rewrite event system to be integrated with ECS
-
-Async
-
-- [ ] WhenAll/WhenAllReady optimizations and benchmarks
-- [ ] Thread local storage
+- [ ] Move to ECS and erase
 
 IO
 
@@ -61,51 +72,38 @@ Audio
 
 Physics
 
-- [ ] Custom Top-Down 2D Physics
-- [ ] Box2D Integration (2D)
-- [ ] Nvidia PhysX Integration (3D)
-
-Editor
-
-- [ ] IMGUI Integration
+- [ ] 2D Physics
+- [ ] 3D Physics
 
 Math
 
 - [ ] Non-square matrices
-- [ ] Optimize matrix computations
-- [ ] Improve matrix and vector hashing
 - [ ] Make exponential functions constexpr
 - [ ] Make power functions constexpr
 - [ ] Make trigonometric functions constexpr
 - [ ] Add documentation
 
-Containers
+Graph
 
-- [ ] Bitset (SIMD optimized)
-- [ ] Map
-- [ ] Set
-- [ ] Vector range operations
-- [ ] SmallVector
-- [ ] StaticVector
+- [ ] Dense adjacency matrix
+- [ ] Optimized BFS based topological sort
+- [ ] Optimized Transitive reduction algorithm
 
 Utilities
 
 - [ ] TypeInfo PrettyName (Same for every compiler)
-- [ ] TypeInfo UniqueId Investigation & Cross-Boundaries tests
-- [ ] TypeInfo use class static vs function static (2x performance on prototype)
-- [ ] Smart pointer casting
-- [ ] Intrusive to non-intrusive ref conversion. (Would allow better type erasure)
-- [ ] AllocateRef, AllocateRefWithDeleter and MakeRefWithDeleter
 - [ ] UUID
 
 Other
 
-- [ ] Build sandboxes/examples cmake option
-- [ ] Precompiled headers
-- [ ] Added info about tests and benchmark to style guide
-- [ ] Add CONTRIBUTING.md
+- [ ] Static analysis
 - [ ] Sanitizers
-- [ ] cppcheck
+- [ ] Architecture optimization
+- [ ] Link time optimizations (LTO)
+- [ ] Linux build
+- [ ] Precompiled headers
+- [ ] Update style guide
+- [ ] Add CONTRIBUTING.md
 
 Official C++ 20 Support
 
@@ -117,6 +115,12 @@ Official C++ 20 Support
 These tasks are large updates with potentially breaking changes.
 
 - [ ] Make engine more generic than "genebits". (Use different name for the engine)
+- [ ] Move graphics to separate lib
+- [ ] Rename 'Containers' to 'adt' or 'container'
+- [ ] Restructure test folders to include mock, unit and system
+- [ ] Restructure benchmark folders to include helper, micro and macro (or similar structure)
+- [ ] Update version.h
+- [ ] Update cmake structure
 
 ## Experimental
 
