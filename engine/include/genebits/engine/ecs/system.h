@@ -220,8 +220,7 @@ public:
   /// @param[in] system The system to wrap.
   ///
   template<System SystemType>
-  SystemObject(SystemType system) noexcept
-    : executor_(system), info_(std::make_unique<Info>(SystemTraits<SystemType>::GetDataAccess()))
+  SystemObject(SystemType system) noexcept : executor_(system), info_(MakeInfo<SystemType>())
   {}
 
   ///
@@ -291,8 +290,25 @@ private:
   ///
   struct Info
   {
+    template<size_t N>
+    Info(const Array<QueryDataAccess, N>& data_access_) : data_access(data_access_)
+    {}
+
     Vector<QueryDataAccess> data_access;
   };
+
+  ///
+  /// Allocates and initializes the system info.
+  ///
+  /// @tparam SystemType System type to get info for.
+  ///
+  /// @return Created system info.
+  ///
+  template<typename SystemType>
+  static Info* MakeInfo()
+  {
+    return new Info(SystemTraits<SystemType>::GetDataAccess());
+  }
 
 private:
   SystemExecutor executor_;
