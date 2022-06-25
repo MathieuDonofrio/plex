@@ -61,7 +61,9 @@ public:
   template<typename Type>
   void SetDefault() noexcept(noexcept(Value()))
   {
-    new (std::addressof(Get<Type>())) Value();
+    Value* value = std::addressof(Get<Type>());
+    value->~Value();
+    new (value) Value();
   }
 
   ///
