@@ -27,6 +27,8 @@ void ThreadPool::RunWorker()
 {
   this_thread::SetName("Worker");
 
+  SetThreadPriority(this_thread::NativeHandle(), ThreadSchedulerPolicy::Realtime, 4);
+
   std::unique_lock lock(mutex_);
 
   Operation* op;

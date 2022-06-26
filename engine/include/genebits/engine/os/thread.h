@@ -7,14 +7,62 @@
 namespace genebits::engine
 {
 ///
+/// Enum of the different scheduler policies supported.
+///
+/// Every policy is OS implementation specific.
+///
+enum class ThreadSchedulerPolicy
+{
+  /// Uses the standard time-sharing policy
+  /// Priority of 0 must be used.
+  ///
+  /// Linux: Same as SCHED_OTHER/SCHED_NORMAL
+  /// Windows: Uses priority THREAD_PRIORITY_NORMAL
+  ///
+  Normal,
+
+  /// For running very low priority background jobs.
+  /// Priority of 0 must be used.
+  ///
+  /// Linux: Same as SCHED_IDLE
+  /// Windows: Uses priority THREAD_PRIORITY_IDLE
+  ///
+  Idle,
+
+  /// For time critical threads.
+  /// Priorities 1 to 31 must be used.
+  ///
+  /// Linux: same as SCHED_RR
+  /// Windows: Uses priorities 1 to 15 (THREAD_PRIORITY_TIME_CRITICAL)
+  ///
+  Realtime
+};
+
+constexpr size_t MinRealtimePriority = 1; // Min priority for realtime scheduling policy
+constexpr size_t MaxRealtimePriority = 31; // Max priority for realtime scheduling policy.
+
+///
+/// Sets the thread priority and scheduler policy.
+///
+/// @see ThreadSchedulerPolicy to see eligible priorities for the desired policy.
+///
+/// @param[in] handle The native thread handle to set priority for.
+/// @param[in] policy The scheduler policy to use for the thread.
+/// @param[in] priority The thread priority.
+///
+/// @return True if the priority was successfully set.
+///
+bool SetThreadPriority(std::thread::native_handle_type handle, ThreadSchedulerPolicy policy, int priority);
+
+///
 /// Sets the thread affinity. Allows operating system to only use cores that are in the mask.
 ///
 /// Every bit in the mask represents a processor.
 ///
 /// @example 0b1 is processor 1 only.
 ///
-/// @param[in] handle Native thread handle.
-/// @param[in] mask Processor Mask.
+/// @param[in] handle The native thread handle to set affinity for.
+/// @param[in] mask The processor mask.
 ///
 /// @return True if the processor was set, false otherwise.
 ///
