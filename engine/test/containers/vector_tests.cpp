@@ -8,7 +8,7 @@ static_assert(
   sizeof(Vector<size_t>) == sizeof(void*) * 2, "The size of Vector should not need to be bigger than 2 pointers");
 static_assert(std::contiguous_iterator<Vector<size_t>::iterator>, "Vector should have contiguous iterator");
 
-static_assert(IsTriviallyRelocatable<Vector<size_t>>::value, "Vector with relocatable type should be relocatable");
+static_assert(IsTriviallyRelocatable<Vector<size_t>>::value, "Vector should be relocatable");
 
 TEST(Vector_Tests, Empty_Trivial_AfterDefaultConstruction_True)
 {

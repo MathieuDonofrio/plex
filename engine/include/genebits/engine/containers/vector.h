@@ -679,7 +679,7 @@ Vector(Iterator first, Iterator last) -> Vector<typename std::allocator_traits<I
 
 template<typename Type, typename Allocator>
 struct IsTriviallyRelocatable<Vector<Type, Allocator>>
-  : public std::bool_constant<IsTriviallyRelocatable<Type>::value && IsTriviallyRelocatable<Allocator>::value>
+  : public std::bool_constant<IsTriviallyRelocatable<Allocator>::value>
 {};
 
 namespace pmr
