@@ -6,6 +6,25 @@
 
 namespace genebits::engine
 {
+size_t GetDefaultAmountOfWorkerThreads()
+{
+  size_t physical_processors = GetAmountPhysicalProcessors();
+
+  // Benchmarks show that if there are a small amount of physical processors and hyper threading is enabled,
+  // then using the amount of logical processors is slightly better latency-wise.
+  if (physical_processors <= 4)
+  {
+    size_t logical_processors = GetAmountLogicalProcessors();
+
+    if (logical_processors == 2 * physical_processors) // Hyper Threading Enabled
+    {
+      return logical_processors;
+    }
+  }
+
+  return physical_processors;
+}
+
 ThreadPool::ThreadPool(const size_t thread_count, bool lock_threads)
   : running_(false), threads_(nullptr), thread_count_(thread_count)
 {
@@ -16,7 +35,7 @@ ThreadPool::ThreadPool(const size_t thread_count, bool lock_threads)
   if (lock_threads) SetWorkerThreadAffinity();
 }
 
-ThreadPool::ThreadPool() : ThreadPool(GetAmountPhysicalProcessors(), true) {}
+ThreadPool::ThreadPool() : ThreadPool(GetDefaultAmountOfWorkerThreads(), true) {}
 
 ThreadPool::~ThreadPool()
 {
