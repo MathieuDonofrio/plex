@@ -75,7 +75,7 @@ public:
     ASSERT(Contains<Type>(), "Instance of given type not found");
 
     map_.Get<Type>() = nullptr;
-    instances_.UnorderedErase(FindByName(TypeName<Type>()));
+    instances_.SwapAndPop(FindByName(TypeName<Type>()));
   }
 
   ///

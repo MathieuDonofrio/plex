@@ -62,7 +62,7 @@ namespace details
     ///
     void Remove(EventHandler<Event> handler) noexcept
     {
-      handlers_.UnorderedErase(std::ranges::find(handlers_, handler));
+      handlers_.SwapAndPop(std::ranges::find(handlers_, handler));
     }
 
     ///
@@ -159,7 +159,10 @@ private:
   {
     auto& pool = pools_.Assure<Event>();
 
-    if (!pool) [[unlikely]] { pool = std::move(MakeErased<details::EventHandlerPool<Event>>()); }
+    if (!pool) [[unlikely]]
+    {
+      pool = std::move(MakeErased<details::EventHandlerPool<Event>>());
+    }
 
     return static_cast<details::EventHandlerPool<Event>*>(pool.Get());
   }

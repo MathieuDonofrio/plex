@@ -380,7 +380,7 @@ public:
   ///
   /// @param[in] it Iterator for element to erase
   ///
-  void UnorderedErase(iterator it)
+  void SwapAndPop(iterator it)
   {
     ASSERT(size_ > 0, "Vector is empty");
 

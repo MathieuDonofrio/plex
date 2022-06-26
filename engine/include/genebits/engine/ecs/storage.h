@@ -436,7 +436,7 @@ private:
   static void AccessAndEraseAt(Storage<Entity>* storage, size_t index)
   {
     auto& component_array = storage->template Access<Component>();
-    component_array.UnorderedErase(component_array.begin() + index);
+    component_array.SwapAndPop(component_array.begin() + index);
   }
 
 private:
