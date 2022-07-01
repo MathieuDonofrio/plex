@@ -189,7 +189,7 @@ public:
   /// @param[in] first First iterator.
   /// @param[in] last Last iterator.
   ///
-  template<std::input_or_output_iterator Iterator>
+  template<std::input_iterator Iterator>
   Vector(Iterator first, Iterator last)
   {
     AssignToEmpty(first, last);
@@ -200,7 +200,7 @@ public:
   ///
   /// @param source Range to copy from.
   ///
-  template<std::ranges::range Range>
+  template<std::ranges::input_range Range>
   Vector(const Range& source) : Vector(std::ranges::begin(source), std::ranges::end(source))
   {}
 
@@ -394,8 +394,6 @@ public:
   ///
   /// Resizes the vector and default constructs all the new elements.
   ///
-  /// Will grow the internal array is the new size if larger than the capacity.
-  ///
   /// @param[in] new_size New size of the vector
   ///
   void Resize(const size_t new_size)
@@ -411,8 +409,6 @@ public:
 
   ///
   /// Resizes the vector and copies the value into the new elements.
-  ///
-  /// Will grow the internal array is the new size if larger than the capacity.
   ///
   /// @param[in] new_size New size of the vector.
   /// @param[in] value The value to copy.
