@@ -528,7 +528,7 @@ protected:
   ///
   /// @return Computed capacity.
   ///
-  [[nodiscard]] uint32_t ComputeNextCapacity() const noexcept
+  [[nodiscard]] constexpr uint32_t ComputeNextCapacity() const noexcept
   {
     if (capacity_ == 0) [[unlikely]]
     {
@@ -670,7 +670,7 @@ private:
   uint32_t capacity_;
 };
 
-template<std::input_or_output_iterator Iterator>
+template<std::input_iterator Iterator>
 Vector(Iterator first, Iterator last) -> Vector<typename std::allocator_traits<Iterator>::value_type>;
 
 template<typename Type, typename Allocator>
