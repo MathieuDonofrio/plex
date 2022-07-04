@@ -7,6 +7,7 @@
 #include <immintrin.h>
 #include <memory>
 
+#include "genebits/engine/config/compiler.h"
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/type_traits.h"
 
@@ -25,17 +26,20 @@ namespace genebits::engine
 /// @param[in] dst Destionation.
 ///
 template<class Type>
-constexpr void RelocateAt(Type* src, Type* dst)
+constexpr Type* RelocateAt(Type* src, Type* dst)
 {
-  if (std::is_constant_evaluated() || !IsTriviallyRelocatable<Type>::value)
+  if constexpr (IsTriviallyRelocatable<Type>::value)
   {
-    ::new (static_cast<void*>(dst)) Type(std::move(*src));
-    src->~Type();
+    if (!std::is_constant_evaluated())
+    {
+      std::memmove(dst, src, sizeof(Type));
+      return std::launder(dst);
+    }
   }
-  else if constexpr (IsTriviallyRelocatable<Type>::value)
-  {
-    std::memmove(dst, src, sizeof(Type));
-  }
+
+  Type* result = ::new (static_cast<void*>(dst)) Type(std::move(*src));
+  src->~Type();
+  return result;
 }
 
 ///
@@ -52,58 +56,41 @@ constexpr void RelocateAt(Type* src, Type* dst)
 /// @param[in] last Last iterator to source.
 /// @param[in] dest Destination iterator.
 ///
-template<typename Type>
-constexpr void UninitializedRelocate(Type* first, Type* last, Type* dest)
+/// @return The iterator pointing to the last element relocated.
+///
+template<std::forward_iterator Iterator1, std::forward_iterator Iterator2>
+constexpr Iterator2 UninitializedRelocate(Iterator1 first, Iterator1 last, Iterator2 dest)
 {
-  if (std::is_constant_evaluated() || !IsTriviallyRelocatable<Type>::value)
+  using Type = typename std::iterator_traits<Iterator2>::value_type;
+  using RelocateType = decltype(std::move(*first));
+
+  constexpr bool relocatable =
+    std::is_same_v<Type, std::remove_reference_t<RelocateType>> && IsTriviallyRelocatable<Type>::value
+    && std::is_pointer_v<Iterator1> && std::is_pointer_v<Iterator2>;
+
+  if constexpr (relocatable)
   {
-    for (; first != last; (void)++dest, ++first)
+    if (!std::is_constant_evaluated())
     {
-      ::new (static_cast<void*>(dest)) Type(std::move(*first));
-      first->~Type();
+      const size_t bytes = reinterpret_cast<char*>(last) - reinterpret_cast<char*>(first);
+
+      if (bytes != 0)
+      {
+        std::memmove(std::addressof(*dest), std::addressof(*first), bytes);
+        dest += (last - first);
+      }
+
+      return dest;
     }
   }
-  else if constexpr (IsTriviallyRelocatable<Type>::value)
+
+  for (; first != last; ++dest, ++first)
   {
-    const size_t bytes = reinterpret_cast<char*>(last) - reinterpret_cast<char*>(first);
-
-    std::memmove(dest, first, bytes);
+    ::new (static_cast<void*>(std::addressof(*dest))) Type(std::move(*first));
+    std::destroy_at(std::addressof(*first));
   }
-}
 
-///
-/// Relocates the range of elements backwards into uninitialized memory. Equivalent to moving all source elements to the
-/// destination then destroying the source elements.
-///
-/// Optimizes destructive move with bitwise memory copy when possible.
-///
-/// @tparam Type Type to relocate.
-///
-/// @param[in] first First iterator to source.
-/// @param[in] last Last iterator to source.
-/// @param[in] dest Destination iterator (points to end of destination).
-///
-template<typename Type>
-constexpr void UninitializedRelocateBackwards(Type* first, Type* last, Type* dest)
-{
-  if (std::is_constant_evaluated() || !IsTriviallyRelocatable<Type>::value)
-  {
-    --dest;
-    --last;
-    --first;
-
-    for (; first != last; (void)--dest, --last)
-    {
-      ::new (static_cast<void*>(dest)) Type(std::move(*last));
-      last->~Type();
-    }
-  }
-  else if constexpr (IsTriviallyRelocatable<Type>::value)
-  {
-    const size_t bytes = reinterpret_cast<char*>(last) - reinterpret_cast<char*>(first);
-
-    std::memmove(reinterpret_cast<char*>(dest) - bytes, first, bytes);
-  }
+  return dest;
 }
 
 } // namespace genebits::engine

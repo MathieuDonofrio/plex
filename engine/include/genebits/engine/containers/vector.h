@@ -567,7 +567,7 @@ protected:
   {
     if (size_ < capacity_) [[likely]]
     {
-      UninitializedRelocateBackwards(pos, end(), end() + 1);
+      ShiftBackAt(pos);
 
       new (pos) Type(std::forward<Args>(args)...);
     }
@@ -621,6 +621,28 @@ protected:
   {
     new (end()) Type(std::forward<Args>(args)...);
     ++size_;
+  }
+
+  ///
+  /// Moves all elements starting at the position one location back leaving the position uninitialized.
+  ///
+  void ShiftBackAt(iterator pos)
+  {
+    auto first = pos;
+    auto last = end();
+    auto dest = last + 1;
+
+    if constexpr (IsTriviallyRelocatable<Type>::value)
+    {
+      const size_t bytes = reinterpret_cast<char*>(last) - reinterpret_cast<char*>(first);
+      std::memmove(reinterpret_cast<char*>(dest) - bytes, first, bytes);
+    }
+    else
+    {
+      ::new (static_cast<void*>(--dest)) Type(std::move(*--last));
+      std::move_backward(first, last, dest);
+      first->~Type();
+    }
   }
 
   ///
