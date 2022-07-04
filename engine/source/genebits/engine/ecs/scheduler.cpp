@@ -1,6 +1,6 @@
 #include "genebits/engine/ecs/scheduler.h"
 
-#include <queue>
+#include "genebits/engine/containers/deque.h"
 
 namespace genebits::engine
 {
@@ -183,13 +183,14 @@ Vector<size_t> TopologicalSort(const Vector<IntermediateStep>& steps)
     }
   }
 
-  std::queue<size_t> queue;
+  Deque<size_t> queue;
+  queue.reserve(steps.size());
 
   for (size_t i = 0; i < steps.size(); i++)
   {
     if (in_degree[i] == 0)
     {
-      queue.push(i);
+      queue.push_back(i);
     }
   }
 
@@ -201,14 +202,14 @@ Vector<size_t> TopologicalSort(const Vector<IntermediateStep>& steps)
   while (!queue.empty())
   {
     size_t index = queue.front();
-    queue.pop();
+    queue.pop_front();
     order.push_back(index);
 
     for (auto dependant : steps[index].dependants)
     {
       if (--in_degree[dependant] == 0)
       {
-        queue.push(dependant);
+        queue.push_back(dependant);
       }
     }
 
