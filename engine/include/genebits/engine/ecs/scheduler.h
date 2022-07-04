@@ -213,7 +213,7 @@ private:
 ///
 /// @return Scheduler steps.
 ///
-Vector<Scheduler::Step> ComputeSchedulerData(const Vector<Stage*>& stages);
+NO_INLINE Vector<Scheduler::Step> ComputeSchedulerData(const Vector<Stage*>& stages);
 
 } // namespace genebits::engine
 

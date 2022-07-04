@@ -143,20 +143,20 @@ TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectArchetypes)
   Vector<ArchetypeId> archetypes;
   Vector<ArchetypeId> view_archetypes;
 
-  archetypes.PushBack(relations.AssureArchetype<int>());
+  archetypes.push_back(relations.AssureArchetype<int>());
 
   relations.AssureArchetype<float>();
   relations.AssureArchetype<bool>();
   relations.AssureArchetype<double>();
 
-  archetypes.PushBack(relations.AssureArchetype<int, float>());
+  archetypes.push_back(relations.AssureArchetype<int, float>());
 
   relations.AssureArchetype<double, float>();
 
   ViewId view = relations.AssureView<int>();
 
-  archetypes.PushBack(relations.AssureArchetype<float, double, int>());
-  archetypes.PushBack(relations.AssureArchetype<bool, double, int>());
+  archetypes.push_back(relations.AssureArchetype<float, double, int>());
+  archetypes.push_back(relations.AssureArchetype<bool, double, int>());
 
   view_archetypes = relations.ViewArchetypes(view);
 

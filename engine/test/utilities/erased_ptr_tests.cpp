@@ -47,7 +47,7 @@ TEST(ErasedPtr_Tests, MoveConstructor_Trivial_CorrectValue)
 
   EXPECT_TRUE(moved);
   EXPECT_FALSE(original);
-  EXPECT_EQ(*moved.Get(), 10u);
+  EXPECT_EQ(*moved.get(), 10u);
 }
 
 TEST(ErasedPtr_Tests, MoveAssignment_Trivial_CorrectValue)
@@ -58,7 +58,7 @@ TEST(ErasedPtr_Tests, MoveAssignment_Trivial_CorrectValue)
 
   EXPECT_TRUE(moved);
   EXPECT_FALSE(original);
-  EXPECT_EQ(*moved.Get(), 10u);
+  EXPECT_EQ(*moved.get(), 10u);
 }
 
 TEST(ErasedPtr_Tests, DefaultConstructor_Void_DefaultState)
@@ -83,7 +83,7 @@ TEST(ErasedPtr_Tests, MoveConstructor_Void_CorrectValue)
 
   EXPECT_TRUE(moved);
   EXPECT_FALSE(original);
-  EXPECT_EQ(*static_cast<size_t*>(moved.Get()), 10u);
+  EXPECT_EQ(*static_cast<size_t*>(moved.get()), 10u);
 }
 
 TEST(ErasedPtr_Tests, MoveAssignment_Void_CorrectValue)
@@ -94,7 +94,7 @@ TEST(ErasedPtr_Tests, MoveAssignment_Void_CorrectValue)
 
   EXPECT_TRUE(moved);
   EXPECT_FALSE(original);
-  EXPECT_EQ(*static_cast<size_t*>(moved.Get()), 10u);
+  EXPECT_EQ(*static_cast<size_t*>(moved.get()), 10u);
 }
 
 TEST(ErasedPtr_Tests, DefaultConstructor_Poly_DefaultState)
@@ -119,7 +119,7 @@ TEST(ErasedPtr_Tests, MoveConstructor_Poly_CorrectValue)
 
   EXPECT_TRUE(moved);
   EXPECT_FALSE(original);
-  EXPECT_EQ(moved.Get()->Test(), 10);
+  EXPECT_EQ(moved.get()->Test(), 10);
 }
 
 TEST(ErasedPtr_Tests, MoveAssignment_Poly_CorrectValue)
@@ -130,7 +130,7 @@ TEST(ErasedPtr_Tests, MoveAssignment_Poly_CorrectValue)
 
   EXPECT_TRUE(moved);
   EXPECT_FALSE(original);
-  EXPECT_EQ(moved.Get()->Test(), 10);
+  EXPECT_EQ(moved.get()->Test(), 10);
 }
 
 } // namespace genebits::engine::tests

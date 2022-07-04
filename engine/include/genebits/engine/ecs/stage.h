@@ -47,7 +47,7 @@ public:
     template<System SystemType>
     SystemOrder After(SystemType* system)
     {
-      stage_.system_infos_[index_].run_after.PushBack(std::bit_cast<SystemHandle>(system));
+      stage_.system_infos_[index_].run_after.push_back(std::bit_cast<SystemHandle>(system));
       return *this;
     }
 
@@ -63,7 +63,7 @@ public:
     template<System SystemType>
     SystemOrder Before(SystemType* system)
     {
-      stage_.system_infos_[index_].run_before.PushBack(std::bit_cast<SystemHandle>(system));
+      stage_.system_infos_[index_].run_before.push_back(std::bit_cast<SystemHandle>(system));
       return *this;
     }
 
@@ -97,8 +97,8 @@ public:
   {
     ASSERT(ContainsSystem(system) == false, "System already exists in stage");
 
-    registered_systems_.PushBack(std::make_unique<SystemObject>(system));
-    system_infos_.EmplaceBack();
+    registered_systems_.push_back(std::make_unique<SystemObject>(system));
+    system_infos_.emplace_back();
 
     return SystemOrder(*this, registered_systems_.size() - 1);
   }

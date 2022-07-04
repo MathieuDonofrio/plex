@@ -274,9 +274,9 @@ namespace details
     static Vector<ComponentId> Value()
     {
       Vector<ComponentId> components;
-      components.Reserve(sizeof...(Components));
+      components.reserve(sizeof...(Components));
 
-      (components.PushBack(GetComponentId<Components>()), ...);
+      (components.push_back(GetComponentId<Components>()), ...);
 
       std::ranges::sort(components);
 
@@ -308,8 +308,8 @@ class ViewRelations final
 public:
   ViewRelations()
   {
-    archetype_states_.Resize(MaxArchetypes);
-    view_states_.Resize(MaxViews);
+    archetype_states_.resize(MaxArchetypes);
+    view_states_.resize(MaxViews);
 
     // Assure the empty view. This guarantees that it will be first in the arrays.
     AssureView();
@@ -395,7 +395,7 @@ private:
   {
     if (id >= components.size())
     {
-      components.Resize(id + 1);
+      components.resize(id + 1);
     }
 
     components[id] = GetComponentIds<std::remove_cvref_t<Components>...>();

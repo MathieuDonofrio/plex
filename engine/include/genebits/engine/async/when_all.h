@@ -14,12 +14,11 @@ namespace genebits::engine
 /// @tparam Type Type to check.
 ///
 template<typename Type>
-concept WhenAllTrigger = Trigger<Type> && requires(Type trigger, std::coroutine_handle<> awaiting)
-{
-  {
-    trigger.TryAwait(awaiting)
-    } -> std::convertible_to<bool>;
-};
+concept WhenAllTrigger = Trigger<Type> && requires(Type trigger, std::coroutine_handle<> awaiting) {
+                                            {
+                                              trigger.TryAwait(awaiting)
+                                              } -> std::convertible_to<bool>;
+                                          };
 
 ///
 /// Awaiter for a when all trigger.
@@ -191,11 +190,11 @@ Task<> WhenAll(Awaitables awaitables)
   WhenAllCounter when_all_counter(amount);
 
   Vector<TriggerTask<void, WhenAllCounter>> trigger_tasks;
-  trigger_tasks.Reserve(amount);
+  trigger_tasks.reserve(amount);
 
   for (auto&& awaitable : awaitables)
   {
-    trigger_tasks.PushBack(MakeTriggerTask<WhenAllCounter, Awaitable, void>(std::move(awaitable)));
+    trigger_tasks.push_back(MakeTriggerTask<WhenAllCounter, Awaitable, void>(std::move(awaitable)));
     trigger_tasks.back().Start(when_all_counter);
   }
 

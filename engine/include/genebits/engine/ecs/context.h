@@ -171,12 +171,12 @@ private:
 
     const bool already_exists = Contains<Type>();
 
-    map_.Assure<Type>() = instance.Get();
+    map_.Assure<Type>() = instance.get();
 
-    if (already_exists) FindByName(name)->instance.Swap(instance);
+    if (already_exists) FindByName(name)->instance.swap(instance);
     else
     {
-      instances_.EmplaceBack(name, std::move(instance));
+      instances_.emplace_back(name, std::move(instance));
     }
   }
 

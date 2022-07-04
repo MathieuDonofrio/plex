@@ -178,7 +178,7 @@ public:
   ///
   constexpr ErasedPtr& operator=(ErasedPtr<Type>&& other) noexcept
   {
-    ErasedPtr<Type>(std::move(other)).Swap(*this);
+    ErasedPtr<Type>(std::move(other)).swap(*this);
     return *this;
   }
 
@@ -194,14 +194,14 @@ public:
   template<AssignableErasedPtr<Type> T>
   constexpr ErasedPtr& operator=(ErasedPtr<T>&& other) noexcept
   {
-    ErasedPtr<Type>(std::move(other)).Swap(*this);
+    ErasedPtr<Type>(std::move(other)).swap(*this);
     return *this;
   }
 
   ///
   /// Exchanges the stored pointer values and ownerships.
   ///
-  constexpr void Swap(ErasedPtr<Type>& other) noexcept
+  constexpr void swap(ErasedPtr<Type>& other) noexcept
   {
     std::swap(ptr_, other.ptr_);
     std::swap(deleter_, other.deleter_);
@@ -212,7 +212,7 @@ public:
   ///
   /// @return Stored pointer.
   ///
-  [[nodiscard]] constexpr Type* Get() const noexcept
+  [[nodiscard]] constexpr Type* get() const noexcept
   {
     return ptr_;
   }
@@ -224,7 +224,7 @@ public:
   ///
   [[nodiscard]] constexpr operator Type*() const noexcept
   {
-    return Get();
+    return get();
   }
 
   ///
@@ -262,7 +262,7 @@ private:
 template<typename T, typename U>
 constexpr bool operator==(const ErasedPtr<T>& lhs, const ErasedPtr<U>& rhs) noexcept
 {
-  return lhs.Get() == rhs.Get();
+  return lhs.get() == rhs.get();
 }
 
 ///
@@ -279,7 +279,7 @@ constexpr bool operator==(const ErasedPtr<T>& lhs, const ErasedPtr<U>& rhs) noex
 template<typename T, typename U>
 constexpr std::strong_ordering operator<=>(const ErasedPtr<T>& lhs, const ErasedPtr<U>& rhs) noexcept
 {
-  return std::compare_three_way()(lhs.Get(), rhs.Get());
+  return std::compare_three_way()(lhs.get(), rhs.get());
 }
 
 ///
@@ -309,7 +309,7 @@ constexpr bool operator==(const ErasedPtr<T>& lhs, std::nullptr_t) noexcept
 template<typename T>
 constexpr std::strong_ordering operator<=>(const ErasedPtr<T>& lhs, std::nullptr_t) noexcept
 {
-  return std::compare_three_way()(lhs.Get(), static_cast<T*>(nullptr));
+  return std::compare_three_way()(lhs.get(), static_cast<T*>(nullptr));
 }
 
 ///
@@ -341,7 +341,7 @@ namespace std
 template<typename T>
 constexpr void swap(genebits::engine::ErasedPtr<T>& lhs, genebits::engine::ErasedPtr<T>& rhs) noexcept
 {
-  lhs.Swap(rhs);
+  lhs.swap(rhs);
 }
 
 template<typename T>
@@ -349,7 +349,7 @@ struct hash<genebits::engine::ErasedPtr<T>>
 {
   constexpr size_t operator()(const genebits::engine::ErasedPtr<T>& obj) const noexcept
   {
-    return std::hash<T*>()(obj.Get());
+    return std::hash<T*>()(obj.get());
   }
 };
 } // namespace std

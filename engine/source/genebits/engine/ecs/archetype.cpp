@@ -4,7 +4,7 @@ namespace genebits::engine
 {
 void ViewRelations::AddView(ViewId id)
 {
-  if (id >= view_archetypes_.size()) view_archetypes_.Resize(id + 1);
+  if (id >= view_archetypes_.size()) view_archetypes_.resize(id + 1);
 
   auto& view_components = view_components_[id];
 
@@ -17,7 +17,7 @@ void ViewRelations::AddView(ViewId id)
       if (std::includes(
             archetype_components.begin(), archetype_components.end(), view_components.begin(), view_components.end()))
       {
-        view_archetypes_[id].PushBack(i);
+        view_archetypes_[id].push_back(i);
 
         if (view_components.size() == archetype_components.size())
         {
@@ -42,7 +42,7 @@ void ViewRelations::AddArchetype(ArchetypeId id)
       if (std::includes(
             archetype_components.begin(), archetype_components.end(), view_components.begin(), view_components.end()))
       {
-        view_archetypes_[i].PushBack(id);
+        view_archetypes_[i].push_back(id);
 
         if (view_components.size() == archetype_components.size())
         {

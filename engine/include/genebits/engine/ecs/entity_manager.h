@@ -45,7 +45,7 @@ public:
     else
     {
       auto entity = recycled_.back();
-      recycled_.PopBack();
+      recycled_.pop_back();
 
       return entity;
     }
@@ -75,7 +75,7 @@ public:
   {
     ASSERT(entity <= current_, "Entity not from this manager");
 
-    recycled_.PushBack(entity);
+    recycled_.push_back(entity);
   }
 
   ///
@@ -83,7 +83,7 @@ public:
   ///
   void ReleaseAll() noexcept
   {
-    recycled_.Clear();
+    recycled_.clear();
 
     current_ = 0;
   }

@@ -380,7 +380,7 @@ public:
   ///
   constexpr Ref<Type>& operator=(Ref<Type>&& other)
   {
-    Ref<Type>(std::move(other)).Swap(*this);
+    Ref<Type>(std::move(other)).swap(*this);
     return *this;
   }
 
@@ -396,7 +396,7 @@ public:
   template<AssignableRef<Type> T>
   constexpr Ref<Type>& operator=(Ref<T>&& other)
   {
-    Ref<Type>(std::move(other)).Swap(*this);
+    Ref<Type>(std::move(other)).swap(*this);
     return *this;
   }
 
@@ -409,7 +409,7 @@ public:
   ///
   constexpr Ref<Type>& operator=(const Ref<Type>& other)
   {
-    Ref<Type>(other).Swap(*this);
+    Ref<Type>(other).swap(*this);
     return *this;
   }
 
@@ -425,14 +425,14 @@ public:
   template<AssignableRef<Type> T>
   constexpr Ref<Type>& operator=(const Ref<T>& other)
   {
-    Ref<Type>(other).Swap(*this);
+    Ref<Type>(other).swap(*this);
     return *this;
   }
 
   ///
   /// Exchanges the stored pointer values and ownerships.
   ///
-  constexpr void Swap(Ref<Type>& other) noexcept
+  constexpr void swap(Ref<Type>& other) noexcept
   {
     LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
     LOCAL_THREAD_ASSERT((other.ptr_ ? other.control_ : nullptr));
@@ -446,7 +446,7 @@ public:
   ///
   /// @return Amount of references.
   ///
-  [[nodiscard]] constexpr size_t UseCount() const noexcept
+  [[nodiscard]] constexpr size_t use_count() const noexcept
   {
     LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
 
@@ -464,7 +464,7 @@ public:
   ///
   /// @return True if this is the only ref, false otherwise.
   ///
-  [[nodiscard]] constexpr bool Unique() const noexcept
+  [[nodiscard]] constexpr bool unique() const noexcept
   {
     LOCAL_THREAD_ASSERT((ptr_ ? control_ : nullptr));
 
@@ -674,7 +674,7 @@ public:
   ///
   constexpr Ref<Type>& operator=(Ref<Type>&& other) noexcept
   {
-    Ref<Type>(std::move(other)).Swap(*this);
+    Ref<Type>(std::move(other)).swap(*this);
     return *this;
   }
 
@@ -690,7 +690,7 @@ public:
   template<AssignableRef<Type> T>
   constexpr Ref<Type>& operator=(Ref<T>&& other) noexcept
   {
-    Ref<Type>(std::move(other)).Swap(*this);
+    Ref<Type>(std::move(other)).swap(*this);
     return *this;
   }
 
@@ -703,7 +703,7 @@ public:
   ///
   constexpr Ref<Type>& operator=(const Ref<Type>& other)
   {
-    Ref<Type>(other).Swap(*this);
+    Ref<Type>(other).swap(*this);
     return *this;
   }
 
@@ -719,14 +719,14 @@ public:
   template<AssignableRef<Type> T>
   constexpr Ref<Type>& operator=(const Ref<T>& other)
   {
-    Ref<Type>(other).Swap(*this);
+    Ref<Type>(other).swap(*this);
     return *this;
   }
 
   ///
   /// Exchanges the stored pointer values and ownerships.
   ///
-  constexpr void Swap(Ref<Type>& other) noexcept
+  constexpr void swap(Ref<Type>& other) noexcept
   {
     std::swap(ptr_, other.ptr_);
     std::swap(deleter_, other.deleter_);
@@ -737,7 +737,7 @@ public:
   ///
   /// @return Amount of references.
   ///
-  [[nodiscard]] constexpr size_t UseCount() const noexcept
+  [[nodiscard]] constexpr size_t use_count() const noexcept
   {
     return ptr_ ? ptr_->IntrusiveRefCount() : 0;
   }
@@ -747,7 +747,7 @@ public:
   ///
   /// @return True if this is the only ref, false otherwise.
   ///
-  [[nodiscard]] constexpr bool Unique() const noexcept
+  [[nodiscard]] constexpr bool unique() const noexcept
   {
     return ptr_ && ptr_->IntrusiveUniqueRef();
   }
@@ -932,7 +932,7 @@ namespace std
 template<typename T>
 constexpr void swap(genebits::engine::Ref<T>& lhs, genebits::engine::Ref<T>& rhs) noexcept
 {
-  lhs.Swap(rhs);
+  lhs.swap(rhs);
 }
 
 template<typename T>

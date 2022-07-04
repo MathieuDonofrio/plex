@@ -6,14 +6,14 @@ namespace genebits::engine
 {
 Task<> Scheduler::RunAll(Context& context)
 {
-  tasks_.Clear();
-  triggers_.Clear();
+  tasks_.clear();
+  triggers_.clear();
 
   const auto& steps = cache_.Build();
 
   for (const auto& step : steps)
   {
-    tasks_.PushBack(MakeSystemTask(step, context));
+    tasks_.push_back(MakeSystemTask(step, context));
   }
 
   co_await WhenAll(tasks_);
@@ -29,7 +29,7 @@ SharedTask<> Scheduler::MakeSystemTask(const Step& step, Context& context)
 
     for (const size_t dependency : step.dependencies)
     {
-      triggers_.PushBack(MakeTriggerTask<WhenAllCounter>(tasks_[dependency]));
+      triggers_.push_back(MakeTriggerTask<WhenAllCounter>(tasks_[dependency]));
       triggers_.back().Start(counter);
     }
 
@@ -58,7 +58,7 @@ const Vector<Scheduler::Step>& Scheduler::Cache::Bake()
 
   while (current->parent != nullptr)
   {
-    stages.PushBack(current->stage);
+    stages.push_back(current->stage);
 
     current = current->parent;
   }
@@ -93,7 +93,7 @@ void Scheduler::Cache::NewPath(Stage* stage)
   node->stage = stage;
   node->baked = false;
 
-  current_->children.PushBack(node);
+  current_->children.push_back(node);
 
   current_ = node;
 }
@@ -138,7 +138,7 @@ Vector<IntermediateStep> ComputeDependencyGraph(const Vector<Stage*>& stages)
 
           if (system.HasDependency(other_system))
           {
-            steps[other_step_index].dependants.PushBack(step_index);
+            steps[other_step_index].dependants.push_back(step_index);
           }
 
           other_step_index++;
@@ -153,13 +153,13 @@ Vector<IntermediateStep> ComputeDependencyGraph(const Vector<Stage*>& stages)
 
         if (stage.HasExplicitOrder(other_system, system) && system.HasDependency(other_system))
         {
-          steps[other_step_index].dependants.PushBack(step_index);
+          steps[other_step_index].dependants.push_back(step_index);
         }
 
         other_step_index++;
       }
 
-      steps.PushBack({ system_it->get() });
+      steps.push_back({ system_it->get() });
 
       step_index++;
     }
@@ -173,7 +173,7 @@ Vector<size_t> TopologicalSort(const Vector<IntermediateStep>& steps)
   // Kahn's algorithm
 
   Vector<size_t> in_degree;
-  in_degree.Resize(steps.size());
+  in_degree.resize(steps.size());
 
   for (const auto& step : steps)
   {
@@ -196,13 +196,13 @@ Vector<size_t> TopologicalSort(const Vector<IntermediateStep>& steps)
   [[maybe_unused]] size_t visited_counter = 0;
 
   Vector<size_t> order;
-  order.Reserve(steps.size());
+  order.reserve(steps.size());
 
   while (!queue.empty())
   {
     size_t index = queue.front();
     queue.pop();
-    order.PushBack(index);
+    order.push_back(index);
 
     for (auto dependant : steps[index].dependants)
     {
@@ -224,7 +224,7 @@ Vector<Scheduler::Step> ComputeExecutionGraph(
   const Vector<IntermediateStep>& intermediate_steps, const Vector<size_t>& order)
 {
   Vector<Scheduler::Step> steps;
-  steps.Reserve(intermediate_steps.size());
+  steps.reserve(intermediate_steps.size());
 
   // Naive transitive reduction.
   // This allows us to have as little dependencies as possible, giving a little less work to the scheduler every run.
@@ -259,12 +259,12 @@ Vector<Scheduler::Step> ComputeExecutionGraph(
       {
         if (!TransitiveReduction::IsRedundant(steps, dependencies, j))
         {
-          dependencies.PushBack(j);
+          dependencies.push_back(j);
         }
       }
     }
 
-    steps.PushBack({ intermediate_step.system->GetExecutor(), dependencies });
+    steps.push_back({ intermediate_step.system->GetExecutor(), dependencies });
   }
 
   return steps;

@@ -44,7 +44,7 @@ public:
   ///
   Registry()
   {
-    storages_.Resize(MaxArchetypes);
+    storages_.resize(MaxArchetypes);
   }
 
   ///

@@ -52,7 +52,7 @@ namespace details
     ///
     void Add(EventHandler<Event> handler) noexcept
     {
-      handlers_.PushBack(handler);
+      handlers_.push_back(handler);
     }
 
     ///
@@ -164,7 +164,7 @@ private:
       pool = std::move(MakeErased<details::EventHandlerPool<Event>>());
     }
 
-    return static_cast<details::EventHandlerPool<Event>*>(pool.Get());
+    return static_cast<details::EventHandlerPool<Event>*>(pool.get());
   }
 
 private:

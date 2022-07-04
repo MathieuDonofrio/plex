@@ -52,7 +52,7 @@ namespace
   void SystemMock([[maybe_unused]] queries... q)
   {
     SystemMockCallCount<id>()++;
-    SystemMockCallOrder().PushBack(id);
+    SystemMockCallOrder().push_back(id);
   }
 
   template<size_t id, Query... queries>
@@ -60,7 +60,7 @@ namespace
   {
     co_await thread_pool.Schedule();
     SystemMockCallCount<id>()++;
-    SystemMockCallOrder().PushBack(id);
+    SystemMockCallOrder().push_back(id);
   }
 } // namespace
 
@@ -103,7 +103,7 @@ TEST(Scheduler_Tests, RunAll_MultipleSystemsSameStage_CorrectExecution)
   scheduler.AddSystem<MockStage<1>>(SystemMock<4>);
   scheduler.AddSystem<MockStage<1>>(SystemMock<5>);
 
-  SystemMockCallOrder().Clear();
+  SystemMockCallOrder().clear();
 
   SystemMockCallCount<1>() = 0;
   SystemMockCallCount<2>() = 0;
@@ -138,7 +138,7 @@ TEST(Scheduler_Tests, RunAll_MultipleSystemsDifferentStages_CorrectExecution)
   scheduler.AddSystem<MockStage<4>>(SystemMock<4, MockQuery<MockData<0>>>);
   scheduler.AddSystem<MockStage<5>>(SystemMock<5, MockQuery<MockData<0>>>);
 
-  SystemMockCallOrder().Clear();
+  SystemMockCallOrder().clear();
 
   SystemMockCallCount<1>() = 0;
   SystemMockCallCount<2>() = 0;
@@ -177,7 +177,7 @@ TEST(Scheduler_Tests, RunAll_AsycDependantSystems_ExecuteInOrder)
   scheduler.AddSystem<MockStage<4>>(AsyncSystemMock<4, MockQuery<MockData<0>>>);
   scheduler.AddSystem<MockStage<5>>(AsyncSystemMock<5, MockQuery<MockData<0>>>);
 
-  SystemMockCallOrder().Clear();
+  SystemMockCallOrder().clear();
 
   SystemMockCallCount<1>() = 0;
   SystemMockCallCount<2>() = 0;

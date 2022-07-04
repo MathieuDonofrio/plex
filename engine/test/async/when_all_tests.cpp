@@ -180,7 +180,7 @@ TEST(WhenAllTask_Tests, WhenAll_ManyAsRange_Execute)
 
     for (size_t i = 0; i < amount; i++)
     {
-      tasks.PushBack(make_task(&thread[i]));
+      tasks.push_back(make_task(&thread[i]));
     }
 
     co_await WhenAll(std::move(tasks));
@@ -222,7 +222,7 @@ TEST(WhenAllTask_Tests, WhenAll_ManyWithResultAsRange_Execute)
 
     for (size_t i = 0; i < amount; i++)
     {
-      tasks.PushBack(make_task(&thread[i]));
+      tasks.push_back(make_task(&thread[i]));
     }
 
     co_await WhenAll(std::move(tasks));
@@ -289,7 +289,7 @@ TEST(WhenAllTask_Tests, WhenAll_ManyAsRange_CorrectValues)
 
     for (size_t i = 0; i < amount; i++)
     {
-      tasks.PushBack(make_task(&thread[i]));
+      tasks.push_back(make_task(&thread[i]));
     }
 
     co_await WhenAll(std::move(tasks));

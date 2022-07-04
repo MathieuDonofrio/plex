@@ -231,11 +231,11 @@ public:
     erase_function_ = []([[maybe_unused]] auto* storage, [[maybe_unused]] const size_t index)
     { (AccessAndEraseAt<std::remove_cvref_t<Components>>(storage, index), ...); };
     clear_function_ = []([[maybe_unused]] auto storage)
-    { ((storage->template Access<std::remove_cvref_t<Components>>().Clear()), ...); };
+    { ((storage->template Access<std::remove_cvref_t<Components>>().clear()), ...); };
 
 #ifndef NDEBUG
     // When debugging it is useful to have the list of components used at initialization.
-    ((components_.PushBack(TypeName<Components>())), ...);
+    ((components_.push_back(TypeName<Components>())), ...);
     initialized_ = true;
 #endif
   }
@@ -268,8 +268,8 @@ public:
     sparse_->Assure(entity);
     (*sparse_)[entity] = static_cast<Entity>(dense_.size());
 
-    dense_.PushBack(entity);
-    ((Access<std::remove_cvref_t<Components>>().EmplaceBack(std::forward<Components>(components))), ...);
+    dense_.push_back(entity);
+    ((Access<std::remove_cvref_t<Components>>().emplace_back(std::forward<Components>(components))), ...);
   }
 
   ///
@@ -288,7 +288,7 @@ public:
     (*sparse_)[back_entity] = index;
     dense_[index] = back_entity;
 
-    dense_.PopBack();
+    dense_.pop_back();
 
     erase_function_(this, index);
   }
@@ -300,7 +300,7 @@ public:
   {
     ASSERT(initialized_, "Not initialized");
 
-    dense_.Clear();
+    dense_.clear();
 
     clear_function_(this);
   }
@@ -372,7 +372,7 @@ public:
     ASSERT(initialized_, "Not initialized");
     ASSERT(HasComponent<Component>(), "Component type not valid");
 
-    return *static_cast<Vector<Component>*>(component_arrays_.template Get<Component>().Get());
+    return *static_cast<Vector<Component>*>(component_arrays_.template Get<Component>().get());
   }
 
   ///

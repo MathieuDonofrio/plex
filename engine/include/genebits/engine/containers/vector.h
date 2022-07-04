@@ -14,33 +14,22 @@
 namespace genebits::engine
 {
 ///
-/// Concept that determines if the type can be used as in a vector.
-///
-/// @tparam Type The type to check
-///
-template<typename Type>
-concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
-
-///
 /// General purpose vector implementation optimized for speed.
 ///
-/// This implementation of vector is our replacement for std::vector. Is most cases this vector is faster than
+/// This implementation of vector is our internal alternative for std::vector. Is most cases this vector is faster than
 /// std::vector for the following reason:
 ///
-/// - Implementation simplicity resulting in significantly less code size.
 /// - Optimizations for relocatable types replacing move and destroy loops for bitwise memory copy.
-/// - Memory/speed tradeoffs like better growth rate and 32 bit size/capacity.
-/// - Carefully crafted to try and take advantage of heap elision. (Works well on clang)
-/// - Built-in optimized unordered operations.
+/// - 16 byte size.
+/// - Other minor optimizations.
 ///
 /// @tparam Type Value type to contain.
 /// @tparam AllocatorType Allocator type to allocate memory with.
 ///
-template<VectorType Type, typename AllocatorType = std::allocator<Type>>
+template<typename Type, typename AllocatorType = std::allocator<Type>>
 class Vector : private AllocatorType
 {
 public:
-  // Style Exception: STL
   // clang-format off
 
   using size_type = size_t;
@@ -253,7 +242,7 @@ public:
   ///
   constexpr Vector& operator=(Vector<Type, AllocatorType>&& other) noexcept
   {
-    Vector<Type, AllocatorType>(std::move(other)).Swap(*this);
+    Vector<Type, AllocatorType>(std::move(other)).swap(*this);
     return *this;
   }
 
@@ -266,7 +255,7 @@ public:
   ///
   Vector& operator=(const Vector<Type, AllocatorType>& other)
   {
-    Vector<Type, AllocatorType>(other).Swap(*this);
+    Vector<Type, AllocatorType>(other).swap(*this);
     return *this;
   }
 
@@ -277,7 +266,8 @@ public:
   /// @param[in] value Element to add and construct in place.
   ///
   template<typename... Args>
-  void Emplace(iterator pos, Args&&... args)
+  void emplace(iterator pos, Args&&... args)
+  requires std::constructible_from<Type, Args...>
   {
     if (size_ < capacity_ && pos == end())
     {
@@ -294,9 +284,10 @@ public:
   ///
   /// @param[in] value Element to insert.
   ///
-  void Insert(iterator pos, const Type& value)
+  void insert(iterator pos, const Type& value)
+  requires std::constructible_from<Type, const Type&>
   {
-    Emplace(pos, value);
+    emplace(pos, value);
   }
 
   ///
@@ -304,9 +295,10 @@ public:
   ///
   /// @param[in] value Element to insert.
   ///
-  void Insert(iterator pos, Type&& value)
+  void insert(iterator pos, Type&& value)
+  requires std::constructible_from<Type, Type&&>
   {
-    Emplace(pos, std::move(value));
+    emplace(pos, std::move(value));
   }
 
   ///
@@ -315,7 +307,8 @@ public:
   /// @param[in] value Element to add and construct in place.
   ///
   template<typename... Args>
-  void EmplaceBack(Args&&... args)
+  void emplace_back(Args&&... args)
+  requires std::constructible_from<Type, Args...>
   {
     if (size_ < capacity_) [[likely]]
     {
@@ -332,9 +325,10 @@ public:
   ///
   /// @param[in] value Element to add
   ///
-  void PushBack(const Type& value)
+  void push_back(const Type& value)
+  requires std::constructible_from<Type, const Type&>
   {
-    EmplaceBack(value);
+    emplace_back(value);
   }
 
   ///
@@ -342,15 +336,16 @@ public:
   ///
   /// @param[in] value Element to add
   ///
-  void PushBack(Type&& value)
+  void push_back(Type&& value)
+  requires std::constructible_from<Type, Type&&>
   {
-    EmplaceBack(std::move(value));
+    emplace_back(std::move(value));
   }
 
   ///
   /// Remove the element at the back of the vector.
   ///
-  void PopBack() noexcept
+  void pop_back() noexcept
   {
     ASSERT(size_ > 0, "Vector is empty");
 
@@ -363,7 +358,7 @@ public:
   ///
   /// @param[in] it Iterator for element to erase
   ///
-  void Erase(iterator it)
+  void erase(iterator it)
   {
     ASSERT(size_ > 0, "Vector is empty");
 
@@ -396,9 +391,10 @@ public:
   ///
   /// @param[in] new_size New size of the vector
   ///
-  void Resize(const size_t new_size)
+  void resize(const size_t new_size)
+  requires std::default_initializable<Type>
   {
-    Reserve(new_size);
+    reserve(new_size);
 
     if (static_cast<uint32_t>(new_size) > size_) std::uninitialized_value_construct(end(), begin() + new_size);
     else
@@ -413,9 +409,10 @@ public:
   /// @param[in] new_size New size of the vector.
   /// @param[in] value The value to copy.
   ///
-  void Resize(const size_t new_size, const Type& value)
+  void resize(const size_t new_size, const Type& value)
+  requires std::constructible_from<Type, const Type&>
   {
-    Reserve(new_size);
+    reserve(new_size);
 
     if (static_cast<uint32_t>(new_size) > size_) std::uninitialized_fill(end(), begin() + new_size, value);
     else
@@ -430,7 +427,7 @@ public:
   ///
   /// @param[in] min_capacity Minimum capacity the vector should have.
   ///
-  void Reserve(const size_t min_capacity)
+  void reserve(const size_t min_capacity)
   {
     if (static_cast<uint32_t>(min_capacity) > capacity_) [[likely]]
     {
@@ -444,7 +441,7 @@ public:
   ///
   /// Clears the vector of all its contents without deallocating the memory.
   ///
-  void Clear() noexcept
+  void clear() noexcept
   {
     std::destroy(begin(), end());
 
@@ -456,7 +453,7 @@ public:
   ///
   /// @param[in] other Other vector.
   ///
-  void Swap(Vector<Type, AllocatorType>& other) noexcept
+  void swap(Vector<Type, AllocatorType>& other) noexcept
   {
     std::swap(array_, other.array_);
     std::swap(size_, other.size_);
@@ -712,7 +709,7 @@ namespace std
 template<typename T>
 constexpr void swap(genebits::engine::Vector<T>& lhs, genebits::engine::Vector<T>& rhs) noexcept
 {
-  lhs.Swap(rhs);
+  lhs.swap(rhs);
 }
 } // namespace std
 

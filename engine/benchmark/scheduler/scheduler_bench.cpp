@@ -82,7 +82,7 @@ namespace
 
     static void MakeStages(Vector<std::unique_ptr<Stage>>& stages)
     {
-      stages.PushBack(std::make_unique<Stage>());
+      stages.push_back(std::make_unique<Stage>());
       SystemGenerator<I, SystemsPerStage, Async>::AddSystems(*stages.back().get());
       if constexpr (I > 1) StageGenerator<Stages, SystemsPerStage, Async, I - 1>::MakeStages(stages);
     }
@@ -118,7 +118,7 @@ static void Scheduler_ComputeSchedulerSteps_5Stages4SystemsEach(benchmark::State
 
   for (auto& stage : stages)
   {
-    raw_ptr_stages.PushBack(stage.get());
+    raw_ptr_stages.push_back(stage.get());
   }
 
   for (auto _ : state)
@@ -151,7 +151,7 @@ static void Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach(benchmark::Stat
 
   for (auto& stage : stages)
   {
-    raw_ptr_stages.PushBack(stage.get());
+    raw_ptr_stages.push_back(stage.get());
   }
 
   for (auto _ : state)
@@ -184,7 +184,7 @@ static void Scheduler_Reference_5Stages4SystemsEach(benchmark::State& state)
 
   for (auto& stage : stages)
   {
-    raw_ptr_stages.PushBack(stage.get());
+    raw_ptr_stages.push_back(stage.get());
   }
 
   auto steps = ComputeSchedulerData(raw_ptr_stages);
@@ -290,7 +290,7 @@ static void Scheduler_Reference_10Stages8SystemsEach(benchmark::State& state)
 
   for (auto& stage : stages)
   {
-    raw_ptr_stages.PushBack(stage.get());
+    raw_ptr_stages.push_back(stage.get());
   }
 
   auto steps = ComputeSchedulerData(raw_ptr_stages);
@@ -396,7 +396,7 @@ static void Scheduler_Reference_10Stages16SystemsEach(benchmark::State& state)
 
   for (auto& stage : stages)
   {
-    raw_ptr_stages.PushBack(stage.get());
+    raw_ptr_stages.push_back(stage.get());
   }
 
   auto steps = ComputeSchedulerData(raw_ptr_stages);

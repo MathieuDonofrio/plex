@@ -7,24 +7,41 @@
 
 namespace genebits::engine
 {
-///
-/// Concept that determines if the type can be used as the value of a type map.
-///
-/// @tparam Type The type to check
-///
-template<typename Type>
-concept TypeMapValueType = VectorType<Type> && std::is_default_constructible_v<Type>;
+// clang-format off
 
 ///
-/// Maps types to values where the type is used efficiently generate a runtime key based off the type name.
+/// Concept used to determine if a type can be used as an underlying container for a type map.
 ///
-/// The key is obtained from type using TypeInfo unique identifiers.
+/// The container must be contiguous and resizable.
 ///
-/// Much faster than using a normal map when a type is required as a key.
+/// @tparam Type The type to check.
+/// @tparam Value The value type of the type map.
+///
+template<typename Type, typename Value>
+concept TypeMapContainer = requires(Type& container, size_t size)
+{
+  { *container.begin() } -> std::same_as<Value&>;
+  { container.begin() } -> std::contiguous_iterator;
+
+  { container.size() } -> std::convertible_to<size_t>;
+  container.resize(size);
+};
+
+// clang-format on
+
+///
+/// Container adapter for mapping types to values.
+///
+/// Uses an efficiently generated dense type index to do lookups into a contiguous array.
+///
+/// Much faster than using a normal map, the price of a obtaining a value for a type is essentially the cost of an array
+/// lookup.
+///
+/// @see TypeIndex
 ///
 /// @tparam Value Value to map types with.
 ///
-template<TypeMapValueType Value>
+template<typename Value, TypeMapContainer<Value> Container = Vector<Value>>
 class TypeMap
 {
 public:
@@ -39,6 +56,7 @@ public:
   ///
   template<typename Type>
   Value& Assure()
+  requires std::default_initializable<Value>
   {
     const size_t index = Key<Type>();
 
@@ -47,7 +65,7 @@ public:
       ResizeFor(index);
     }
 
-    return values_[index];
+    return std::to_address(values_.begin())[index];
   }
 
   ///
@@ -59,7 +77,8 @@ public:
   /// @tparam[in] Type The type to use as key.
   ///
   template<typename Type>
-  void SetDefault() noexcept(noexcept(Value()))
+  void SetDefault() noexcept(std::is_nothrow_default_constructible_v<Value>)
+  requires std::default_initializable<Value>
   {
     Value* value = std::addressof(Get<Type>());
     value->~Value();
@@ -80,12 +99,12 @@ public:
   /// @return True if the type exists in the map, false otherwise.
   ///
   template<typename Type>
-  [[nodiscard]] bool ContainsNonDefault() const noexcept
+  [[nodiscard]] bool ContainsNonDefault() const noexcept(std::is_nothrow_default_constructible_v<Value>)
   requires std::equality_comparable<Value>
   {
     const auto key = Key<Type>();
 
-    return values_.size() > key && values_[key] != cDefaultValue;
+    return values_.size() > key && values_.data()[key] != Value {};
   }
 
   ///
@@ -102,9 +121,11 @@ public:
   template<typename Type>
   [[nodiscard]] const Value& Get() const noexcept
   {
-    ASSERT(values_.size() > Key<Type>(), "Type maps out of bounds");
+    const auto key = Key<Type>();
 
-    return values_[Key<Type>()];
+    ASSERT(values_.size() > key, "Type maps out of bounds");
+
+    return std::to_address(values_.begin())[key];
   }
 
   ///
@@ -125,10 +146,6 @@ public:
   }
 
 private:
-  using DefaultValueType = std::conditional_t<std::equality_comparable<Value>, Value, void*>;
-
-  static inline const DefaultValueType cDefaultValue {};
-
   ///
   /// Resizes the internal array to make sure the index is valid.
   ///
@@ -138,7 +155,7 @@ private:
   {
     ASSERT(index < 100000, "To many types, probably a bug"); // Highly unlikely the map exceeds 100k types
 
-    values_.Resize(index + 1);
+    values_.resize(index + 1);
   }
 
   ///
@@ -153,17 +170,17 @@ private:
   /// @return size_t key for the templated type.
   ///
   template<typename Type>
-  [[nodiscard]] static size_t Key() noexcept
+  [[nodiscard]] ALWAYS_INLINE static size_t Key() noexcept
   {
-    return TypeIndex<Type, TypeMap>();
+    return TypeIndex<Type, Container>();
   }
 
 private:
-  Vector<Value> values_;
+  Container values_;
 };
 
-template<typename Type>
-struct IsTriviallyRelocatable<TypeMap<Type>> : public IsTriviallyRelocatable<Vector<Type>>
+template<typename Type, typename Container>
+struct IsTriviallyRelocatable<TypeMap<Type, Container>> : public IsTriviallyRelocatable<Container>
 {};
 } // namespace genebits::engine
 

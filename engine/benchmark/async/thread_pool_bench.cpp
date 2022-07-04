@@ -100,7 +100,7 @@ static void ThreadPool_STD_Reference_Async_WorkDividedInLewLargeTasks(benchmark:
   for (auto _ : state)
   {
     Vector<std::future<void>> tasks;
-    tasks.Resize(threads);
+    tasks.resize(threads);
 
     for (size_t i = 0; i < threads; i++)
     {
@@ -136,13 +136,13 @@ static void ThreadPool_Schedule_WorkDividedInFewLargeTasks(benchmark::State& sta
   for (auto _ : state)
   {
     Vector<Task<>> tasks;
-    tasks.Reserve(amount);
+    tasks.reserve(amount);
 
     benchmark::DoNotOptimize(tasks.data());
 
     for (size_t i = 0; i < pool.ThreadCount(); i++)
     {
-      tasks.PushBack(CreateTask(pool, 1000 * work_per_thread));
+      tasks.push_back(CreateTask(pool, 1000 * work_per_thread));
     }
 
     benchmark::ClobberMemory();
@@ -166,7 +166,7 @@ static void ThreadPool_STD_Reference_Async_WorkDividedInManySmallTasks(benchmark
   for (auto _ : state)
   {
     Vector<std::future<void>> tasks;
-    tasks.Resize(amount);
+    tasks.resize(amount);
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -202,13 +202,13 @@ static void ThreadPool_Schedule_WorkDividedInManySmallTasks(benchmark::State& st
   for (auto _ : state)
   {
     Vector<Task<>> tasks;
-    tasks.Reserve(amount);
+    tasks.reserve(amount);
 
     benchmark::DoNotOptimize(tasks.data());
 
     for (size_t i = 0; i < amount; i++)
     {
-      tasks.PushBack(CreateTask(pool, 1000));
+      tasks.push_back(CreateTask(pool, 1000));
     }
 
     benchmark::ClobberMemory();
