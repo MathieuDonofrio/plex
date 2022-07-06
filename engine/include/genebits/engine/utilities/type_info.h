@@ -6,17 +6,17 @@
 
 #include "genebits/engine/config/compiler.h"
 
-namespace fsig // Keep small namespace for faster compile-time.
+namespace _ // Keep small
 {
 ///
 /// Returns the function name with a templated type. Can be used to probe type name.
 ///
-/// @tparam Type The type to include in the function name
+/// @tparam T The type to include in the function name
 ///
 /// @return The function name with the templated type.
 ///
-template<typename Type>
-consteval const char* F() // Keep char* return and small name for faster compile-time.
+template<typename T>
+consteval auto X() // Keep small to avoid overhead
 {
 #if COMPILER_MSVC
   return __FUNCSIG__;
@@ -26,12 +26,16 @@ consteval const char* F() // Keep char* return and small name for faster compile
 }
 
 // Probing technique:
-// Get the templated function name of void type and use that to find the start and offset of the type.
+// Use a known type to obtain information about how to extract the type from the signature.
 
-constexpr std::string_view cProbe = F<void>();
-constexpr size_t cStart = cProbe.find("void");
-constexpr size_t cOffset = cProbe.length() - 4;
-} // namespace fsig
+namespace probe
+{
+  constexpr std::string_view cFuncSig = X<void>();
+
+  constexpr size_t cStart = cFuncSig.find("void");
+  constexpr size_t cOffset = cFuncSig.length() - 4;
+} // namespace probe
+} // namespace _
 
 namespace genebits::engine
 {
@@ -51,9 +55,9 @@ namespace genebits::engine
 template<typename Type>
 [[nodiscard]] static consteval std::string_view TypeName() noexcept
 {
-  const std::string_view function_name = fsig::F<std::remove_cvref_t<Type>>();
+  const std::string_view function_name = _::X<std::remove_cvref_t<Type>>();
 
-  return function_name.substr(fsig::cStart, function_name.length() - fsig::cOffset);
+  return function_name.substr(_::probe::cStart, function_name.length() - _::probe::cOffset);
 }
 
 ///
