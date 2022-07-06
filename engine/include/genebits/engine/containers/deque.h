@@ -101,7 +101,7 @@ namespace details
 ///
 /// General purpose deque implementation optimized for speed.
 ///
-/// This implementation of deque is our internal alternative for std::vector. This deque is faster than std::deque for
+/// This implementation of deque is our internal alternative for std::deque. This deque is faster than std::deque for
 /// the following reasons:
 ///
 /// - Optimizations for relocatable types replacing move and destroy loops for bitwise memory copy.
