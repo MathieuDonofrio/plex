@@ -704,7 +704,7 @@ private:
   /// @param[in] args Arguments.
   ///
   template<typename... Args>
-  void SlowEmplaceFront(Args&&... args)
+  NO_INLINE void SlowEmplaceFront(Args&&... args)
   {
     const uint32_t new_capacity = ComputeNextCapacity();
     Type* new_array = Allocate(new_capacity);
@@ -727,7 +727,7 @@ private:
   /// @param[in] args Arguments.
   ///
   template<typename... Args>
-  void SlowEmplaceBack(Args&&... args)
+  NO_INLINE void SlowEmplaceBack(Args&&... args)
   {
     const uint32_t new_capacity = ComputeNextCapacity();
     Type* new_array = Allocate(new_capacity);
