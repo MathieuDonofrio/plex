@@ -589,9 +589,9 @@ TEST(SubView_Tests, ForEach_None_NoIteration)
 
   registry.Destroy(registry.Create<int>(0));
 
-  View<int> poly_view = registry.ViewFor<int>();
+  View<int> view = registry.ViewFor<int>();
 
-  SubView<int> mono_view = *poly_view.begin();
+  SubView<int> mono_view = *view.begin();
 
   size_t iterations = 0;
 
@@ -606,9 +606,9 @@ TEST(SubView_Tests, ForEach_Single_OneIteration)
 
   auto entity = registry.Create<int>(0);
 
-  View poly_view = registry.ViewFor<int>();
+  View view = registry.ViewFor<int>();
 
-  SubView mono_view = *poly_view.begin();
+  SubView mono_view = *view.begin();
 
   size_t iterations = 0;
 
@@ -629,9 +629,9 @@ TEST(SubView_Tests, ForEach_Double_TwoIterations)
   registry.Create<int>(0);
   registry.Create<int>(0);
 
-  View poly_view = registry.ViewFor<int>();
+  View view = registry.ViewFor<int>();
 
-  SubView mono_view = *poly_view.begin();
+  SubView mono_view = *view.begin();
 
   size_t iterations = 0;
 
@@ -707,12 +707,12 @@ TEST(SubViewIterator_Tests, PreDecrement_Double_CorrectEntities)
   registry.Create<int>(1);
   registry.Create<int>(2);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
-  auto incremented = ++mono_view.begin();
+  auto it = ++sub_view.begin();
 
-  int value1 = *std::get<int*>(*incremented);
-  int value2 = *std::get<int*>(*(--incremented));
+  int value1 = *std::get<int*>(*it);
+  int value2 = *std::get<int*>(*(--it));
 
   EXPECT_EQ(value1 + value2, 3);
 }
@@ -724,15 +724,15 @@ TEST(SubViewIterator_Tests, PostIncrement_Double_CorrectEntities)
   registry.Create<int>(1);
   registry.Create<int>(2);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
-  auto value = mono_view.begin();
+  auto it = sub_view.begin();
 
-  int value1 = *std::get<int*>(*value);
+  int value1 = *std::get<int*>(*it);
 
-  value++;
+  it++;
 
-  int value2 = *std::get<int*>(*(value));
+  int value2 = *std::get<int*>(*it);
 
   EXPECT_EQ(value1 + value2, 3);
 }
@@ -744,9 +744,9 @@ TEST(SubViewIterator_Tests, PostDecrement_Double_CorrectEntities)
   registry.Create<int>(1);
   registry.Create<int>(2);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
-  auto value = ++mono_view.begin();
+  auto value = ++sub_view.begin();
 
   int value1 = *std::get<int*>(*value);
 
@@ -765,9 +765,9 @@ TEST(SubViewIterator_Tests, AddAssign_Multiple_CorrectEntities)
   registry.Create<int>(2);
   registry.Create<int>(3);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
-  auto value = mono_view.begin();
+  auto value = sub_view.begin();
 
   int value1 = *std::get<int*>(*value);
 
@@ -786,9 +786,9 @@ TEST(SubViewIterator_Tests, SubstractAssign_Multiple_CorrectEntities)
   registry.Create<int>(2);
   registry.Create<int>(3);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
-  auto value = ++(++mono_view.begin());
+  auto value = ++(++sub_view.begin());
 
   int value1 = *std::get<int*>(*value);
 
@@ -807,10 +807,10 @@ TEST(SubViewIterator_Tests, Add_Multiple_CorrectEntities)
   registry.Create<int>(2);
   registry.Create<int>(3);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
-  int value1 = *std::get<int*>(*(mono_view.begin() + 1));
-  int value2 = *std::get<int*>(*(mono_view.begin() + 2));
+  int value1 = *std::get<int*>(*(sub_view.begin() + 1));
+  int value2 = *std::get<int*>(*(sub_view.begin() + 2));
 
   EXPECT_EQ(value1 + value2, 5);
 }
@@ -823,9 +823,9 @@ TEST(SubViewIterator_Tests, Subtract_Multiple_CorrectEntities)
   registry.Create<int>(2);
   registry.Create<int>(3);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
-  auto value = mono_view.begin() + 2;
+  auto value = sub_view.begin() + 2;
 
   int value1 = *std::get<int*>(*(value - 1));
   int value2 = *std::get<int*>(*(value - 2));
@@ -839,9 +839,9 @@ TEST(SubViewIterator_Tests, CopyAssign_Single_CorrectEntity)
 
   registry.Create<int>(99);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
-  SubView<int>::Iterator it = mono_view.begin();
+  SubView<int>::iterator it = sub_view.begin();
 
   ++it;
 
@@ -859,13 +859,13 @@ TEST(SubViewEntityIterator_Tests, Increment_Double_CorrectEntities)
   auto entity1 = registry.Create<int>(1);
   auto entity2 = registry.Create<int>(2);
 
-  SubView mono_view = *registry.ViewFor<int>().begin();
+  SubView sub_view = *registry.ViewFor<int>().begin();
 
   int iterations = 0;
 
   size_t last = 9999999;
 
-  for (auto it = mono_view.ebegin(); it != mono_view.eend(); ++it)
+  for (auto it = sub_view.ebegin(); it != sub_view.eend(); ++it)
   {
     auto entity = *it;
 

@@ -164,7 +164,7 @@ public:
   ///
   /// @return Entity at index.
   ///
-  [[nodiscard]] constexpr const Entity& operator[](const size_type index) const noexcept
+  [[nodiscard]] constexpr const_reference operator[](const size_type index) const noexcept
   {
     return dense_[index];
   }
@@ -176,7 +176,7 @@ public:
   ///
   /// @return Entity at index.
   ///
-  [[nodiscard]] constexpr Entity& operator[](const size_type index) noexcept
+  [[nodiscard]] constexpr reference operator[](const size_type index) noexcept
   {
     return dense_[index];
   }

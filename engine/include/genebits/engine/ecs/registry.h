@@ -300,7 +300,7 @@ concept EntityFunctor = EntityReducedFunctor<Functor, Components...> || EntityEx
 ///
 template<typename Functor, typename... Components>
 requires EntityExtendedFunctor<Functor, Components...>
-constexpr void EntityApply(Functor& func, EntityData<Components...>& data)
+ALWAYS_INLINE constexpr void EntityApply(const Functor& func, const EntityData<Components...>& data)
 {
   func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
 }
@@ -318,7 +318,7 @@ constexpr void EntityApply(Functor& func, EntityData<Components...>& data)
 ///
 template<typename Functor, typename... Components>
 requires EntityReducedFunctor<Functor, Components...>
-constexpr void EntityApply(Functor& func, EntityData<Components...>& data)
+ALWAYS_INLINE constexpr void EntityApply(const Functor& func, const EntityData<Components...>& data)
 {
   func(*std::get<std::remove_cvref_t<Components>*>(data)...);
 }
@@ -336,8 +336,8 @@ constexpr void EntityApply(Functor& func, EntityData<Components...>& data)
 /// @param[in] data Entity data.
 ///
 template<class Type, typename... Components>
-constexpr void EntityApply(
-  void (Type::*func)(Entity, Components...) const, Type* instance, EntityData<Components...>& data)
+ALWAYS_INLINE constexpr void EntityApply(
+  void (Type::*func)(Entity, Components...) const, const Type* instance, const EntityData<Components...>& data)
 {
   (instance->*func)(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
 }
@@ -355,7 +355,8 @@ constexpr void EntityApply(
 /// @param[in] data Entity data.
 ///
 template<class Type, typename... Components>
-constexpr void EntityApply(void (Type::*func)(Entity, Components...), Type* instance, EntityData<Components...>& data)
+ALWAYS_INLINE constexpr void EntityApply(
+  void (Type::*func)(Entity, Components...), Type* instance, const EntityData<Components...>& data)
 {
   (instance->*func)(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
 }
@@ -373,7 +374,8 @@ constexpr void EntityApply(void (Type::*func)(Entity, Components...), Type* inst
 /// @param[in] data Entity data.
 ///
 template<class Type, typename... Components>
-constexpr void EntityApply(void (Type::*func)(Components...) const, Type* instance, EntityData<Components...>& data)
+ALWAYS_INLINE constexpr void EntityApply(
+  void (Type::*func)(Components...) const, Type* instance, const EntityData<Components...>& data)
 {
   (instance->*func)(*std::get<std::remove_cvref_t<Components>*>(data)...);
 }
@@ -391,7 +393,8 @@ constexpr void EntityApply(void (Type::*func)(Components...) const, Type* instan
 /// @param[in] data Entity data.
 ///
 template<class Type, typename... Components>
-constexpr void EntityApply(void (Type::*func)(Components...), Type* instance, EntityData<Components...>& data)
+ALWAYS_INLINE constexpr void EntityApply(
+  void (Type::*func)(Components...), Type* instance, const EntityData<Components...>& data)
 {
   (instance->*func)(*std::get<std::remove_cvref_t<Components>*>(data)...);
 }
@@ -407,7 +410,7 @@ constexpr void EntityApply(void (Type::*func)(Components...), Type* instance, En
 /// @param[in] data Entity data.
 ///
 template<typename... Components>
-constexpr void EntityApply(void (*func)(Entity, Components...), EntityData<Components...>& data)
+ALWAYS_INLINE constexpr void EntityApply(void (*func)(Entity, Components...), const EntityData<Components...>& data)
 {
   func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
 }
@@ -423,7 +426,7 @@ constexpr void EntityApply(void (*func)(Entity, Components...), EntityData<Compo
 /// @param[in] data Entity data.
 ///
 template<typename... Components>
-constexpr void EntityApply(void (*func)(Components...), EntityData<Components...>& data)
+ALWAYS_INLINE constexpr void EntityApply(void (*func)(Components...), const EntityData<Components...>& data)
 {
   func(*std::get<std::remove_cvref_t<Components>*>(data)...);
 }
@@ -438,6 +441,112 @@ constexpr void EntityApply(void (*func)(Components...), EntityData<Components...
 template<typename... Components>
 class SubView
 {
+public:
+  class SubViewIterator
+  {
+  private:
+    using Self = SubViewIterator;
+
+  public:
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
+    using value_type = EntityData<Components...>;
+
+    constexpr SubViewIterator() noexcept = default;
+
+    SubViewIterator(Storage<Entity>* storage, size_t offset) noexcept
+      : data_(
+        storage->data() + offset, (storage->template Access<std::remove_cvref_t<Components>>().data() + offset)...)
+    {}
+
+    SubViewIterator(const SubViewIterator& other) noexcept = default;
+    SubViewIterator& operator=(const SubViewIterator&) noexcept = default;
+
+    // clang-format off
+
+    Self& operator+=(difference_type amount) noexcept
+    {
+      std::get<0>(data_) += amount;
+      ((std::get<std::remove_cvref_t<Components>*>(data_) += amount), ...);
+      return *this;
+    }
+
+    Self& operator-=(difference_type amount) noexcept
+    {
+      std::get<0>(data_) -= amount;
+      ((std::get<std::remove_cvref_t<Components>*>(data_) -= amount), ...);
+      return *this;
+    }
+
+    Self& operator++() noexcept
+    {
+      ++std::get<0>(data_);
+      (++std::get<std::remove_cvref_t<Components>*>(data_), ...);
+      return *this;
+    }
+
+    Self& operator--() noexcept
+    {
+      --std::get<0>(data_);
+      (--std::get<std::remove_cvref_t<Components>*>(data_), ...);
+      return *this;
+    }
+
+    Self operator++(int) noexcept { Self copy(*this); operator++(); return copy; }
+    Self operator--(int) noexcept { Self copy(*this); operator--(); return copy; }
+
+    [[nodiscard]] friend Self operator+(const Self& it, difference_type amount) noexcept
+    { Self tmp = it; tmp += amount; return tmp; }
+    [[nodiscard]] friend Self operator-(const Self& it, difference_type amount) noexcept
+    { Self tmp = it; tmp -= amount; return tmp; }
+    [[nodiscard]] friend Self operator+(difference_type amount, const Self& it) noexcept
+    { return it + amount; }
+
+    [[nodiscard]] friend difference_type operator-(const Self& lhs, const Self& rhs) noexcept
+    {
+      return std::get<0>(lhs.data_) - std::get<0>(rhs.data_);
+    }
+
+    const value_type& operator*() const noexcept { return data_; }
+
+    [[nodiscard]] friend bool operator==(const Self& lhs, const Self& rhs) noexcept
+    {
+      return std::get<0>(lhs.data_) == std::get<0>(rhs.data_);
+    }
+
+    [[nodiscard]] friend bool operator!=(const Self& lhs, const Self& rhs) noexcept
+    {
+      return !(lhs == rhs);
+    }
+
+    [[nodiscard]]
+    friend std::strong_ordering operator<=>(const Self& lhs, const Self& rhs) noexcept
+    {
+      return std::get<0>(lhs.data_) <=> std::get<0>(rhs.data_);
+    }
+
+    // clang-format on
+
+  private:
+    value_type data_;
+  };
+
+  using iterator = SubViewIterator;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+
+  // clang-format off
+
+  [[nodiscard]] iterator begin() const noexcept { return {storage_, 0}; }
+  [[nodiscard]] iterator end() const noexcept { return { storage_, storage_->Size() }; }
+
+  [[nodiscard]] reverse_iterator rbegin() const noexcept { return reverse_iterator(end()); }
+  [[nodiscard]] reverse_iterator rend() const noexcept { return reverse_iterator(begin()); }
+
+  [[nodiscard]] const Entity* ebegin() const noexcept { return storage_->begin(); }
+  [[nodiscard]] const Entity* eend() const noexcept { return storage_->end(); }
+
+  // clang-format on
+
 public:
   ///
   /// Iterates all entities in the view, for each one, unpacks the component data and invokes the function.
@@ -516,231 +625,6 @@ public:
     return const_cast<Component&>(static_cast<const SubView*>(this)->Unpack<Component>(entity));
   }
 
-public:
-  ///
-  /// Entity iterator. Iterates on a selection of entities and components from a single archetype
-  /// storage.
-  ///
-  class Iterator
-  {
-  public:
-    using Data = EntityData<Components...>;
-
-    ///
-    /// Constructs an entity iterator using data.
-    ///
-    /// @param[in] data Data for iterator.
-    ///
-    constexpr Iterator(Data data) noexcept : data_(data) {}
-
-    ///
-    /// Copy constructor.
-    ///
-    /// @param[in] other Iterator to copy.
-    ///
-    constexpr Iterator(const Iterator& other) noexcept : data_(other.data_) {}
-
-    ///
-    /// Copy assignment operator.
-    ///
-    /// @param[in] other Iterator to assign.
-    ///
-    /// @return Reference to assigned iterator.
-    ///
-    constexpr Iterator& operator=(const Iterator& other) noexcept
-    {
-      data_ = other.data_;
-      return *this;
-    }
-
-    ///
-    /// Add-assign operator.
-    ///
-    /// @return Reference to iterator after add.
-    ///
-    constexpr Iterator& operator+=(size_t amount) noexcept
-    {
-      std::get<0>(data_) += amount;
-      ((std::get<std::remove_cvref_t<Components>*>(data_) += amount), ...);
-      return *this;
-    }
-
-    ///
-    /// Subtract-assign operator.
-    ///
-    /// @return Reference to iterator after add.
-    ///
-    constexpr Iterator& operator-=(size_t amount) noexcept
-    {
-      std::get<0>(data_) -= amount;
-      ((std::get<std::remove_cvref_t<Components>*>(data_) -= amount), ...);
-      return *this;
-    }
-
-    ///
-    /// Pre-increment operator.
-    ///
-    /// @return Reference to iterator after increment.
-    ///
-    constexpr Iterator& operator++() noexcept
-    {
-      ++std::get<0>(data_);
-      (++std::get<std::remove_cvref_t<Components>*>(data_), ...);
-      return *this;
-    }
-
-    ///
-    /// Pre-decrement operator.
-    ///
-    /// @return Reference to iterator before decrement.
-    ///
-    constexpr Iterator& operator--() noexcept
-    {
-      --std::get<0>(data_);
-      (--std::get<std::remove_cvref_t<Components>*>(data_), ...);
-      return *this;
-    }
-
-    ///
-    /// Post-increment operator.
-    ///
-    /// @return Copy of iterator before increment.
-    ///
-    constexpr const Iterator operator++(int) noexcept
-    {
-      Iterator copy(*this);
-      operator++();
-      return copy;
-    }
-
-    ///
-    /// Post-decrement operator.
-    ///
-    /// @return Copy of iterator before decrement.
-    ///
-    constexpr const Iterator operator--(int) noexcept
-    {
-      Iterator copy(*this);
-      operator--();
-      return copy;
-    }
-
-    ///
-    /// Add operator.
-    ///
-    /// @return Result.
-    ///
-    constexpr Iterator operator+(size_t amount) const noexcept
-    {
-      return Iterator(std::make_tuple<Entity*, std::remove_cvref_t<Components>*...>(
-        std::get<0>(data_) + amount, (std::get<std::remove_cvref_t<Components>*>(data_) + amount)...));
-    }
-
-    ///
-    /// Subtract operator.
-    ///
-    /// @return Result.
-    ///
-    constexpr Iterator operator-(size_t amount) const noexcept
-    {
-      return Iterator(std::make_tuple<Entity*, std::remove_cvref_t<Components>*...>(
-        std::get<0>(data_) - amount, (std::get<std::remove_cvref_t<Components>*>(data_) - amount)...));
-    }
-
-    ///
-    /// Returns reference to entity data.
-    ///
-    /// @return Reference to data.
-    ///
-    constexpr const Data& operator*() const noexcept
-    {
-      return data_;
-    }
-
-    ///
-    /// Returns reference to entity data.
-    ///
-    /// @return Reference to data.
-    ///
-    constexpr Data& operator*() noexcept
-    {
-      return data_;
-    }
-
-    ///
-    /// Returns pointer to entity data.
-    ///
-    /// @return Pointer to data.
-    ///
-    constexpr const Data* operator->() const noexcept
-    {
-      return *data_;
-    }
-
-    ///
-    /// Returns pointer to entity data.
-    ///
-    /// @return Pointer to data.
-    ///
-    constexpr Data* operator->() noexcept
-    {
-      return *data_;
-    }
-
-    ///
-    /// Compares the iterator to another iterator.
-    ///
-    /// @param other Entity iterator.
-    ///
-    /// @return True if iterator is equal to other iterator, false otherwise.
-    ///
-    constexpr bool operator==(const Iterator& other) const noexcept
-    {
-      return std::get<0>(data_) == std::get<0>(other.data_);
-    }
-
-    ///
-    /// Compares the iterator to an entity iterator.
-    ///
-    /// @param other Entity iterator.
-    ///
-    /// @return True if iterator is not equal to other iterator, false otherwise..
-    ///
-    constexpr bool operator!=(const Iterator& other) const noexcept
-    {
-      return !(*this == other);
-    }
-
-  private:
-    template<typename...>
-    friend class SubView;
-
-    ///
-    /// Constructs an entity iterator using a storage and an offset.
-    ///
-    /// @param[in] storage Storage to iterate on.
-    /// @param[in] offset Offset of the iteration in the entity array of the storage.
-    ///
-    constexpr Iterator(Storage<Entity>* storage, size_t offset) noexcept
-      : data_(
-        storage->data() + offset, (storage->template Access<std::remove_cvref_t<Components>>().data() + offset)...)
-    {}
-
-  private:
-    Data data_;
-  };
-
-  // Style Exception: STL
-  // clang-format off
-
-  Iterator begin() noexcept { return Iterator(storage_, 0); }
-  Iterator end() noexcept { return Iterator(storage_, storage_->Size()); }
-
-  Entity* ebegin() noexcept { return storage_->begin(); }
-  Entity* eend() noexcept { return storage_->end(); }
-
-  // clang-format on
-
 private:
   template<typename...>
   friend class View;
@@ -761,6 +645,8 @@ private:
 ///
 /// Can be thought of as a view over the entire registry for the given components.
 ///
+/// Quite a bit of work being done here. Registry will use the view to do its higher level operations.
+///
 /// @warning
 ///     The view only guarantees that it will contain the archetypes that meet its requirements at the time of creation.
 ///     For example, if a new archetype is created with all the required components after this view was created, it will
@@ -771,6 +657,88 @@ private:
 template<typename... Components>
 class View
 {
+public:
+  class ViewIterator
+  {
+  private:
+    using Self = ViewIterator;
+
+  public:
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
+    using value_type = SubView<Components...>;
+
+    constexpr ViewIterator(const ArchetypeId* archetype, Registry& registry) noexcept
+      : archetype_(archetype), registry_(registry)
+    {}
+
+    ViewIterator(const ViewIterator& other) noexcept = default;
+    ViewIterator& operator=(const ViewIterator&) noexcept = default;
+
+    // clang-format off
+
+    constexpr Self& operator+=(difference_type amount) noexcept { archetype_ += amount; return *this; }
+    constexpr Self& operator-=(difference_type amount) noexcept { archetype_ -= amount; return *this; }
+
+    constexpr Self& operator++() noexcept { return ++archetype_, *this; }
+    constexpr Self& operator--() noexcept { return --archetype_, *this; }
+
+    Self operator++(int) noexcept { Self copy(*this); operator++(); return copy; }
+    Self operator--(int) noexcept { Self copy(*this); operator--(); return copy; }
+
+    [[nodiscard]] friend Self operator+(const Self& it, difference_type amount) noexcept
+    { Self tmp = it; tmp += amount; return tmp; }
+    [[nodiscard]] friend Self operator-(const Self& it, difference_type amount) noexcept
+    { Self tmp = it; tmp -= amount; return tmp; }
+    [[nodiscard]] friend Self operator+(difference_type amount, const Self& it) noexcept
+    { return it + amount; }
+
+    [[nodiscard]] friend difference_type operator-(const Self& lhs, const Self& rhs) noexcept
+    {
+      return lhs.archetype_ - rhs.archetype_;
+    }
+
+    [[nodiscard]] constexpr value_type operator*() const noexcept
+    {
+      return registry_.storages_[*archetype_];
+    }
+
+    [[nodiscard]] friend bool operator==(const Self& lhs, const Self& rhs) noexcept
+    {
+      return lhs.archetype_ == rhs.archetype_;
+    }
+
+    [[nodiscard]] friend bool operator!=(const Self& lhs, const Self& rhs) noexcept
+    {
+      return !(lhs == rhs);
+    }
+
+    [[nodiscard]]
+    friend std::strong_ordering operator<=>(const Self& lhs, const Self& rhs) noexcept
+    {
+      return lhs.archetype_ <=> rhs.archetype_;
+    }
+
+    // clang-format on
+
+  private:
+    const ArchetypeId* archetype_;
+    Registry& registry_;
+  };
+
+  using iterator = ViewIterator;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+
+  // clang-format off
+
+  [[nodiscard]] iterator begin() const noexcept { return { archetypes_.begin(), registry_ }; }
+  [[nodiscard]] iterator end() const noexcept { return { archetypes_.end(), registry_ }; }
+
+  [[nodiscard]] reverse_iterator rbegin() const noexcept { return reverse_iterator(end()); }
+  [[nodiscard]] reverse_iterator rend() const noexcept { return reverse_iterator(begin()); }
+
+  // clang-format on
+
 public:
   static constexpr bool cNoComponents = sizeof...(Components) == 0;
 
@@ -970,161 +938,6 @@ public:
   {
     return const_cast<Component&>(static_cast<const View*>(this)->Unpack<Component>(entity));
   }
-
-public:
-  ///
-  /// Poly view iterator. Iterates on single views in the view.
-  ///
-  class Iterator
-  {
-  public:
-    ///
-    /// Add-assign operator.
-    ///
-    /// @return Reference to iterator after add.
-    ///
-    constexpr Iterator& operator+=(size_t amount) noexcept
-    {
-      archetype_ += amount;
-      return *this;
-    }
-
-    ///
-    /// Subtract-assign operator.
-    ///
-    /// @return Reference to iterator after add.
-    ///
-    constexpr Iterator& operator-=(size_t amount) noexcept
-    {
-      archetype_ -= amount;
-      return *this;
-    }
-
-    ///
-    /// Pre-increment operator.
-    ///
-    /// @return Reference to iterator before increment.
-    ///
-    constexpr Iterator& operator++() noexcept
-    {
-      return ++archetype_, *this;
-    }
-
-    ///
-    /// Pre-decrement operator.
-    ///
-    /// @return Reference to iterator before decrement.
-    ///
-    constexpr Iterator& operator--() noexcept
-    {
-      return --archetype_, *this;
-    }
-
-    ///
-    /// Post-increment operator.
-    ///
-    /// @return Copy of iterator before increment.
-    ///
-    constexpr const Iterator operator++(int) noexcept
-    {
-      Iterator copy(*this);
-      operator++();
-      return copy;
-    }
-
-    ///
-    /// Post-decrement operator.
-    ///
-    /// @return Copy of iterator before decrement.
-    ///
-    constexpr const Iterator operator--(int) noexcept
-    {
-      Iterator copy(*this);
-      operator--();
-      return copy;
-    }
-
-    ///
-    /// Add operator.
-    ///
-    /// @return Result.
-    ///
-    constexpr Iterator operator+(size_t amount) const noexcept
-    {
-      return Iterator(archetype_ + amount, registry_);
-    }
-
-    ///
-    /// Subtract operator.
-    ///
-    /// @return Result.
-    ///
-    constexpr Iterator operator-(size_t amount) const noexcept
-    {
-      return Iterator(archetype_ - amount, registry_);
-    }
-
-    ///
-    /// Returns the reference to the storage.
-    ///
-    /// @return Storage reference.
-    ///
-    constexpr SubView<Components...> operator*() const noexcept
-    {
-      return SubView<Components...> { registry_.storages_[*archetype_] };
-    }
-
-    ///
-    /// Returns whether or not iterators are equal.
-    ///
-    /// @param[in] other Iterator to compare.
-    ///
-    /// @return True if both iterators are equal, false otherwise.
-    ///
-    constexpr bool operator==(const Iterator& other) const noexcept
-    {
-      return archetype_ == other.archetype_;
-    }
-
-    ///
-    /// Returns whether or not iterators are equal.
-    ///
-    /// @param[in] other Iterator to compare.
-    ///
-    /// @return True if both iterators are not equal, false otherwise.
-    ///
-    constexpr bool operator!=(const Iterator& other) const noexcept
-    {
-      return archetype_ != other.archetype_;
-    }
-
-  private:
-    template<typename...>
-    friend class View;
-
-    ///
-    /// Constructs an iterator with the archetype array and a registry reference.
-    ///
-    /// @param[in] archetype Archetype
-    ///
-    /// @param[in] registry Registry to obtain storages from.
-    ///
-    constexpr Iterator(const ArchetypeId* archetype, Registry& registry) noexcept
-      : archetype_(archetype), registry_(registry)
-    {}
-
-  private:
-    const ArchetypeId* archetype_;
-    Registry& registry_;
-  };
-
-  // Style Exception: STL
-  // clang-format off
-
-  [[nodiscard]] Iterator begin() { return Iterator(archetypes_.begin(), registry_); }
-  [[nodiscard]] Iterator end() { return Iterator(archetypes_.end(), registry_); }
-
-  // clang-format on
 
 private:
   Registry& registry_;

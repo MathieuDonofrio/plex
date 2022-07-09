@@ -49,17 +49,17 @@ public:
   using allocator_type = AllocatorType;
   using allocator_traits = std::allocator_traits<allocator_type>;
 
-  // Forward iterator creation methods.
+  // Forward iterators
   [[nodiscard]] constexpr iterator begin() { return array_; }
   [[nodiscard]] constexpr const_iterator begin() const { return array_; }
   [[nodiscard]] constexpr iterator end() { return array_ + size_; }
   [[nodiscard]] constexpr const_iterator end() const { return array_ + size_; }
 
-  // Explicit const forward iterator creation methods.
+  // Explicit const forward iterators
   [[nodiscard]] constexpr const_iterator cbegin() const { return array_; }
   [[nodiscard]] constexpr const_iterator cend() const { return array_ + size_; }
 
-  // Reverse iterator creation methods.
+  // Reverse iterators
   [[nodiscard]] constexpr reverse_iterator rbegin() { return reverse_iterator(end()); }
   [[nodiscard]] constexpr const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
   [[nodiscard]] constexpr reverse_iterator rend() { return reverse_iterator(begin()); }
@@ -82,7 +82,7 @@ public:
   ///
   /// @return Const reference to element at the index.
   ///
-  [[nodiscard]] constexpr const Type& operator[](const size_type index) const noexcept
+  [[nodiscard]] constexpr const_reference operator[](const size_type index) const noexcept
   {
     ASSERT(index < size_, "Index out of bounds");
     return array_[index];
@@ -95,7 +95,7 @@ public:
   ///
   /// @return Reference to element at the index.
   ///
-  [[nodiscard]] constexpr Type& operator[](const size_type index) noexcept
+  [[nodiscard]] constexpr reference operator[](const size_type index) noexcept
   {
     ASSERT(index < size_, "Index out of bounds");
     return array_[index];
@@ -106,9 +106,9 @@ public:
   ///
   /// @return Size of the vector.
   ///
-  [[nodiscard]] constexpr size_t size() const noexcept
+  [[nodiscard]] constexpr size_type size() const noexcept
   {
-    return static_cast<size_t>(size_);
+    return static_cast<size_type>(size_);
   }
 
   ///
@@ -117,9 +117,9 @@ public:
   ///
   /// @return Capacity of the vector.
   ///
-  [[nodiscard]] constexpr size_t capacity() const noexcept
+  [[nodiscard]] constexpr size_type capacity() const noexcept
   {
-    return static_cast<size_t>(capacity_);
+    return static_cast<size_type>(capacity_);
   }
 
   ///
