@@ -27,15 +27,15 @@ namespace
 
 [[nodiscard]] bool SystemObject::HasDependency(const SystemObject& system) const noexcept
 {
-  for (const QueryDataAccess& data : info_->data_access)
+  for (const QueryDataAccess& data : data_access_)
   {
     if (data.thread_safe) continue;
 
     if (data.read_only)
     {
-      if (HasWriteDependency(system.info_->data_access, data)) return true;
+      if (HasWriteDependency(system.data_access_, data)) return true;
     }
-    else if (HasReadDependency(system.info_->data_access, data))
+    else if (HasReadDependency(system.data_access_, data))
     {
       return true;
     }

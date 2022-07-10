@@ -25,7 +25,7 @@ namespace
   template<typename... Components>
   struct MockQuery : public QueryDataAccessFactory<MockQuery<Components...>, Components...>
   {
-    static MockQuery FetchData([[maybe_unused]] Context& context, void*)
+    static MockQuery FetchData(void*, Context&, Context&)
     {
       return MockQuery();
     }
@@ -193,7 +193,7 @@ static void Scheduler_Reference_5Stages4SystemsEach(benchmark::State& state)
   {
     for (auto& step : steps)
     {
-      auto task = step.executor(context);
+      auto task = (*step.system)(context);
 
       task.Eject();
 
@@ -299,7 +299,7 @@ static void Scheduler_Reference_10Stages8SystemsEach(benchmark::State& state)
   {
     for (auto& step : steps)
     {
-      auto task = step.executor(context);
+      auto task = (*step.system)(context);
 
       task.Eject();
 
@@ -405,7 +405,7 @@ static void Scheduler_Reference_10Stages16SystemsEach(benchmark::State& state)
   {
     for (auto& step : steps)
     {
-      auto task = step.executor(context);
+      auto task = (*step.system)(context);
 
       task.Eject();
 

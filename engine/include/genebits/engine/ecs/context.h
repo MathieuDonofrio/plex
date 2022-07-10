@@ -165,7 +165,7 @@ private:
   /// @param[in] resource Pointer to the resource to insert.
   ///
   template<typename Type>
-  void InsertOrReplace(ErasedPtr<void>&& instance)
+  COLD_SECTION void InsertOrReplace(ErasedPtr<void>&& instance)
   {
     const constexpr auto name = TypeName<Type>();
 
@@ -187,7 +187,7 @@ private:
   ///
   /// @return Iterator to the instance, or end() if not found.
   ///
-  [[nodiscard]] auto FindByName(std::string_view name) noexcept
+  [[nodiscard]] COLD_SECTION auto FindByName(std::string_view name) noexcept
   {
     for (auto it = instances_.begin(); it != instances_.end(); ++it)
     {

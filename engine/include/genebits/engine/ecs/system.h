@@ -87,32 +87,26 @@ public:
   using ContainsQueryType = std::disjunction<IsQueryType<Query, std::remove_cvref_t<Queries>>...>;
 
   ///
-  /// Invokes the system with the specified registry.
+  /// Invokes the system with the context.
   ///
   /// Will create all the queries fetching the data from various context data sources.
   ///
-  /// @warning Data sources should contain all the necessary data sources for the possibly used queries, otherwise
-  /// behaviour might be undefined.
-  ///
-  /// Always returns a void coroutine task. If the system was a couroutine, it will be awaited, otherwise, the system
-  /// will be invoked and returned as a task.
-  ///
   /// @param[in] system The system to invoke.
-  /// @param[in] context Context to use, containing all the data sources.
+  /// @param[in] global_context The global context to use, contains all global state.
   ///
   /// @return Coroutine task of the system invocation.
   ///
-  static Task<> Invoke(SystemType* system, Context& context)
+  static Task<> Invoke(SystemType* system, Context& global_context, Context& local_context)
   {
     const SystemHandle handle = std::bit_cast<SystemHandle>(system);
 
     if constexpr (IsCoroutine)
     {
-      co_await system(std::remove_cvref_t<Queries>::FetchData(context, handle)...);
+      co_await system(std::remove_cvref_t<Queries>::FetchData(handle, global_context, local_context)...);
     }
     else
     {
-      system(std::remove_cvref_t<Queries>::FetchData(context, handle)...);
+      system(std::remove_cvref_t<Queries>::FetchData(handle, global_context, local_context)...);
       co_return;
     }
   }
@@ -159,15 +153,14 @@ public:
   ///
   /// Executes the system for the context.
   ///
-  /// @warning The context should contain all the required data sources for the queries.
-  ///
-  /// @param[in] registry The registry to use.
+  /// @param[in] global_context The global context.
+  /// @param[in] local_context The local context.
   ///
   /// @return The task of the system invocation.
   ///
-  Task<> operator()(Context& context) const
+  Task<> operator()(Context& global_context, Context& local_context) const
   {
-    return executor_(context, system_);
+    return executor_(system_, global_context, local_context);
   }
 
   ///
@@ -186,26 +179,27 @@ private:
   ///
   /// @tparam SystemType The system type.
   ///
-  /// @param[in] context The context to use.
   /// @param[in] system The system to invoke.
+  /// @param[in] global_context The global context.
+  /// @param[in] local_context The local context.
   ///
   /// @return The task of the system invocation.
   ///
   template<typename SystemType>
-  static Task<> Execute(Context& context, SystemHandle system)
+  static Task<> Execute(SystemHandle system, Context& global_context, Context& local_context)
   {
-    return SystemTraits<SystemType>::Invoke(std::bit_cast<SystemType>(system), context);
+    return SystemTraits<SystemType>::Invoke(std::bit_cast<SystemType>(system), global_context, local_context);
   }
 
 private:
   SystemHandle system_;
-  Task<> (*executor_)(Context&, SystemHandle);
+  Task<> (*executor_)(SystemHandle, Context&, Context&);
 };
 
 ///
 /// Type-erased wrapper for a system.
 ///
-/// Contains executor and extra information about the system.
+/// Contains system information and local state.
 ///
 class SystemObject
 {
@@ -220,8 +214,21 @@ public:
   /// @param[in] system The system to wrap.
   ///
   template<System SystemType>
-  SystemObject(SystemType system) noexcept : executor_(system), info_(MakeInfo<SystemType>())
+  explicit SystemObject(SystemType system) noexcept
+    : executor_(system), data_access_(SystemTraits<SystemType>::GetDataAccess())
   {}
+
+  ///
+  /// Executes the system for the context.
+  ///
+  /// @param[in] global_context The global context.
+  ///
+  /// @return The task of the system invocation.
+  ///
+  Task<> operator()(Context& global_context)
+  {
+    return executor_(global_context, local_context_);
+  }
 
   ///
   /// Checks whether or not one system object has a data dependency on another.
@@ -285,35 +292,9 @@ public:
   }
 
 private:
-  ///
-  /// Struct that contains the extra information about the system.
-  ///
-  struct Info
-  {
-    template<size_t N>
-    Info(const Array<QueryDataAccess, N>& data_access_) : data_access(data_access_)
-    {}
-
-    Vector<QueryDataAccess> data_access;
-  };
-
-  ///
-  /// Allocates and initializes the system info.
-  ///
-  /// @tparam SystemType System type to get info for.
-  ///
-  /// @return Created system info.
-  ///
-  template<typename SystemType>
-  static Info* MakeInfo()
-  {
-    return new Info(SystemTraits<SystemType>::GetDataAccess());
-  }
-
-private:
   SystemExecutor executor_;
-
-  std::unique_ptr<Info> info_;
+  Context local_context_;
+  Vector<QueryDataAccess> data_access_;
 };
 } // namespace genebits::engine
 

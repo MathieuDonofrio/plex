@@ -16,7 +16,7 @@ namespace
   template<typename... Types>
   struct ResourcesMock : public QueryDataAccessFactory<ResourcesMock<Types...>, Types...>
   {
-    static ResourcesMock FetchData([[maybe_unused]] Context& context, void*)
+    static ResourcesMock FetchData(void*, Context&, Context&)
     {
       resources_mock_get_call_counter++;
 
@@ -32,7 +32,7 @@ namespace
   template<typename... Components>
   struct EntitiesMock : public QueryDataAccessFactory<EntitiesMock<Components...>, Components...>
   {
-    static EntitiesMock FetchData([[maybe_unused]] Context& context, void*)
+    static EntitiesMock FetchData(void*, Context&, Context&)
     {
       entities_mock_get_call_counter++;
 
@@ -132,7 +132,7 @@ TEST(SystemTraits, Invoke_NoQueries_SystemCalled)
 
   auto system = SystemMock1<>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -147,7 +147,7 @@ TEST(SystemTraits, Invoke_VoidReturnAndNoQueries_SystemCalled)
 
   auto system = SystemMock2<>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -162,7 +162,7 @@ TEST(SystemTraits, Invoke_EmptyEntitiesQuery_SystemCalled)
 
   auto system = SystemMock1<EntitiesMock<>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -177,7 +177,7 @@ TEST(SystemTraits, Invoke_EmptyResourcesQuery_SystemCalled)
 
   auto system = SystemMock1<ResourcesMock<>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -192,7 +192,7 @@ TEST(SystemTraits, Invoke_EmptyEntitiesAndResourcesQuery_SystemCalled)
 
   auto system = SystemMock1<EntitiesMock<>, ResourcesMock<>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -207,7 +207,7 @@ TEST(SystemTraits, Invoke_EntitiesWithComponentsQuery_SystemCalled)
 
   auto system = SystemMock1<EntitiesMock<int>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -222,7 +222,7 @@ TEST(SystemTraits, Invoke_EntitiesWithComponentsAndResourcesQuery_SystemCalled)
 
   auto system = SystemMock1<EntitiesMock<int, long>, ResourcesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -237,7 +237,7 @@ TEST(SystemTraits, Invoke_VoidReturnEntitiesWithComponentsAndResourcesQuery_Syst
 
   auto system = SystemMock2<EntitiesMock<int, long>, ResourcesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -252,7 +252,7 @@ TEST(SystemTraits, Invoke_SingleQuery_QueryGetCalled)
 
   auto system = SystemMock2<ResourcesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -267,7 +267,7 @@ TEST(SystemTraits, Invoke_DoubleQuerySameType_QueryGetCalled)
 
   auto system = SystemMock2<ResourcesMock<float>, ResourcesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -283,7 +283,7 @@ TEST(SystemTraits, Invoke_DoubleQueryDifferent_QueryGetCalled)
 
   auto system = SystemMock2<ResourcesMock<float>, EntitiesMock<float>>;
 
-  auto task = SystemTraits<decltype(system)>::Invoke(system, context);
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
 
   SyncWait(task);
 
@@ -319,7 +319,7 @@ TEST(SystemExecutor, Execute_NoData_SystemCalled)
 
   Context context;
 
-  auto task = executor(context);
+  auto task = executor(context, context);
 
   SyncWait(task);
 
@@ -336,7 +336,7 @@ TEST(SystemExecutor, Execute_WithData_SystemCalled)
 
   Context context;
 
-  auto task = executor(context);
+  auto task = executor(context, context);
 
   SyncWait(task);
 

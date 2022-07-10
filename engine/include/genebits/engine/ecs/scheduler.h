@@ -69,7 +69,7 @@ public:
   ///
   struct Step
   {
-    SystemExecutor executor;
+    SystemObject* system;
     Vector<size_t> dependencies; // As indexes
   };
 

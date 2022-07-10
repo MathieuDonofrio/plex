@@ -9,7 +9,7 @@ namespace
   template<typename... Components>
   struct QueryMock : public QueryDataAccessFactory<QueryMock<Components...>, Components...>
   {
-    static QueryMock FetchData([[maybe_unused]] Context& context, void*)
+    static QueryMock FetchData(void*, Context&, Context&)
     {
       return QueryMock();
     }

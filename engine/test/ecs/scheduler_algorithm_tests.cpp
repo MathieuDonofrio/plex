@@ -21,7 +21,7 @@ namespace
   template<typename... Components>
   struct MockQuery : public QueryDataAccessFactory<MockQuery<Components...>, Components...>
   {
-    static MockQuery FetchData([[maybe_unused]] Context& context, void*)
+    static MockQuery FetchData(void*, Context&, Context&)
     {
       return MockQuery();
     }
@@ -50,7 +50,7 @@ namespace
   {
     for (size_t i = 0; i < steps.size(); i++)
     {
-      if (steps[i].executor.Handle() == std::bit_cast<SystemHandle>(system))
+      if (steps[i].system->Handle() == std::bit_cast<SystemHandle>(system))
       {
         return i;
       }
@@ -133,7 +133,7 @@ TEST(Scheduler_Algorithm_Tests, ComputeSchedulerData_SingleSystem_OneStep)
 
   EXPECT_EQ(steps.size(), 1);
 
-  EXPECT_EQ(steps[0].executor.Handle(), std::bit_cast<SystemHandle>(&SystemMock<1>));
+  EXPECT_EQ(steps[0].system->Handle(), std::bit_cast<SystemHandle>(&SystemMock<1>));
   EXPECT_EQ(steps[0].dependencies.size(), 0);
 }
 

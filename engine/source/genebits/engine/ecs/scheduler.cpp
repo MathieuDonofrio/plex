@@ -36,7 +36,7 @@ SharedTask<> Scheduler::MakeSystemTask(const Step& step, Context& context)
     co_await counter;
   }
 
-  co_await step.executor(context);
+  co_await step.system->operator()(context);
 }
 
 Scheduler::Cache::Cache()
@@ -265,7 +265,7 @@ Vector<Scheduler::Step> ComputeExecutionGraph(
       }
     }
 
-    steps.push_back({ intermediate_step.system->GetExecutor(), dependencies });
+    steps.push_back({ intermediate_step.system, dependencies });
   }
 
   return steps;
