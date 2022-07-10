@@ -583,93 +583,6 @@ TEST(SubView_Tests, Unpack_Single_CorrectValue)
   EXPECT_EQ(mono_view.Unpack<int>(entity), 10);
 }
 
-TEST(SubView_Tests, ForEach_None_NoIteration)
-{
-  Registry registry;
-
-  registry.Destroy(registry.Create<int>(0));
-
-  View<int> view = registry.ViewFor<int>();
-
-  SubView<int> mono_view = *view.begin();
-
-  size_t iterations = 0;
-
-  mono_view.ForEach([&iterations](int) { iterations++; });
-
-  EXPECT_EQ(iterations, 0);
-}
-
-TEST(SubView_Tests, ForEach_Single_OneIteration)
-{
-  Registry registry;
-
-  auto entity = registry.Create<int>(0);
-
-  View view = registry.ViewFor<int>();
-
-  SubView mono_view = *view.begin();
-
-  size_t iterations = 0;
-
-  mono_view.ForEach(
-    [&](int e)
-    {
-      EXPECT_EQ(entity, static_cast<Entity>(e));
-      iterations++;
-    });
-
-  EXPECT_EQ(iterations, 1);
-}
-
-TEST(SubView_Tests, ForEach_Double_TwoIterations)
-{
-  Registry registry;
-
-  registry.Create<int>(0);
-  registry.Create<int>(0);
-
-  View view = registry.ViewFor<int>();
-
-  SubView mono_view = *view.begin();
-
-  size_t iterations = 0;
-
-  mono_view.ForEach([&](int) { iterations++; });
-
-  EXPECT_EQ(iterations, 2);
-}
-
-TEST(SubView_Tests, ForEach_Multiple_CorrectIterations)
-{
-  Registry registry;
-
-  registry.Create<int>(0);
-  registry.Create<int>(0);
-  registry.Create<int>(0);
-  registry.Create<int>(0);
-  registry.Create<int>(0);
-  registry.Create<int>(0);
-
-  registry.Create<double>(0);
-  registry.Create<double>(0);
-
-  SubView mono_view1 = *registry.ViewFor<int>().begin();
-  SubView mono_view2 = *(registry.ViewFor<double>().begin());
-
-  size_t iterations = 0;
-
-  mono_view1.ForEach([&](int) { iterations++; });
-
-  EXPECT_EQ(iterations, 6);
-
-  iterations = 0;
-
-  mono_view2.ForEach([&](double) { iterations++; });
-
-  EXPECT_EQ(iterations, 2);
-}
-
 TEST(SubViewIterator_Tests, Dereference_Single_CorrectEntity)
 {
   Registry registry;
@@ -881,70 +794,6 @@ TEST(SubViewEntityIterator_Tests, Increment_Double_CorrectEntities)
   EXPECT_EQ(iterations, 2);
 }
 
-TEST(EntityApply_Tests, FreeFunction_Reduced_CallsFunction)
-{
-  static size_t call_count = 0;
-
-  static constexpr int value = 99;
-
-  struct TestClass
-  {
-    static void function(int actual)
-    {
-      call_count++;
-
-      EXPECT_EQ(value, actual);
-    }
-  };
-
-  Registry registry;
-
-  registry.Create(value);
-  registry.Create(value);
-
-  for (auto sub_view : registry.ViewFor<int>())
-  {
-    for (auto& data : sub_view)
-    {
-      EntityApply<int>(&TestClass::function, data);
-    }
-  }
-
-  EXPECT_EQ(call_count, 2);
-}
-
-TEST(EntityApply_Tests, FreeFunction_Extended_CallsFunction)
-{
-  static size_t call_count = 0;
-
-  static constexpr int value = 99;
-
-  struct TestClass
-  {
-    static void function(Entity, int actual)
-    {
-      call_count++;
-
-      EXPECT_EQ(value, actual);
-    }
-  };
-
-  Registry registry;
-
-  registry.Create(value);
-  registry.Create(value);
-
-  for (auto sub_view : registry.ViewFor<int>())
-  {
-    for (auto& data : sub_view)
-    {
-      EntityApply<int>(&TestClass::function, data);
-    }
-  }
-
-  EXPECT_EQ(call_count, 2);
-}
-
 TEST(EntityApply_Tests, Lambda_Reduced_CallsFunction)
 {
   static size_t call_count = 0;
@@ -1003,140 +852,241 @@ TEST(EntityApply_Tests, Lambda_Extended_CallsFunction)
   EXPECT_EQ(call_count, 2);
 }
 
-TEST(EntityApply_Tests, MemberFunction_Reduced_CallsFunction)
+TEST(EntityForEach_Tests, SubView_Single_CorrectEntity)
 {
-  static size_t call_count = 0;
+  Registry registry;
 
-  static constexpr int value = 99;
+  registry.Create<int>(99);
 
-  struct TestClass
-  {
-    void function(int actual)
+  SubView sub_view = *registry.ViewFor<int>().begin();
+
+  size_t call_count = 0;
+
+  EntityForEach(sub_view,
+    [&](Entity, int value)
     {
-      call_count++;
+      EXPECT_EQ(value, 99);
+      ++call_count;
+    });
 
-      EXPECT_EQ(value, actual);
-    }
-  };
+  EXPECT_EQ(call_count, 1);
+}
 
-  TestClass instance;
+TEST(EntityForEach_Tests, SubView_3_CorrectEntities)
+{
+  constexpr int amount = 3;
 
   Registry registry;
 
-  registry.Create(value);
-  registry.Create(value);
-
-  for (auto sub_view : registry.ViewFor<int>())
+  for (int i = 0; i < amount; i++)
   {
-    for (auto& data : sub_view)
-    {
-      EntityApply<TestClass, int>(&TestClass::function, &instance, data);
-    }
+    registry.Create(i);
   }
 
-  EXPECT_EQ(call_count, 2);
+  SubView sub_view = *registry.ViewFor<int>().begin();
+
+  int call_count = 0;
+
+  EntityForEach(sub_view,
+    [&](Entity, int value)
+    {
+      EXPECT_EQ(value, call_count);
+      ++call_count;
+    });
+
+  EXPECT_EQ(call_count, amount);
 }
 
-TEST(EntityApply_Tests, MemberFunction_Extended_CallsFunction)
+TEST(EntityForEach_Tests, SubView_4_CorrectEntities)
 {
-  static size_t call_count = 0;
-
-  static constexpr int value = 99;
-
-  struct TestClass
-  {
-    void function(Entity, int actual)
-    {
-      call_count++;
-
-      EXPECT_EQ(value, actual);
-    }
-  };
-
-  TestClass instance;
+  constexpr int amount = 4;
 
   Registry registry;
 
-  registry.Create(value);
-  registry.Create(value);
-
-  for (auto sub_view : registry.ViewFor<int>())
+  for (int i = 0; i < amount; i++)
   {
-    for (auto& data : sub_view)
-    {
-      EntityApply<TestClass, int>(&TestClass::function, &instance, data);
-    }
+    registry.Create(i);
   }
 
-  EXPECT_EQ(call_count, 2);
+  SubView sub_view = *registry.ViewFor<int>().begin();
+
+  int call_count = 0;
+
+  EntityForEach(sub_view,
+    [&](Entity, int value)
+    {
+      EXPECT_EQ(value, call_count);
+      ++call_count;
+    });
+
+  EXPECT_EQ(call_count, amount);
 }
 
-TEST(EntityApply_Tests, ConstMemberFunction_Reduced_CallsFunction)
+TEST(EntityForEach_Tests, SubView_7_CorrectEntities)
 {
-  static size_t call_count = 0;
-
-  static constexpr int value = 99;
-
-  struct TestClass
-  {
-    void function(int actual)
-    {
-      call_count++;
-
-      EXPECT_EQ(value, actual);
-    }
-  };
-
-  TestClass instance;
+  constexpr int amount = 7;
 
   Registry registry;
 
-  registry.Create(value);
-  registry.Create(value);
-
-  for (auto sub_view : registry.ViewFor<int>())
+  for (int i = 0; i < amount; i++)
   {
-    for (auto& data : sub_view)
-    {
-      EntityApply<TestClass, int>(&TestClass::function, &instance, data);
-    }
+    registry.Create(i);
   }
 
-  EXPECT_EQ(call_count, 2);
+  SubView sub_view = *registry.ViewFor<int>().begin();
+
+  int call_count = 0;
+
+  EntityForEach(sub_view,
+    [&](Entity, int value)
+    {
+      EXPECT_EQ(value, call_count);
+      ++call_count;
+    });
+
+  EXPECT_EQ(call_count, amount);
 }
 
-TEST(EntityApply_Tests, ConstMemberFunction_Extended_CallsFunction)
+TEST(EntityForEach_Tests, SubView_8_CorrectEntities)
 {
-  static size_t call_count = 0;
-
-  static constexpr int value = 99;
-
-  struct TestClass
-  {
-    void function(Entity, int actual)
-    {
-      call_count++;
-
-      EXPECT_EQ(value, actual);
-    }
-  };
-
-  TestClass instance;
+  constexpr int amount = 8;
 
   Registry registry;
 
-  registry.Create(value);
-  registry.Create(value);
-
-  for (auto sub_view : registry.ViewFor<int>())
+  for (int i = 0; i < amount; i++)
   {
-    for (auto& data : sub_view)
-    {
-      EntityApply<TestClass, int>(&TestClass::function, &instance, data);
-    }
+    registry.Create(i);
   }
 
-  EXPECT_EQ(call_count, 2);
+  SubView sub_view = *registry.ViewFor<int>().begin();
+
+  int call_count = 0;
+
+  EntityForEach(sub_view,
+    [&](Entity, int value)
+    {
+      EXPECT_EQ(value, call_count);
+      ++call_count;
+    });
+
+  EXPECT_EQ(call_count, amount);
 }
 
+TEST(EntityForEach_Tests, SubView_9_CorrectEntities)
+{
+  constexpr int amount = 9;
+
+  Registry registry;
+
+  for (int i = 0; i < amount; i++)
+  {
+    registry.Create(i);
+  }
+
+  SubView sub_view = *registry.ViewFor<int>().begin();
+
+  int call_count = 0;
+
+  EntityForEach(sub_view,
+    [&](Entity, int value)
+    {
+      EXPECT_EQ(value, call_count);
+      ++call_count;
+    });
+
+  EXPECT_EQ(call_count, amount);
+}
+
+TEST(EntityForEach_Tests, SubView_65_CorrectEntities)
+{
+  constexpr int amount = 65;
+
+  Registry registry;
+
+  for (int i = 0; i < amount; i++)
+  {
+    registry.Create(i);
+  }
+
+  SubView sub_view = *registry.ViewFor<int>().begin();
+
+  int call_count = 0;
+
+  EntityForEach(sub_view,
+    [&](Entity, int value)
+    {
+      EXPECT_EQ(value, call_count);
+      ++call_count;
+    });
+
+  EXPECT_EQ(call_count, amount);
+}
+
+TEST(EntityForEach_Tests, View_SingleArchetype_CorrectEntities)
+{
+  constexpr int arch1_amount = 2;
+
+  constexpr int total_amount = arch1_amount;
+
+  Registry registry;
+
+  for (int i = 0; i < arch1_amount; i++)
+  {
+    registry.Create(i);
+  }
+
+  auto view = registry.ViewFor<int>();
+
+  int call_count = 0;
+
+  EntityForEach(view,
+    [&](Entity, int value)
+    {
+      EXPECT_EQ(value, call_count);
+      ++call_count;
+    });
+
+  EXPECT_EQ(call_count, total_amount);
+}
+
+TEST(EntityForEach_Tests, View_TwoArchetypes_CorrectEntities)
+{
+  constexpr int arch1_amount = 2;
+  constexpr int arch2_amount = 9;
+
+  constexpr int total_amount = arch1_amount + arch2_amount;
+
+  Registry registry;
+
+  for (int i = 0; i < arch1_amount; i++)
+  {
+    registry.Create(i);
+  }
+
+  for (int i = arch1_amount; i < total_amount; i++)
+  {
+    registry.Create(i, 0.5);
+  }
+
+  auto view = registry.ViewFor<int>();
+
+  int call_count = 0;
+
+  std::set<int> seen_entities;
+
+  EntityForEach(view,
+    [&](Entity, int value)
+    {
+      seen_entities.emplace(value);
+      ++call_count;
+    });
+
+  for (int i = 0; i < total_amount; i++)
+  {
+    EXPECT_TRUE(seen_entities.contains(i));
+  }
+
+  EXPECT_EQ(call_count, total_amount);
+  EXPECT_EQ(seen_entities.size(), total_amount);
+}
 } // namespace genebits::engine::tests

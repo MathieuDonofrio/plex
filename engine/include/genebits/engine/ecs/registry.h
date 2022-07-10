@@ -250,186 +250,7 @@ private:
 /// @tparam Components All the component types.
 ///
 template<typename... Components>
-using EntityData = std::tuple<Entity*, std::remove_cvref_t<Components>*...>;
-
-///
-/// Concept used to determine if an functor can be used as an reduced entity apply functor.
-///
-/// To meet the requirements, the functor operator must not contain the entity identifier.
-///
-/// @tparam Functor Functor type.
-/// @tparam Components Component types.
-///
-template<typename Functor, typename... Components>
-concept EntityReducedFunctor = requires(Functor functor, Components... components) { functor(components...); };
-
-///
-/// Concept used to determine if an functor can be used as an extended entity apply functor.
-///
-/// To meet the requirements, the functor operator must contain the entity identifier type as
-/// the first argument.
-///
-/// @tparam Functor Functor type.
-/// @tparam Components Component types.
-///
-template<typename Functor, typename... Components>
-concept EntityExtendedFunctor =
-  requires(Functor functor, Entity entity, Components... components) { functor(entity, components...); };
-
-///
-/// Concept used to determine if an functor can be used as an entity apply functor.
-///
-/// To meet the requirements, must be EntityReducedFunctor or EntityExtendedFunctor.
-///
-/// @tparam Functor Functor type.
-/// @tparam Components Component types.
-///
-template<typename Functor, typename... Components>
-concept EntityFunctor = EntityReducedFunctor<Functor, Components...> || EntityExtendedFunctor<Functor, Components...>;
-
-///
-/// Unpacks the entity identifier and entity data, then invokes the functor.
-///
-/// Overload used for functors such as lambda's.
-///
-/// @tparam Functor Type of functor to apply.
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] invocable Invocable to apply.
-/// @param[in] data Entity data.
-///
-template<typename Functor, typename... Components>
-requires EntityExtendedFunctor<Functor, Components...>
-ALWAYS_INLINE constexpr void EntityApply(const Functor& func, const EntityData<Components...>& data)
-{
-  func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
-}
-
-///
-/// Unpacks the entity data, then invokes the functor.
-///
-/// Overload used for functors such as lambda's.
-///
-/// @tparam Functor Type of functor to apply.
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] invocable Invocable to apply.
-/// @param[in] data Entity data.
-///
-template<typename Functor, typename... Components>
-requires EntityReducedFunctor<Functor, Components...>
-ALWAYS_INLINE constexpr void EntityApply(const Functor& func, const EntityData<Components...>& data)
-{
-  func(*std::get<std::remove_cvref_t<Components>*>(data)...);
-}
-
-///
-/// Unpacks the entity identifier and entity data, then invokes the member function.
-///
-/// Overload used for const member function.
-///
-/// @tparam Type Type of instance to invoke member function with.
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] func Member function to apply.
-/// @param[in] instance Instance to invoke function on.
-/// @param[in] data Entity data.
-///
-template<class Type, typename... Components>
-ALWAYS_INLINE constexpr void EntityApply(
-  void (Type::*func)(Entity, Components...) const, const Type* instance, const EntityData<Components...>& data)
-{
-  (instance->*func)(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
-}
-
-///
-/// Unpacks the entity identifier and entity data, then invokes the member function.
-///
-/// Overload used for member function.
-///
-/// @tparam Type Type of instance to invoke member function with.
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] func Member function to apply.
-/// @param[in] instance Instance to invoke function on.
-/// @param[in] data Entity data.
-///
-template<class Type, typename... Components>
-ALWAYS_INLINE constexpr void EntityApply(
-  void (Type::*func)(Entity, Components...), Type* instance, const EntityData<Components...>& data)
-{
-  (instance->*func)(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
-}
-
-///
-/// Unpacks the entity data, then invokes the member function.
-///
-/// Overload used for const member function.
-///
-/// @tparam Type Type of instance to invoke member function with.
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] func Member function to apply.
-/// @param[in] instance Instance to invoke function on.
-/// @param[in] data Entity data.
-///
-template<class Type, typename... Components>
-ALWAYS_INLINE constexpr void EntityApply(
-  void (Type::*func)(Components...) const, Type* instance, const EntityData<Components...>& data)
-{
-  (instance->*func)(*std::get<std::remove_cvref_t<Components>*>(data)...);
-}
-
-///
-/// Unpacks the entity data, then invokes the member function.
-///
-/// Overload used for member function.
-///
-/// @tparam Type Type of instance to invoke member function with.
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] func Member function to apply.
-/// @param[in] instance Instance to invoke function on.
-/// @param[in] data Entity data.
-///
-template<class Type, typename... Components>
-ALWAYS_INLINE constexpr void EntityApply(
-  void (Type::*func)(Components...), Type* instance, const EntityData<Components...>& data)
-{
-  (instance->*func)(*std::get<std::remove_cvref_t<Components>*>(data)...);
-}
-
-///
-/// Unpacks the entity identifier and entity data, then invokes the function.
-///
-/// Overload used for free functions.
-///
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] func Function to apply.
-/// @param[in] data Entity data.
-///
-template<typename... Components>
-ALWAYS_INLINE constexpr void EntityApply(void (*func)(Entity, Components...), const EntityData<Components...>& data)
-{
-  func(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
-}
-
-///
-/// Unpacks the entity data, then invokes the function.
-///
-/// Overload used for free functions.
-///
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] func Function to apply.
-/// @param[in] data Entity data.
-///
-template<typename... Components>
-ALWAYS_INLINE constexpr void EntityApply(void (*func)(Components...), const EntityData<Components...>& data)
-{
-  func(*std::get<std::remove_cvref_t<Components>*>(data)...);
-}
+using EntityData = std::tuple<Entity*, Components*...>;
 
 ///
 /// Sub view contains entities and component data of a single archetype.
@@ -450,7 +271,7 @@ public:
   public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
-    using value_type = EntityData<Components...>;
+    using value_type = EntityData<std::remove_cvref_t<Components>...>;
 
     constexpr SubViewIterator() noexcept = default;
 
@@ -548,23 +369,6 @@ public:
   // clang-format on
 
 public:
-  ///
-  /// Iterates all entities in the view, for each one, unpacks the component data and invokes the function.
-  ///
-  /// @tparam Function Function type to invoke for each entity.
-  ///
-  /// @param[in] function Function to invoke for each entity.
-  ///
-  template<typename Function>
-  requires EntityFunctor<Function, Components...>
-  void ForEach(Function function)
-  {
-    for (auto& data : *this)
-    {
-      EntityApply<Function, Components...>(function, data);
-    }
-  }
-
   ///
   /// Checks if the entity is in the view.
   ///
@@ -666,7 +470,7 @@ public:
   public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
-    using value_type = SubView<Components...>;
+    using value_type = SubView<std::remove_cvref_t<Components>...>;
 
     constexpr ViewIterator(const ArchetypeId* archetype, Registry& registry) noexcept
       : archetype_(archetype), registry_(registry)
@@ -751,31 +555,6 @@ public:
     : registry_(registry),
       archetypes_(registry.relations_.ViewArchetypes(registry.relations_.template AssureView<Components...>()))
   {}
-
-  ///
-  /// Iterates all entities in the view, for each one, unpacks the component data and invokes the function.
-  ///
-  /// @note The iteration speed is near that of a contiguous array, there is some overhead over arrays due to possibly
-  /// having multiple storages to iterate on. Multiple storages causes slight memory fragmentation, and this can have an
-  /// effect on iteration speed due to things like cache misses. Normally this is an incredibly small overhead and is
-  /// not something to worry about.
-  ///
-  /// @tparam Function Function type to invoke for each entity.
-  ///
-  /// @param[in] function Function to invoke for each entity.
-  ///
-  template<typename Function>
-  requires EntityFunctor<Function, Components...>
-  void ForEach(Function function)
-  {
-    for (auto sub_view : *this)
-    {
-      for (auto& data : sub_view)
-      {
-        EntityApply<Function, Components...>(function, data);
-      }
-    }
-  }
 
   ///
   /// Destroys the entity and all its attached components.
@@ -943,6 +722,251 @@ private:
   Registry& registry_;
   const Vector<ArchetypeId>& archetypes_;
 };
+
+namespace details
+{
+  template<typename Type>
+  struct IsInstanceOfEntityData : std::false_type
+  {};
+
+  template<typename... Components>
+  struct IsInstanceOfEntityData<EntityData<Components...>> : std::true_type
+  {};
+
+  template<typename Type>
+  concept InstanceOfEntityData = IsInstanceOfEntityData<std::remove_cvref_t<Type>>::value;
+
+  template<typename Type>
+  struct IsInstanceOfSubView : std::false_type
+  {};
+
+  template<typename... Components>
+  struct IsInstanceOfSubView<SubView<Components...>> : std::true_type
+  {};
+
+  template<typename Type>
+  concept InstanceOfSubView = IsInstanceOfSubView<std::remove_cvref_t<Type>>::value;
+} // namespace details
+
+// clang-format off
+
+///
+/// Concept used to determine whether a type is a SubView iterator.
+///
+/// @tparam Type Type to check
+///
+template<typename Type>
+concept SubViewIterator = requires(Type value)
+{
+  { value.operator*() } -> details::InstanceOfEntityData;
+};
+
+///
+/// Concept used to determine whether a type is a View iterator.
+///
+/// @tparam Type Type to check
+///
+template<typename Type>
+concept ViewIterator = requires(Type value)
+{
+  { value.operator*() } -> details::InstanceOfSubView;
+};
+
+///
+/// Concept used to determine whether a type is a SubView iterator.
+///
+/// @tparam Type Type to check
+///
+template<typename Type>
+concept SubViewRange = requires(Type value)
+{
+  { value.begin() } -> SubViewIterator;
+  { value.end() } -> SubViewIterator;
+};
+
+///
+/// Concept used to determine whether a type is a View iterator.
+///
+/// @tparam Type Type to check
+///
+template<typename Type>
+concept ViewRange = requires(Type value)
+{
+  { value.begin() } -> ViewIterator;
+  { value.end() } -> ViewIterator;
+};
+
+///
+/// Concept used to determine if a function can be used as a reduced entity invocable function.
+///
+/// To meet the requirements, the function operator must contain only components as its arguments.
+///
+/// @example
+/// @code
+/// [](Position& position, Velocity& velocity) {...}
+/// @endcode
+///
+/// @tparam Function Function type.
+/// @tparam Components Component types.
+///
+template<typename Function, typename... Components>
+concept EntityReducedInvocable = requires(Function function, Components... components)
+{
+  function(components...);
+};
+
+///
+/// Concept used to determine if a function can be used as a extended entity invocable function.
+///
+/// To meet the requirements, the function operator must contain the entity and components as its arguments.
+///
+/// @example
+/// @code
+/// [](Entity entity, Position& position, Velocity& velocity) {...}
+/// @endcode
+///
+/// @tparam Function Function type.
+/// @tparam Components Component types.
+///
+template<typename Function, typename... Components>
+concept EntityExtendedInvocable = requires(Function function, Entity entity, Components... components)
+{
+  function(entity, components...);
+};
+
+// clang-format on
+
+///
+/// Unpacks the entity identifier and entity data, then applies the function.
+///
+/// @tparam Function The function object to apply.
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] invocable Invocable to apply.
+/// @param[in] data Entity data.
+///
+template<typename Function, typename... Components>
+requires EntityExtendedInvocable<Function, Components...>
+ALWAYS_INLINE constexpr void EntityApply(const Function& function, const EntityData<Components...>& data)
+{
+  function(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Unpacks the entity data, then applies the function.
+///
+/// @tparam Function The function object to apply.
+/// @tparam Components Component types of the entity data.
+///
+/// @param[in] invocable Invocable to apply.
+/// @param[in] data Entity data.
+///
+template<typename Function, typename... Components>
+requires EntityReducedInvocable<Function, Components...>
+ALWAYS_INLINE constexpr void EntityApply(const Function& function, const EntityData<Components...>& data)
+{
+  function(*std::get<std::remove_cvref_t<Components>*>(data)...);
+}
+
+///
+/// Iterates over every entity within the range. For each entity, its components will be unpacked and the given
+/// function will be invoked.
+///
+/// It is recommended to always use this method for iterating over entities instead manually iterating.
+///
+/// @tparam Iterator SubView iterator type.
+/// @tparam Function Function to apply at each iteration.
+///
+/// @param[in] first, last The range to apply the function to
+/// @param[in] function The function object to apply at every iteration.
+///
+template<SubViewIterator Iterator, typename Function>
+FLATTEN ALWAYS_INLINE constexpr void EntityForEach(Iterator first, Iterator last, const Function& function)
+{
+  // Iteration is unrolled to reduce branching and improve vectorization.
+
+  auto trip_count = (last - first) >> 2;
+
+  // clang-format off
+
+  for (; trip_count > 0; --trip_count)
+  {
+    EntityApply(function, *first); ++first;
+    EntityApply(function, *first); ++first;
+    EntityApply(function, *first); ++first;
+    EntityApply(function, *first); ++first;
+  }
+
+  switch (last - first)
+  {
+  case 3: EntityApply(function, *first); ++first;
+  case 2: EntityApply(function, *first); ++first;
+  case 1: EntityApply(function, *first);
+  case 0: ;
+  }
+
+  // clang-format on
+}
+
+///
+/// Iterates over every entity within the range. For each entity, its components will be unpacked and the given
+/// function will be invoked.
+///
+/// It is recommended to always use this method for iterating over entities instead manually iterating.
+///
+/// @tparam Range Range type
+/// @tparam Function Function to apply at each iteration.
+///
+/// @param[in] range The range to apply the function to
+/// @param[in] function The function object to apply at every iteration.
+///
+template<SubViewRange Range, typename Function>
+ALWAYS_INLINE constexpr void EntityForEach(Range&& range, const Function& function)
+{
+  EntityForEach(range.begin(), range.end(), function);
+}
+
+///
+/// Iterates over every entity within the range. For each entity, its components will be unpacked and the given
+/// function will be invoked.
+///
+/// It is recommended to always use this method for iterating over entities instead manually iterating.
+///
+/// @tparam Iterator SubView iterator type.
+/// @tparam Function Function to apply at each iteration.
+///
+/// @param[in] first, last The range to apply the function to
+/// @param[in] function The function object to apply at every iteration.
+///
+template<ViewIterator Iterator, typename Function>
+void EntityForEach(Iterator first, Iterator last, Function function)
+{
+  for (; first != last; ++first)
+  {
+    EntityForEach(*first, function);
+  }
+}
+
+///
+/// Iterates over every entity within the range. For each entity, its components will be unpacked and the given
+/// function will be invoked.
+///
+/// It is recommended to always use this method for iterating over entities instead manually iterating.
+///
+/// @tparam Range Range type.
+/// @tparam Function Function to apply at each iteration.
+///
+/// @param[in] range The range to apply the function to
+/// @param[in] function The function object to apply at every iteration.
+///
+template<ViewRange Range, typename Function>
+void EntityForEach(Range&& range, Function function)
+{
+  for (auto sub_view : std::forward<Range>(range))
+  {
+    EntityForEach(sub_view, function);
+  }
+}
 
 } // namespace genebits::engine
 

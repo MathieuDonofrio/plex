@@ -2,10 +2,22 @@
 
 #include <benchmark/benchmark.h>
 
+#include "genebits/engine/math/vec4.h"
+
 namespace genebits::engine::bench
 {
 namespace
 {
+  struct Position
+  {
+    float4 data;
+  };
+
+  struct Velocity
+  {
+    float4 data;
+  };
+
   template<size_t ID>
   struct Component
   {
@@ -13,6 +25,74 @@ namespace
     uint64_t data2;
   };
 } // namespace
+
+static void Registry_Iterate_SimpleWork_ManualFor(benchmark::State& state)
+{
+  Registry registry;
+
+  size_t amount = state.range(0);
+
+  for (float f = 0; f < static_cast<float>(amount); f++)
+  {
+    registry.Create(Position { { f, f, f, f } }, Velocity { { f, f, f, f } });
+  }
+
+  for (auto _ : state)
+  {
+    for (auto sub_view : registry.ViewFor<Position, Velocity>())
+    {
+      for (auto& data : sub_view)
+      {
+        std::get<1>(data)->data += std::get<2>(data)->data * std::get<2>(data)->data;
+        benchmark::DoNotOptimize(*std::get<1>(data));
+      }
+    }
+  }
+
+  benchmark::DoNotOptimize(registry);
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(Registry_Iterate_SimpleWork_ManualFor)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Arg(100000)
+  ->Complexity(::benchmark::oN);
+
+static void Registry_Iterate_SimpleWork_ForEach(benchmark::State& state)
+{
+  Registry registry;
+
+  size_t amount = state.range(0);
+
+  for (float f = 0; f < static_cast<float>(amount); f++)
+  {
+    registry.Create(Position { { f, f, f, f } }, Velocity { { f, f, f, f } });
+  }
+
+  for (auto _ : state)
+  {
+    EntityForEach(registry.ViewFor<Position, Velocity>(),
+      [](Position& position, const Velocity& velocity)
+      {
+        position.data += velocity.data * velocity.data;
+        benchmark::DoNotOptimize(position.data);
+      });
+  }
+
+  benchmark::DoNotOptimize(registry);
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(Registry_Iterate_SimpleWork_ForEach)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Arg(100000)
+  ->Complexity(::benchmark::oN);
 
 static void Registry_Iterate_OneArchetype(benchmark::State& state)
 {
@@ -27,7 +107,7 @@ static void Registry_Iterate_OneArchetype(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ViewFor<>().ForEach([](Entity entity) { benchmark::DoNotOptimize(entity); });
+    EntityForEach(registry.ViewFor<>(), [](Entity entity) { benchmark::DoNotOptimize(entity); });
   }
 
   benchmark::DoNotOptimize(registry);
@@ -35,7 +115,7 @@ static void Registry_Iterate_OneArchetype(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_OneArchetype)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Iterate_OneArchetype)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
 {
@@ -50,7 +130,7 @@ static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ViewFor<Component<0>>().ForEach(
+    EntityForEach(registry.ViewFor<Component<0>>(),
       [](Entity entity, Component<0> c1)
       {
         benchmark::DoNotOptimize(entity);
@@ -63,7 +143,7 @@ static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_OneArchetype_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Iterate_OneArchetype_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
 {
@@ -78,7 +158,7 @@ static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ViewFor<Component<0>, Component<1>>().ForEach(
+    EntityForEach(registry.ViewFor<Component<0>, Component<1>>(),
       [](Entity entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
@@ -92,7 +172,7 @@ static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_OneArchetype_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Iterate_OneArchetype_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
 {
@@ -112,7 +192,7 @@ static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ViewFor<Component<0>, Component<1>>().ForEach(
+    EntityForEach(registry.ViewFor<Component<0>, Component<1>>(),
       [](Entity entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
@@ -126,7 +206,7 @@ static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_TwoArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Iterate_TwoArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
 {
@@ -186,7 +266,7 @@ static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
 
   for (auto _ : state)
   {
-    registry.ViewFor<Component<0>, Component<1>>().ForEach(
+    EntityForEach(registry.ViewFor<Component<0>, Component<1>>(),
       [](Entity entity, Component<0> c1, Component<1> c2)
       {
         benchmark::DoNotOptimize(entity);
@@ -200,7 +280,7 @@ static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_TenArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Iterate_TenArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Create_NoComponents(benchmark::State& state)
 {
@@ -250,7 +330,7 @@ static void Registry_Create_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Create_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Create_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Create_TwoComponents(benchmark::State& state)
 {
@@ -275,7 +355,7 @@ static void Registry_Create_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Create_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Create_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Destroy_NoComponents(benchmark::State& state)
 {
@@ -305,7 +385,7 @@ static void Registry_Destroy_NoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Destroy_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Destroy_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Destroy_OneComponent(benchmark::State& state)
 {
@@ -335,7 +415,7 @@ static void Registry_Destroy_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Destroy_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Destroy_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Registry_Destroy_TwoComponents(benchmark::State& state)
 {
@@ -365,5 +445,5 @@ static void Registry_Destroy_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Destroy_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Registry_Destroy_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 } // namespace genebits::engine::bench
