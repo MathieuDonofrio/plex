@@ -131,7 +131,10 @@ static void Scheduler_ComputeSchedulerSteps_5Stages4SystemsEach(benchmark::State
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_ComputeSchedulerSteps_5Stages4SystemsEach);
+BENCHMARK(Scheduler_ComputeSchedulerSteps_5Stages4SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach(benchmark::State& state)
 {
@@ -164,7 +167,10 @@ static void Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach(benchmark::Stat
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach);
+BENCHMARK(Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_Reference_5Stages4SystemsEach(benchmark::State& state)
 {
@@ -206,7 +212,10 @@ static void Scheduler_Reference_5Stages4SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_Reference_5Stages4SystemsEach);
+BENCHMARK(Scheduler_Reference_5Stages4SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_SyncWork_5Stages4SystemsEach(benchmark::State& state)
 {
@@ -238,7 +247,10 @@ static void Scheduler_SyncWork_5Stages4SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_SyncWork_5Stages4SystemsEach);
+BENCHMARK(Scheduler_SyncWork_5Stages4SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_AsyncWork_5Stages4SystemsEach(benchmark::State& state)
 {
@@ -270,7 +282,10 @@ static void Scheduler_AsyncWork_5Stages4SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_AsyncWork_5Stages4SystemsEach);
+BENCHMARK(Scheduler_AsyncWork_5Stages4SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_Reference_10Stages8SystemsEach(benchmark::State& state)
 {
@@ -312,7 +327,10 @@ static void Scheduler_Reference_10Stages8SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_Reference_10Stages8SystemsEach);
+BENCHMARK(Scheduler_Reference_10Stages8SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_SyncWork_10Stages8SystemsEach(benchmark::State& state)
 {
@@ -344,7 +362,10 @@ static void Scheduler_SyncWork_10Stages8SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_SyncWork_10Stages8SystemsEach);
+BENCHMARK(Scheduler_SyncWork_10Stages8SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_AsyncWork_10Stages8SystemsEach(benchmark::State& state)
 {
@@ -376,7 +397,10 @@ static void Scheduler_AsyncWork_10Stages8SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_AsyncWork_10Stages8SystemsEach);
+BENCHMARK(Scheduler_AsyncWork_10Stages8SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_Reference_10Stages16SystemsEach(benchmark::State& state)
 {
@@ -418,7 +442,10 @@ static void Scheduler_Reference_10Stages16SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_Reference_10Stages16SystemsEach);
+BENCHMARK(Scheduler_Reference_10Stages16SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_SyncWork_10Stages16SystemsEach(benchmark::State& state)
 {
@@ -450,7 +477,10 @@ static void Scheduler_SyncWork_10Stages16SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_SyncWork_10Stages16SystemsEach);
+BENCHMARK(Scheduler_SyncWork_10Stages16SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void Scheduler_AsyncWork_10Stages16SystemsEach(benchmark::State& state)
 {
@@ -482,5 +512,8 @@ static void Scheduler_AsyncWork_10Stages16SystemsEach(benchmark::State& state)
   benchmark::DoNotOptimize(scheduler);
 }
 
-BENCHMARK(Scheduler_AsyncWork_10Stages16SystemsEach);
+BENCHMARK(Scheduler_AsyncWork_10Stages16SystemsEach)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 } // namespace genebits::engine::bench

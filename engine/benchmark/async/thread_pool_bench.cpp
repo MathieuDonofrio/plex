@@ -35,7 +35,10 @@ static void ThreadPool_STD_Reference_ThreadCreation(benchmark::State& state)
   }
 }
 
-BENCHMARK(ThreadPool_STD_Reference_ThreadCreation);
+BENCHMARK(ThreadPool_STD_Reference_ThreadCreation)
+  ->Unit(benchmark::kNanosecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void ThreadPool_STD_Reference_Async_Wait_NoWork(benchmark::State& state)
 {
@@ -49,7 +52,10 @@ static void ThreadPool_STD_Reference_Async_Wait_NoWork(benchmark::State& state)
   }
 }
 
-BENCHMARK(ThreadPool_STD_Reference_Async_Wait_NoWork);
+BENCHMARK(ThreadPool_STD_Reference_Async_Wait_NoWork)
+  ->Unit(benchmark::kNanosecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void ThreadPool_Schedule_Wait_NoWork(benchmark::State& state)
 {
@@ -65,7 +71,7 @@ static void ThreadPool_Schedule_Wait_NoWork(benchmark::State& state)
   }
 }
 
-BENCHMARK(ThreadPool_Schedule_Wait_NoWork);
+BENCHMARK(ThreadPool_Schedule_Wait_NoWork)->Unit(benchmark::kNanosecond)->MeasureProcessCPUTime()->UseRealTime();
 
 static void ThreadPool_Reference_SingleThread_AllWorkInSingleTask(benchmark::State& state)
 {
@@ -82,7 +88,13 @@ static void ThreadPool_Reference_SingleThread_AllWorkInSingleTask(benchmark::Sta
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_Reference_SingleThread_AllWorkInSingleTask)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(ThreadPool_Reference_SingleThread_AllWorkInSingleTask)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void ThreadPool_STD_Reference_Async_WorkDividedInLewLargeTasks(benchmark::State& state)
 {
@@ -123,7 +135,9 @@ BENCHMARK(ThreadPool_STD_Reference_Async_WorkDividedInLewLargeTasks)
   ->Arg(100)
   ->Arg(1000)
   ->Arg(10000)
-  ->Complexity(benchmark::oN);
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void ThreadPool_Schedule_WorkDividedInFewLargeTasks(benchmark::State& state)
 {
@@ -155,7 +169,13 @@ static void ThreadPool_Schedule_WorkDividedInFewLargeTasks(benchmark::State& sta
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_Schedule_WorkDividedInFewLargeTasks)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_Schedule_WorkDividedInFewLargeTasks)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void ThreadPool_STD_Reference_Async_WorkDividedInManySmallTasks(benchmark::State& state)
 {
@@ -191,7 +211,9 @@ BENCHMARK(ThreadPool_STD_Reference_Async_WorkDividedInManySmallTasks)
   ->Arg(100)
   ->Arg(1000)
   ->Arg(10000)
-  ->Complexity(benchmark::oN);
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 static void ThreadPool_Schedule_WorkDividedInManySmallTasks(benchmark::State& state)
 {
@@ -221,6 +243,12 @@ static void ThreadPool_Schedule_WorkDividedInManySmallTasks(benchmark::State& st
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_Schedule_WorkDividedInManySmallTasks)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_Schedule_WorkDividedInManySmallTasks)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 } // namespace genebits::engine::bench
