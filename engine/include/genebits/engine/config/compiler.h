@@ -58,7 +58,7 @@ static_assert(sizeof(void*) == 4, "In 32 bit environment, size of pointer should
 ///
 /// Hints the compiler to not inline the function
 ///
-#ifdef COMPILER_MSVC
+#if COMPILER_MSVC
 #define NO_INLINE __declspec(noinline)
 #elif COMPILER_CLANG
 #define NO_INLINE [[clang::noinline]]
@@ -69,7 +69,7 @@ static_assert(sizeof(void*) == 4, "In 32 bit environment, size of pointer should
 ///
 /// Hints the compiler to inline the function
 ///
-#ifdef COMPILER_MSVC
+#if COMPILER_MSVC
 #define ALWAYS_INLINE __forceinline
 #elif COMPILER_CLANG
 #define ALWAYS_INLINE [[clang::always_inline]]
@@ -80,7 +80,7 @@ static_assert(sizeof(void*) == 4, "In 32 bit environment, size of pointer should
 ///
 /// Hints the compiler to inline calls inside the function.
 ///
-#ifdef COMPILER_MSVC
+#if COMPILER_MSVC
 #define FLATTEN [[msvc::forceinline_calls]]
 #elif CCOMPILER_CLANG
 #define FLATTEN [[clang::flatten]]
