@@ -8,7 +8,7 @@
 set(ARCH_FLAGS "")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-  set(ARCH_FLAGS "/arch:AVX2")
+  set(ARCH_FLAGS "/arch:AVX2 /fp:fast")
 else ()
   set(ARCH_FLAGS "-mf16c -mavx2 -mfma -mlzcnt -mbmi -mbmi2")
 endif ()
