@@ -80,7 +80,9 @@ static_assert(sizeof(void*) == 4, "In 32 bit environment, size of pointer should
 ///
 /// Hints the compiler to inline calls inside the function.
 ///
-#ifdef CCOMPILER_CLANG
+#ifdef COMPILER_MSVC
+#define FLATTEN [[msvc::forceinline_calls]]
+#elif CCOMPILER_CLANG
 #define FLATTEN [[clang::flatten]]
 #else
 #define FLATTEN [[gnu::flatten]]
