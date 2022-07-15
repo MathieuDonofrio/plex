@@ -939,7 +939,7 @@ ALWAYS_INLINE constexpr void EntityForEach(Range&& range, const Function& functi
 /// @param[in] function The function object to apply at every iteration.
 ///
 template<ViewIterator Iterator, typename Function>
-void EntityForEach(Iterator first, Iterator last, Function function)
+ALWAYS_INLINE void EntityForEach(Iterator first, Iterator last, Function function)
 {
   for (; first != last; ++first)
   {
@@ -960,7 +960,7 @@ void EntityForEach(Iterator first, Iterator last, Function function)
 /// @param[in] function The function object to apply at every iteration.
 ///
 template<ViewRange Range, typename Function>
-void EntityForEach(Range&& range, Function function)
+ALWAYS_INLINE void EntityForEach(Range&& range, Function function)
 {
   for (auto sub_view : std::forward<Range>(range))
   {
