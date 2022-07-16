@@ -187,7 +187,7 @@ private:
   ///
   /// @return Iterator to the instance, or end() if not found.
   ///
-  [[nodiscard]] COLD_SECTION auto FindByName(std::string_view name) noexcept
+  [[nodiscard]] COLD_SECTION InstanceInfo* FindByName(std::string_view name) noexcept
   {
     for (auto it = instances_.begin(); it != instances_.end(); ++it)
     {

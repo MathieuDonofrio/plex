@@ -794,64 +794,6 @@ TEST(SubViewEntityIterator_Tests, Increment_Double_CorrectEntities)
   EXPECT_EQ(iterations, 2);
 }
 
-TEST(EntityApply_Tests, Lambda_Reduced_CallsFunction)
-{
-  static size_t call_count = 0;
-
-  static constexpr int value = 99;
-
-  Registry registry;
-
-  registry.Create(value);
-  registry.Create(value);
-
-  auto function = [](int actual)
-  {
-    call_count++;
-
-    EXPECT_EQ(value, actual);
-  };
-
-  for (auto sub_view : registry.ViewFor<int>())
-  {
-    for (auto& data : sub_view)
-    {
-      EntityApply<decltype(function), int>(function, data);
-    }
-  }
-
-  EXPECT_EQ(call_count, 2);
-}
-
-TEST(EntityApply_Tests, Lambda_Extended_CallsFunction)
-{
-  static size_t call_count = 0;
-
-  static constexpr int value = 99;
-
-  Registry registry;
-
-  registry.Create(value);
-  registry.Create(value);
-
-  auto function = [](int actual)
-  {
-    call_count++;
-
-    EXPECT_EQ(value, actual);
-  };
-
-  for (auto sub_view : registry.ViewFor<int>())
-  {
-    for (auto& data : sub_view)
-    {
-      EntityApply<decltype(function), int>(function, data);
-    }
-  }
-
-  EXPECT_EQ(call_count, 2);
-}
-
 TEST(EntityForEach_Tests, SubView_Single_CorrectEntity)
 {
   Registry registry;
@@ -988,7 +930,7 @@ TEST(EntityForEach_Tests, SubView_9_CorrectEntities)
   int call_count = 0;
 
   EntityForEach(sub_view,
-    [&](Entity, int value)
+    [&](int value)
     {
       EXPECT_EQ(value, call_count);
       ++call_count;

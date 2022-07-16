@@ -242,27 +242,9 @@ private:
   Vector<Storage<Entity>*> storages_;
 };
 
-///
-/// Tuple for all data pointers of an entity.
-///
-/// They is one pointer for the entity identifier and one pointer for each component.
-///
-/// @tparam Components All the component types.
-///
-template<typename... Components>
-using EntityData = std::tuple<Entity*, Components*...>;
-
-///
-/// Sub view contains entities and component data of a single archetype.
-///
-/// Can be thought of as a view over a single storage in the registry.
-///
-/// @tparam Components Component types of the view.
-///
-template<typename... Components>
-class SubView
+namespace details
 {
-public:
+  template<typename... DataTypes>
   class SubViewIterator
   {
   private:
@@ -271,45 +253,44 @@ public:
   public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
-    using value_type = EntityData<std::remove_cvref_t<Components>...>;
+    using value_type = std::tuple<std::remove_cvref_t<DataTypes>*...>;
 
     constexpr SubViewIterator() noexcept = default;
 
     SubViewIterator(Storage<Entity>* storage, size_t offset) noexcept
-      : data_(
-        storage->data() + offset, (storage->template Access<std::remove_cvref_t<Components>>().data() + offset)...)
+      : data_(AccessFromStorage<std::remove_cvref_t<DataTypes>>(storage, offset)...)
     {}
 
     SubViewIterator(const SubViewIterator& other) noexcept = default;
     SubViewIterator& operator=(const SubViewIterator&) noexcept = default;
 
+    template<typename... OtherDataTypes>
+    SubViewIterator(const SubViewIterator<OtherDataTypes...>& other) : data_(std::get<DataTypes*>(other.data_)...)
+    {}
+
     // clang-format off
 
     Self& operator+=(difference_type amount) noexcept
     {
-      std::get<0>(data_) += amount;
-      ((std::get<std::remove_cvref_t<Components>*>(data_) += amount), ...);
+      ((std::get<std::remove_cvref_t<DataTypes>*>(data_) += amount), ...);
       return *this;
     }
 
     Self& operator-=(difference_type amount) noexcept
     {
-      std::get<0>(data_) -= amount;
-      ((std::get<std::remove_cvref_t<Components>*>(data_) -= amount), ...);
+      ((std::get<std::remove_cvref_t<DataTypes>*>(data_) -= amount), ...);
       return *this;
     }
 
     Self& operator++() noexcept
     {
-      ++std::get<0>(data_);
-      (++std::get<std::remove_cvref_t<Components>*>(data_), ...);
+      (++std::get<std::remove_cvref_t<DataTypes>*>(data_), ...);
       return *this;
     }
 
     Self& operator--() noexcept
     {
-      --std::get<0>(data_);
-      (--std::get<std::remove_cvref_t<Components>*>(data_), ...);
+      (--std::get<std::remove_cvref_t<DataTypes>*>(data_), ...);
       return *this;
     }
 
@@ -349,13 +330,47 @@ public:
     // clang-format on
 
   private:
+    template<typename DataType>
+    DataType* AccessFromStorage(Storage<Entity>* storage, size_t offset) noexcept
+    {
+      if constexpr (std::same_as<DataType, Entity>)
+      {
+        return storage->data() + offset;
+      }
+      else
+      {
+        return storage->template Access<DataType>().data() + offset;
+      }
+    }
+
+  private:
     value_type data_;
   };
+} // namespace details
 
-  using iterator = SubViewIterator;
+///
+/// Sub view contains entities and component data of a single archetype.
+///
+/// Can be thought of as a view over a single storage in the registry.
+///
+/// @tparam Components Component types of the view.
+///
+template<typename... Components>
+class SubView
+{
+public:
+  template<typename... DataTypes>
+  using template_iterator = details::SubViewIterator<DataTypes...>;
+
+  using iterator = template_iterator<Entity, Components...>;
   using reverse_iterator = std::reverse_iterator<iterator>;
 
   // clang-format off
+
+  template<typename... DataTypes>
+  [[nodiscard]] template_iterator<DataTypes...> begin() const noexcept { return {storage_, 0}; }
+  template<typename... DataTypes>
+  [[nodiscard]] template_iterator<DataTypes...> end() const noexcept { return { storage_, storage_->Size() }; }
 
   [[nodiscard]] iterator begin() const noexcept { return {storage_, 0}; }
   [[nodiscard]] iterator end() const noexcept { return { storage_, storage_->Size() }; }
@@ -729,8 +744,8 @@ namespace details
   struct IsInstanceOfEntityData : std::false_type
   {};
 
-  template<typename... Components>
-  struct IsInstanceOfEntityData<EntityData<Components...>> : std::true_type
+  template<typename... DataTypes>
+  struct IsInstanceOfEntityData<std::tuple<DataTypes*...>> : std::true_type
   {};
 
   template<typename Type>
@@ -746,6 +761,26 @@ namespace details
 
   template<typename Type>
   concept InstanceOfSubView = IsInstanceOfSubView<std::remove_cvref_t<Type>>::value;
+
+  template<typename View, typename Function>
+  struct EntityForEachHelper;
+
+  template<typename... Components, typename Class, typename... Args>
+  struct EntityForEachHelper<SubView<Components...>, void (Class::*)(Args...) const>
+  {
+    using iterator_type = typename SubView<Components...>::template template_iterator<Args...>;
+
+    static iterator_type begin(const SubView<Components...>& view) noexcept
+    {
+      return view.template begin<Args...>();
+    }
+
+    static iterator_type end(const SubView<Components...>& view) noexcept
+    {
+      return view.template end<Args...>();
+    }
+  };
+
 } // namespace details
 
 // clang-format off
@@ -796,44 +831,6 @@ concept ViewRange = requires(Type value)
   { value.end() } -> ViewIterator;
 };
 
-///
-/// Concept used to determine if a function can be used as a reduced entity invocable function.
-///
-/// To meet the requirements, the function operator must contain only components as its arguments.
-///
-/// @example
-/// @code
-/// [](Position& position, Velocity& velocity) {...}
-/// @endcode
-///
-/// @tparam Function Function type.
-/// @tparam Components Component types.
-///
-template<typename Function, typename... Components>
-concept EntityReducedInvocable = requires(Function function, Components... components)
-{
-  function(components...);
-};
-
-///
-/// Concept used to determine if a function can be used as a extended entity invocable function.
-///
-/// To meet the requirements, the function operator must contain the entity and components as its arguments.
-///
-/// @example
-/// @code
-/// [](Entity entity, Position& position, Velocity& velocity) {...}
-/// @endcode
-///
-/// @tparam Function Function type.
-/// @tparam Components Component types.
-///
-template<typename Function, typename... Components>
-concept EntityExtendedInvocable = requires(Function function, Entity entity, Components... components)
-{
-  function(entity, components...);
-};
-
 // clang-format on
 
 ///
@@ -845,27 +842,10 @@ concept EntityExtendedInvocable = requires(Function function, Entity entity, Com
 /// @param[in] invocable Invocable to apply.
 /// @param[in] data Entity data.
 ///
-template<typename Function, typename... Components>
-requires EntityExtendedInvocable<Function, Components...>
-ALWAYS_INLINE constexpr void EntityApply(const Function& function, const EntityData<Components...>& data)
+template<typename Function, typename... DataTypes>
+FLATTEN ALWAYS_INLINE constexpr void EntityApply(const Function& function, const std::tuple<DataTypes*...>& data)
 {
-  function(*std::get<0>(data), *std::get<std::remove_cvref_t<Components>*>(data)...);
-}
-
-///
-/// Unpacks the entity data, then applies the function.
-///
-/// @tparam Function The function object to apply.
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] invocable Invocable to apply.
-/// @param[in] data Entity data.
-///
-template<typename Function, typename... Components>
-requires EntityReducedInvocable<Function, Components...>
-ALWAYS_INLINE constexpr void EntityApply(const Function& function, const EntityData<Components...>& data)
-{
-  function(*std::get<std::remove_cvref_t<Components>*>(data)...);
+  function(*std::get<std::remove_cvref_t<DataTypes>*>(data)...);
 }
 
 ///
@@ -881,9 +861,10 @@ ALWAYS_INLINE constexpr void EntityApply(const Function& function, const EntityD
 /// @param[in] function The function object to apply at every iteration.
 ///
 template<SubViewIterator Iterator, typename Function>
-FLATTEN ALWAYS_INLINE constexpr void EntityForEach(Iterator first, Iterator last, const Function& function)
+ALWAYS_INLINE constexpr void EntityForEach(Iterator first, Iterator last, const Function& function)
 {
   // Iteration is unrolled to reduce branching and improve vectorization.
+  // https://godbolt.org/z/Kczcczqd9
 
   auto trip_count = (last - first) >> 2;
 
@@ -923,7 +904,10 @@ FLATTEN ALWAYS_INLINE constexpr void EntityForEach(Iterator first, Iterator last
 template<SubViewRange Range, typename Function>
 ALWAYS_INLINE constexpr void EntityForEach(Range&& range, const Function& function)
 {
-  EntityForEach(range.begin(), range.end(), function);
+  using FuncPtr = decltype(&Function::operator());
+  using Traits = typename details::EntityForEachHelper<std::remove_cvref_t<Range>, FuncPtr>;
+
+  EntityForEach(Traits::begin(range), Traits::end(range), function);
 }
 
 ///
