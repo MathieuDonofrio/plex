@@ -41,10 +41,15 @@ static void Registry_Iterate_SimpleWork_ManualFor(benchmark::State& state)
   {
     for (auto sub_view : registry.ViewFor<Position, Velocity>())
     {
-      for (auto& data : sub_view)
+      auto last = sub_view.end<Position, Velocity>();
+
+      for (auto first = sub_view.begin<Position, Velocity>(); first != last; ++first)
       {
-        std::get<1>(data)->data += std::get<2>(data)->data * std::get<2>(data)->data;
-        benchmark::DoNotOptimize(*std::get<1>(data));
+        auto data = *first;
+
+        std::get<Position*>(data)->data += std::get<Velocity*>(data)->data * std::get<Velocity*>(data)->data;
+
+        benchmark::DoNotOptimize(*std::get<Position*>(data));
       }
     }
   }

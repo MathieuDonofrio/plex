@@ -72,7 +72,7 @@ static void Storage_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Iterate_Unpack1(benchmark::State& state)
 {
@@ -103,7 +103,7 @@ static void Storage_Iterate_Unpack1(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Iterate_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Iterate_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Iterate_Unpack2(benchmark::State& state)
 {
@@ -136,7 +136,7 @@ static void Storage_Iterate_Unpack2(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Iterate_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Iterate_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Insert_NoComponents(benchmark::State& state)
 {
@@ -164,7 +164,7 @@ static void Storage_Insert_NoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Insert_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Insert_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Insert_OneComponent(benchmark::State& state)
 {
@@ -192,7 +192,7 @@ static void Storage_Insert_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Insert_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Insert_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Insert_OneComponentNonTrivial(benchmark::State& state)
 {
@@ -220,7 +220,7 @@ static void Storage_Insert_OneComponentNonTrivial(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Insert_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Insert_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Insert_TwoComponents(benchmark::State& state)
 {
@@ -248,7 +248,7 @@ static void Storage_Insert_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Insert_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Insert_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Erase_NoComponents(benchmark::State& state)
 {
@@ -281,7 +281,7 @@ static void Storage_Erase_NoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Erase_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Erase_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Erase_OneComponent(benchmark::State& state)
 {
@@ -314,7 +314,7 @@ static void Storage_Erase_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Erase_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Erase_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Erase_OneComponentNonTrivial(benchmark::State& state)
 {
@@ -347,7 +347,7 @@ static void Storage_Erase_OneComponentNonTrivial(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Erase_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Erase_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
 static void Storage_Erase_TwoComponents(benchmark::State& state)
 {
@@ -380,5 +380,5 @@ static void Storage_Erase_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Erase_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Storage_Erase_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 } // namespace genebits::engine::bench

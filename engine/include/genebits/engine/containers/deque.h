@@ -70,7 +70,8 @@ namespace details
     [[nodiscard]] constexpr reference operator*() const noexcept { return array_[index_]; }
     [[nodiscard]] constexpr pointer operator->() const noexcept { return array_ + index_; }
 
-    [[nodiscard]] constexpr reference operator[](difference_type index) const noexcept { return array_[index]; }
+    [[nodiscard]] constexpr reference operator[](difference_type index) const noexcept
+    { return array_[(index_ + index) & mask_]; }
 
     [[nodiscard]] friend bool operator==(const DequeIterator& lhs, const DequeIterator& rhs) noexcept
     {

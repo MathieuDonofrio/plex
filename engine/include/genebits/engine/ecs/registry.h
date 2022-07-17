@@ -253,7 +253,7 @@ namespace details
   public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
-    using value_type = std::tuple<std::remove_cvref_t<DataTypes>*...>;
+    using pointers = std::tuple<std::remove_cvref_t<DataTypes>*...>;
 
     constexpr SubViewIterator() noexcept = default;
 
@@ -309,7 +309,10 @@ namespace details
       return std::get<0>(lhs.data_) - std::get<0>(rhs.data_);
     }
 
-    const value_type& operator*() const noexcept { return data_; }
+    const pointers& operator*() const noexcept
+    {
+      return data_;
+    }
 
     [[nodiscard]] friend bool operator==(const Self& lhs, const Self& rhs) noexcept
     {
@@ -344,7 +347,7 @@ namespace details
     }
 
   private:
-    value_type data_;
+    pointers data_;
   };
 } // namespace details
 
@@ -741,17 +744,6 @@ private:
 namespace details
 {
   template<typename Type>
-  struct IsInstanceOfEntityData : std::false_type
-  {};
-
-  template<typename... DataTypes>
-  struct IsInstanceOfEntityData<std::tuple<DataTypes*...>> : std::true_type
-  {};
-
-  template<typename Type>
-  concept InstanceOfEntityData = IsInstanceOfEntityData<std::remove_cvref_t<Type>>::value;
-
-  template<typename Type>
   struct IsInstanceOfSubView : std::false_type
   {};
 
@@ -760,30 +752,86 @@ namespace details
   {};
 
   template<typename Type>
-  concept InstanceOfSubView = IsInstanceOfSubView<std::remove_cvref_t<Type>>::value;
+  struct IsInstanceOfView : std::false_type
+  {};
 
-  template<typename View, typename Function>
+  template<typename... Components>
+  struct IsInstanceOfView<View<Components...>> : std::true_type
+  {};
+
+  template<typename Type>
+  struct IsInstanceOfEntityApplyData : std::false_type
+  {};
+
+  template<typename... DataTypes>
+  struct IsInstanceOfEntityApplyData<std::tuple<DataTypes*...>> : std::true_type
+  {};
+
+  template<typename Type>
+  concept InstanceOfEntityApplyData = IsInstanceOfEntityApplyData<std::remove_cvref_t<Type>>::value;
+
+  template<typename Function>
+  struct EntityApplyHelper;
+
+  template<typename Class, typename... Args>
+  struct EntityApplyHelper<void (Class::*)(Args...) const>
+  {
+    template<typename Function, typename... DataTypes>
+    FLATTEN ALWAYS_INLINE static constexpr void Apply(Function&& function, const std::tuple<DataTypes*...>& data)
+    {
+      function(*std::get<std::remove_cvref_t<Args>*>(data)...);
+    }
+  };
+
+  template<typename Class, typename... Args>
+  struct EntityApplyHelper<void (Class::*)(Args...)>
+  {
+    template<typename Function, typename... DataTypes>
+    FLATTEN ALWAYS_INLINE static constexpr void Apply(Function&& function, const std::tuple<DataTypes*...>& data)
+    {
+      function(*std::get<std::remove_cvref_t<Args>*>(data)...);
+    }
+  };
+
+  template<typename SubViewType, typename Function>
   struct EntityForEachHelper;
 
   template<typename... Components, typename Class, typename... Args>
   struct EntityForEachHelper<SubView<Components...>, void (Class::*)(Args...) const>
   {
-    using iterator_type = typename SubView<Components...>::template template_iterator<Args...>;
-
-    static iterator_type begin(const SubView<Components...>& view) noexcept
-    {
-      return view.template begin<Args...>();
-    }
-
-    static iterator_type end(const SubView<Components...>& view) noexcept
-    {
-      return view.template end<Args...>();
-    }
+    // clang-format off
+    static auto begin(const SubView<Components...>& view) noexcept { return view.template begin<Args...>(); }
+    static auto end(const SubView<Components...>& view) noexcept { return view.template end<Args...>(); }
+    // clang-format on
   };
 
+  template<typename... Components, typename Class, typename... Args>
+  struct EntityForEachHelper<SubView<Components...>, void (Class::*)(Args...)>
+  {
+    // clang-format off
+    static auto begin(const SubView<Components...>& view) noexcept { return view.template begin<Args...>(); }
+    static auto end(const SubView<Components...>& view) noexcept { return view.template end<Args...>(); }
+    // clang-format on
+  };
 } // namespace details
 
 // clang-format off
+
+///
+/// Concept used to determine if a type is a View.
+///
+/// @tparam Type Type to check.
+///
+template<typename Type>
+concept InstanceOfView = details::IsInstanceOfView<std::remove_cvref_t<Type>>::value;
+
+///
+/// Concept used to determine if a type is a SubView.
+///
+/// @tparam Type Type to check.
+///
+template<typename Type>
+concept InstanceOfSubView = details::IsInstanceOfSubView<std::remove_cvref_t<Type>>::value;
 
 ///
 /// Concept used to determine whether a type is a SubView iterator.
@@ -793,7 +841,7 @@ namespace details
 template<typename Type>
 concept SubViewIterator = requires(Type value)
 {
-  { value.operator*() } -> details::InstanceOfEntityData;
+  { value.operator*() } -> details::InstanceOfEntityApplyData;
 };
 
 ///
@@ -804,55 +852,17 @@ concept SubViewIterator = requires(Type value)
 template<typename Type>
 concept ViewIterator = requires(Type value)
 {
-  { value.operator*() } -> details::InstanceOfSubView;
-};
-
-///
-/// Concept used to determine whether a type is a SubView iterator.
-///
-/// @tparam Type Type to check
-///
-template<typename Type>
-concept SubViewRange = requires(Type value)
-{
-  { value.begin() } -> SubViewIterator;
-  { value.end() } -> SubViewIterator;
-};
-
-///
-/// Concept used to determine whether a type is a View iterator.
-///
-/// @tparam Type Type to check
-///
-template<typename Type>
-concept ViewRange = requires(Type value)
-{
-  { value.begin() } -> ViewIterator;
-  { value.end() } -> ViewIterator;
+  { value.operator*() } -> InstanceOfSubView;
 };
 
 // clang-format on
 
 ///
-/// Unpacks the entity identifier and entity data, then applies the function.
-///
-/// @tparam Function The function object to apply.
-/// @tparam Components Component types of the entity data.
-///
-/// @param[in] invocable Invocable to apply.
-/// @param[in] data Entity data.
-///
-template<typename Function, typename... DataTypes>
-FLATTEN ALWAYS_INLINE constexpr void EntityApply(const Function& function, const std::tuple<DataTypes*...>& data)
-{
-  function(*std::get<std::remove_cvref_t<DataTypes>*>(data)...);
-}
-
-///
 /// Iterates over every entity within the range. For each entity, its components will be unpacked and the given
 /// function will be invoked.
 ///
-/// It is recommended to always use this method for iterating over entities instead manually iterating.
+/// It is recommended to always use this method for iterating over entities instead manually iterating. It is both safer
+/// and more efficient in many cases.
 ///
 /// @tparam Iterator SubView iterator type.
 /// @tparam Function Function to apply at each iteration.
@@ -861,29 +871,27 @@ FLATTEN ALWAYS_INLINE constexpr void EntityApply(const Function& function, const
 /// @param[in] function The function object to apply at every iteration.
 ///
 template<SubViewIterator Iterator, typename Function>
-ALWAYS_INLINE constexpr void EntityForEach(Iterator first, Iterator last, const Function& function)
+ALWAYS_INLINE constexpr void EntityForEach(Iterator first, Iterator last, Function&& function)
 {
-  // Iteration is unrolled to reduce branching and improve vectorization.
-  // https://godbolt.org/z/Kczcczqd9
+  using FunctionPtr = decltype(&std::remove_cvref_t<Function>::operator());
+  using Helper = details::EntityApplyHelper<FunctionPtr>;
 
-  auto trip_count = (last - first) >> 2;
+  const auto iterations = (last - first);
+  const auto odd_iterations = iterations & 1;
+
+  auto trip_count = iterations >> 1;
 
   // clang-format off
 
   for (; trip_count > 0; --trip_count)
   {
-    EntityApply(function, *first); ++first;
-    EntityApply(function, *first); ++first;
-    EntityApply(function, *first); ++first;
-    EntityApply(function, *first); ++first;
+    Helper::Apply(function, *first); ++first;
+    Helper::Apply(function, *first); ++first;
   }
 
-  switch (last - first)
+  if(odd_iterations)
   {
-  case 3: EntityApply(function, *first); ++first;
-  case 2: EntityApply(function, *first); ++first;
-  case 1: EntityApply(function, *first);
-  case 0: ;
+    Helper::Apply(function, *first);
   }
 
   // clang-format on
@@ -893,28 +901,31 @@ ALWAYS_INLINE constexpr void EntityForEach(Iterator first, Iterator last, const 
 /// Iterates over every entity within the range. For each entity, its components will be unpacked and the given
 /// function will be invoked.
 ///
-/// It is recommended to always use this method for iterating over entities instead manually iterating.
+/// It is recommended to always use this method for iterating over entities instead manually iterating. It is both safer
+/// and more efficient in many cases.
 ///
-/// @tparam Range Range type
+/// @tparam SubViewType The sub view type.
 /// @tparam Function Function to apply at each iteration.
 ///
 /// @param[in] range The range to apply the function to
 /// @param[in] function The function object to apply at every iteration.
 ///
-template<SubViewRange Range, typename Function>
-ALWAYS_INLINE constexpr void EntityForEach(Range&& range, const Function& function)
+template<InstanceOfSubView SubViewType, typename Function>
+ALWAYS_INLINE constexpr void EntityForEach(SubViewType&& view, Function&& function)
 {
-  using FuncPtr = decltype(&Function::operator());
-  using Traits = typename details::EntityForEachHelper<std::remove_cvref_t<Range>, FuncPtr>;
+  // Obtain optimal iterator type from function arguments
+  using FunctionPtr = decltype(&std::remove_cvref_t<Function>::operator());
+  using Helper = details::EntityForEachHelper<std::remove_cvref_t<SubViewType>, FunctionPtr>;
 
-  EntityForEach(Traits::begin(range), Traits::end(range), function);
+  EntityForEach(Helper::begin(view), Helper::end(view), function);
 }
 
 ///
 /// Iterates over every entity within the range. For each entity, its components will be unpacked and the given
 /// function will be invoked.
 ///
-/// It is recommended to always use this method for iterating over entities instead manually iterating.
+/// It is recommended to always use this method for iterating over entities instead manually iterating. It is both safer
+/// and more efficient in many cases.
 ///
 /// @tparam Iterator SubView iterator type.
 /// @tparam Function Function to apply at each iteration.
@@ -935,18 +946,19 @@ ALWAYS_INLINE void EntityForEach(Iterator first, Iterator last, Function functio
 /// Iterates over every entity within the range. For each entity, its components will be unpacked and the given
 /// function will be invoked.
 ///
-/// It is recommended to always use this method for iterating over entities instead manually iterating.
+/// It is recommended to always use this method for iterating over entities instead manually iterating. It is both safer
+/// and more efficient in many cases.
 ///
-/// @tparam Range Range type.
+/// @tparam ViewType The view type.
 /// @tparam Function Function to apply at each iteration.
 ///
 /// @param[in] range The range to apply the function to
 /// @param[in] function The function object to apply at every iteration.
 ///
-template<ViewRange Range, typename Function>
-ALWAYS_INLINE void EntityForEach(Range&& range, Function function)
+template<InstanceOfView ViewType, typename Function>
+ALWAYS_INLINE void EntityForEach(ViewType&& view, Function function)
 {
-  for (auto sub_view : std::forward<Range>(range))
+  for (auto&& sub_view : std::forward<ViewType>(view))
   {
     EntityForEach(sub_view, function);
   }
