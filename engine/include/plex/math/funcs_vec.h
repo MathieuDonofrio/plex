@@ -1,10 +1,10 @@
 #ifndef PLEX_MATH_FUNCS_VEC_H
 #define PLEX_MATH_FUNCS_VEC_H
 
-#include "genebits/engine/math/funcs_common.h"
-#include "genebits/engine/math/vec2.h"
-#include "genebits/engine/math/vec3.h"
-#include "genebits/engine/math/vec4.h"
+#include "plex/math/funcs_common.h"
+#include "plex/math/vec2.h"
+#include "plex/math/vec3.h"
+#include "plex/math/vec4.h"
 
 namespace plex
 {

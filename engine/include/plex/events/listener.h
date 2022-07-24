@@ -3,7 +3,7 @@
 
 #include <type_traits>
 
-#include "genebits/engine/events/event_bus.h"
+#include "plex/events/event_bus.h"
 
 namespace plex
 {
@@ -17,10 +17,7 @@ namespace plex
 /// @tparam Event Event type to check.
 ///
 template<typename Listener, typename Event>
-concept EventListen = requires(Listener listener, const Event& event)
-{
-  listener.Listen(event);
-};
+concept EventListen = requires(Listener listener, const Event& event) { listener.Listen(event); };
 
 ///
 /// Utility listener class to remove a lot of a boiler plate for listening to events. Uses RAII for
@@ -65,8 +62,8 @@ public:
   /// @return Event handler for event type.
   ///
   template<typename Event>
-  requires EventListen<Impl, Event> EventHandler<Event> GetEventHandler()
-  noexcept
+  requires EventListen<Impl, Event>
+  EventHandler<Event> GetEventHandler() noexcept
   {
     static_assert(std::is_base_of_v<Listener<Impl, Events...>, Impl>, "Listener must be base of implementation");
 

@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_OS_COLOR_PRINT_H
-#define GENEBITS_ENGINE_OS_COLOR_PRINT_H
+#ifndef PLEX_OS_COLOR_PRINT_H
+#define PLEX_OS_COLOR_PRINT_H
 
 namespace plex::terminal
 {

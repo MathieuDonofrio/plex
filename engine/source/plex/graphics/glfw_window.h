@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <string>
 
-#include "genebits/engine/graphics/vulkan_capable_window.h"
-#include "genebits/engine/graphics/window.h"
-#include "genebits/engine/utilities/enumerator.h"
+#include "plex/graphics/vulkan_capable_window.h"
+#include "plex/graphics/window.h"
+#include "plex/utilities/enumerator.h"
 
 namespace
 {

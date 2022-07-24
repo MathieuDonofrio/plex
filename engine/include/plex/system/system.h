@@ -1,10 +1,10 @@
 #ifndef PLEX_SYSTEM_SYSTEM_H
 #define PLEX_SYSTEM_SYSTEM_H
 
-#include "genebits/engine/async/task.h"
-#include "genebits/engine/system/context.h"
-#include "genebits/engine/system/query.h"
-#include "genebits/engine/utilities/ref.h"
+#include "plex/async/task.h"
+#include "plex/system/context.h"
+#include "plex/system/query.h"
+#include "plex/utilities/ref.h"
 
 namespace plex
 {

@@ -7,9 +7,9 @@
 #include <immintrin.h>
 #include <memory>
 
-#include "genebits/engine/config/compiler.h"
-#include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/utilities/type_traits.h"
+#include "plex/config/compiler.h"
+#include "plex/debug/assertion.h"
+#include "plex/utilities/type_traits.h"
 
 namespace plex
 {

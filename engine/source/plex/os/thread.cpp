@@ -1,7 +1,7 @@
-#include "genebits/engine/os/thread.h"
+#include "plex/os/thread.h"
 
-#include "genebits/engine/config/compiler.h"
-#include "genebits/engine/debug/assertion.h"
+#include "plex/config/compiler.h"
+#include "plex/debug/assertion.h"
 
 #if PLATFORM_WINDOWS
 // Lean windows include

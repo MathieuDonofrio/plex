@@ -1,4 +1,4 @@
-#include "genebits/engine/random/seed.h"
+#include "plex/random/seed.h"
 
 #include <benchmark/benchmark.h>
 

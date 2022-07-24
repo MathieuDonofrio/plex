@@ -1,6 +1,6 @@
-#include "genebits/engine/graphics/window.h"
+#include "plex/graphics/window.h"
 
-#include "genebits/engine/graphics/glfw_window.h"
+#include "plex/graphics/glfw_window.h"
 
 namespace plex
 {

@@ -1,7 +1,7 @@
 #ifndef PLEX_UTILITIES_ERASED_PTR_H
 #define PLEX_UTILITIES_ERASED_PTR_H
 
-#include "genebits/engine/utilities/type_traits.h"
+#include "plex/utilities/type_traits.h"
 
 namespace plex
 {

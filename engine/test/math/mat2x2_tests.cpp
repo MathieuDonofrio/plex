@@ -1,4 +1,4 @@
-#include "genebits/engine/math/mat2x2.h"
+#include "plex/math/mat2x2.h"
 
 #include <gtest/gtest.h>
 

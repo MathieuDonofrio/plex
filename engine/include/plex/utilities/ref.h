@@ -8,9 +8,9 @@
 #include <thread>
 #include <type_traits>
 
-#include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/debug/thread_validator.h"
-#include "genebits/engine/utilities/type_traits.h"
+#include "plex/debug/assertion.h"
+#include "plex/debug/thread_validator.h"
+#include "plex/utilities/type_traits.h"
 
 namespace plex
 {

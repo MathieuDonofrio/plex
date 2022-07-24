@@ -1,8 +1,8 @@
-#include "genebits/engine/random/pcg.h"
+#include "plex/random/pcg.h"
 
 #include <benchmark/benchmark.h>
 
-#include "genebits/engine/random/seed.h"
+#include "plex/random/seed.h"
 
 namespace plex::bench
 {

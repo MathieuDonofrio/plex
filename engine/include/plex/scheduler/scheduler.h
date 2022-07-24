@@ -1,11 +1,11 @@
 #ifndef PLEX_SCHEDULER_SCHEDULER_H
 #define PLEX_SCHEDULER_SCHEDULER_H
 
-#include "genebits/engine/async/shared_task.h"
-#include "genebits/engine/async/when_all.h"
-#include "genebits/engine/scheduler/stage.h"
-#include "genebits/engine/system/system.h"
-#include "genebits/engine/utilities/ref.h"
+#include "plex/async/shared_task.h"
+#include "plex/async/when_all.h"
+#include "plex/scheduler/stage.h"
+#include "plex/system/system.h"
+#include "plex/utilities/ref.h"
 
 namespace plex
 {

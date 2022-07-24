@@ -5,9 +5,9 @@
 #include <memory>
 #include <mutex>
 
-#include "genebits/engine/containers/vector.h"
-#include "genebits/engine/utilities/type_info.h"
-#include "genebits/engine/utilities/type_traits.h"
+#include "plex/containers/vector.h"
+#include "plex/utilities/type_info.h"
+#include "plex/utilities/type_traits.h"
 
 namespace plex
 {

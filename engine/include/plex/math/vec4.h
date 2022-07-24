@@ -3,8 +3,8 @@
 
 #include <numeric>
 
-#include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/math/swizzle.h"
+#include "plex/debug/assertion.h"
+#include "plex/math/swizzle.h"
 
 namespace plex
 {

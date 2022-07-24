@@ -1,8 +1,8 @@
-#include "genebits/engine/async/thread_pool.h"
+#include "plex/async/thread_pool.h"
 
-#include "genebits/engine/async/exponential_backoff.h"
-#include "genebits/engine/os/cpu_info.h"
-#include "genebits/engine/os/thread.h"
+#include "plex/async/exponential_backoff.h"
+#include "plex/os/cpu_info.h"
+#include "plex/os/thread.h"
 
 namespace plex
 {

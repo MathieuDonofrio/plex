@@ -6,9 +6,9 @@
 #include <tuple>
 #include <type_traits>
 
-#include "genebits/engine/ecs/archetype.h"
-#include "genebits/engine/ecs/entity_manager.h"
-#include "genebits/engine/ecs/storage.h"
+#include "plex/ecs/archetype.h"
+#include "plex/ecs/entity_manager.h"
+#include "plex/ecs/storage.h"
 
 namespace plex
 {

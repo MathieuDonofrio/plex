@@ -1,7 +1,7 @@
 #ifndef PLEX_MATH_FUNCS_COMMON_H
 #define PLEX_MATH_FUNCS_COMMON_H
 
-#include "genebits/engine/config/compiler.h"
+#include "plex/config/compiler.h"
 
 #include <bit>
 #include <cmath>

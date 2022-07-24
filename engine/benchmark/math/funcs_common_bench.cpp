@@ -1,9 +1,9 @@
-#include "genebits/engine/math/funcs_common.h"
+#include "plex/math/funcs_common.h"
 
 #include <benchmark/benchmark.h>
 
-#include "genebits/engine/random/pcg.h"
-#include "genebits/engine/random/seed.h"
+#include "plex/random/pcg.h"
+#include "plex/random/seed.h"
 
 namespace plex::bench
 {

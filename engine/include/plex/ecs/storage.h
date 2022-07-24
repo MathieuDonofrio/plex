@@ -1,11 +1,11 @@
 #ifndef PLEX_STORAGE_H
 #define PLEX_STORAGE_H
 
-#include "genebits/engine/containers/type_map.h"
-#include "genebits/engine/containers/vector.h"
-#include "genebits/engine/utilities/erased_ptr.h"
-#include "genebits/engine/utilities/memory.h"
-#include "genebits/engine/utilities/type_info.h"
+#include "plex/containers/type_map.h"
+#include "plex/containers/vector.h"
+#include "plex/utilities/erased_ptr.h"
+#include "plex/utilities/memory.h"
+#include "plex/utilities/type_info.h"
 
 namespace plex
 {

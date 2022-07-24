@@ -1,9 +1,9 @@
 #ifndef PLEX_SCHEDULER_STAGE_H
 #define PLEX_SCHEDULER_STAGE_H
 
-#include "genebits/engine/containers/vector.h"
-#include "genebits/engine/system/system.h"
-#include "genebits/engine/utilities/ref.h"
+#include "plex/containers/vector.h"
+#include "plex/system/system.h"
+#include "plex/utilities/ref.h"
 
 namespace plex
 {

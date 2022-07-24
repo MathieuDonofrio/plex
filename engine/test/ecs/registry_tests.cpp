@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/registry.h"
+#include "plex/ecs/registry.h"
 
 #include <gtest/gtest.h>
 

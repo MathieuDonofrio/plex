@@ -1,11 +1,11 @@
-#include "genebits/engine/debug/logging.h"
+#include "plex/debug/logging.h"
 
 #ifndef NDEBUG
 
 #include <iostream>
 #include <mutex>
 
-#include "genebits/engine/os/color_print.h"
+#include "plex/os/color_print.h"
 
 namespace plex::debug
 {

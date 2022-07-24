@@ -1,7 +1,7 @@
-#include "genebits/engine/os/cpu_info.h"
+#include "plex/os/cpu_info.h"
 
-#include "genebits/engine/config/compiler.h"
-#include "genebits/engine/debug/assertion.h"
+#include "plex/config/compiler.h"
+#include "plex/debug/assertion.h"
 
 #include <memory>
 

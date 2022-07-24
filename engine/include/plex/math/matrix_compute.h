@@ -1,7 +1,7 @@
 #ifndef PLEX_MATH_MATRIX_COMPUTE_H
 #define PLEX_MATH_MATRIX_COMPUTE_H
 
-#include "genebits/engine/debug/assertion.h"
+#include "plex/debug/assertion.h"
 
 namespace plex
 {

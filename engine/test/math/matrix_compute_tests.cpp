@@ -1,10 +1,10 @@
-#include "genebits/engine/math/matrix_compute.h"
+#include "plex/math/matrix_compute.h"
 
 #include <gtest/gtest.h>
 
-#include "genebits/engine/math/mat2x2.h"
-#include "genebits/engine/math/mat3x3.h"
-#include "genebits/engine/math/mat4x4.h"
+#include "plex/math/mat2x2.h"
+#include "plex/math/mat3x3.h"
+#include "plex/math/mat4x4.h"
 
 namespace plex::tests
 {

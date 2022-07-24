@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "genebits/engine/os/thread.h"
+#include "plex/os/thread.h"
 
 namespace plex
 {

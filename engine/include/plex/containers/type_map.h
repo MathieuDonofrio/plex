@@ -1,9 +1,9 @@
 #ifndef PLEX_CONTAINERS_TYPE_MAP_H
 #define PLEX_CONTAINERS_TYPE_MAP_H
 
-#include "genebits/engine/containers/vector.h"
-#include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/utilities/type_info.h"
+#include "plex/containers/vector.h"
+#include "plex/debug/assertion.h"
+#include "plex/utilities/type_info.h"
 
 namespace plex
 {

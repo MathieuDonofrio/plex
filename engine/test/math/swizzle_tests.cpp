@@ -1,10 +1,10 @@
-#include "genebits/engine/math/swizzle.h"
+#include "plex/math/swizzle.h"
 
 #include <gtest/gtest.h>
 
-#include "genebits/engine/math/vec2.h"
-#include "genebits/engine/math/vec3.h"
-#include "genebits/engine/math/vec4.h"
+#include "plex/math/vec2.h"
+#include "plex/math/vec3.h"
+#include "plex/math/vec4.h"
 
 namespace plex::tests
 {

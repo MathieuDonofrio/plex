@@ -1,10 +1,10 @@
-#include "genebits/engine/async/when_all.h"
+#include "plex/async/when_all.h"
 
 #include <thread>
 
 #include <gmock/gmock.h>
 
-#include "genebits/engine/async/sync_wait.h"
+#include "plex/async/sync_wait.h"
 
 namespace plex
 {

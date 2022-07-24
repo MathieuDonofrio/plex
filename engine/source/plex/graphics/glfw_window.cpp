@@ -1,8 +1,8 @@
-#include "genebits/engine/graphics/glfw_window.h"
+#include "glfw_window.h"
 
 #include <atomic>
 
-#include "genebits/engine/debug/logging.h"
+#include "plex/debug/logging.h"
 
 #define GLFW_INCLUDE_NONE // Removes OpenGL
 #include "GLFW/glfw3.h"

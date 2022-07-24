@@ -1,8 +1,8 @@
-#include "genebits/engine/ecs/registry.h"
+#include "plex/ecs/registry.h"
 
 #include <benchmark/benchmark.h>
 
-#include "genebits/engine/math/vec4.h"
+#include "plex/math/vec4.h"
 
 namespace plex::bench
 {

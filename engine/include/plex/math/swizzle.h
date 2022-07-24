@@ -1,5 +1,5 @@
 #ifndef PLEX_MATH_SWIZZLE_H
-#define GENEBITS_ENGINE_MATH_SWIZZLE_H
+#define PLEX_MATH_SWIZZLE_H
 
 #include <bit>
 #include <cstdlib>

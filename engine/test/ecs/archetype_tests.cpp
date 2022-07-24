@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/archetype.h"
+#include "plex/ecs/archetype.h"
 
 #include <algorithm>
 

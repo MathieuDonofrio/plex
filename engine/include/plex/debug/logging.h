@@ -3,7 +3,7 @@
 
 #include <format>
 
-#include "genebits/engine/debug/stacktrace.h"
+#include "plex/debug/stacktrace.h"
 
 namespace plex::debug
 {

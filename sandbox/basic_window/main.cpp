@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "genebits/engine/debug/logging.h"
-#include "genebits/engine/events/listener.h"
-#include "genebits/engine/graphics/window.h"
+#include "plex/debug/logging.h"
+#include "plex/events/listener.h"
+#include "plex/graphics/window.h"
 
 using namespace plex;
 

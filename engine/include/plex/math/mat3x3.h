@@ -1,7 +1,7 @@
 #ifndef PLEX_MATH_MAT3X3_H
 #define PLEX_MATH_MAT3X3_H
 
-#include "genebits/engine/math/vec3.h"
+#include "plex/math/vec3.h"
 
 namespace plex
 {
