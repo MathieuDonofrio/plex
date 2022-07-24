@@ -35,7 +35,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_BINARY_DIR})
 
 include(cmake/Debugging.cmake)
-include(cmake/Editor.cmake)
 include(cmake/Testing.cmake)
 include(cmake/Benchmarking.cmake)
 include(cmake/ColorDiagnostics.cmake)
