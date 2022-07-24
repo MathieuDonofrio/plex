@@ -1,8 +1,8 @@
-#include "genebits/engine/system/context.h"
+#include "plex/system/context.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -123,4 +123,4 @@ TEST(Context_Tests, Emplace_Multiple_CorrectValues)
   EXPECT_EQ(manager.Get<TestResource<4>>(), 4);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

@@ -1,10 +1,10 @@
-#include "genebits/engine/utilities/memory.h"
+#include "plex/utilities/memory.h"
 
 #include <benchmark/benchmark.h>
 
 #include <new>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 static void Memory_STD_Memcpy(benchmark::State& state)
 {
@@ -88,4 +88,4 @@ static void Memory_STD_UninitializedRelocate(benchmark::State& state)
 
 BENCHMARK(Memory_STD_UninitializedRelocate)->Arg(100)->Arg(1000)->Arg(10000);
 
-} // namespace genebits::engine::bench
+} // namespace plex::bench

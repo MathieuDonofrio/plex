@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "genebits/engine/debug/logging.h"
-#include "genebits/engine/events/listener.h"
-#include "genebits/engine/graphics/window.h"
+#include "plex/debug/logging.h"
+#include "plex/events/listener.h"
+#include "plex/graphics/window.h"
 
-using namespace genebits::engine;
+using namespace plex;
 
 struct TestWindowListener : public Listener<TestWindowListener,
                               WindowCloseEvent,
@@ -52,7 +52,7 @@ struct TestWindowListener : public Listener<TestWindowListener,
     std::cout << "keyboard event: " << KeyCodeToString(event.keycode) << ", " << static_cast<uint32_t>(event.modifiers)
               << ", " << static_cast<uint32_t>(event.action) << std::endl;
 
-    if (event.keycode == genebits::engine::W && event.action == genebits::engine::ButtonEvent::Action::Pressed)
+    if (event.keycode == plex::W && event.action == plex::ButtonEvent::Action::Pressed)
     {
       std::cout << "Window monitor query: " << event.window->GetMonitorWidth() << "x"
                 << event.window->GetMonitorHeight() << std::endl;

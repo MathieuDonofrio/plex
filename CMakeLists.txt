@@ -1,5 +1,5 @@
 #
-# Genebits
+# Plex Framework
 #
 
 cmake_minimum_required(VERSION 3.20)
@@ -17,16 +17,16 @@ endif ()
 # Project Configuration
 #
 
-set(GENEBITS_VERSION_REGEX "#define GENEBITS_VERSION_.*[ \t]+(.+)")
-file(STRINGS "engine/include/genebits/engine/config/version.h" GENEBITS_VERSION REGEX ${GENEBITS_VERSION_REGEX})
-list(TRANSFORM GENEBITS_VERSION REPLACE ${GENEBITS_VERSION_REGEX} "\\1")
-string(JOIN "." GENEBITS_VERSION ${GENEBITS_VERSION})
+set(PLEX_VERSION_REGEX "#define PLEX_VERSION_.*[ \t]+(.+)")
+file(STRINGS "engine/include/plex/config/version.h" PLEX_VERSION REGEX ${PLEX_VERSION_REGEX})
+list(TRANSFORM PLEX_VERSION REPLACE ${PLEX_VERSION_REGEX} "\\1")
+string(JOIN "." PLEX_VERSION ${PLEX_VERSION})
 
 project(
   Genebits
-  VERSION ${GENEBITS_VERSION}
-  DESCRIPTION "Artificial life simulator"
-  HOMEPAGE_URL "https://github.com/MathieuDonofrio/Genebits"
+  VERSION ${PLEX_VERSION}
+  DESCRIPTION "Data-oriented framework"
+  HOMEPAGE_URL "https://github.com/MathieuDonofrio/Plex"
   LANGUAGES CXX
 )
 
@@ -35,7 +35,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_BINARY_DIR})
 
 include(cmake/Debugging.cmake)
-include(cmake/Editor.cmake)
 include(cmake/Testing.cmake)
 include(cmake/Benchmarking.cmake)
 include(cmake/ColorDiagnostics.cmake)

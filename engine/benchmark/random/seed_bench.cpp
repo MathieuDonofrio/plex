@@ -1,8 +1,8 @@
-#include "genebits/engine/random/seed.h"
+#include "plex/random/seed.h"
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 static void Random_Seed(benchmark::State& state)
 {
@@ -13,4 +13,4 @@ static void Random_Seed(benchmark::State& state)
 }
 
 BENCHMARK(Random_Seed);
-} // namespace genebits::engine::bench
+} // namespace plex::bench

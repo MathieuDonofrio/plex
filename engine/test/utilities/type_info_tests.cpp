@@ -1,4 +1,4 @@
-#include "genebits/engine/utilities/type_info.h"
+#include "plex/utilities/type_info.h"
 
 #include <gtest/gtest.h>
 
@@ -15,7 +15,7 @@ class TestTypeB
 {};
 } // namespace test_namespace
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 enum TestTypeC
 {
@@ -81,4 +81,4 @@ TEST(Meta_Tests, UniqueId_MultipleTypesTwoTags_Increment)
   EXPECT_EQ((TypeIndex<TestType<32>, STS<30>>()), 1);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

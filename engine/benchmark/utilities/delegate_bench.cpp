@@ -1,10 +1,10 @@
-#include "genebits/engine/utilities/delegate.h"
+#include "plex/utilities/delegate.h"
 
 #include <functional>
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 namespace
 {
@@ -143,4 +143,4 @@ static void Delegate_Invoke_ZeroOverhead(benchmark::State& state)
 
 BENCHMARK(Delegate_Invoke_ZeroOverhead);
 
-} // namespace genebits::engine::bench
+} // namespace plex::bench

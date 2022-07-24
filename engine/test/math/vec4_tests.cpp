@@ -1,8 +1,8 @@
-#include "genebits/engine/math/vec4.h"
+#include "plex/math/vec4.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 static_assert(sizeof(float4) == sizeof(float) * 4, "float4 size is not 4 floats");
 
@@ -648,4 +648,4 @@ TEST(Vec4Bool_Tests, Or)
   bool4 b = bool4(true, true, false, false);
   EXPECT_EQ(bool4(true, true, false, true), a || b);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

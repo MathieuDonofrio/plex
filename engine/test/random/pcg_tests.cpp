@@ -1,11 +1,11 @@
-#include "genebits/engine/random/pcg.h"
+#include "plex/random/pcg.h"
 
 #include <thread>
 #include <type_traits>
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 // Random static tests
 
@@ -41,4 +41,4 @@ TEST(PCG_Tests, NextBounded_UpperBound_InRange)
     }
   }
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

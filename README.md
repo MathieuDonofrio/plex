@@ -1,6 +1,6 @@
-# Genebits
+# Plex
 
-[![Build Status](https://github.com/MathieuDonofrio/xecs/workflows/build/badge.svg)](https://github.com/MathieuDonofrio/Genebits/actions)
+[![Build Status](https://github.com/MathieuDonofrio/xecs/workflows/build/badge.svg)](https://github.com/MathieuDonofrio/plex/actions)
 
 # Table of Contents
 
@@ -16,7 +16,7 @@ Make sure you have a recent driver update installed.
 
 Make sure you're using a valid compiler.
 
-Currently, only the latest version of MSVC is currently supported. However, we should support linux with gcc soon.
+Currently, only the latest version of MSVC is currently supported.
 
 ## Vulkan
 

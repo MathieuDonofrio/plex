@@ -1,10 +1,10 @@
-#include "genebits/engine/ecs/archetype.h"
+#include "plex/ecs/archetype.h"
 
 #include <algorithm>
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -181,4 +181,4 @@ TEST(Archetype_Tests, GetComponentIds_ObtainedTwiceDifferentValues_Different)
 
   EXPECT_NE(list1, list2);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

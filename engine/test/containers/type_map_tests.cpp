@@ -1,8 +1,8 @@
-#include "genebits/engine/containers/type_map.h"
+#include "plex/containers/type_map.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -136,4 +136,4 @@ TEST(TypeMap_Tests, SetDefault_WithValue_DoesNotContain)
 
   EXPECT_FALSE(map.ContainsNonDefault<TestKey<0>>());
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

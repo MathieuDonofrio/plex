@@ -1,10 +1,10 @@
-#include "genebits/engine/scheduler/scheduler.h"
+#include "plex/scheduler/scheduler.h"
 
 #include <gtest/gtest.h>
 
 #include <bit>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -346,4 +346,4 @@ TEST(Scheduler_Algorithm_Tests, ComputeSchedulerData_Complex8s_RunsAfterDependen
   EXPECT_TRUE(RunsAfter(steps, system3, system8));
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests
