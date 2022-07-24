@@ -6,8 +6,6 @@
 
 #include "genebits/engine/config/compiler.h"
 
-namespace _ // Keep small
-{
 ///
 /// Returns the function name with a templated type. Can be used to probe type name.
 ///
@@ -16,7 +14,7 @@ namespace _ // Keep small
 /// @return The function name with the templated type.
 ///
 template<typename T>
-consteval auto X() // Keep small to avoid overhead
+consteval auto _F() // Keep small to avoid overhead
 {
 #if COMPILER_MSVC
   return __FUNCSIG__;
@@ -25,20 +23,19 @@ consteval auto X() // Keep small to avoid overhead
 #endif
 }
 
-// Probing technique:
-// Use a known type to obtain information about how to extract the type from the signature.
-
-namespace probe
+namespace genebits::engine
 {
-  constexpr std::string_view cFuncSig = X<void>();
+namespace void_probe
+{
+  // Probing technique:
+  // Use a known type to obtain information about how to extract the type from the signature.
+
+  constexpr std::string_view cFuncSig = _F<void>();
 
   constexpr size_t cStart = cFuncSig.find("void");
   constexpr size_t cOffset = cFuncSig.length() - 4;
-} // namespace probe
-} // namespace _
+} // namespace void_probe
 
-namespace genebits::engine
-{
 ///
 /// Returns the full name of the type, this includes namespaces.
 ///
@@ -55,9 +52,9 @@ namespace genebits::engine
 template<typename Type>
 [[nodiscard]] static consteval std::string_view TypeName() noexcept
 {
-  const std::string_view function_name = _::X<std::remove_cvref_t<Type>>();
+  const std::string_view function_name = _F<std::remove_cvref_t<Type>>();
 
-  return function_name.substr(_::probe::cStart, function_name.length() - _::probe::cOffset);
+  return function_name.substr(void_probe::cStart, function_name.length() - void_probe::cOffset);
 }
 
 ///
@@ -146,7 +143,7 @@ namespace details
 /// @return Index for type.
 ///
 template<typename Type, typename Tag = void>
-static size_t TypeIndex()
+ALWAYS_INLINE static size_t TypeIndex() noexcept
 {
   return details::TypeIndexGlobalStorage<Type, Tag>::value;
 }

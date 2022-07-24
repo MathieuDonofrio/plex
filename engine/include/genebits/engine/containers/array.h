@@ -187,6 +187,7 @@ constexpr auto ConcatArrays(const Array<Type, Lengths>&... arrays)
 
     auto it = result.begin();
     ((it = std::copy(arrays.begin(), arrays.end(), it)), ...);
+    (void)it; // maybe unused
 
     return result;
   }
