@@ -1,12 +1,9 @@
-#ifndef GENEBITS_ENGINE_DEBUG_COLOR_PRINT_H
-#define GENEBITS_ENGINE_DEBUG_COLOR_PRINT_H
+#ifndef GENEBITS_ENGINE_OS_COLOR_PRINT_H
+#define GENEBITS_ENGINE_OS_COLOR_PRINT_H
 
-#include <iostream>
-#include <string_view>
-
-namespace genebits::engine::debug
+namespace genebits::engine::terminal
 {
-enum class TColor
+enum class Color
 {
   Black,
   DarkBlue,
@@ -27,11 +24,11 @@ enum class TColor
 };
 
 ///
-/// Print the color to the termimal (stdout).
+/// Print the color to the terminal (stdout).
 ///
 /// @param[in] color Color to print.
 ///
-void PrintTerminalColor(TColor color);
+void PrintTerminalColor(Color color);
 
 ///
 /// Returns whether the standard output is a terminal that supports colored output.
@@ -40,6 +37,6 @@ void PrintTerminalColor(TColor color);
 ///
 bool IsColorTerminal();
 
-} // namespace genebits::engine::debug
+} // namespace genebits::engine::terminal
 
 #endif

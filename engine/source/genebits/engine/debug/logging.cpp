@@ -2,9 +2,10 @@
 
 #ifndef NDEBUG
 
+#include <iostream>
 #include <mutex>
 
-#include "genebits/engine/debug/color_print.h"
+#include "genebits/engine/os/color_print.h"
 
 namespace genebits::engine::debug
 {
@@ -12,45 +13,49 @@ std::mutex logger_mutex;
 
 void PrintPrefix(const LogLevel level, bool color)
 {
+  using namespace terminal;
+
   std::cout << '[';
 
   switch (level)
   {
   case LogLevel::Trace:
   {
-    if (color) PrintTerminalColor(TColor::Cyan);
+    if (color) PrintTerminalColor(Color::Cyan);
     std::cout << "TRACE";
     break;
   }
   case LogLevel::Info:
   {
-    if (color) PrintTerminalColor(TColor::Blue);
+    if (color) PrintTerminalColor(Color::Blue);
     std::cout << "INFO ";
     break;
   }
   case LogLevel::Warn:
   {
-    if (color) PrintTerminalColor(TColor::Yellow);
+    if (color) PrintTerminalColor(Color::Yellow);
     std::cout << "WARN ";
     break;
   }
   case LogLevel::Error:
   {
-    if (color) PrintTerminalColor(TColor::Red);
+    if (color) PrintTerminalColor(Color::Red);
     std::cout << "ERROR";
     break;
   }
   default: std::cout << "?????"; break;
   }
 
-  if (color) PrintTerminalColor(TColor::LightGray);
+  if (color) PrintTerminalColor(Color::LightGray);
 
   std::cout << "] ";
 }
 
 void PrintStackTrace(const StackTrace stack_trace, bool color)
 {
-  if (color) PrintTerminalColor(TColor::DarkRed);
+  using namespace terminal;
+
+  if (color) PrintTerminalColor(Color::DarkRed);
 
   std::cout << "Backtrace:\n";
 
@@ -59,11 +64,13 @@ void PrintStackTrace(const StackTrace stack_trace, bool color)
     std::cout << "\tat " << frame.name << '(' << frame.file_name << ':' << frame.line << ")\n";
   }
 
-  if (color) PrintTerminalColor(TColor::LightGray);
+  if (color) PrintTerminalColor(Color::LightGray);
 }
 
 void Log(LogMetadata metadata, std::string_view message)
 {
+  using namespace terminal;
+
   bool color = IsColorTerminal();
 
   std::lock_guard<std::mutex> lock(logger_mutex);
