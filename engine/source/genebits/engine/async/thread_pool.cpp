@@ -6,6 +6,26 @@
 
 namespace genebits::engine
 {
+size_t GetDefaultAmountOfWorkerThreads()
+{
+  size_t physical_processors = GetAmountPhysicalProcessors();
+
+  // For large amount of cores using logical processors when Hyper-Threading is enabled will probably just consume
+  // unnecessarily more resources.
+  if (physical_processors <= 16)
+  {
+    // Using logical core amount does improve performance with Hyper-Threading.
+    size_t logical_processors = GetAmountLogicalProcessors();
+
+    if (logical_processors == 2 * physical_processors) // Hyper Threading Enabled
+    {
+      return logical_processors;
+    }
+  }
+
+  return physical_processors;
+}
+
 ThreadPool::ThreadPool(const size_t thread_count, bool lock_threads)
   : running_(false), threads_(nullptr), thread_count_(thread_count)
 {
@@ -16,7 +36,7 @@ ThreadPool::ThreadPool(const size_t thread_count, bool lock_threads)
   if (lock_threads) SetWorkerThreadAffinity();
 }
 
-ThreadPool::ThreadPool() : ThreadPool(GetAmountPhysicalProcessors(), true) {}
+ThreadPool::ThreadPool() : ThreadPool(GetDefaultAmountOfWorkerThreads(), true) {}
 
 ThreadPool::~ThreadPool()
 {

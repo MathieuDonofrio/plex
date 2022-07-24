@@ -45,7 +45,7 @@ public:
     else
     {
       auto entity = recycled_.back();
-      recycled_.PopBack();
+      recycled_.pop_back();
 
       return entity;
     }
@@ -75,20 +75,15 @@ public:
   {
     ASSERT(entity <= current_, "Entity not from this manager");
 
-    recycled_.PushBack(entity);
+    recycled_.push_back(entity);
   }
 
   ///
   /// Releases all the entity identifiers and resets the generator sequence to 0.
   ///
-  /// This operation is O(1).
-  ///
-  /// @note This method should be preferred to releasing every entity one by one.
-  ///
-  ///
   void ReleaseAll() noexcept
   {
-    recycled_.Clear();
+    recycled_.clear();
 
     current_ = 0;
   }
@@ -105,9 +100,6 @@ public:
 
   ///
   /// Returns the amount of entity identifiers ready to be reused.
-  ///
-  /// While this is bigger than 0, no new identifier will be generating when
-  /// obtaining unless explicitly generated.
   ///
   /// @return Amount of entity identifiers currently recycled.
   ///

@@ -63,9 +63,9 @@ public:
   ///
   /// @return A pointer to the first element of the vector.
   ///
-  [[nodiscard]] constexpr const T* data() const noexcept
+  [[nodiscard]] const T* data() const noexcept
   {
-    return reinterpret_cast<const T*>(this);
+    return std::bit_cast<const T*>(this);
   }
 
   ///
@@ -73,9 +73,9 @@ public:
   ///
   /// @return A pointer to the first element of the vector.
   ///
-  [[nodiscard]] constexpr T* data() noexcept
+  [[nodiscard]] T* data() noexcept
   {
-    return reinterpret_cast<T*>(this);
+    return std::bit_cast<T*>(this);
   }
 
   ///

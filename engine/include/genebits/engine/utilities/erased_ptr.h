@@ -6,7 +6,7 @@
 namespace genebits::engine
 {
 ///
-/// Concept used to determine whether or not two erased ptr's can be implicitly casted.
+/// Concept used to determine whether or not two erased pointers can be implicitly casted.
 ///
 /// @tparam From Type casted from.
 /// @tparam To Type to cast to.
@@ -83,6 +83,14 @@ public:
   ///
   /// Parametric Constructor
   ///
+  /// @param[in] instance Instance to handle.
+  /// @param[in] deleter The custom deleter to delete the managed instance with.
+  ///
+  constexpr ErasedPtr(Type* instance, void (*deleter)(void*)) noexcept : ptr_(instance), deleter_(deleter) {}
+
+  ///
+  /// Parametric Constructor
+  ///
   /// @tparam T The type to store, must be same or derived from erased type base.
   ///
   /// @param[in] instance Instance to handle.
@@ -102,6 +110,15 @@ public:
   template<AssignableErasedPtr<Type> T>
   constexpr explicit ErasedPtr(T* instance) noexcept
     : ErasedPtr(instance, [](void* instance) { delete static_cast<T*>(instance); })
+  {}
+
+  ///
+  /// Parametric Constructor. Uses default deleter.
+  ///
+  /// @param[in] instance Instance to handle.
+  ///
+  constexpr explicit ErasedPtr(Type* instance) noexcept
+    : ErasedPtr(instance, [](void* instance) { delete static_cast<Type*>(instance); })
   {}
 
   ///
@@ -161,7 +178,7 @@ public:
   ///
   constexpr ErasedPtr& operator=(ErasedPtr<Type>&& other) noexcept
   {
-    ErasedPtr<Type>(std::move(other)).Swap(*this);
+    ErasedPtr<Type>(std::move(other)).swap(*this);
     return *this;
   }
 
@@ -177,14 +194,14 @@ public:
   template<AssignableErasedPtr<Type> T>
   constexpr ErasedPtr& operator=(ErasedPtr<T>&& other) noexcept
   {
-    ErasedPtr<Type>(std::move(other)).Swap(*this);
+    ErasedPtr<Type>(std::move(other)).swap(*this);
     return *this;
   }
 
   ///
   /// Exchanges the stored pointer values and ownerships.
   ///
-  constexpr void Swap(ErasedPtr<Type>& other) noexcept
+  constexpr void swap(ErasedPtr<Type>& other) noexcept
   {
     std::swap(ptr_, other.ptr_);
     std::swap(deleter_, other.deleter_);
@@ -195,7 +212,7 @@ public:
   ///
   /// @return Stored pointer.
   ///
-  [[nodiscard]] constexpr Type* Get() const noexcept
+  [[nodiscard]] constexpr Type* get() const noexcept
   {
     return ptr_;
   }
@@ -207,7 +224,7 @@ public:
   ///
   [[nodiscard]] constexpr operator Type*() const noexcept
   {
-    return Get();
+    return get();
   }
 
   ///
@@ -245,7 +262,7 @@ private:
 template<typename T, typename U>
 constexpr bool operator==(const ErasedPtr<T>& lhs, const ErasedPtr<U>& rhs) noexcept
 {
-  return lhs.Get() == rhs.Get();
+  return lhs.get() == rhs.get();
 }
 
 ///
@@ -262,7 +279,7 @@ constexpr bool operator==(const ErasedPtr<T>& lhs, const ErasedPtr<U>& rhs) noex
 template<typename T, typename U>
 constexpr std::strong_ordering operator<=>(const ErasedPtr<T>& lhs, const ErasedPtr<U>& rhs) noexcept
 {
-  return std::compare_three_way()(lhs.Get(), rhs.Get());
+  return std::compare_three_way()(lhs.get(), rhs.get());
 }
 
 ///
@@ -292,7 +309,7 @@ constexpr bool operator==(const ErasedPtr<T>& lhs, std::nullptr_t) noexcept
 template<typename T>
 constexpr std::strong_ordering operator<=>(const ErasedPtr<T>& lhs, std::nullptr_t) noexcept
 {
-  return std::compare_three_way()(lhs.Get(), static_cast<T*>(nullptr));
+  return std::compare_three_way()(lhs.get(), static_cast<T*>(nullptr));
 }
 
 ///
@@ -315,7 +332,7 @@ ErasedPtr<Type> MakeErased(Args&&... args)
 }
 
 template<typename Type>
-struct IsTriviallyRelocatable<ErasedPtr<Type>> : std::true_type
+struct IsTriviallyRelocatable<ErasedPtr<Type>> : public std::true_type
 {};
 } // namespace genebits::engine
 
@@ -324,7 +341,7 @@ namespace std
 template<typename T>
 constexpr void swap(genebits::engine::ErasedPtr<T>& lhs, genebits::engine::ErasedPtr<T>& rhs) noexcept
 {
-  lhs.Swap(rhs);
+  lhs.swap(rhs);
 }
 
 template<typename T>
@@ -332,7 +349,7 @@ struct hash<genebits::engine::ErasedPtr<T>>
 {
   constexpr size_t operator()(const genebits::engine::ErasedPtr<T>& obj) const noexcept
   {
-    return std::hash<T*>()(obj.Get());
+    return std::hash<T*>()(obj.get());
   }
 };
 } // namespace std

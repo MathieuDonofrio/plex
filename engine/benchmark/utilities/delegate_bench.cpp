@@ -26,7 +26,7 @@ namespace
   };
 } // namespace
 
-static void Delegate_STD_FunctionBind_Construct(benchmark::State& state)
+static void Delegate_STD_Reference_FunctionBind_Construct(benchmark::State& state)
 {
   using namespace std::placeholders;
 
@@ -40,49 +40,7 @@ static void Delegate_STD_FunctionBind_Construct(benchmark::State& state)
   }
 }
 
-BENCHMARK(Delegate_STD_FunctionBind_Construct);
-
-static void Delegate_STD_FunctionBind_Invoke_Overhead(benchmark::State& state)
-{
-  using namespace std::placeholders;
-
-  TestListener listener;
-
-  std::function<void(TestEvent&)> handler = std::bind(&TestListener::listenOverhead, &listener, _1);
-
-  TestEvent event { static_cast<size_t>(std::rand()) };
-
-  for (auto _ : state)
-  {
-    handler(event);
-  }
-
-  benchmark::DoNotOptimize(event);
-  benchmark::DoNotOptimize(listener);
-}
-
-BENCHMARK(Delegate_STD_FunctionBind_Invoke_Overhead);
-
-static void Delegate_STD_FunctionBind_Invoke_ZeroOverhead(benchmark::State& state)
-{
-  using namespace std::placeholders;
-
-  TestListener listener;
-
-  std::function<void(TestEvent&)> handler = std::bind(&TestListener::listenZeroOverhead, &listener, _1);
-
-  TestEvent event { static_cast<size_t>(std::rand()) };
-
-  for (auto _ : state)
-  {
-    handler(event);
-  }
-
-  benchmark::DoNotOptimize(event);
-  benchmark::DoNotOptimize(listener);
-}
-
-BENCHMARK(Delegate_STD_FunctionBind_Invoke_ZeroOverhead);
+BENCHMARK(Delegate_STD_Reference_FunctionBind_Construct);
 
 static void Delegate_Construct(benchmark::State& state)
 {
@@ -103,6 +61,27 @@ static void Delegate_Construct(benchmark::State& state)
 
 BENCHMARK(Delegate_Construct);
 
+static void Delegate_STD_Reference_FunctionBind_Invoke_Overhead(benchmark::State& state)
+{
+  using namespace std::placeholders;
+
+  TestListener listener;
+
+  std::function<void(TestEvent&)> handler = std::bind(&TestListener::listenOverhead, &listener, _1);
+
+  TestEvent event { static_cast<size_t>(std::rand()) };
+
+  for (auto _ : state)
+  {
+    handler(event);
+  }
+
+  benchmark::DoNotOptimize(event);
+  benchmark::DoNotOptimize(listener);
+}
+
+BENCHMARK(Delegate_STD_Reference_FunctionBind_Invoke_Overhead);
+
 static void Delegate_Invoke_Overhead(benchmark::State& state)
 {
   TestListener listener;
@@ -122,6 +101,27 @@ static void Delegate_Invoke_Overhead(benchmark::State& state)
 }
 
 BENCHMARK(Delegate_Invoke_Overhead);
+
+static void Delegate_STD_Reference_FunctionBind_Invoke_ZeroOverhead(benchmark::State& state)
+{
+  using namespace std::placeholders;
+
+  TestListener listener;
+
+  std::function<void(TestEvent&)> handler = std::bind(&TestListener::listenZeroOverhead, &listener, _1);
+
+  TestEvent event { static_cast<size_t>(std::rand()) };
+
+  for (auto _ : state)
+  {
+    handler(event);
+  }
+
+  benchmark::DoNotOptimize(event);
+  benchmark::DoNotOptimize(listener);
+}
+
+BENCHMARK(Delegate_STD_Reference_FunctionBind_Invoke_ZeroOverhead);
 
 static void Delegate_Invoke_ZeroOverhead(benchmark::State& state)
 {

@@ -22,6 +22,41 @@ namespace
   }
 } // namespace
 
+static void ThreadPool_STD_Reference_ThreadCreation(benchmark::State& state)
+{
+  for (auto _ : state)
+  {
+    std::thread thread { [&]() { Work(0); } };
+
+    benchmark::DoNotOptimize(thread);
+    benchmark::ClobberMemory();
+
+    thread.join();
+  }
+}
+
+BENCHMARK(ThreadPool_STD_Reference_ThreadCreation)
+  ->Unit(benchmark::kNanosecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
+
+static void ThreadPool_STD_Reference_Async_Wait_NoWork(benchmark::State& state)
+{
+  for (auto _ : state)
+  {
+    auto future = std::async(std::launch::async, [&]() { Work(0); });
+
+    future.wait();
+
+    benchmark::DoNotOptimize(future);
+  }
+}
+
+BENCHMARK(ThreadPool_STD_Reference_Async_Wait_NoWork)
+  ->Unit(benchmark::kNanosecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
+
 static void ThreadPool_Schedule_Wait_NoWork(benchmark::State& state)
 {
   ThreadPool pool;
@@ -36,37 +71,9 @@ static void ThreadPool_Schedule_Wait_NoWork(benchmark::State& state)
   }
 }
 
-BENCHMARK(ThreadPool_Schedule_Wait_NoWork);
+BENCHMARK(ThreadPool_Schedule_Wait_NoWork)->Unit(benchmark::kNanosecond)->MeasureProcessCPUTime()->UseRealTime();
 
-static void ThreadPool_STD_ThreadCreation(benchmark::State& state)
-{
-  for (auto _ : state)
-  {
-    std::thread thread { [&]() { Work(0); } };
-
-    thread.join();
-
-    benchmark::DoNotOptimize(thread);
-  }
-}
-
-BENCHMARK(ThreadPool_STD_ThreadCreation);
-
-static void ThreadPool_STD_Async_NoWork(benchmark::State& state)
-{
-  for (auto _ : state)
-  {
-    auto future = std::async(std::launch::async, [&]() { Work(0); });
-
-    future.wait();
-
-    benchmark::DoNotOptimize(future);
-  }
-}
-
-BENCHMARK(ThreadPool_STD_Async_NoWork);
-
-static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state)
+static void ThreadPool_Reference_SingleThread_AllWorkInSingleTask(benchmark::State& state)
 {
   // This is to be used as a reference of single thread performance with no schedule overhead
   // Conclusion: For small loads it is better to not use the thread pool because scheduling is expensive.
@@ -81,56 +88,78 @@ static void ThreadPool_NoSchedule_SingleThread_Reference(benchmark::State& state
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_NoSchedule_SingleThread_Reference)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(ThreadPool_Reference_SingleThread_AllWorkInSingleTask)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
-static void ThreadPool_Schedule_FewLargeTasks(benchmark::State& state)
+static void ThreadPool_STD_Reference_Async_WorkDividedInLewLargeTasks(benchmark::State& state)
 {
-  constexpr size_t threads = 4;
-
-  ThreadPool pool(threads, true);
+  // STD Async can use a thread pool under the hood.
+  // MSVC does this but not GCC and CLANG
+  // The goal is for our thread pool to be about the same performance as MSVC, this would mean
+  // we would have an efficient cross-platform thread pool.
 
   const size_t amount = state.range(0);
+
+  size_t threads = std::thread::hardware_concurrency();
 
   auto work_per_thread = static_cast<unsigned int>(amount / threads);
 
   for (auto _ : state)
   {
-    auto task = [&]() -> Task<> {
-      co_await WhenAll(CreateTask(pool, 1000 * work_per_thread),
-        CreateTask(pool, 1000 * work_per_thread),
-        CreateTask(pool, 1000 * work_per_thread),
-        CreateTask(pool, 1000 * work_per_thread));
-    }();
+    Vector<std::future<void>> tasks;
+    tasks.resize(threads);
 
-    SyncWait(task);
+    for (size_t i = 0; i < threads; i++)
+    {
+      tasks[i] = std::async(std::launch::async, [work_per_thread]() { Work(1000 * work_per_thread); });
+    }
+
+    benchmark::DoNotOptimize(tasks.data());
+    benchmark::ClobberMemory();
+
+    for (auto& task : tasks)
+    {
+      task.wait();
+    }
   }
 
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_Schedule_FewLargeTasks)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_STD_Reference_Async_WorkDividedInLewLargeTasks)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
-static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
+static void ThreadPool_Schedule_WorkDividedInFewLargeTasks(benchmark::State& state)
 {
   ThreadPool pool;
 
   const size_t amount = state.range(0);
 
+  auto work_per_thread = static_cast<unsigned int>(amount / pool.ThreadCount());
+
   for (auto _ : state)
   {
-    state.PauseTiming();
-
     Vector<Task<>> tasks;
-    tasks.Reserve(amount);
+    tasks.reserve(amount);
 
-    benchmark::DoNotOptimize(tasks);
+    benchmark::DoNotOptimize(tasks.data());
 
-    state.ResumeTiming();
-
-    for (size_t i = 0; i < amount; i++)
+    for (size_t i = 0; i < pool.ThreadCount(); i++)
     {
-      tasks.PushBack(CreateTask(pool, 1000));
+      tasks.push_back(CreateTask(pool, 1000 * work_per_thread));
     }
+
+    benchmark::ClobberMemory();
 
     Task<> task = WhenAll(std::move(tasks));
 
@@ -140,49 +169,15 @@ static void ThreadPool_Schedule_ManySmallTasks(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_Schedule_ManySmallTasks)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_Schedule_WorkDividedInFewLargeTasks)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
-static void ThreadPool_STD_Async_LewLargeTasks(benchmark::State& state)
-{
-  // STD Async can use a thread pool under the hood.
-  // MSVC does this but not GCC and CLANG
-  // The goal is for our thread pool to be about the same performance as MSVC, this would mean
-  // we would have an efficient cross-platform thread pool.
-
-  constexpr size_t threads = 4;
-
-  const size_t amount = state.range(0);
-
-  auto work_per_thread = static_cast<unsigned int>(amount / threads);
-
-  auto executor = [work_per_thread]() { Work(1000 * work_per_thread); };
-
-  for (auto _ : state)
-  {
-    auto future1 = std::async(std::launch::async, executor);
-    auto future2 = std::async(std::launch::async, executor);
-    auto future3 = std::async(std::launch::async, executor);
-    auto future4 = std::async(std::launch::async, executor);
-
-    future1.wait();
-    future2.wait();
-    future3.wait();
-    future4.wait();
-
-    benchmark::DoNotOptimize(future1);
-    benchmark::DoNotOptimize(future2);
-    benchmark::DoNotOptimize(future3);
-    benchmark::DoNotOptimize(future4);
-  }
-
-  benchmark::DoNotOptimize(executor);
-
-  state.SetComplexityN(amount);
-}
-
-BENCHMARK(ThreadPool_STD_Async_LewLargeTasks)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
-
-static void ThreadPool_STD_Async_ManySmallTasks(benchmark::State& state)
+static void ThreadPool_STD_Reference_Async_WorkDividedInManySmallTasks(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
@@ -190,23 +185,20 @@ static void ThreadPool_STD_Async_ManySmallTasks(benchmark::State& state)
 
   for (auto _ : state)
   {
-    state.PauseTiming();
-
     Vector<std::future<void>> tasks;
-    tasks.Resize(amount);
-
-    benchmark::DoNotOptimize(tasks);
-
-    state.ResumeTiming();
+    tasks.resize(amount);
 
     for (size_t i = 0; i < amount; i++)
     {
       tasks[i] = std::async(std::launch::async, executor);
     }
 
-    for (size_t i = 0; i < amount; i++)
+    benchmark::DoNotOptimize(tasks.data());
+    benchmark::ClobberMemory();
+
+    for (auto& task : tasks)
     {
-      tasks[i].get();
+      task.wait();
     }
   }
 
@@ -215,6 +207,48 @@ static void ThreadPool_STD_Async_ManySmallTasks(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(ThreadPool_STD_Async_ManySmallTasks)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
+BENCHMARK(ThreadPool_STD_Reference_Async_WorkDividedInManySmallTasks)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
+
+static void ThreadPool_Schedule_WorkDividedInManySmallTasks(benchmark::State& state)
+{
+  ThreadPool pool;
+
+  const size_t amount = state.range(0);
+
+  for (auto _ : state)
+  {
+    Vector<Task<>> tasks;
+    tasks.reserve(amount);
+
+    benchmark::DoNotOptimize(tasks.data());
+
+    for (size_t i = 0; i < amount; i++)
+    {
+      tasks.push_back(CreateTask(pool, 1000));
+    }
+
+    benchmark::ClobberMemory();
+
+    Task<> task = WhenAll(std::move(tasks));
+
+    SyncWait(task);
+  }
+
+  state.SetComplexityN(amount);
+}
+
+BENCHMARK(ThreadPool_Schedule_WorkDividedInManySmallTasks)
+  ->Arg(100)
+  ->Arg(1000)
+  ->Arg(10000)
+  ->Unit(benchmark::kMillisecond)
+  ->MeasureProcessCPUTime()
+  ->UseRealTime();
 
 } // namespace genebits::engine::bench

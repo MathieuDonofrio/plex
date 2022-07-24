@@ -5,6 +5,7 @@
 
 #include "genebits/engine/async/awaitable.h"
 #include "genebits/engine/debug/assertion.h"
+#include "genebits/engine/utilities/type_traits.h"
 
 namespace genebits::engine
 {

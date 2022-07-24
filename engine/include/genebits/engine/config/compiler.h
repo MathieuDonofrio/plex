@@ -53,6 +53,55 @@ static_assert(sizeof(void*) == 4, "In 32 bit environment, size of pointer should
 #error "Environment must be 64 bit"
 #endif
 
+// Non-Standard Attributes & Compiler hints
+
+///
+/// Hints the compiler to not inline the function
+///
+#if COMPILER_MSVC
+#define NO_INLINE __declspec(noinline)
+#elif COMPILER_CLANG
+#define NO_INLINE [[clang::noinline]]
+#else
+#define NO_INLINE [[gnu::noinline]]
+#endif
+
+///
+/// Hints the compiler to inline the function
+///
+#if COMPILER_MSVC
+#define ALWAYS_INLINE __forceinline
+#elif COMPILER_CLANG
+#define ALWAYS_INLINE [[clang::always_inline]]
+#else
+#define ALWAYS_INLINE [[gnu::always_inline]]
+#endif
+
+///
+/// Hints the compiler to inline calls inside the function.
+///
+#if COMPILER_MSVC
+#define FLATTEN [[msvc::forceinline_calls]]
+#elif CCOMPILER_CLANG
+#define FLATTEN [[clang::flatten]]
+#else
+#define FLATTEN [[gnu::flatten]]
+#endif
+
+///
+/// Hints the compiler that the function is likely to be executed.
+/// The function is optimized more aggressively, and is usually placed in a special hot section so all hot functions
+/// appear close together improving locality.
+///
+#define HOT_SECTION [[gnu::hot]]
+
+///
+/// Hints the compiler that the function is unlikely to be executed.
+/// The function is optimized for size rather than speed, and is usually placed in a special cold section
+/// so all cold functions are close together, improving cache locality of hot functions.
+///
+#define COLD_SECTION [[gnu::cold]]
+
 // C++ Standard
 
 #if defined(__cplusplus)
@@ -72,10 +121,6 @@ static_assert(sizeof(void*) == 4, "In 32 bit environment, size of pointer should
 #endif
 
 // C++ Feature test
-
-#ifndef __cpp_lib_format
-#error C++ formatting must be supported
-#endif
 
 #ifndef __cpp_lib_source_location
 #error C++ source location must be supported

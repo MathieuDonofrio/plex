@@ -56,7 +56,7 @@ public:
   ///
   [[nodiscard]] const T* data() const noexcept
   {
-    return reinterpret_cast<const T*>(this);
+    return std::bit_cast<const T*>(this);
   }
 
   ///
@@ -66,7 +66,7 @@ public:
   ///
   [[nodiscard]] T* data() noexcept
   {
-    return reinterpret_cast<T*>(this);
+    return std::bit_cast<T*>(this);
   }
 
   ///

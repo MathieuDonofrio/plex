@@ -32,6 +32,47 @@ bool SetThreadAffinity([[maybe_unused]] std::thread::native_handle_type handle, 
 #endif
 }
 
+bool SetThreadPriority(std::thread::native_handle_type handle, ThreadSchedulerPolicy policy, int priority)
+{
+#if PLATFORM_WINDOWS
+  switch (policy)
+  {
+  case ThreadSchedulerPolicy::Normal:
+  {
+    ASSERT(priority == 0, "Priority must be 0 for normal scheduler policy");
+
+    return ::SetThreadPriority(handle, THREAD_PRIORITY_NORMAL);
+  }
+  case ThreadSchedulerPolicy::Idle:
+  {
+    ASSERT(priority == 0, "Priority must be 0 for idle scheduler policy");
+
+    return ::SetThreadPriority(handle, THREAD_PRIORITY_IDLE);
+  }
+  case ThreadSchedulerPolicy::Realtime:
+  {
+    ASSERT(priority >= 1 && priority <= 31, "Prority must be between 1 & 31 for realtime scheduler policy");
+
+    int actual_priority = (priority + 1) / 2;
+
+    if (actual_priority < 1)
+    {
+      actual_priority = 1;
+    }
+    else if (actual_priority > THREAD_PRIORITY_TIME_CRITICAL)
+    {
+      actual_priority = THREAD_PRIORITY_TIME_CRITICAL;
+    }
+
+    return ::SetThreadPriority(handle, actual_priority);
+  }
+  default: return false;
+  }
+#elif PLATFORM_LINUX
+  return false;
+#endif
+}
+
 namespace this_thread
 {
   std::thread::native_handle_type NativeHandle()

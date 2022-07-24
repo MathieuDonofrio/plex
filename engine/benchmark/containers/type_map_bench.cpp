@@ -1,9 +1,10 @@
 #include "genebits/engine/containers/type_map.h"
 
-#include <map>
 #include <unordered_map>
 
 #include <benchmark/benchmark.h>
+
+#include "common/repeat.h"
 
 namespace genebits::engine::bench
 {
@@ -11,41 +12,29 @@ namespace
 {
   template<size_t Tag = 0>
   struct TestType
-  {};
+  {
+    [[maybe_unused]] std::atomic_size_t i = Tag;
+  };
 
 } // namespace
 
-static void TypeMap_STD_Map_Assure(benchmark::State& state)
+static void TypeMap_STD_UnorderedMap_Subscript(benchmark::State& state)
 {
-  std::map<size_t, int> map;
+  std::unordered_map<std::string_view, int> map;
 
-  benchmark::DoNotOptimize(map[TypeInfo<TestType<0>>::HashCode()]);
-  benchmark::DoNotOptimize(map[TypeInfo<TestType<1>>::HashCode()]);
-  benchmark::DoNotOptimize(map[TypeInfo<TestType<2>>::HashCode()]);
+  benchmark::DoNotOptimize(map[TypeName<TestType<0>>()]);
+  benchmark::DoNotOptimize(map[TypeName<TestType<1>>()]);
+  benchmark::DoNotOptimize(map[TypeName<TestType<2>>()]);
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(map[TypeInfo<TestType<9999>>::HashCode()]);
+    REPEAT8(benchmark::DoNotOptimize(map[TypeName<TestType<1001>>()]))
   }
+
+  state.SetItemsProcessed(state.iterations() * 8);
 }
 
-BENCHMARK(TypeMap_STD_Map_Assure);
-
-static void TypeMap_STD_UnorderedMap_Assure(benchmark::State& state)
-{
-  std::unordered_map<size_t, int> map;
-
-  benchmark::DoNotOptimize(map[TypeInfo<TestType<0>>::HashCode()]);
-  benchmark::DoNotOptimize(map[TypeInfo<TestType<1>>::HashCode()]);
-  benchmark::DoNotOptimize(map[TypeInfo<TestType<2>>::HashCode()]);
-
-  for (auto _ : state)
-  {
-    benchmark::DoNotOptimize(map[TypeInfo<TestType<9999>>::HashCode()]);
-  }
-}
-
-BENCHMARK(TypeMap_STD_UnorderedMap_Assure);
+BENCHMARK(TypeMap_STD_UnorderedMap_Subscript);
 
 static void TypeMap_Assure(benchmark::State& state)
 {
@@ -57,10 +46,32 @@ static void TypeMap_Assure(benchmark::State& state)
 
   for (auto _ : state)
   {
-    benchmark::DoNotOptimize(map.Assure<TestType<9999>>());
+    REPEAT8(benchmark::DoNotOptimize(map.Assure<TestType<1001>>()));
   }
+
+  state.SetItemsProcessed(state.iterations() * 8);
 }
 
 BENCHMARK(TypeMap_Assure);
+
+static void TypeMap_Get(benchmark::State& state)
+{
+  TypeMap<int> map;
+
+  benchmark::DoNotOptimize(map.Assure<TestType<0>>());
+  benchmark::DoNotOptimize(map.Assure<TestType<1>>());
+  benchmark::DoNotOptimize(map.Assure<TestType<2>>());
+
+  benchmark::DoNotOptimize(map.Assure<TestType<1001>>());
+
+  for (auto _ : state)
+  {
+    REPEAT8(benchmark::DoNotOptimize(map.Get<TestType<1001>>()));
+  }
+
+  state.SetItemsProcessed(state.iterations() * 8);
+}
+
+BENCHMARK(TypeMap_Get);
 
 } // namespace genebits::engine::bench

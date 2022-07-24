@@ -7,7 +7,7 @@
 
 namespace genebits::engine::bench
 {
-static void Pow_STD_FloatBaseIntExp(benchmark::State& state)
+static void Pow_STD_Reference_FloatBaseIntExp(benchmark::State& state)
 {
   int amount = static_cast<int>(state.range(0));
 
@@ -21,7 +21,7 @@ static void Pow_STD_FloatBaseIntExp(benchmark::State& state)
   benchmark::DoNotOptimize(amount);
 }
 
-BENCHMARK(Pow_STD_FloatBaseIntExp)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(Pow_STD_Reference_FloatBaseIntExp)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
 static void Pow_FloatBaseIntExp(benchmark::State& state)
 {
@@ -39,7 +39,7 @@ static void Pow_FloatBaseIntExp(benchmark::State& state)
 
 BENCHMARK(Pow_FloatBaseIntExp)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-static void Sqrt_STD_Float(benchmark::State& state)
+static void Sqrt_STD_Reference_Float(benchmark::State& state)
 {
   PCG pcg { Seed() };
   float x = static_cast<float>(pcg()) / (static_cast<float>(RAND_MAX / 10000.0f));
@@ -54,7 +54,7 @@ static void Sqrt_STD_Float(benchmark::State& state)
   benchmark::DoNotOptimize(x);
 }
 
-BENCHMARK(Sqrt_STD_Float);
+BENCHMARK(Sqrt_STD_Reference_Float);
 
 static void Sqrt_Float(benchmark::State& state)
 {
@@ -73,7 +73,7 @@ static void Sqrt_Float(benchmark::State& state)
 
 BENCHMARK(Sqrt_Float);
 
-static void RSqrt_STD_Float(benchmark::State& state)
+static void RSqrt_STD_Reference_Float(benchmark::State& state)
 {
   PCG pcg { Seed() };
   float x = static_cast<float>(pcg()) / (static_cast<float>(RAND_MAX / 10000.0f));
@@ -88,7 +88,7 @@ static void RSqrt_STD_Float(benchmark::State& state)
   benchmark::DoNotOptimize(x);
 }
 
-BENCHMARK(RSqrt_STD_Float);
+BENCHMARK(RSqrt_STD_Reference_Float);
 
 static void RSqrt_Float(benchmark::State& state)
 {
@@ -107,7 +107,7 @@ static void RSqrt_Float(benchmark::State& state)
 
 BENCHMARK(RSqrt_Float);
 
-static void RSqrt_STD_Double(benchmark::State& state)
+static void RSqrt_STD_Reference_Double(benchmark::State& state)
 {
   PCG pcg { Seed() };
   double x = static_cast<float>(pcg()) / (static_cast<float>(RAND_MAX / 10000.0f));
@@ -122,7 +122,7 @@ static void RSqrt_STD_Double(benchmark::State& state)
   benchmark::DoNotOptimize(x);
 }
 
-BENCHMARK(RSqrt_STD_Double);
+BENCHMARK(RSqrt_STD_Reference_Double);
 
 static void RSqrt_Double(benchmark::State& state)
 {

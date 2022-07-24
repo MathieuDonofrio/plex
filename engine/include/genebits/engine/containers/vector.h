@@ -2,48 +2,34 @@
 #define GENEBITS_ENGINE_CONTAINERS_VECTOR_H
 
 #include <iterator>
-#include <memory>
-#include <type_traits>
+#include <memory_resource>
+#include <ranges>
 #include <utility>
 
-#include "genebits/engine/containers/c_array.h"
+#include "genebits/engine/containers/array.h"
 #include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/os/memory.h"
+#include "genebits/engine/utilities/memory.h"
 #include "genebits/engine/utilities/type_traits.h"
 
 namespace genebits::engine
 {
 ///
-/// Concept that determines if the type can be used as in a vector.
-///
-/// @tparam Type The type to check
-///
-template<typename Type>
-concept VectorType = std::is_copy_constructible_v<Type> || std::is_move_constructible_v<Type>;
-
-// Currently, only stateless and default constructed allocators are really supported. Once we have a compressed pair, we
-// could correctly implement allocators with empty base optimization.
-
-///
 /// General purpose vector implementation optimized for speed.
 ///
-/// This implementation of vector is our replacement for std::vector. Is most cases this vector is faster than
+/// This implementation of vector is our internal alternative for std::vector. Is most cases this vector is faster than
 /// std::vector for the following reason:
 ///
-/// - Implementation simplicity resulting in significantly less code size.
 /// - Optimizations for relocatable types replacing move and destroy loops for bitwise memory copy.
-/// - Memory/speed tradeoffs like better growth rate and 32 bit size/capacity.
-/// - Carefully crafted to try and take advantage of heap elision. (Works well on clang)
-/// - Built-in optimized unordered operations.
+/// - 16 byte size.
+/// - Other minor optimizations.
 ///
-/// @tparam[in] Type Value type to contain.
-/// @tparam[in] AllocatorType Allocator type to allocate memory with.
+/// @tparam Type Value type to contain.
+/// @tparam AllocatorType Allocator type to allocate memory with.
 ///
-template<VectorType Type, typename AllocatorType = std::allocator<Type>>
+template<typename Type, typename AllocatorType = std::allocator<Type>>
 class Vector : private AllocatorType
 {
 public:
-  // Style Exception: STL
   // clang-format off
 
   using size_type = size_t;
@@ -63,17 +49,17 @@ public:
   using allocator_type = AllocatorType;
   using allocator_traits = std::allocator_traits<allocator_type>;
 
-  // Forward iterator creation methods.
+  // Forward iterators
   [[nodiscard]] constexpr iterator begin() { return array_; }
   [[nodiscard]] constexpr const_iterator begin() const { return array_; }
   [[nodiscard]] constexpr iterator end() { return array_ + size_; }
   [[nodiscard]] constexpr const_iterator end() const { return array_ + size_; }
 
-  // Explicit const forward iterator creation methods.
+  // Explicit const forward iterators
   [[nodiscard]] constexpr const_iterator cbegin() const { return array_; }
   [[nodiscard]] constexpr const_iterator cend() const { return array_ + size_; }
 
-  // Reverse iterator creation methods.
+  // Reverse iterators
   [[nodiscard]] constexpr reverse_iterator rbegin() { return reverse_iterator(end()); }
   [[nodiscard]] constexpr const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
   [[nodiscard]] constexpr reverse_iterator rend() { return reverse_iterator(begin()); }
@@ -96,7 +82,7 @@ public:
   ///
   /// @return Const reference to element at the index.
   ///
-  [[nodiscard]] constexpr const Type& operator[](const size_type index) const noexcept
+  [[nodiscard]] constexpr const_reference operator[](const size_type index) const noexcept
   {
     ASSERT(index < size_, "Index out of bounds");
     return array_[index];
@@ -109,7 +95,7 @@ public:
   ///
   /// @return Reference to element at the index.
   ///
-  [[nodiscard]] constexpr Type& operator[](const size_type index) noexcept
+  [[nodiscard]] constexpr reference operator[](const size_type index) noexcept
   {
     ASSERT(index < size_, "Index out of bounds");
     return array_[index];
@@ -120,9 +106,9 @@ public:
   ///
   /// @return Size of the vector.
   ///
-  [[nodiscard]] constexpr size_t size() const noexcept
+  [[nodiscard]] constexpr size_type size() const noexcept
   {
-    return static_cast<size_t>(size_);
+    return static_cast<size_type>(size_);
   }
 
   ///
@@ -131,9 +117,9 @@ public:
   ///
   /// @return Capacity of the vector.
   ///
-  [[nodiscard]] constexpr size_t capacity() const noexcept
+  [[nodiscard]] constexpr size_type capacity() const noexcept
   {
-    return static_cast<size_t>(capacity_);
+    return static_cast<size_type>(capacity_);
   }
 
   ///
@@ -151,7 +137,7 @@ public:
   ///
   /// @return Allocator.
   ///
-  allocator_type get_allocator() const noexcept
+  constexpr allocator_type get_allocator() const noexcept
   {
     return *this;
   }
@@ -160,7 +146,9 @@ public:
   ///
   /// Default constructor
   ///
-  constexpr Vector() noexcept : array_(nullptr), size_(0), capacity_(0) {}
+  constexpr Vector() noexcept(std::is_nothrow_default_constructible_v<AllocatorType>)
+    : array_(nullptr), size_(0), capacity_(0)
+  {}
 
   ///
   /// Constructs vector using c-array style initializer list.
@@ -170,7 +158,7 @@ public:
   /// @param[in] source Array.
   ///
   template<size_t Size>
-  Vector(CArray<Type, Size>&& source) noexcept
+  Vector(CArray<Type, Size>&& source)
   {
     AssignToEmpty(std::move(source));
   }
@@ -179,7 +167,30 @@ public:
   /// Empty c-array constructor. Default constructs the vector.
   ///
   template<std::same_as<EmptyCArray> Source = EmptyCArray>
-  constexpr Vector(Source) noexcept : Vector()
+  constexpr Vector(Source) noexcept(noexcept(Vector())) : Vector()
+  {}
+
+  ///
+  /// Constructs vector using iterators.
+  ///
+  /// @tparam Iterator Iterator type.
+  ///
+  /// @param[in] first First iterator.
+  /// @param[in] last Last iterator.
+  ///
+  template<std::input_iterator Iterator>
+  Vector(Iterator first, Iterator last)
+  {
+    AssignToEmpty(first, last);
+  }
+
+  ///
+  /// Constructs vector using a range
+  ///
+  /// @param source Range to copy from.
+  ///
+  template<std::ranges::input_range Range>
+  Vector(const Range& source) : Vector(std::ranges::begin(source), std::ranges::end(source))
   {}
 
   ///
@@ -212,7 +223,7 @@ public:
   ///
   /// @param[in] other Vector to copy from.
   ///
-  Vector(const Vector<Type, AllocatorType>& other) noexcept : size_(other.size_)
+  Vector(const Vector<Type, AllocatorType>& other) : size_(other.size_)
   {
     Block block = AllocateAtLeast(size_);
 
@@ -231,7 +242,7 @@ public:
   ///
   constexpr Vector& operator=(Vector<Type, AllocatorType>&& other) noexcept
   {
-    Vector<Type, AllocatorType>(std::move(other)).Swap(*this);
+    Vector<Type, AllocatorType>(std::move(other)).swap(*this);
     return *this;
   }
 
@@ -242,9 +253,9 @@ public:
   ///
   /// @return Reference to this vector.
   ///
-  Vector& operator=(const Vector<Type, AllocatorType>& other) noexcept
+  Vector& operator=(const Vector<Type, AllocatorType>& other)
   {
-    Vector<Type, AllocatorType>(other).Swap(*this);
+    Vector<Type, AllocatorType>(other).swap(*this);
     return *this;
   }
 
@@ -255,9 +266,13 @@ public:
   /// @param[in] value Element to add and construct in place.
   ///
   template<typename... Args>
-  void Emplace(iterator pos, Args&&... args)
+  void emplace(iterator pos, Args&&... args)
+  requires std::constructible_from<Type, Args...>
   {
-    if (size_ < capacity_ && pos == end()) { ConstructOneAtEnd(std::forward<Args>(args)...); }
+    if (size_ < capacity_ && pos == end())
+    {
+      ConstructOneAtEnd(std::forward<Args>(args)...);
+    }
     else // Slow path
     {
       SlowEmplace(pos, std::forward<Args>(args)...);
@@ -269,9 +284,10 @@ public:
   ///
   /// @param[in] value Element to insert.
   ///
-  void Insert(iterator pos, const Type& value)
+  void insert(iterator pos, const Type& value)
+  requires std::constructible_from<Type, const Type&>
   {
-    Emplace(pos, value);
+    emplace(pos, value);
   }
 
   ///
@@ -279,9 +295,10 @@ public:
   ///
   /// @param[in] value Element to insert.
   ///
-  void Insert(iterator pos, Type&& value)
+  void insert(iterator pos, Type&& value)
+  requires std::constructible_from<Type, Type&&>
   {
-    Emplace(pos, std::move(value));
+    emplace(pos, std::move(value));
   }
 
   ///
@@ -290,9 +307,13 @@ public:
   /// @param[in] value Element to add and construct in place.
   ///
   template<typename... Args>
-  void EmplaceBack(Args&&... args)
+  void emplace_back(Args&&... args)
+  requires std::constructible_from<Type, Args...>
   {
-    if (size_ < capacity_) [[likely]] { ConstructOneAtEnd(std::forward<Args>(args)...); }
+    if (size_ < capacity_) [[likely]]
+    {
+      ConstructOneAtEnd(std::forward<Args>(args)...);
+    }
     else // Slow path
     {
       SlowEmplaceBack(std::forward<Args>(args)...);
@@ -304,9 +325,10 @@ public:
   ///
   /// @param[in] value Element to add
   ///
-  void PushBack(const Type& value) noexcept
+  void push_back(const Type& value)
+  requires std::constructible_from<Type, const Type&>
   {
-    EmplaceBack(value);
+    emplace_back(value);
   }
 
   ///
@@ -314,15 +336,16 @@ public:
   ///
   /// @param[in] value Element to add
   ///
-  void PushBack(Type&& value) noexcept
+  void push_back(Type&& value)
+  requires std::constructible_from<Type, Type&&>
   {
-    EmplaceBack(std::move(value));
+    emplace_back(std::move(value));
   }
 
   ///
   /// Remove the element at the back of the vector.
   ///
-  void PopBack() noexcept
+  void pop_back() noexcept
   {
     ASSERT(size_ > 0, "Vector is empty");
 
@@ -335,7 +358,7 @@ public:
   ///
   /// @param[in] it Iterator for element to erase
   ///
-  void Erase(iterator it) noexcept
+  void erase(iterator it)
   {
     ASSERT(size_ > 0, "Vector is empty");
 
@@ -352,24 +375,26 @@ public:
   ///
   /// @param[in] it Iterator for element to erase
   ///
-  void UnorderedErase(iterator it) noexcept
+  void SwapAndPop(iterator it)
   {
     ASSERT(size_ > 0, "Vector is empty");
 
     it->~Type();
-    if (--size_) [[likely]] { RelocateAt(end(), it); }
+    if (--size_) [[likely]]
+    {
+      RelocateAt(end(), it);
+    }
   }
 
   ///
   /// Resizes the vector and default constructs all the new elements.
   ///
-  /// Will grow the internal array is the new size if larger than the capacity.
-  ///
   /// @param[in] new_size New size of the vector
   ///
-  void Resize(const size_t new_size) noexcept
+  void resize(const size_t new_size)
+  requires std::default_initializable<Type>
   {
-    Reserve(new_size);
+    reserve(new_size);
 
     if (static_cast<uint32_t>(new_size) > size_) std::uninitialized_value_construct(end(), begin() + new_size);
     else
@@ -381,14 +406,13 @@ public:
   ///
   /// Resizes the vector and copies the value into the new elements.
   ///
-  /// Will grow the internal array is the new size if larger than the capacity.
-  ///
   /// @param[in] new_size New size of the vector.
   /// @param[in] value The value to copy.
   ///
-  void Resize(const size_t new_size, const Type& value) noexcept
+  void resize(const size_t new_size, const Type& value)
+  requires std::constructible_from<Type, const Type&>
   {
-    Reserve(new_size);
+    reserve(new_size);
 
     if (static_cast<uint32_t>(new_size) > size_) std::uninitialized_fill(end(), begin() + new_size, value);
     else
@@ -403,7 +427,7 @@ public:
   ///
   /// @param[in] min_capacity Minimum capacity the vector should have.
   ///
-  void Reserve(const size_t min_capacity) noexcept
+  void reserve(const size_t min_capacity)
   {
     if (static_cast<uint32_t>(min_capacity) > capacity_) [[likely]]
     {
@@ -417,7 +441,7 @@ public:
   ///
   /// Clears the vector of all its contents without deallocating the memory.
   ///
-  void Clear() noexcept
+  void clear() noexcept
   {
     std::destroy(begin(), end());
 
@@ -429,7 +453,7 @@ public:
   ///
   /// @param[in] other Other vector.
   ///
-  void Swap(Vector<Type, AllocatorType>& other) noexcept
+  void swap(Vector<Type, AllocatorType>& other) noexcept
   {
     std::swap(array_, other.array_);
     std::swap(size_, other.size_);
@@ -443,10 +467,10 @@ public:
   ///
   /// @return True if vectors are equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator==(const Vector<Type, AllocatorType>& other) const noexcept
+  [[nodiscard]] constexpr bool operator==(const Vector<Type, AllocatorType>& other) const
   {
     if (this->array_ == other.array_) return true; // Checks for same instance or two empty vectors.
-    if (this->size_ != other.size_ || this->capacity_ != other.capacity_) return false;
+    if (this->size_ != other.size_) return false;
 
     return std::equal(this->begin(), this->end(), other.begin());
   }
@@ -458,7 +482,7 @@ public:
   ///
   /// @return True if vectors are not equal, false otherwise.
   ///
-  [[nodiscard]] constexpr bool operator!=(const Vector<Type, AllocatorType>& other) const noexcept
+  [[nodiscard]] constexpr bool operator!=(const Vector<Type, AllocatorType>& other) const
   {
     return !(*this == other);
   }
@@ -480,16 +504,17 @@ protected:
   ///
   /// @return The allocated block.
   ///
-  Block AllocateAtLeast(size_t capacity) noexcept
+  Block AllocateAtLeast(size_t capacity)
   {
     // C++ 23 allocate_at_least should yield major performance benefits over regular allocation for containers.
     // It is a suitable replacement for realloc.
     // Proposal: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0401r6.html
 #ifdef __cpp_lib_allocate_at_least
-    const auto result = get_allocator().allocate_at_least(capacity);
-    return { result.ptr, static_cast<uint32_t>(result.count) };
+    auto block = get_allocator().allocate_at_least(capacity);
+    return { std::to_address(block.ptr), static_cast<uint32_t>(block.count) };
 #else
-    return { get_allocator().allocate(capacity), static_cast<uint32_t>(capacity) };
+    auto ptr = get_allocator().allocate(capacity);
+    return { std::to_address(ptr), static_cast<uint32_t>(capacity) };
 #endif
   }
 
@@ -500,7 +525,7 @@ protected:
   ///
   /// @return Computed capacity.
   ///
-  [[nodiscard]] uint32_t ComputeNextCapacity() const noexcept
+  [[nodiscard]] constexpr uint32_t ComputeNextCapacity() const noexcept
   {
     if (capacity_ == 0) [[unlikely]]
     {
@@ -539,7 +564,7 @@ protected:
   {
     if (size_ < capacity_) [[likely]]
     {
-      UninitializedRelocateBackwards(pos, end(), end() + 1);
+      ShiftBackAt(pos);
 
       new (pos) Type(std::forward<Args>(args)...);
     }
@@ -589,10 +614,32 @@ protected:
   /// @param[in] args Arguments.
   ///
   template<typename... Args>
-  void ConstructOneAtEnd(Args&&... args) noexcept
+  void ConstructOneAtEnd(Args&&... args) noexcept(noexcept(Type(std::forward<Args>(args)...)))
   {
     new (end()) Type(std::forward<Args>(args)...);
     ++size_;
+  }
+
+  ///
+  /// Moves all elements starting at the position one location back leaving the position uninitialized.
+  ///
+  void ShiftBackAt(iterator pos)
+  {
+    auto first = pos;
+    auto last = end();
+    auto dest = last + 1;
+
+    if constexpr (IsTriviallyRelocatable<Type>::value)
+    {
+      const size_t bytes = reinterpret_cast<char*>(last) - reinterpret_cast<char*>(first);
+      std::memmove(reinterpret_cast<char*>(dest) - bytes, first, bytes);
+    }
+    else
+    {
+      ::new (static_cast<void*>(--dest)) Type(std::move(*--last));
+      std::move_backward(first, last, dest);
+      first->~Type();
+    }
   }
 
   ///
@@ -603,7 +650,7 @@ protected:
   /// @param[in] source CArray source.
   ///
   template<size_t Size>
-  void AssignToEmpty(CArray<Type, Size>&& source) noexcept
+  void AssignToEmpty(CArray<Type, Size>&& source)
   {
     Block block = AllocateAtLeast(Size);
 
@@ -614,6 +661,26 @@ protected:
     UninitializedRelocate(source, static_cast<Type*>(source) + Size, array_);
   }
 
+  ///
+  /// Iterator contents to an empty vector.
+  ///
+  /// @param[in] first Iterator to first element.
+  /// @param[in] last Iterator to last element.
+  ///
+  template<typename Iterator>
+  void AssignToEmpty(Iterator first, Iterator last)
+  {
+    const auto size = static_cast<uint32_t>(std::distance(first, last));
+
+    Block block = AllocateAtLeast(size);
+
+    array_ = block.ptr;
+    size_ = size;
+    capacity_ = block.count;
+
+    std::uninitialized_copy(first, last, array_);
+  }
+
 private:
   Type* array_;
 
@@ -622,11 +689,19 @@ private:
   uint32_t capacity_;
 };
 
+template<std::input_iterator Iterator>
+Vector(Iterator first, Iterator last) -> Vector<typename std::allocator_traits<Iterator>::value_type>;
+
 template<typename Type, typename Allocator>
 struct IsTriviallyRelocatable<Vector<Type, Allocator>>
-  : std::bool_constant<IsTriviallyRelocatable<Type>::value && IsTriviallyRelocatable<Allocator>::value>
+  : public std::bool_constant<IsTriviallyRelocatable<Allocator>::value>
 {};
 
+namespace pmr
+{
+  template<typename Type>
+  using Vector = Vector<Type, std::pmr::polymorphic_allocator<Type>>;
+}
 } // namespace genebits::engine
 
 namespace std
@@ -634,7 +709,7 @@ namespace std
 template<typename T>
 constexpr void swap(genebits::engine::Vector<T>& lhs, genebits::engine::Vector<T>& rhs) noexcept
 {
-  lhs.Swap(rhs);
+  lhs.swap(rhs);
 }
 } // namespace std
 

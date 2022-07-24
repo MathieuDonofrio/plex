@@ -26,11 +26,9 @@ endfunction()
 #
 
 add_engine_benchmark(utilities)
-add_engine_benchmark(events)
-add_engine_benchmark(graphics)
 add_engine_benchmark(ecs)
 add_engine_benchmark(async)
 add_engine_benchmark(random)
+add_engine_benchmark(scheduler)
 add_engine_benchmark(containers)
-add_engine_benchmark(os)
 add_engine_benchmark(math)

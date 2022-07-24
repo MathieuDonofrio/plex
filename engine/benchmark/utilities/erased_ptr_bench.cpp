@@ -6,7 +6,7 @@
 
 namespace genebits::engine::bench
 {
-static void ErasedPtr_STD_SharedPtr_Cast(benchmark::State& state)
+static void ErasedPtr_STD_Reference_SharedPtr_Cast(benchmark::State& state)
 {
   for (auto _ : state)
   {
@@ -18,7 +18,7 @@ static void ErasedPtr_STD_SharedPtr_Cast(benchmark::State& state)
   }
 }
 
-BENCHMARK(ErasedPtr_STD_SharedPtr_Cast);
+BENCHMARK(ErasedPtr_STD_Reference_SharedPtr_Cast);
 
 static void ErasedPtr_Cast(benchmark::State& state)
 {
@@ -26,7 +26,7 @@ static void ErasedPtr_Cast(benchmark::State& state)
   {
     ErasedPtr<void> erased(new int(10));
 
-    int* casted = static_cast<int*>(erased.Get());
+    int* casted = static_cast<int*>(erased.get());
 
     benchmark::DoNotOptimize(casted);
   }

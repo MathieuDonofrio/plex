@@ -71,8 +71,8 @@ TYPED_TEST(Ref_Tests, Constructor_Default_Null)
   Ref<TypeParam> obj;
 
   EXPECT_FALSE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 0);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 0);
   EXPECT_EQ(obj.Get(), nullptr);
 }
 
@@ -81,8 +81,8 @@ TYPED_TEST(Ref_Tests, Constructor_NullInstance_Null)
   Ref<TypeParam> obj(nullptr);
 
   EXPECT_FALSE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 0);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 0);
   EXPECT_EQ(obj.Get(), nullptr);
 }
 
@@ -102,8 +102,8 @@ TYPED_TEST(Ref_Tests, Constructor_Instance_Unique)
   Ref<TypeParam> obj(instance);
 
   EXPECT_TRUE(obj);
-  EXPECT_TRUE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 1);
+  EXPECT_TRUE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 1);
   EXPECT_EQ(obj.Get(), instance);
 }
 
@@ -114,8 +114,8 @@ TYPED_TEST(Ref_Tests, Constructor_Downcast_Unique)
   Ref<TypeParam> obj(instance);
 
   EXPECT_TRUE(obj);
-  EXPECT_TRUE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 1);
+  EXPECT_TRUE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 1);
   EXPECT_EQ(obj.Get(), instance);
 }
 
@@ -129,8 +129,8 @@ TYPED_TEST(Ref_Tests, Destructor_Unique_Deleted)
     Ref<TypeParam> obj(instance, MockRefDeleter<TypeParam>);
 
     EXPECT_TRUE(obj);
-    EXPECT_TRUE(obj.Unique());
-    EXPECT_EQ(obj.UseCount(), 1);
+    EXPECT_TRUE(obj.unique());
+    EXPECT_EQ(obj.use_count(), 1);
     EXPECT_EQ(obj.Get(), instance);
   }
 
@@ -145,13 +145,13 @@ TYPED_TEST(Ref_Tests, MoveConstructor_Unique_Unique)
   Ref<TypeParam> moved(std::move(obj));
 
   EXPECT_FALSE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 0);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 0);
   EXPECT_EQ(obj.Get(), nullptr);
 
   EXPECT_TRUE(moved);
-  EXPECT_TRUE(moved.Unique());
-  EXPECT_EQ(moved.UseCount(), 1);
+  EXPECT_TRUE(moved.unique());
+  EXPECT_EQ(moved.use_count(), 1);
   EXPECT_EQ(moved.Get(), instance);
 }
 
@@ -163,13 +163,13 @@ TYPED_TEST(Ref_Tests, MoveConstructor_Downcast_Unique)
   Ref<TypeParam> moved(std::move(obj));
 
   EXPECT_FALSE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 0);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 0);
   EXPECT_EQ(obj.Get(), nullptr);
 
   EXPECT_TRUE(moved);
-  EXPECT_TRUE(moved.Unique());
-  EXPECT_EQ(moved.UseCount(), 1);
+  EXPECT_TRUE(moved.unique());
+  EXPECT_EQ(moved.use_count(), 1);
   EXPECT_EQ(moved.Get(), instance);
 }
 
@@ -179,13 +179,13 @@ TYPED_TEST(Ref_Tests, CopyConstructor_Null_Null)
   Ref<TypeParam> copied(obj);
 
   EXPECT_FALSE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 0);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 0);
   EXPECT_EQ(obj.Get(), nullptr);
 
   EXPECT_FALSE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 0);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 0);
   EXPECT_EQ(copied.Get(), nullptr);
 }
 
@@ -197,13 +197,13 @@ TYPED_TEST(Ref_Tests, CopyConstructor_Unique_2Ref)
   Ref<TypeParam> copied(obj);
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 2);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 2);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_TRUE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 2);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 2);
   EXPECT_EQ(copied.Get(), instance);
 }
 
@@ -216,18 +216,18 @@ TYPED_TEST(Ref_Tests, CopyConstructor_2Ref_3Ref)
   Ref<TypeParam> copied2(obj);
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 3);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 3);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_TRUE(copied1);
-  EXPECT_FALSE(copied1.Unique());
-  EXPECT_EQ(copied1.UseCount(), 3);
+  EXPECT_FALSE(copied1.unique());
+  EXPECT_EQ(copied1.use_count(), 3);
   EXPECT_EQ(copied1.Get(), instance);
 
   EXPECT_TRUE(copied2);
-  EXPECT_FALSE(copied2.Unique());
-  EXPECT_EQ(copied2.UseCount(), 3);
+  EXPECT_FALSE(copied2.unique());
+  EXPECT_EQ(copied2.use_count(), 3);
   EXPECT_EQ(copied2.Get(), instance);
 }
 
@@ -241,18 +241,18 @@ TYPED_TEST(Ref_Tests, MoveConstructor_2Ref_2Ref)
   Ref<TypeParam> moved(std::move(copied));
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 2);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 2);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_FALSE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 0);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 0);
   EXPECT_EQ(copied.Get(), nullptr);
 
   EXPECT_TRUE(moved);
-  EXPECT_FALSE(moved.Unique());
-  EXPECT_EQ(moved.UseCount(), 2);
+  EXPECT_FALSE(moved.unique());
+  EXPECT_EQ(moved.use_count(), 2);
   EXPECT_EQ(moved.Get(), instance);
 }
 
@@ -269,13 +269,13 @@ TYPED_TEST(Ref_Tests, MoveConstructor_ExistingRef_Deleted)
   obj1 = std::move(obj2);
 
   EXPECT_TRUE(obj1);
-  EXPECT_TRUE(obj1.Unique());
-  EXPECT_EQ(obj1.UseCount(), 1);
+  EXPECT_TRUE(obj1.unique());
+  EXPECT_EQ(obj1.use_count(), 1);
   EXPECT_EQ(obj1.Get(), instance2);
 
   EXPECT_FALSE(obj2);
-  EXPECT_FALSE(obj2.Unique());
-  EXPECT_EQ(obj2.UseCount(), 0);
+  EXPECT_FALSE(obj2.unique());
+  EXPECT_EQ(obj2.use_count(), 0);
   EXPECT_EQ(obj2.Get(), nullptr);
 
   EXPECT_EQ(mock_deleter_calls, 1);
@@ -294,13 +294,13 @@ TYPED_TEST(Ref_Tests, CopyConstructor_ExistingRef_Deleted)
   obj1 = obj2;
 
   EXPECT_TRUE(obj1);
-  EXPECT_FALSE(obj1.Unique());
-  EXPECT_EQ(obj1.UseCount(), 2);
+  EXPECT_FALSE(obj1.unique());
+  EXPECT_EQ(obj1.use_count(), 2);
   EXPECT_EQ(obj1.Get(), instance2);
 
   EXPECT_TRUE(obj2);
-  EXPECT_FALSE(obj2.Unique());
-  EXPECT_EQ(obj2.UseCount(), 2);
+  EXPECT_FALSE(obj2.unique());
+  EXPECT_EQ(obj2.use_count(), 2);
   EXPECT_EQ(obj2.Get(), instance2);
 
   EXPECT_EQ(mock_deleter_calls, 1);
@@ -320,19 +320,19 @@ TYPED_TEST(Ref_Tests, Destructor_2Ref_Dereferenced)
       Ref<TypeParam> copied(obj);
 
       EXPECT_TRUE(obj);
-      EXPECT_FALSE(obj.Unique());
-      EXPECT_EQ(obj.UseCount(), 2);
+      EXPECT_FALSE(obj.unique());
+      EXPECT_EQ(obj.use_count(), 2);
       EXPECT_EQ(obj.Get(), instance);
 
       EXPECT_TRUE(copied);
-      EXPECT_FALSE(copied.Unique());
-      EXPECT_EQ(copied.UseCount(), 2);
+      EXPECT_FALSE(copied.unique());
+      EXPECT_EQ(copied.use_count(), 2);
       EXPECT_EQ(copied.Get(), instance);
     }
 
     EXPECT_TRUE(obj);
-    EXPECT_TRUE(obj.Unique());
-    EXPECT_EQ(obj.UseCount(), 1);
+    EXPECT_TRUE(obj.unique());
+    EXPECT_EQ(obj.use_count(), 1);
     EXPECT_EQ(obj.Get(), instance);
   }
 
@@ -355,35 +355,35 @@ TYPED_TEST(Ref_Tests, Destructor_3Ref_Dereferenced)
         Ref<TypeParam> copied2(obj);
 
         EXPECT_TRUE(obj);
-        EXPECT_FALSE(obj.Unique());
-        EXPECT_EQ(obj.UseCount(), 3);
+        EXPECT_FALSE(obj.unique());
+        EXPECT_EQ(obj.use_count(), 3);
         EXPECT_EQ(obj.Get(), instance);
 
         EXPECT_TRUE(copied1);
-        EXPECT_FALSE(copied1.Unique());
-        EXPECT_EQ(copied1.UseCount(), 3);
+        EXPECT_FALSE(copied1.unique());
+        EXPECT_EQ(copied1.use_count(), 3);
         EXPECT_EQ(copied1.Get(), instance);
 
         EXPECT_TRUE(copied2);
-        EXPECT_FALSE(copied2.Unique());
-        EXPECT_EQ(copied2.UseCount(), 3);
+        EXPECT_FALSE(copied2.unique());
+        EXPECT_EQ(copied2.use_count(), 3);
         EXPECT_EQ(copied2.Get(), instance);
       }
 
       EXPECT_TRUE(obj);
-      EXPECT_FALSE(obj.Unique());
-      EXPECT_EQ(obj.UseCount(), 2);
+      EXPECT_FALSE(obj.unique());
+      EXPECT_EQ(obj.use_count(), 2);
       EXPECT_EQ(obj.Get(), instance);
 
       EXPECT_TRUE(copied1);
-      EXPECT_FALSE(copied1.Unique());
-      EXPECT_EQ(copied1.UseCount(), 2);
+      EXPECT_FALSE(copied1.unique());
+      EXPECT_EQ(copied1.use_count(), 2);
       EXPECT_EQ(copied1.Get(), instance);
     }
 
     EXPECT_TRUE(obj);
-    EXPECT_TRUE(obj.Unique());
-    EXPECT_EQ(obj.UseCount(), 1);
+    EXPECT_TRUE(obj.unique());
+    EXPECT_EQ(obj.use_count(), 1);
     EXPECT_EQ(obj.Get(), instance);
   }
 
@@ -400,20 +400,20 @@ TYPED_TEST(Ref_Tests, Destructor_2RefSameBlock_Dereferenced)
     Ref<TypeParam> obj(instance, MockRefDeleter<TypeParam>);
 
     EXPECT_TRUE(obj);
-    EXPECT_TRUE(obj.Unique());
-    EXPECT_EQ(obj.UseCount(), 1);
+    EXPECT_TRUE(obj.unique());
+    EXPECT_EQ(obj.use_count(), 1);
     EXPECT_EQ(obj.Get(), instance);
 
     Ref<TypeParam> copied(obj);
 
     EXPECT_TRUE(obj);
-    EXPECT_FALSE(obj.Unique());
-    EXPECT_EQ(obj.UseCount(), 2);
+    EXPECT_FALSE(obj.unique());
+    EXPECT_EQ(obj.use_count(), 2);
     EXPECT_EQ(obj.Get(), instance);
 
     EXPECT_TRUE(copied);
-    EXPECT_FALSE(copied.Unique());
-    EXPECT_EQ(copied.UseCount(), 2);
+    EXPECT_FALSE(copied.unique());
+    EXPECT_EQ(copied.use_count(), 2);
     EXPECT_EQ(copied.Get(), instance);
   }
 
@@ -429,8 +429,8 @@ TYPED_TEST(Ref_Tests, MoveAssignment_SelfAssingment_Same)
   obj = std::move(obj);
 
   EXPECT_TRUE(obj);
-  EXPECT_TRUE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 1);
+  EXPECT_TRUE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 1);
   EXPECT_EQ(obj.Get(), instance);
 }
 
@@ -444,13 +444,13 @@ TYPED_TEST(Ref_Tests, MoveAssignment_SelfAssingment2Ref_Same)
   obj = std::move(obj);
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 2);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 2);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_TRUE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 2);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 2);
   EXPECT_EQ(copied.Get(), instance);
 }
 
@@ -463,8 +463,8 @@ TYPED_TEST(Ref_Tests, CopyAssignment_SelfAssingment_Same)
   obj = obj;
 
   EXPECT_TRUE(obj);
-  EXPECT_TRUE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 1);
+  EXPECT_TRUE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 1);
   EXPECT_EQ(obj.Get(), instance);
 }
 
@@ -478,13 +478,13 @@ TYPED_TEST(Ref_Tests, CopyAssignment_SelfAssingment2Ref_Same)
   obj = obj;
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 2);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 2);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_TRUE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 2);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 2);
   EXPECT_EQ(copied.Get(), instance);
 }
 
@@ -498,13 +498,13 @@ TYPED_TEST(Ref_Tests, MoveAssignment_Unique_Unique)
   moved = std::move(obj);
 
   EXPECT_FALSE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 0);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 0);
   EXPECT_EQ(obj.Get(), nullptr);
 
   EXPECT_TRUE(moved);
-  EXPECT_TRUE(moved.Unique());
-  EXPECT_EQ(moved.UseCount(), 1);
+  EXPECT_TRUE(moved.unique());
+  EXPECT_EQ(moved.use_count(), 1);
   EXPECT_EQ(moved.Get(), instance);
 }
 
@@ -516,13 +516,13 @@ TYPED_TEST(Ref_Tests, CopyAssignment_Null_Null)
   copied = obj;
 
   EXPECT_FALSE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 0);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 0);
   EXPECT_EQ(obj.Get(), nullptr);
 
   EXPECT_FALSE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 0);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 0);
   EXPECT_EQ(copied.Get(), nullptr);
 }
 
@@ -536,13 +536,13 @@ TYPED_TEST(Ref_Tests, CopyAssignment_Unique_2Ref)
   copied = obj;
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 2);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 2);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_TRUE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 2);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 2);
   EXPECT_EQ(copied.Get(), instance);
 }
 
@@ -557,18 +557,18 @@ TYPED_TEST(Ref_Tests, CopyAssignment_2Ref_3Ref)
   copied2 = obj;
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 3);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 3);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_TRUE(copied1);
-  EXPECT_FALSE(copied1.Unique());
-  EXPECT_EQ(copied1.UseCount(), 3);
+  EXPECT_FALSE(copied1.unique());
+  EXPECT_EQ(copied1.use_count(), 3);
   EXPECT_EQ(copied1.Get(), instance);
 
   EXPECT_TRUE(copied2);
-  EXPECT_FALSE(copied2.Unique());
-  EXPECT_EQ(copied2.UseCount(), 3);
+  EXPECT_FALSE(copied2.unique());
+  EXPECT_EQ(copied2.use_count(), 3);
   EXPECT_EQ(copied2.Get(), instance);
 }
 
@@ -581,13 +581,13 @@ TYPED_TEST(Ref_Tests, CopyAssignment_Downcast_2Ref)
   copied = obj;
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 2);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 2);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_TRUE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 2);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 2);
   EXPECT_EQ(copied.Get(), instance);
 }
 
@@ -602,18 +602,18 @@ TYPED_TEST(Ref_Tests, MoveAssignment_2Ref_2Ref)
   moved = std::move(copied);
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 2);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 2);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_FALSE(copied);
-  EXPECT_FALSE(copied.Unique());
-  EXPECT_EQ(copied.UseCount(), 0);
+  EXPECT_FALSE(copied.unique());
+  EXPECT_EQ(copied.use_count(), 0);
   EXPECT_EQ(copied.Get(), nullptr);
 
   EXPECT_TRUE(moved);
-  EXPECT_FALSE(moved.Unique());
-  EXPECT_EQ(moved.UseCount(), 2);
+  EXPECT_FALSE(moved.unique());
+  EXPECT_EQ(moved.use_count(), 2);
   EXPECT_EQ(moved.Get(), instance);
 }
 
@@ -628,13 +628,13 @@ TYPED_TEST(Ref_Tests, MoveAssignment_Downcast_2Ref)
   moved = std::move(copied);
 
   EXPECT_TRUE(obj);
-  EXPECT_FALSE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 2);
+  EXPECT_FALSE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 2);
   EXPECT_EQ(obj.Get(), instance);
 
   EXPECT_TRUE(moved);
-  EXPECT_FALSE(moved.Unique());
-  EXPECT_EQ(moved.UseCount(), 2);
+  EXPECT_FALSE(moved.unique());
+  EXPECT_EQ(moved.use_count(), 2);
   EXPECT_EQ(moved.Get(), instance);
 }
 
@@ -722,11 +722,11 @@ TYPED_TEST(Ref_Tests, Swap_Same_Same)
 
   Ref<TypeParam> obj(instance);
 
-  obj.Swap(obj);
+  obj.swap(obj);
 
   EXPECT_TRUE(obj);
-  EXPECT_TRUE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 1);
+  EXPECT_TRUE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 1);
   EXPECT_EQ(obj.Get(), instance);
 }
 
@@ -738,16 +738,16 @@ TYPED_TEST(Ref_Tests, Swap_Different_Swapped)
   Ref<TypeParam> obj1(instance1);
   Ref<TypeParam> obj2(instance2);
 
-  obj1.Swap(obj2);
+  obj1.swap(obj2);
 
   EXPECT_TRUE(obj1);
-  EXPECT_TRUE(obj1.Unique());
-  EXPECT_EQ(obj1.UseCount(), 1);
+  EXPECT_TRUE(obj1.unique());
+  EXPECT_EQ(obj1.use_count(), 1);
   EXPECT_EQ(obj1.Get(), instance2);
 
   EXPECT_TRUE(obj2);
-  EXPECT_TRUE(obj2.Unique());
-  EXPECT_EQ(obj2.UseCount(), 1);
+  EXPECT_TRUE(obj2.unique());
+  EXPECT_EQ(obj2.use_count(), 1);
   EXPECT_EQ(obj2.Get(), instance1);
 }
 
@@ -756,8 +756,8 @@ TYPED_TEST(Ref_Tests, MakeRef_Default_Unique)
   Ref<TypeParam> obj = MakeRef<TypeParam>();
 
   EXPECT_TRUE(obj);
-  EXPECT_TRUE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 1);
+  EXPECT_TRUE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 1);
   EXPECT_NE(obj.Get(), nullptr);
 }
 
@@ -769,19 +769,19 @@ TYPED_TEST(Ref_Tests, MakeRef_Default_Ref2)
     Ref<TypeParam> copy = obj;
 
     EXPECT_TRUE(obj);
-    EXPECT_FALSE(obj.Unique());
-    EXPECT_EQ(obj.UseCount(), 2);
+    EXPECT_FALSE(obj.unique());
+    EXPECT_EQ(obj.use_count(), 2);
     EXPECT_NE(obj.Get(), nullptr);
 
     EXPECT_TRUE(copy);
-    EXPECT_FALSE(copy.Unique());
-    EXPECT_EQ(copy.UseCount(), 2);
+    EXPECT_FALSE(copy.unique());
+    EXPECT_EQ(copy.use_count(), 2);
     EXPECT_NE(copy.Get(), nullptr);
   }
 
   EXPECT_TRUE(obj);
-  EXPECT_TRUE(obj.Unique());
-  EXPECT_EQ(obj.UseCount(), 1);
+  EXPECT_TRUE(obj.unique());
+  EXPECT_EQ(obj.use_count(), 1);
   EXPECT_NE(obj.Get(), nullptr);
 }
 

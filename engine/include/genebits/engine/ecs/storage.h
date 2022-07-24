@@ -3,9 +3,8 @@
 
 #include "genebits/engine/containers/type_map.h"
 #include "genebits/engine/containers/vector.h"
-#include "genebits/engine/os/memory.h"
-#include "genebits/engine/utilities/concepts.h"
 #include "genebits/engine/utilities/erased_ptr.h"
+#include "genebits/engine/utilities/memory.h"
 #include "genebits/engine/utilities/type_info.h"
 
 namespace genebits::engine
@@ -15,10 +14,9 @@ namespace genebits::engine
 ///
 /// Very quick entity to index mappings used for the storage to create a sparse set.
 ///
-/// The sparse array can be shared between storages that use the same entity generator sequence as long as
-/// no entity can be in more than one storage. Since there is one storage per archetype this is guaranteed.
-/// Sharing the sparse array reduces overall memory use by a substantial amount. For example, if there are
-/// 10 archetypes, sharing the sparse array could save up to 9 times the memory of one sparse array.
+/// The sparse array can be shared between storages that use the same entity manager. Sharing the sparse array can
+/// reduce memory usage. For example, if there are 10 archetypes, sharing the sparse array could save up to 9 times the
+/// lookup table memory, making it more cache friendly.
 ///
 /// @tparam Entity The type of entity to use.
 /// @tparam AllocatorImpl Allocator to allocate memory with.
@@ -106,11 +104,13 @@ private:
 ///
 /// Basically a sparse set, but optimized for storing extra type erased data, in this case component data.
 ///
-/// Component data is contiguously stored in memory and can achieve near vector iteration speeds.
+/// Components are stores as SOA, and every component array is dense.
+///
 /// Insertion and erasing is constant time.
 ///
-/// @warning
-///  Never assume any order. Storage reserves freedom of moving entities around at any time.
+/// @warning There is no pointer stability, never store a pointer to a component.
+///
+/// @warning Never assume any kind of order. Storage reserves the right to reorder entities and components.
 ///
 template<std::unsigned_integral Entity>
 class Storage
@@ -164,7 +164,7 @@ public:
   ///
   /// @return Entity at index.
   ///
-  [[nodiscard]] constexpr const Entity& operator[](const size_type index) const noexcept
+  [[nodiscard]] constexpr const_reference operator[](const size_type index) const noexcept
   {
     return dense_[index];
   }
@@ -176,7 +176,7 @@ public:
   ///
   /// @return Entity at index.
   ///
-  [[nodiscard]] constexpr Entity& operator[](const size_type index) noexcept
+  [[nodiscard]] constexpr reference operator[](const size_type index) noexcept
   {
     return dense_[index];
   }
@@ -216,22 +216,26 @@ public:
   /// @tparam Components List of component types.
   ///
   template<typename... Components>
-  requires UniqueTypes<Components...>
-  void Initialize() noexcept
+  requires UniqueTypes<std::remove_cvref_t<Components>
+    ...>
+    COLD_SECTION NO_INLINE void Initialize() noexcept
   {
     ASSERT(!initialized_, "Already initialized");
 
     // Set up all the component arrays with type erased vectors.
-    ((component_arrays_.template Assure<Components>() = std::move(MakeErased<Vector<Components>>())), ...);
+    ((component_arrays_.template Assure<std::remove_cvref_t<Components>>() =
+         std::move(MakeErased<Vector<std::remove_cvref_t<Components>>>())),
+      ...);
 
     // Store functors for the operations that need type information and don't have it.
     erase_function_ = []([[maybe_unused]] auto* storage, [[maybe_unused]] const size_t index)
-    { (AccessAndEraseAt<Components>(storage, index), ...); };
-    clear_function_ = []([[maybe_unused]] auto storage) { ((storage->template Access<Components>().Clear()), ...); };
+    { (AccessAndEraseAt<std::remove_cvref_t<Components>>(storage, index), ...); };
+    clear_function_ = []([[maybe_unused]] auto storage)
+    { ((storage->template Access<std::remove_cvref_t<Components>>().clear()), ...); };
 
 #ifndef NDEBUG
     // When debugging it is useful to have the list of components used at initialization.
-    ((components_.PushBack(TypeInfo<Components>::HashCode())), ...);
+    ((components_.push_back(TypeName<Components>())), ...);
     initialized_ = true;
 #endif
   }
@@ -248,22 +252,24 @@ public:
   /// @param[in] components Component data to move into the storage.
   ///
   template<typename... Components>
-  requires UniqueTypes<Components...>
-  void Insert(const Entity entity, Components&&... components) noexcept
+  requires UniqueTypes<std::remove_cvref_t<Components>
+    ...> void
+    Insert(const Entity entity, Components&&... components) noexcept
   {
     ASSERT(initialized_, "Not initialized");
     ASSERT(!Contains(entity), "Entity already exists");
-
-#ifndef NDEBUG
     ASSERT(sizeof...(Components) == components_.size(), "Invalid amount of components");
+
+    // Runtime check that the components are the same as the ones used to initialize the storage
+#ifndef NDEBUG // Because of parameter pack
     ((ASSERT(HasComponent<std::remove_cvref_t<Components>>(), "Component type not valid")), ...);
 #endif
 
     sparse_->Assure(entity);
     (*sparse_)[entity] = static_cast<Entity>(dense_.size());
 
-    dense_.PushBack(entity);
-    ((Access<std::remove_cvref_t<Components>>().EmplaceBack(std::forward<Components>(components))), ...);
+    dense_.push_back(entity);
+    ((Access<std::remove_cvref_t<Components>>().emplace_back(std::forward<Components>(components))), ...);
   }
 
   ///
@@ -282,7 +288,7 @@ public:
     (*sparse_)[back_entity] = index;
     dense_[index] = back_entity;
 
-    dense_.PopBack();
+    dense_.pop_back();
 
     erase_function_(this, index);
   }
@@ -294,7 +300,7 @@ public:
   {
     ASSERT(initialized_, "Not initialized");
 
-    dense_.Clear();
+    dense_.clear();
 
     clear_function_(this);
   }
@@ -366,7 +372,7 @@ public:
     ASSERT(initialized_, "Not initialized");
     ASSERT(HasComponent<Component>(), "Component type not valid");
 
-    return *static_cast<Vector<Component>*>(component_arrays_.template Get<Component>().Get());
+    return *static_cast<Vector<Component>*>(component_arrays_.template Get<Component>().get());
   }
 
   ///
@@ -414,7 +420,7 @@ private:
   template<typename Component>
   [[nodiscard]] bool HasComponent() const noexcept
   {
-    return std::ranges::find(components_, TypeInfo<Component>::HashCode()) != components_.end();
+    return std::ranges::find(components_, TypeName<Component>()) != components_.end();
   }
 #endif
 
@@ -430,7 +436,7 @@ private:
   static void AccessAndEraseAt(Storage<Entity>* storage, size_t index)
   {
     auto& component_array = storage->template Access<Component>();
-    component_array.UnorderedErase(component_array.begin() + index);
+    component_array.SwapAndPop(component_array.begin() + index);
   }
 
 private:
@@ -449,7 +455,7 @@ private:
   // Used for debugging purposes
 #ifndef NDEBUG
   bool initialized_ = false;
-  Vector<size_t> components_;
+  Vector<std::string_view> components_;
 #endif
 };
 
