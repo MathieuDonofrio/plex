@@ -11,7 +11,7 @@
 #include <immintrin.h>
 #endif
 
-namespace genebits::engine
+namespace plex
 {
 // Body generation
 
@@ -707,6 +707,6 @@ inline long double ATan(long double y, long double x) noexcept { return std::ata
 // clang-format on
 
 #undef MATH_GEN
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

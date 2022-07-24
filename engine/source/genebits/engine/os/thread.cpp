@@ -13,7 +13,7 @@
 #include <unistd.h>
 #endif
 
-namespace genebits::engine
+namespace plex
 {
 bool SetThreadAffinity([[maybe_unused]] std::thread::native_handle_type handle, [[maybe_unused]] uint64_t mask)
 {
@@ -116,4 +116,4 @@ namespace this_thread
   }
 
 } // namespace this_thread
-} // namespace genebits::engine
+} // namespace plex

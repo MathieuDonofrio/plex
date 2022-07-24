@@ -11,7 +11,7 @@
 #include "genebits/engine/utilities/memory.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// General purpose vector implementation optimized for speed.
@@ -702,12 +702,12 @@ namespace pmr
   template<typename Type>
   using Vector = Vector<Type, std::pmr::polymorphic_allocator<Type>>;
 }
-} // namespace genebits::engine
+} // namespace plex
 
 namespace std
 {
 template<typename T>
-constexpr void swap(genebits::engine::Vector<T>& lhs, genebits::engine::Vector<T>& rhs) noexcept
+constexpr void swap(plex::Vector<T>& lhs, plex::Vector<T>& rhs) noexcept
 {
   lhs.swap(rhs);
 }

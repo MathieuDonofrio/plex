@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 static_assert(IsTriviallyRelocatable<Deque<size_t>>::value, "Dequeue should be relocatable");
 static_assert(std::random_access_iterator<Deque<size_t>::iterator>, "Dequeue iterator should be random access");
@@ -960,4 +960,4 @@ TEST(Deque_Tests, Iterator_Increment_NotContigious_CorrectState)
     EXPECT_EQ(*it, i + 10);
   }
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

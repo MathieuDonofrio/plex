@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(Threading_Tests, GetCPUInfo_NormalExecution_HasProcessors)
 {
@@ -18,4 +18,4 @@ TEST(Threading_Tests, GetCPUInfo_NormalExecution_HasCaches)
 
   EXPECT_GT(info.caches.size(), 0);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

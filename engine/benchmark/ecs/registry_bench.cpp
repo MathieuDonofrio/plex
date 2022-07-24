@@ -4,7 +4,7 @@
 
 #include "genebits/engine/math/vec4.h"
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 namespace
 {
@@ -451,4 +451,4 @@ static void Registry_Destroy_TwoComponents(benchmark::State& state)
 }
 
 BENCHMARK(Registry_Destroy_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
-} // namespace genebits::engine::bench
+} // namespace plex::bench

@@ -7,7 +7,7 @@
 #include "genebits/engine/graphics/key_codes.h"
 #include "genebits/engine/utilities/enumerator.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Enum flags used to specify features to be enabled or disabled during the creation of the window
@@ -442,5 +442,5 @@ Window* CreateWindow(const std::string& title,
   EventBus* bus,
   WindowCreationHints hints = WindowCreationHints::Defaults);
 
-} // namespace genebits::engine
+} // namespace plex
 #endif

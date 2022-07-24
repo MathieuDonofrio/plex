@@ -3,7 +3,7 @@
 
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Concept used to determine whether or not two erased pointers can be implicitly casted.
@@ -334,20 +334,20 @@ ErasedPtr<Type> MakeErased(Args&&... args)
 template<typename Type>
 struct IsTriviallyRelocatable<ErasedPtr<Type>> : public std::true_type
 {};
-} // namespace genebits::engine
+} // namespace plex
 
 namespace std
 {
 template<typename T>
-constexpr void swap(genebits::engine::ErasedPtr<T>& lhs, genebits::engine::ErasedPtr<T>& rhs) noexcept
+constexpr void swap(plex::ErasedPtr<T>& lhs, plex::ErasedPtr<T>& rhs) noexcept
 {
   lhs.swap(rhs);
 }
 
 template<typename T>
-struct hash<genebits::engine::ErasedPtr<T>>
+struct hash<plex::ErasedPtr<T>>
 {
-  constexpr size_t operator()(const genebits::engine::ErasedPtr<T>& obj) const noexcept
+  constexpr size_t operator()(const plex::ErasedPtr<T>& obj) const noexcept
   {
     return std::hash<T*>()(obj.get());
   }

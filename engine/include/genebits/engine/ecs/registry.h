@@ -10,7 +10,7 @@
 #include "genebits/engine/ecs/entity_manager.h"
 #include "genebits/engine/ecs/storage.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Entity identifier type.
@@ -964,6 +964,6 @@ ALWAYS_INLINE void EntityForEach(ViewType&& view, Function function)
   }
 }
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

@@ -8,7 +8,7 @@
 #include <source_location>
 #include <thread>
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Generates a seed at compile time.
@@ -104,6 +104,6 @@ inline uint64_t Seed()
   }
 }
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

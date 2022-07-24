@@ -4,7 +4,7 @@
 #include "genebits/engine/os/cpu_info.h"
 #include "genebits/engine/os/thread.h"
 
-namespace genebits::engine
+namespace plex
 {
 size_t GetDefaultAmountOfWorkerThreads()
 {
@@ -164,4 +164,4 @@ void ThreadPool::DestroyWorkers()
   delete[] threads_;
 }
 
-} // namespace genebits::engine
+} // namespace plex

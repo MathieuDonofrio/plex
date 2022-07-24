@@ -10,7 +10,7 @@
 #include "genebits/engine/async/when_all.h"
 #include "genebits/engine/containers/vector.h"
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 namespace
 {
@@ -251,4 +251,4 @@ BENCHMARK(ThreadPool_Schedule_WorkDividedInManySmallTasks)
   ->MeasureProcessCPUTime()
   ->UseRealTime();
 
-} // namespace genebits::engine::bench
+} // namespace plex::bench

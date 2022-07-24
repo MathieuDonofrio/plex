@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -150,4 +150,4 @@ TEST(Stage_Tests, IsExplicitOrder_MixedOrder_CorrectOrdering)
   EXPECT_FALSE(stage.HasExplicitOrder(*system1, *system2));
   EXPECT_TRUE(stage.HasExplicitOrder(*system2, *system1));
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

@@ -14,7 +14,7 @@ namespace
 class GLFWwindow; // from glfw
 } // namespace
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Vulkan capable GLFW window.
@@ -354,6 +354,6 @@ private:
   EventBus* bus_;
 };
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

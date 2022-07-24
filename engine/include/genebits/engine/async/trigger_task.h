@@ -3,7 +3,7 @@
 
 #include "genebits/engine/async/task.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Concept required to be a trigger.
@@ -308,6 +308,6 @@ auto MakeTriggerTask(Awaitable&& awaitable) -> TriggerTask<Result, Trigger>
 template<typename Type, typename Trigger>
 struct IsTriviallyRelocatable<TriggerTask<Type, Trigger>> : std::true_type
 {};
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

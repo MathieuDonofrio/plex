@@ -112,7 +112,7 @@ GLFWInstance& GetGLFW()
 
 } // namespace
 
-namespace genebits::engine
+namespace plex
 {
 GLFWWindow::GLFWWindow(
   const std::string& title, uint32_t width, uint32_t height, EventBus* bus, WindowCreationHints hints)
@@ -607,4 +607,4 @@ void GLFWWindow::GLFWFramebufferResizeCallback(GLFWWindowHandle handle, int32_t 
   }
 }
 
-} // namespace genebits::engine
+} // namespace plex

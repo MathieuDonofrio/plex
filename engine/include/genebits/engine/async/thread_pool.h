@@ -6,7 +6,7 @@
 
 #include "genebits/engine/async/task.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Pool of threads to execute tasks on.
@@ -240,6 +240,6 @@ private:
   std::thread* threads_;
   size_t thread_count_;
 };
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

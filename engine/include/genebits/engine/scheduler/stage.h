@@ -5,7 +5,7 @@
 #include "genebits/engine/system/system.h"
 #include "genebits/engine/utilities/ref.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// The stage object is a container for systems.
@@ -183,6 +183,6 @@ private:
   Vector<std::unique_ptr<SystemObject>> registered_systems_;
   Vector<SystemInfo> system_infos_;
 };
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

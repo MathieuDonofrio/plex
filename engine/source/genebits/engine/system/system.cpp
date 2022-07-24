@@ -1,6 +1,6 @@
 #include "genebits/engine/system/system.h"
 
-namespace genebits::engine
+namespace plex
 {
 namespace
 {
@@ -44,4 +44,4 @@ namespace
   return false;
 }
 
-} // namespace genebits::engine
+} // namespace plex

@@ -9,7 +9,7 @@
 #include "genebits/engine/utilities/delegate.h"
 #include "genebits/engine/utilities/erased_ptr.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Delegate alias for handling events.
@@ -171,6 +171,6 @@ private:
   TypeMap<ErasedPtr<void>> pools_;
 };
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

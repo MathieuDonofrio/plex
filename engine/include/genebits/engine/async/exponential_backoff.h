@@ -5,7 +5,7 @@
 
 #include "genebits/engine/os/thread.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Used in spin wait loops to exponentially wait for longer durations to reduce contention and save power.
@@ -57,6 +57,6 @@ private:
 
   uint_fast16_t count_;
 };
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

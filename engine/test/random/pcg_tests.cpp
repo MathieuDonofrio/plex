@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 // Random static tests
 
@@ -41,4 +41,4 @@ TEST(PCG_Tests, NextBounded_UpperBound_InRange)
     }
   }
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

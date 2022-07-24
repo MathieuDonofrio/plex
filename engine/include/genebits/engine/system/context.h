@@ -7,7 +7,7 @@
 #include "genebits/engine/containers/vector.h"
 #include "genebits/engine/utilities/erased_ptr.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Container for single instances of different types.
@@ -202,6 +202,6 @@ private:
   Vector<InstanceInfo> instances_;
 };
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

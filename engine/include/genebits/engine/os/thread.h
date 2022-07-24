@@ -4,7 +4,7 @@
 #include <immintrin.h>
 #include <thread>
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Enum of the different scheduler policies supported.
@@ -97,6 +97,6 @@ namespace this_thread
   }
 } // namespace this_thread
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

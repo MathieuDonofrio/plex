@@ -5,7 +5,7 @@
 #include <deque>
 #include <random>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 template<template<class> class Container>
 static void Deque_PushPop(benchmark::State& state)
@@ -115,4 +115,4 @@ static void Deque_Iterate(benchmark::State& state)
 
 BENCHMARK_TEMPLATE(Deque_Iterate, std::deque)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
 BENCHMARK_TEMPLATE(Deque_Iterate, Deque)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(benchmark::oN);
-} // namespace genebits::engine::bench
+} // namespace plex::bench

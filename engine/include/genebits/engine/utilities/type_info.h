@@ -23,7 +23,7 @@ consteval auto _F() // Keep small to avoid overhead
 #endif
 }
 
-namespace genebits::engine
+namespace plex
 {
 namespace void_probe
 {
@@ -148,6 +148,6 @@ ALWAYS_INLINE static size_t TypeIndex() noexcept
   return details::TypeIndexGlobalStorage<Type, Tag>::value;
 }
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

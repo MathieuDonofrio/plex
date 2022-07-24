@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -129,4 +129,4 @@ TEST(Listener_Tests, Listen_MultiPublish_ReceivedEvent)
   EXPECT_EQ(listener.sum, 30u);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

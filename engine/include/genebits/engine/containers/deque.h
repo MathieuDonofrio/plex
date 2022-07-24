@@ -8,7 +8,7 @@
 #include "genebits/engine/utilities/memory.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 
 namespace details
@@ -803,12 +803,12 @@ namespace pmr
   template<typename Type>
   using Dequeue = Deque<Type, std::pmr::polymorphic_allocator<Type>>;
 }
-} // namespace genebits::engine
+} // namespace plex
 
 namespace std
 {
 template<typename T>
-constexpr void swap(genebits::engine::Deque<T>& lhs, genebits::engine::Deque<T>& rhs) noexcept
+constexpr void swap(plex::Deque<T>& lhs, plex::Deque<T>& rhs) noexcept
 {
   lhs.swap(rhs);
 }

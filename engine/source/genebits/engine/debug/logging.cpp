@@ -7,7 +7,7 @@
 
 #include "genebits/engine/os/color_print.h"
 
-namespace genebits::engine::debug
+namespace plex::debug
 {
 std::mutex logger_mutex;
 
@@ -88,6 +88,6 @@ void Log(LogMetadata metadata, std::string_view message)
 
   std::cout << std::flush;
 }
-} // namespace genebits::engine::debug
+} // namespace plex::debug
 
 #endif

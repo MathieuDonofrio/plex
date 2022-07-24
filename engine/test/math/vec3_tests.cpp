@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 static_assert(sizeof(float3) == sizeof(float) * 3, "float3 size is not 4 floats");
 
@@ -600,4 +600,4 @@ TEST(Vec3Bool_Tests, Or)
   bool3 b = bool3(true, true, false);
   EXPECT_EQ(bool3(true, true, false), a || b);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

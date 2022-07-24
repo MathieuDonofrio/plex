@@ -4,7 +4,7 @@
 #include <map>
 #include <mutex>
 
-namespace genebits::engine
+namespace plex
 {
 namespace details
 {
@@ -44,4 +44,4 @@ namespace details
     }
   }
 } // namespace details
-} // namespace genebits::engine
+} // namespace plex

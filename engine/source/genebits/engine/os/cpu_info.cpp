@@ -15,7 +15,7 @@
 #include <unistd.h>
 #endif
 
-namespace genebits::engine
+namespace plex
 {
 CPUInfo GetCPUInfo()
 {
@@ -103,4 +103,4 @@ size_t GetAmountLogicalProcessors()
   return std::thread::hardware_concurrency(); // Should be considered a hint according to standard
 #endif
 }
-} // namespace genebits::engine
+} // namespace plex

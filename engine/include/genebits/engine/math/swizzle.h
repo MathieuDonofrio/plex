@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <type_traits>
 
-namespace genebits::engine
+namespace plex
 {
 
 ///
@@ -749,6 +749,6 @@ public:
   Swizzle<Vec, 3, 3, 3, 1> A3##A3##A3##A1;        \
   Swizzle<Vec, 3, 3, 3, 2> A3##A3##A3##A2;        \
   Swizzle<Vec, 3, 3, 3, 3> A3##A3##A3##A3;
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

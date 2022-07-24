@@ -5,7 +5,7 @@
 
 #include "genebits/engine/events/event_bus.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Concept to verify that a listener class can listen to a specified event type.
@@ -80,6 +80,6 @@ private:
   EventBus* bus_;
 };
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

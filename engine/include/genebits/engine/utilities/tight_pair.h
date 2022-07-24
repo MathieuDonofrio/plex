@@ -6,7 +6,7 @@
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 namespace details
 {
@@ -149,6 +149,6 @@ template<typename FirstType, typename SecondType>
 struct IsTriviallyRelocatable<TightPair<FirstType, SecondType>>
   : public std::bool_constant<std::conjunction_v<IsTriviallyRelocatable<FirstType>, IsTriviallyRelocatable<SecondType>>>
 {};
-} // namespace genebits::engine
+} // namespace plex
 
 #endif // GENEBITS_C_ARRAY_H

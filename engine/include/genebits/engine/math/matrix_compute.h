@@ -3,7 +3,7 @@
 
 #include "genebits/engine/debug/assertion.h"
 
-namespace genebits::engine
+namespace plex
 {
 template<typename T, size_t Rows, size_t Cols>
 struct Mat;
@@ -328,6 +328,6 @@ template<typename T>
     -minor_23 * inv_det,
     +minor_33 * inv_det);
 }
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

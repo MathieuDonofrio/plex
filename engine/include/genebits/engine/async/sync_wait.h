@@ -5,7 +5,7 @@
 
 #include "genebits/engine/async/trigger_task.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Concept required to be a trigger for a sync wait.
@@ -140,6 +140,6 @@ auto SyncWait(Awaitable&& awaitable) -> typename AwaitableTraits<Awaitable>::Awa
   return trigger_task.Result();
 }
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

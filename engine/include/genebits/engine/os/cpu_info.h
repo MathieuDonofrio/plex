@@ -4,7 +4,7 @@
 #include <atomic>
 #include <vector>
 
-namespace genebits::engine
+namespace plex
 {
 // Cache line size.
 // Sometimes this is not implemented, so we assume 64 bytes. (64 bytes on x86-64)
@@ -81,6 +81,6 @@ size_t GetAmountPhysicalProcessors();
 ///
 size_t GetAmountLogicalProcessors();
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

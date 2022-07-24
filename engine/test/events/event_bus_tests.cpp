@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -76,4 +76,4 @@ TEST(EventBus_Tests, Publish_SingleSubscribe_CallsSubscribe)
   EXPECT_EQ(sum1_1, 10u);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

@@ -7,7 +7,7 @@
 #include "genebits/engine/utilities/memory.h"
 #include "genebits/engine/utilities/type_info.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Sparse array used to lookup entity indexes.
@@ -459,6 +459,6 @@ private:
 #endif
 };
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

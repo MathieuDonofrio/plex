@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(Func_Vec_Tests, Sqrt_Float_2)
 {
@@ -112,4 +112,4 @@ TEST(Func_Vec_Tests, RSqrt_Float_4)
   EXPECT_NEAR(rt_value.w, expected.w, 0.001f);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

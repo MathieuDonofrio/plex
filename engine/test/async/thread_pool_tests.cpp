@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(ThreadPool_Tests, Constructor_CustomAmountThreads_CorrectCount)
 {
@@ -77,4 +77,4 @@ TEST(ThreadPool_Tests, Schedule_16ThreadsMultipleTasks_Wait_CorrectExecution)
   EXPECT_EQ(count, amount);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

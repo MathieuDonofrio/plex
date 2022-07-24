@@ -2,7 +2,7 @@
 
 #include <gmock/gmock.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -860,4 +860,4 @@ TEST(Ref_Tests, CopyAssignment_Unique_CallIntrusiveAddRef)
     .WillOnce([&]() { return true; });
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

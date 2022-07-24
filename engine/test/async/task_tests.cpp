@@ -6,7 +6,7 @@
 
 #include "genebits/engine/async/sync_wait.h"
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -380,4 +380,4 @@ TEST(Task_Tests, CoAwait_DifferentThreadsResultAndAsync_CorrectValue)
   if (thread2.joinable()) thread2.join();
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

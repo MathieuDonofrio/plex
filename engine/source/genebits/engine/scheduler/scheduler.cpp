@@ -2,7 +2,7 @@
 
 #include "genebits/engine/containers/deque.h"
 
-namespace genebits::engine
+namespace plex
 {
 Task<> Scheduler::RunAll(Context& context)
 {
@@ -279,4 +279,4 @@ Vector<Scheduler::Step> ComputeSchedulerData(const Vector<Stage*>& stages)
 
   return steps;
 }
-} // namespace genebits::engine
+} // namespace plex

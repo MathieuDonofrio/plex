@@ -6,7 +6,7 @@
 
 #include "genebits/engine/debug/assertion.h"
 
-namespace genebits::engine
+namespace plex
 {
 // clang-format off
 
@@ -211,6 +211,6 @@ private:
 
 #undef DELEGATE_INVOKE_AND_TRY_RETURN
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

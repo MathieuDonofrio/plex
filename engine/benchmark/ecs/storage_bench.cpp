@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 namespace
 {
@@ -381,4 +381,4 @@ static void Storage_Erase_TwoComponents(benchmark::State& state)
 }
 
 BENCHMARK(Storage_Erase_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
-} // namespace genebits::engine::bench
+} // namespace plex::bench

@@ -6,7 +6,7 @@
 #include "genebits/engine/async/awaitable.h"
 #include "genebits/engine/debug/assertion.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Synchronization primitive that allows one or more coroutines to wait until a count down is reached.
@@ -196,6 +196,6 @@ private:
   ///
   mutable std::atomic<void*> state_;
 };
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

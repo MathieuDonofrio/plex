@@ -6,7 +6,7 @@
 #include "genebits/engine/async/sync_wait.h"
 #include "genebits/engine/async/thread_pool.h"
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 namespace
 {
@@ -516,4 +516,4 @@ BENCHMARK(Scheduler_AsyncWork_10Stages16SystemsEach)
   ->Unit(benchmark::kMillisecond)
   ->MeasureProcessCPUTime()
   ->UseRealTime();
-} // namespace genebits::engine::bench
+} // namespace plex::bench

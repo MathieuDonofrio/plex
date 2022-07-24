@@ -7,7 +7,7 @@
 #include "genebits/engine/async/thread_pool.h"
 #include "genebits/engine/async/when_all.h"
 
-namespace genebits::engine
+namespace plex
 {
 TEST(AsyncLatch_Tests, Constructor_Zero_Released)
 {
@@ -344,4 +344,4 @@ TEST(AsyncLatch_Tests, CoAwait_TwoDriverTwoWaiterTwoCount_Continue)
   EXPECT_EQ(drivers, 2);
   EXPECT_EQ(waiters, 2);
 }
-} // namespace genebits::engine
+} // namespace plex

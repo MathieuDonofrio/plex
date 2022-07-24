@@ -5,7 +5,7 @@
 
 #include "genebits/engine/async/sync_wait.h"
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -488,4 +488,4 @@ TEST(SystemObject, HasDependency_WriteWriteThreadSafe_NoDependency)
 
   EXPECT_FALSE(object1.HasDependency(object2));
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

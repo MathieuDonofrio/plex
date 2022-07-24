@@ -5,7 +5,7 @@
 
 #include "genebits/engine/debug/stacktrace.h"
 
-namespace genebits::engine::debug
+namespace plex::debug
 {
 ///
 /// Enumerator of the different log levels.
@@ -53,27 +53,27 @@ struct LogMetadata
 ///
 void Log(LogMetadata metadata, std::string_view message);
 
-} // namespace genebits::engine::debug
+} // namespace plex::debug
 
-#define CREATE_LOG_METADATA(level)                                                                  \
-  ::genebits::engine::debug::LogMetadata                                                            \
-  {                                                                                                 \
-    level, ::genebits::engine::debug::StackBackTrace(GetStackTraceDepth(level)), __FILE__, __LINE__ \
+#define CREATE_LOG_METADATA(level)                                                      \
+  ::plex::debug::LogMetadata                                                            \
+  {                                                                                     \
+    level, ::plex::debug::StackBackTrace(GetStackTraceDepth(level)), __FILE__, __LINE__ \
   }
 
 #ifndef NDEBUG
 
 #ifdef __cpp_lib_format
-#define LOG(level, ...) ::genebits::engine::debug::Log(CREATE_LOG_METADATA(level), ::std::format(__VA_ARGS__))
+#define LOG(level, ...) ::plex::debug::Log(CREATE_LOG_METADATA(level), ::std::format(__VA_ARGS__))
 #else
 // Formatting not supported, print message without formatting
-#define LOG(level, message, ...) ::genebits::engine::debug::Log(CREATE_LOG_METADATA(level), message)
+#define LOG(level, message, ...) ::plex::debug::Log(CREATE_LOG_METADATA(level), message)
 #endif
 
-#define LOG_TRACE(...) LOG(::genebits::engine::debug::LogLevel::Trace, __VA_ARGS__)
-#define LOG_INFO(...) LOG(::genebits::engine::debug::LogLevel::Info, __VA_ARGS__)
-#define LOG_WARN(...) LOG(::genebits::engine::debug::LogLevel::Warn, __VA_ARGS__)
-#define LOG_ERROR(...) LOG(::genebits::engine::debug::LogLevel::Error, __VA_ARGS__)
+#define LOG_TRACE(...) LOG(::plex::debug::LogLevel::Trace, __VA_ARGS__)
+#define LOG_INFO(...) LOG(::plex::debug::LogLevel::Info, __VA_ARGS__)
+#define LOG_WARN(...) LOG(::plex::debug::LogLevel::Warn, __VA_ARGS__)
+#define LOG_ERROR(...) LOG(::plex::debug::LogLevel::Error, __VA_ARGS__)
 
 #else
 

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace genebits::engine::debug
+namespace plex::debug
 {
 ///
 /// Data of a stack frame.
@@ -36,6 +36,6 @@ struct StackTrace
 ///
 StackTrace StackBackTrace(size_t max_amount);
 
-} // namespace genebits::engine::debug
+} // namespace plex::debug
 
 #endif

@@ -6,7 +6,7 @@
 #include "genebits/engine/containers/array.h"
 #include "genebits/engine/system/context.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Structure containing the information about a single data access of a query.
@@ -111,6 +111,6 @@ struct QueryDataAccessFactory
     }... };
   }
 };
-} // namespace genebits::engine
+} // namespace plex
 
 #endif // GENEBITS_QUERY_H

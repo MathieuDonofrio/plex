@@ -6,7 +6,7 @@
 #include "genebits/engine/math/vec3.h"
 #include "genebits/engine/math/vec4.h"
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 
 template<typename T>
@@ -402,4 +402,4 @@ TYPED_TEST(Swizzle_Tests, DivAssign_Vec)
   EXPECT_EQ(vec3.x, 2 / static_cast<TypeParam>(4));
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

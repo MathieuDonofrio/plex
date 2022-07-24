@@ -5,7 +5,7 @@
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/type_info.h"
 
-namespace genebits::engine
+namespace plex
 {
 // clang-format off
 
@@ -182,6 +182,6 @@ private:
 template<typename Type, typename Container>
 struct IsTriviallyRelocatable<TypeMap<Type, Container>> : public IsTriviallyRelocatable<Container>
 {};
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

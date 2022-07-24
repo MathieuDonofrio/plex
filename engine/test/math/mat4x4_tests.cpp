@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 
 static_assert(std::is_trivially_copy_constructible_v<float4x4>, "Mat4x4 Must be trivially copy constructable");
@@ -578,4 +578,4 @@ TYPED_TEST(Mat4x4_Tests, Mult_Mat_Reversed)
   EXPECT_EQ(result[3][2], 774);
   EXPECT_EQ(result[3][3], 832);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

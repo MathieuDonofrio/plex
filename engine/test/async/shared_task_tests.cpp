@@ -7,7 +7,7 @@
 #include "genebits/engine/async/thread_pool.h"
 #include "genebits/engine/async/when_all.h"
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(SharedTask_Tests, IsReady_VoidAndNotStarted_NotReady)
 {
@@ -143,4 +143,4 @@ TEST(SharedTask_Tests, CoAwait_ResultAndMultipleAwaiters_CorrectlyWaited)
   EXPECT_EQ(count, 1);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

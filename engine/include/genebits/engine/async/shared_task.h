@@ -7,7 +7,7 @@
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 template<typename Type = void>
 class SharedTask;
@@ -603,6 +603,6 @@ auto MakeSharedTask(Awaitable&& awaitable) -> SharedTask<Result>
 template<typename Type>
 struct IsTriviallyRelocatable<SharedTask<Type>> : std::true_type
 {};
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

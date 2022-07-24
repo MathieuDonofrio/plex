@@ -12,7 +12,7 @@
 #include "genebits/engine/debug/thread_validator.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 // clang-format off
 ///
@@ -925,20 +925,20 @@ Ref<Type> MakeRef(Args&&... args)
 template<typename Type>
 struct IsTriviallyRelocatable<Ref<Type>> : public std::true_type
 {};
-} // namespace genebits::engine
+} // namespace plex
 
 namespace std
 {
 template<typename T>
-constexpr void swap(genebits::engine::Ref<T>& lhs, genebits::engine::Ref<T>& rhs) noexcept
+constexpr void swap(plex::Ref<T>& lhs, plex::Ref<T>& rhs) noexcept
 {
   lhs.swap(rhs);
 }
 
 template<typename T>
-struct hash<genebits::engine::Ref<T>>
+struct hash<plex::Ref<T>>
 {
-  constexpr size_t operator()(const genebits::engine::Ref<T>& obj) const noexcept
+  constexpr size_t operator()(const plex::Ref<T>& obj) const noexcept
   {
     return std::hash<T*>()(obj.Get());
   }

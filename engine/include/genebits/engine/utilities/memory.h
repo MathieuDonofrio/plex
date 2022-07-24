@@ -11,7 +11,7 @@
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Relocates an element into uninitialized memory. Equivalent to moving source to destination then destroying source.
@@ -93,5 +93,5 @@ constexpr Iterator2 UninitializedRelocate(Iterator1 first, Iterator1 last, Itera
   return dest;
 }
 
-} // namespace genebits::engine
+} // namespace plex
 #endif

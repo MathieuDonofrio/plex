@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 static_assert(sizeof(float2) == sizeof(float) * 2, "float2 size is not 2 floats");
 
@@ -552,4 +552,4 @@ TEST(Vec2Bool_Tests, Or)
   bool2 b = bool2(true, true);
   EXPECT_EQ(bool2(true, true), a || b);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

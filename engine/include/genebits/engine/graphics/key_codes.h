@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-namespace genebits::engine
+namespace plex
 {
 
 ///
@@ -272,6 +272,6 @@ enum KeyCode : int32_t
   default: return "Unknown";
   };
 }
-} // namespace genebits::engine
+} // namespace plex
 
 #endif // GENEBITS_KEY_CODES_H

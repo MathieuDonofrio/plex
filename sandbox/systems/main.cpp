@@ -6,16 +6,16 @@
 #include "genebits/engine/debug/logging.h"
 #include "genebits/engine/system/system.h"
 
-using namespace genebits::engine;
+using namespace plex;
 
-namespace genebits::engine
+namespace plex
 {
 
-} // namespace genebits::engine
+} // namespace plex
 
 int main()
 {
-  using namespace genebits::engine;
+  using namespace plex;
 
   return 0;
 }

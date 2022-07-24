@@ -5,7 +5,7 @@
 #include "genebits/engine/random/pcg.h"
 #include "genebits/engine/random/seed.h"
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 static void Pow_STD_Reference_FloatBaseIntExp(benchmark::State& state)
 {
@@ -141,4 +141,4 @@ static void RSqrt_Double(benchmark::State& state)
 
 BENCHMARK(RSqrt_Double);
 
-} // namespace genebits::engine::bench
+} // namespace plex::bench

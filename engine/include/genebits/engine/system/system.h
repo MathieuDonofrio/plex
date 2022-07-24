@@ -6,7 +6,7 @@
 #include "genebits/engine/system/query.h"
 #include "genebits/engine/utilities/ref.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Type-erased handle to a system function.
@@ -296,6 +296,6 @@ private:
   Context local_context_;
   Vector<QueryDataAccess> data_access_;
 };
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

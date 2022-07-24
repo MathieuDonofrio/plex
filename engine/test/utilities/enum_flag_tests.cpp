@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 
 namespace
@@ -35,4 +35,4 @@ static_assert(EnumFlag<TestEnumWithOperators>, "Enum with operators should be an
 
 TEST(EnumFlag_Tests, OperatorBitwiseOr_CorrectArithmetic) {}
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

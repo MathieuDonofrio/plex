@@ -5,7 +5,7 @@
 
 #include <vulkan/vulkan_core.h>
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Interface for windows that are vulkan capable.
@@ -45,6 +45,6 @@ public:
   virtual bool GetPhysicalDevicePresentationSupport(
     VkInstance instance, VkPhysicalDevice physical_device, uint32_t queue_family_index) = 0;
 };
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

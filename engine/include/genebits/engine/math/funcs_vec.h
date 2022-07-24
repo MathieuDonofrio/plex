@@ -6,7 +6,7 @@
 #include "genebits/engine/math/vec3.h"
 #include "genebits/engine/math/vec4.h"
 
-namespace genebits::engine
+namespace plex
 {
 #define VEC_UNROLLED_LOOP_ITERATION(L, I, expression) \
   if constexpr ((L) > (I))                            \
@@ -457,6 +457,6 @@ inline Vec<T, L> ATan(const Vec<T, L>& v1, const Vec<T, L>& v2)
 #undef VEC_UNROLLED_LOOP
 #undef VEC_UNROLLED_LOOP_ITERATION
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

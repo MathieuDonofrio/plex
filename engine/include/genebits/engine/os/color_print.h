@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_OS_COLOR_PRINT_H
 #define GENEBITS_ENGINE_OS_COLOR_PRINT_H
 
-namespace genebits::engine::terminal
+namespace plex::terminal
 {
 enum class Color
 {
@@ -37,6 +37,6 @@ void PrintTerminalColor(Color color);
 ///
 bool IsColorTerminal();
 
-} // namespace genebits::engine::terminal
+} // namespace plex::terminal
 
 #endif

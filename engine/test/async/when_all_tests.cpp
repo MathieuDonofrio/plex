@@ -6,7 +6,7 @@
 
 #include "genebits/engine/async/sync_wait.h"
 
-namespace genebits::engine
+namespace plex
 {
 namespace
 {
@@ -551,4 +551,4 @@ TEST(WhenAllTask_Tests, CollectAll_ManyOneVoid_CorrectValues)
   }
 }
 
-} // namespace genebits::engine
+} // namespace plex

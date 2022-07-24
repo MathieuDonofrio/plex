@@ -5,7 +5,7 @@
 #include "genebits/engine/async/sync_wait.h"
 #include "genebits/engine/async/thread_pool.h"
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -204,4 +204,4 @@ TEST(Scheduler_Tests, RunAll_AsycDependantSystems_ExecuteInOrder)
   EXPECT_EQ(SystemMockCallOrder(), expected_order);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

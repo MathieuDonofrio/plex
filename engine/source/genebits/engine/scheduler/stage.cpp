@@ -1,6 +1,6 @@
 #include "genebits/engine/scheduler/stage.h"
 
-namespace genebits::engine
+namespace plex
 {
 [[nodiscard]] bool Stage::HasExplicitOrder(const SystemObject& before, const SystemObject& after) const
 {
@@ -37,4 +37,4 @@ const SystemObject* Stage::GetSystemObject(SystemHandle handle) const
 
   return nullptr;
 }
-} // namespace genebits::engine
+} // namespace plex

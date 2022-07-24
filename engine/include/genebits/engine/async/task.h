@@ -7,7 +7,7 @@
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 template<typename Type = void>
 class Task;
@@ -527,6 +527,6 @@ namespace details
 template<typename Type>
 struct IsTriviallyRelocatable<Task<Type>> : std::true_type
 {};
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

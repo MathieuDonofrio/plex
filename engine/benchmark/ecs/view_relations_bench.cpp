@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 static void ViewRelations_AssureArchetype(benchmark::State& state)
 {
@@ -31,4 +31,4 @@ static void ViewRelations_AssureView(benchmark::State& state)
 }
 
 BENCHMARK(ViewRelations_AssureView);
-} // namespace genebits::engine::bench
+} // namespace plex::bench

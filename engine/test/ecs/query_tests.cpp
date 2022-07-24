@@ -2,7 +2,7 @@
 
 #include <gmock/gmock.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -102,4 +102,4 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_Multiple_CorrectDataAccesses)
   EXPECT_TRUE(array[2].thread_safe);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

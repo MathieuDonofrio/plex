@@ -7,7 +7,7 @@
 #include "genebits/engine/system/system.h"
 #include "genebits/engine/utilities/ref.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Scheduler class responsible for running systems.
@@ -215,6 +215,6 @@ private:
 ///
 NO_INLINE Vector<Scheduler::Step> ComputeSchedulerData(const Vector<Stage*>& stages);
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

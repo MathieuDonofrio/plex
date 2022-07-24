@@ -7,7 +7,7 @@
 #include <limits>
 #include <source_location>
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Pseudo-random number generator from PCG family.
@@ -114,6 +114,6 @@ private:
 private:
   uint64_t state_;
 };
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

@@ -51,7 +51,7 @@
   void unhandled_exception() const noexcept {}
 #endif
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Concept used to determine if a type is an awaiter. Meaning it must comply with the standard requirements of an
@@ -149,6 +149,6 @@ using AgrAwaitResult =
     VoidAwaitResult,
     typename std::remove_reference_t<typename AwaitableTraits<Awaitables>::AwaitResultType>>...>;
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif // GENEBITS_AWAITABLE_H

@@ -9,7 +9,7 @@
 #include "genebits/engine/utilities/type_info.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 namespace details
 {
@@ -477,6 +477,6 @@ private:
   Vector<bool> view_states_;
 };
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

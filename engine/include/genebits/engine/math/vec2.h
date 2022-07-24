@@ -6,7 +6,7 @@
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/math/swizzle.h"
 
-namespace genebits::engine
+namespace plex
 {
 template<typename T, size_t Size>
 struct Vec;
@@ -826,14 +826,14 @@ using int2 = Vec<int, 2>;
 using uint2 = Vec<unsigned int, 2>;
 using float2 = Vec<float, 2>;
 using double2 = Vec<double, 2>;
-} // namespace genebits::engine
+} // namespace plex
 
 namespace std
 {
 template<typename T>
-struct hash<genebits::engine::Vec<T, 2>>
+struct hash<plex::Vec<T, 2>>
 {
-  constexpr size_t operator()(const genebits::engine::Vec<T, 2>& vec) const noexcept
+  constexpr size_t operator()(const plex::Vec<T, 2>& vec) const noexcept
   {
     return hash<T>()(vec.x) ^ (hash<T>()(vec.y) << 1);
   }

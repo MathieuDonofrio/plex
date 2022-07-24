@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(Storage_Tests, Empty_AfterInitialization_True)
 {
@@ -322,4 +322,4 @@ TEST(Storage_Tests, Erase_MultipleEraseAfterMultipleInsert_CorrectState)
   EXPECT_FALSE(storage.Contains(1));
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

@@ -1,6 +1,6 @@
 #include "genebits/engine/ecs/archetype.h"
 
-namespace genebits::engine
+namespace plex
 {
 void ViewRelations::AddView(ViewId id)
 {
@@ -53,4 +53,4 @@ void ViewRelations::AddArchetype(ArchetypeId id)
     }
   }
 }
-} // namespace genebits::engine
+} // namespace plex

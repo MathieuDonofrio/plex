@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -133,4 +133,4 @@ TEST(ErasedPtr_Tests, MoveAssignment_Poly_CorrectValue)
   EXPECT_EQ(moved.get()->Test(), 10);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

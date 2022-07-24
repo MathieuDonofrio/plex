@@ -13,7 +13,7 @@
 #include <unistd.h>
 #endif
 
-namespace genebits::engine::terminal
+namespace plex::terminal
 {
 #if PLATFORM_WINDOWS
 
@@ -121,4 +121,4 @@ bool IsColorTerminal()
   return 0 != isatty(fileno(stdout)) && term_supports_color;
 #endif
 }
-} // namespace genebits::engine::terminal
+} // namespace plex::terminal

@@ -3,7 +3,7 @@
 
 #include "genebits/engine/math/vec3.h"
 
-namespace genebits::engine
+namespace plex
 {
 template<typename T, size_t Rows, size_t Cols>
 struct Mat;
@@ -440,14 +440,14 @@ using int3x3 = Mat<int, 3, 3>;
 using uint3x3 = Mat<unsigned int, 3, 3>;
 using float3x3 = Mat<float, 3, 3>;
 using double3x3 = Mat<double, 3, 3>;
-} // namespace genebits::engine
+} // namespace plex
 
 namespace std
 {
 template<typename T>
-struct hash<genebits::engine::Mat<T, 3, 3>>
+struct hash<plex::Mat<T, 3, 3>>
 {
-  constexpr size_t operator()(const genebits::engine::Mat<T, 3, 3>& mat) const noexcept
+  constexpr size_t operator()(const plex::Mat<T, 3, 3>& mat) const noexcept
   {
     return std::hash<T>()(mat[0]) ^ std::hash<T>(mat[1]) ^ std::hash<T>(mat[2]);
   }

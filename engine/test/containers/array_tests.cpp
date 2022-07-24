@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 static_assert(Array<int, 0>::Size == 0);
 static_assert(Array<int, 1>::Size == 1);
@@ -31,4 +31,4 @@ TEST(Array_Tests, ConcatArrays_MultipleArrays_Concatenated)
 
   EXPECT_EQ(result, expected);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

@@ -6,7 +6,7 @@
 #include "genebits/engine/async/trigger_task.h"
 #include "genebits/engine/containers/vector.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Concept required to be a trigger for a when all.
@@ -436,6 +436,6 @@ Task<AgrAwaitResult<Awaitables...>> CollectAll(Awaitables&&... awaitables)
     },
     std::move(trigger_tasks));
 }
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

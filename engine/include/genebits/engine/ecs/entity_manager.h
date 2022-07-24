@@ -5,7 +5,7 @@
 
 #include "genebits/engine/containers/vector.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Responsible for providing and recycling entity identifiers.
@@ -113,6 +113,6 @@ private:
   Vector<Entity> recycled_;
 };
 
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

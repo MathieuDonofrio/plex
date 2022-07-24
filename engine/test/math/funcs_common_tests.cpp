@@ -4,7 +4,7 @@
 
 #include <array>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -44,7 +44,10 @@ namespace
   {
     for (Iterator it = begin; it != end; ++it, ++otherBegin)
     {
-      if (std::isnan(*it)) { EXPECT_LT(*otherBegin, 0.0001); }
+      if (std::isnan(*it))
+      {
+        EXPECT_LT(*otherBegin, 0.0001);
+      }
       else if (std::isinf(*it))
       {
         EXPECT_GT(*otherBegin, 9007199254740992 * 0.9999);
@@ -393,4 +396,4 @@ TEST(Func_Common_Tests, RSqrt_Double_LargeAccuracy)
   }
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

@@ -5,7 +5,7 @@
 #include <tuple>
 #include <type_traits>
 
-namespace genebits::engine
+namespace plex
 {
 namespace details
 {
@@ -101,6 +101,6 @@ struct IsUniqueTypes<Type, Types...>
 ///
 template<typename... Types>
 concept UniqueTypes = IsUniqueTypes<Types...>::value;
-} // namespace genebits::engine
+} // namespace plex
 
 #endif

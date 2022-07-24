@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -113,4 +113,4 @@ TEST(TightTuple_Tests, ParametricConstructor_RightEmpty_DefaultValues)
 
   EXPECT_EQ(const_tuple.First(), 50);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

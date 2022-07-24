@@ -6,7 +6,7 @@
 #include "genebits/engine/debug/assertion.h"
 #include "genebits/engine/utilities/type_traits.h"
 
-namespace genebits::engine
+namespace plex
 {
 ///
 /// Simple alias for readability when working with c arrays.
@@ -200,6 +200,6 @@ constexpr auto ConcatArrays(const Array<Type, Lengths>&... arrays)
 template<typename Type, size_t N>
 struct IsTriviallyRelocatable<Array<Type, N>> : public std::bool_constant<IsTriviallyRelocatable<Type>::value>
 {};
-} // namespace genebits::engine
+} // namespace plex
 
 #endif // GENEBITS_C_ARRAY_H

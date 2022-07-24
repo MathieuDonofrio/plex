@@ -4,7 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 namespace
 {
@@ -161,4 +161,4 @@ static void Ref_AtomicIntrusive_Ref2(benchmark::State& state)
 
 BENCHMARK(Ref_AtomicIntrusive_Ref2);
 
-} // namespace genebits::engine::bench
+} // namespace plex::bench

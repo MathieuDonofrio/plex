@@ -4,7 +4,7 @@
 #include <concepts>
 #include <type_traits>
 
-namespace genebits::engine
+namespace plex
 {
 
 ///
@@ -117,5 +117,5 @@ concept EnumFlag = std::is_enum_v<EnumType> && requires(EnumType lhs, EnumType r
 // Utility for creating bit flags in a more readable way.
 #define BitFlag(Bit) (1 << Bit)
 
-} // namespace genebits::engine
+} // namespace plex
 #endif

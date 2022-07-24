@@ -6,7 +6,7 @@
 
 #include "common/repeat.h"
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 namespace
 {
@@ -74,4 +74,4 @@ static void TypeMap_Get(benchmark::State& state)
 
 BENCHMARK(TypeMap_Get);
 
-} // namespace genebits::engine::bench
+} // namespace plex::bench
