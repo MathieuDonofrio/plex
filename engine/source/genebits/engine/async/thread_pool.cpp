@@ -10,10 +10,11 @@ size_t GetDefaultAmountOfWorkerThreads()
 {
   size_t physical_processors = GetAmountPhysicalProcessors();
 
-  // Benchmarks show that if there are a small amount of physical processors and hyper threading is enabled,
-  // then using the amount of logical processors is slightly better latency-wise.
-  if (physical_processors <= 4)
+  // For large amount of cores using logical processors when Hyper-Threading is enabled will probably just consume
+  // unnecessarily more resources.
+  if (physical_processors <= 16)
   {
+    // Using logical core amount does improve performance with Hyper-Threading.
     size_t logical_processors = GetAmountLogicalProcessors();
 
     if (logical_processors == 2 * physical_processors) // Hyper Threading Enabled
