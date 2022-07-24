@@ -68,11 +68,6 @@ constexpr const char* GetANSIColorCode(TerminalColor color) noexcept
 
 #endif
 
-Color GetDefaultTerminalColor()
-{
-  return Color::LightGray;
-}
-
 void PrintTerminalColor(Color color)
 {
 #if PLATFORM_WINDOWS
