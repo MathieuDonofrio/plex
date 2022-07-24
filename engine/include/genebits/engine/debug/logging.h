@@ -4,7 +4,6 @@
 #include <format>
 
 #include "genebits/engine/debug/stacktrace.h"
-#include "genebits/engine/events/event_bus.h"
 
 namespace genebits::engine::debug
 {
@@ -31,32 +30,6 @@ struct LogMetadata
 };
 
 ///
-/// Data structure for log.
-///
-struct Log
-{
-  LogMetadata metadata;
-  std::string message;
-};
-
-///
-/// Log event.
-///
-/// Published when the logger makes a log.
-///
-struct LogEvent
-{
-  Log log;
-};
-
-///
-/// Singleton event bus used for logging.
-///
-/// @return Event bus used for logging.
-///
-EventBus& GetLoggingEventBus();
-
-///
 /// Returns the amount of stack frames to get when logging.
 ///
 /// Usually only errors obtain a stacktrace when debugging.
@@ -72,22 +45,7 @@ EventBus& GetLoggingEventBus();
   return 0;
 }
 
-///
-/// Constructs & publishes a log event on the event bus.
-///
-/// @param[in] message The log message.
-/// @param[in] metadata The log metadata.
-/// @param[in] bus The event bus to publish on.
-///
-inline void PublishLog(std::string&& message, LogMetadata&& metadata, EventBus& bus = GetLoggingEventBus())
-{
-  LogEvent event;
-
-  event.log.metadata = std::move(metadata);
-  event.log.message = std::move(message);
-
-  bus.Publish(event);
-}
+void Log(LogMetadata metadata, std::string_view message);
 
 } // namespace genebits::engine::debug
 
@@ -99,7 +57,12 @@ inline void PublishLog(std::string&& message, LogMetadata&& metadata, EventBus& 
 
 #ifndef NDEBUG
 
-#define LOG(level, ...) ::genebits::engine::debug::PublishLog(::std::format(__VA_ARGS__), CREATE_LOG_METADATA(level))
+#ifdef __cpp_lib_format
+#define LOG(level, ...) ::genebits::engine::debug::Log(CREATE_LOG_METADATA(level), ::std::format(__VA_ARGS__))
+#else
+// Formatting not supported, print message without formatting
+#define LOG(level, message, ...) ::genebits::engine::debug::Log(CREATE_LOG_METADATA(level), message)
+#endif
 
 #define LOG_TRACE(...) LOG(::genebits::engine::debug::LogLevel::Trace, __VA_ARGS__)
 #define LOG_INFO(...) LOG(::genebits::engine::debug::LogLevel::Info, __VA_ARGS__)

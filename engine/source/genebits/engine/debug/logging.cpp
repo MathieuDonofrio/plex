@@ -2,61 +2,92 @@
 
 #ifndef NDEBUG
 
-#include "genebits/engine/debug/terminal_logger.h"
+#include <mutex>
 
-#include <iostream>
-#include <signal.h>
-
-namespace
-{
-using namespace genebits::engine;
-using namespace genebits::engine::debug;
-
-///
-/// Handler called when the application crashes.
-///
-/// @param[in] signal The crash signal
-///
-void CrashSignalHandler(int signal)
-{
-  // We must skip same frames because they give us useless stack frames about signal handling.
-  static constexpr size_t cSkipFrames = 2;
-
-  std::cerr << "Error: Signal=" << signal << '\n';
-
-  StackTrace stack_trace = StackBackTrace(16 + cSkipFrames);
-
-  if (stack_trace.frames.size() > cSkipFrames)
-  {
-    for (auto it = stack_trace.frames.begin() + cSkipFrames; it != stack_trace.frames.end(); ++it)
-    {
-      std::cerr << "\tat " << it->name << '(' << it->file_name << ':' << it->line << ")\n";
-    }
-  }
-
-  std::cerr << std::flush;
-
-  exit(1);
-}
-
-TerminalLogger InitializeDebugTerminalLogging()
-{
-  signal(SIGSEGV, CrashSignalHandler); // On segmentation fault
-  signal(SIGABRT_COMPAT, CrashSignalHandler); // On abort (assert)
-
-  return TerminalLogger(GetLoggingEventBus());
-}
-
-[[maybe_unused]] auto terminal_logger = InitializeDebugTerminalLogging();
-} // namespace
-#endif
+#include "genebits/engine/debug/terminal_print.h"
 
 namespace genebits::engine::debug
 {
-EventBus& GetLoggingEventBus()
-{
-  static EventBus bus;
+std::mutex logger_mutex;
 
-  return bus;
+void PrintPrefix(const LogLevel level)
+{
+  TPrint('[');
+
+  switch (level)
+  {
+  case LogLevel::Trace:
+  {
+    TPrintColor(TColor::Cyan);
+    TPrint(std::string_view { "TRACE" });
+    break;
+  }
+  case LogLevel::Info:
+  {
+    TPrintColor(TColor::Blue);
+    TPrint(std::string_view { "INFO " });
+    break;
+  }
+  case LogLevel::Warn:
+  {
+    TPrintColor(TColor::Yellow);
+    TPrint(std::string_view { "WARN " });
+    break;
+  }
+  case LogLevel::Error:
+  {
+    TPrintColor(TColor::Red);
+    TPrint(std::string_view { "ERROR" });
+    break;
+  }
+  default: TPrint(std::string_view { "?????" }); break;
+  }
+
+  TPrintColorReset();
+
+  TPrint(std::string_view { "] " });
+}
+
+void PrintStackTrace(const StackTrace stack_trace)
+{
+  TPrintColor(TColor::DarkRed);
+
+  TPrint(std::string_view { "Backtrace:\n" });
+
+  for (const auto& frame : stack_trace.frames)
+  {
+    TPrint(std::string_view { "\tat " });
+    TPrint(frame.name);
+    TPrint('(');
+    TPrint(frame.file_name);
+    TPrint(':');
+    TPrint(std::to_string(frame.line));
+    TPrint(std::string_view { ")\n" });
+  }
+
+  TPrintColorReset();
+}
+
+void Log(LogMetadata metadata, std::string_view message)
+{
+  std::lock_guard<std::mutex> lock(logger_mutex);
+
+  PrintPrefix(metadata.level);
+
+  TPrint(message);
+
+  TPrintLine();
+
+  const auto& stack_trace = metadata.stack_trace;
+
+  if (!stack_trace.frames.empty())
+  {
+    // Prints red stacktrace
+    PrintStackTrace(stack_trace);
+  }
+
+  TPrintFlush();
 }
 } // namespace genebits::engine::debug
+
+#endif

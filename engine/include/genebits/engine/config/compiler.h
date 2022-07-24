@@ -122,10 +122,6 @@ static_assert(sizeof(void*) == 4, "In 32 bit environment, size of pointer should
 
 // C++ Feature test
 
-#ifndef __cpp_lib_format
-#error C++ formatting must be supported
-#endif
-
 #ifndef __cpp_lib_source_location
 #error C++ source location must be supported
 #endif
