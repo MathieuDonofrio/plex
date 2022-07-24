@@ -8,7 +8,7 @@
 
 #include "genebits/engine/containers/array.h"
 #include "genebits/engine/debug/assertion.h"
-#include "genebits/engine/os/memory.h"
+#include "genebits/engine/utilities/memory.h"
 #include "genebits/engine/utilities/type_traits.h"
 
 namespace genebits::engine
