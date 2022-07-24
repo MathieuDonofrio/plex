@@ -45,6 +45,12 @@ struct LogMetadata
   return 0;
 }
 
+///
+/// Logs message to terminal.
+///
+/// @param[in] metadata Log metadata.
+/// @param[in] message The message to log.
+///
 void Log(LogMetadata metadata, std::string_view message);
 
 } // namespace genebits::engine::debug

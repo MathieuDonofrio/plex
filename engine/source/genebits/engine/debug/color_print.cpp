@@ -1,22 +1,26 @@
-#include "genebits/engine/debug/terminal_print.h"
+#include "genebits/engine/debug/color_print.h"
 
-#include <cstdio>
+#include <cstdlib>
 
 #include "genebits/engine/config/compiler.h"
 
 #if PLATFORM_WINDOWS
+#include <io.h>
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #include <Windows.h> // for displaying colors
+#else
+#include <unistd.h>
 #endif
 
 namespace genebits::engine::debug
 {
-[[nodiscard]] constexpr decltype(auto) TColorId(const TColor Color) noexcept
-{
-  switch (Color)
-  {
 #if PLATFORM_WINDOWS
+
+[[nodiscard]] constexpr WORD GetWindowsColorCode(TColor color) noexcept
+{
+  switch (color)
+  {
   case TColor::Black: return 0;
   case TColor::DarkBlue: return 1;
   case TColor::DarkGreen: return 2;
@@ -34,7 +38,14 @@ namespace genebits::engine::debug
   case TColor::Yellow: return 14;
   case TColor::White: return 15;
   default: return 7;
+  }
+}
 #else
+
+constexpr const char* GetANSIColorCode(TColor color) noexcept
+{
+  switch (color)
+  {
   case TColor::Black: return "30";
   case TColor::DarkBlue: return "34";
   case TColor::DarkGreen: return "32";
@@ -52,49 +63,67 @@ namespace genebits::engine::debug
   case TColor::Yellow: return "93";
   case TColor::White: return "97";
   default: return "37";
-#endif
   }
 }
 
-void TPrint(const std::string& string)
+#endif
+
+TColor GetDefaultTerminalColor()
 {
-  fwrite(string.data(), sizeof(char), string.size(), stdout);
+  return TColor::LightGray;
 }
 
-void TPrint(std::string_view string)
-{
-  fwrite(string.data(), sizeof(char), string.size(), stdout);
-}
-
-void TPrint(const char character)
-{
-  putc(character, stdout);
-}
-
-void TPrintColor(TColor color)
+void PrintTerminalColor(TColor color)
 {
 #if PLATFORM_WINDOWS
-  static const HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-  SetConsoleTextAttribute(handle, static_cast<WORD>(TColorId(color)));
+  static HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+  fflush(stdout);
+  SetConsoleTextAttribute(handle, GetWindowsColorCode(color));
 #else
   fwrite("\033[", sizeof(char), 3, stdout);
-  fwrite(TColorId(color), sizeof(char), 2, stdout);
+  fwrite(GetANSIColorCode(color), sizeof(char), 2, stdout);
   putc('m', stdout);
 #endif
 }
 
-void TPrintColorReset()
+bool IsColorTerminal()
 {
-  TPrintColor(TColor::LightGray); // Light gray is the default
-}
+#if PLATFORM_WINDOWS
+  return 0 != _isatty(_fileno(stdout));
+#else
+  // For non-Windows platforms use the TERM variable.
+  // This list is copied from Google Test.
+  constexpr std::string_view supported_term_values[] = {
+    "xterm",
+    "xterm-color",
+    "xterm-256color",
+    "screen",
+    "screen-256color",
+    "tmux",
+    "tmux-256color",
+    "rxvt-unicode",
+    "rxvt-unicode-256color",
+    "linux",
+    "cygwin",
+  };
 
-void TPrintLine()
-{
-  putc('\n', stdout);
-}
+  const char* const term = std::getenv("TERM");
 
-void TPrintFlush()
-{
-  fflush(stdout);
+  bool term_supports_color = false;
+
+  if (term)
+  {
+    for (auto candidate : supported_term_values)
+    {
+      if (candidate == term)
+      {
+        term_supports_color = true;
+        break;
+      }
+    }
+  }
+
+  return 0 != isatty(fileno(stdout)) && term_supports_color;
+#endif
 }
 } // namespace genebits::engine::debug

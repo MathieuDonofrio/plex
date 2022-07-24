@@ -4,89 +4,82 @@
 
 #include <mutex>
 
-#include "genebits/engine/debug/terminal_print.h"
+#include "genebits/engine/debug/color_print.h"
 
 namespace genebits::engine::debug
 {
 std::mutex logger_mutex;
 
-void PrintPrefix(const LogLevel level)
+void PrintPrefix(const LogLevel level, bool color)
 {
-  TPrint('[');
+  std::cout << '[';
 
   switch (level)
   {
   case LogLevel::Trace:
   {
-    TPrintColor(TColor::Cyan);
-    TPrint(std::string_view { "TRACE" });
+    if (color) PrintTerminalColor(TColor::Cyan);
+    std::cout << "TRACE";
     break;
   }
   case LogLevel::Info:
   {
-    TPrintColor(TColor::Blue);
-    TPrint(std::string_view { "INFO " });
+    if (color) PrintTerminalColor(TColor::Blue);
+    std::cout << "INFO ";
     break;
   }
   case LogLevel::Warn:
   {
-    TPrintColor(TColor::Yellow);
-    TPrint(std::string_view { "WARN " });
+    if (color) PrintTerminalColor(TColor::Yellow);
+    std::cout << "WARN ";
     break;
   }
   case LogLevel::Error:
   {
-    TPrintColor(TColor::Red);
-    TPrint(std::string_view { "ERROR" });
+    if (color) PrintTerminalColor(TColor::Red);
+    std::cout << "ERROR";
     break;
   }
-  default: TPrint(std::string_view { "?????" }); break;
+  default: std::cout << "?????"; break;
   }
 
-  TPrintColorReset();
+  if (color) PrintTerminalColor(TColor::LightGray);
 
-  TPrint(std::string_view { "] " });
+  std::cout << "] ";
 }
 
-void PrintStackTrace(const StackTrace stack_trace)
+void PrintStackTrace(const StackTrace stack_trace, bool color)
 {
-  TPrintColor(TColor::DarkRed);
+  if (color) PrintTerminalColor(TColor::DarkRed);
 
-  TPrint(std::string_view { "Backtrace:\n" });
+  std::cout << "Backtrace:\n";
 
   for (const auto& frame : stack_trace.frames)
   {
-    TPrint(std::string_view { "\tat " });
-    TPrint(frame.name);
-    TPrint('(');
-    TPrint(frame.file_name);
-    TPrint(':');
-    TPrint(std::to_string(frame.line));
-    TPrint(std::string_view { ")\n" });
+    std::cout << "\tat " << frame.name << '(' << frame.file_name << ':' << frame.line << ")\n";
   }
 
-  TPrintColorReset();
+  if (color) PrintTerminalColor(TColor::LightGray);
 }
 
 void Log(LogMetadata metadata, std::string_view message)
 {
+  bool color = IsColorTerminal();
+
   std::lock_guard<std::mutex> lock(logger_mutex);
 
-  PrintPrefix(metadata.level);
+  PrintPrefix(metadata.level, color);
 
-  TPrint(message);
-
-  TPrintLine();
+  std::cout << message << '\n';
 
   const auto& stack_trace = metadata.stack_trace;
 
   if (!stack_trace.frames.empty())
   {
-    // Prints red stacktrace
-    PrintStackTrace(stack_trace);
+    PrintStackTrace(stack_trace, color);
   }
 
-  TPrintFlush();
+  std::cout << std::flush;
 }
 } // namespace genebits::engine::debug
 
