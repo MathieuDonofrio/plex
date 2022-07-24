@@ -1,9 +1,9 @@
-#ifndef GENEBITS_ENGINE_BENCHMARK_COMMON_FAKE_WORK_H
-#define GENEBITS_ENGINE_BENCHMARK_COMMON_FAKE_WORK_H
+#ifndef PLEX_BENCHMARK_COMMON_FAKE_WORK_H
+#define PLEX_BENCHMARK_COMMON_FAKE_WORK_H
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 inline void Work(size_t amount)
 {
@@ -23,6 +23,6 @@ inline void Work(size_t amount)
   benchmark::DoNotOptimize(state);
   benchmark::ClobberMemory();
 }
-} // namespace genebits::engine::bench
+} // namespace plex::bench
 
 #endif

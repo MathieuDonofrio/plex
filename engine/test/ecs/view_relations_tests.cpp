@@ -1,8 +1,8 @@
-#include "genebits/engine/ecs/archetype.h"
+#include "plex/ecs/archetype.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(ViewRelations_Tests, AssureArchetype_Single_UniqueId)
 {
@@ -167,4 +167,4 @@ TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectArchetypes)
 
   EXPECT_TRUE(std::includes(archetypes.begin(), archetypes.end(), view_archetypes.begin(), view_archetypes.end()));
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

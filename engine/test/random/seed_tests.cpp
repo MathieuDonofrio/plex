@@ -1,8 +1,8 @@
-#include "genebits/engine/random/seed.h"
+#include "plex/random/seed.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(Random_Tests, CompileTimeSeed_DifferentLine_DifferentSeed)
 {
@@ -25,4 +25,4 @@ TEST(Seed_Tests, Seed_DoubleCreation_DifferentSeed)
 
   EXPECT_NE(seed1, seed2);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

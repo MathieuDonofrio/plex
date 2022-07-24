@@ -1,8 +1,8 @@
-#include "genebits/engine/ecs/entity_manager.h"
+#include "plex/ecs/entity_manager.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(EntityManager_Tests, Obtain_AfterInitialization_UniqueId)
 {
@@ -88,4 +88,4 @@ TEST(EntityManager_Tests, Obtain_ReleaseAll_ResetGenerator)
   EXPECT_EQ(manager.CirculatingCount(), 1);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

@@ -1,11 +1,11 @@
-#include "genebits/engine/async/sync_wait.h"
-#include "genebits/engine/async/task.h"
-#include "genebits/engine/async/thread_pool.h"
-#include "genebits/engine/async/when_all.h"
+#include "plex/async/sync_wait.h"
+#include "plex/async/task.h"
+#include "plex/async/thread_pool.h"
+#include "plex/async/when_all.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(ThreadPool_Tests, Constructor_CustomAmountThreads_CorrectCount)
 {
@@ -77,4 +77,4 @@ TEST(ThreadPool_Tests, Schedule_16ThreadsMultipleTasks_Wait_CorrectExecution)
   EXPECT_EQ(count, amount);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

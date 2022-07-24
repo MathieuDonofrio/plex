@@ -1,4 +1,4 @@
-# Genebits Style Guide
+# Plex Style Guide
 
 Welcome to the genebits style guide. This style guide is heavily influences by the **Google C++ Style Guide** and can be
 found [here](https://google.github.io/styleguide/cppguide.html).

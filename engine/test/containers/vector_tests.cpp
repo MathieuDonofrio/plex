@@ -1,8 +1,8 @@
-#include "genebits/engine/containers/vector.h"
+#include "plex/containers/vector.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 static_assert(
   sizeof(Vector<size_t>) == sizeof(void*) * 2, "The size of Vector should not need to be bigger than 2 pointers");
@@ -1420,4 +1420,4 @@ TEST(Vector_Tests, Inequality_DifferentValues_NotEqual)
   EXPECT_NE(vector1, vector2);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

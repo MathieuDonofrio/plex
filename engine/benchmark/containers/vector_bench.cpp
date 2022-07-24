@@ -1,11 +1,11 @@
-#include "genebits/engine/containers/vector.h"
+#include "plex/containers/vector.h"
 
 #include <benchmark/benchmark.h>
 
 #include <random>
 #include <vector>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 template<template<class> class Container>
 static void Vector_Reserve(benchmark::State& state)
@@ -114,4 +114,4 @@ BENCHMARK_TEMPLATE(Vector_Relocatable_Consecutive_PushBack, Vector)
   ->Arg(10000)
   ->Complexity(benchmark::oN);
 
-} // namespace genebits::engine::bench
+} // namespace plex::bench

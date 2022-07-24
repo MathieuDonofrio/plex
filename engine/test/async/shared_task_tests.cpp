@@ -1,13 +1,13 @@
-#include "genebits/engine/async/shared_task.h"
+#include "plex/async/shared_task.h"
 
 #include <gtest/gtest.h>
 
-#include "genebits/engine/async/async_latch.h"
-#include "genebits/engine/async/sync_wait.h"
-#include "genebits/engine/async/thread_pool.h"
-#include "genebits/engine/async/when_all.h"
+#include "plex/async/async_latch.h"
+#include "plex/async/sync_wait.h"
+#include "plex/async/thread_pool.h"
+#include "plex/async/when_all.h"
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(SharedTask_Tests, IsReady_VoidAndNotStarted_NotReady)
 {
@@ -143,4 +143,4 @@ TEST(SharedTask_Tests, CoAwait_ResultAndMultipleAwaiters_CorrectlyWaited)
   EXPECT_EQ(count, 1);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

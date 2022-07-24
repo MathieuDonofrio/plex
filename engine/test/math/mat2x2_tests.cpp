@@ -1,8 +1,8 @@
-#include "genebits/engine/math/mat2x2.h"
+#include "plex/math/mat2x2.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 
 static_assert(std::is_trivially_copy_constructible_v<float2x2>, "Mat2x2 Must be trivially copy constructable");
@@ -299,4 +299,4 @@ TYPED_TEST(Mat2x2_Tests, Mult_Mat_Reversed)
   EXPECT_EQ(result[1][1], 50);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

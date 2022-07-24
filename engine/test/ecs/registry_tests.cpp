@@ -1,8 +1,8 @@
-#include "genebits/engine/ecs/registry.h"
+#include "plex/ecs/registry.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 TEST(Registry_Tests, EntityCount_AfterInitialization_Zero)
 {
@@ -1031,4 +1031,4 @@ TEST(EntityForEach_Tests, View_TwoArchetypes_CorrectEntities)
   EXPECT_EQ(call_count, total_amount);
   EXPECT_EQ(seen_entities.size(), total_amount);
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

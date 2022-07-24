@@ -1,10 +1,10 @@
-#include "genebits/engine/async/trigger_task.h"
+#include "plex/async/trigger_task.h"
 
 #include <thread>
 
 #include <gmock/gmock.h>
 
-namespace genebits::engine
+namespace plex
 {
 namespace
 {
@@ -100,4 +100,4 @@ TEST(TriggerTask_Tests, MakeTriggerTask_RValueResult_CorrectValue)
 
   EXPECT_EQ(std::move(trigger_task).Result(), 102);
 }
-} // namespace genebits::engine
+} // namespace plex

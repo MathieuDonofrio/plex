@@ -1,6 +1,6 @@
 ---
-name: 'Bug Report' 
-about: Help us improve the engine by reporting a bug
+name: 'Bug Report'
+about: Help us improve the framework by reporting a bug
 
 ---
 
@@ -18,3 +18,4 @@ about: Help us improve the engine by reporting a bug
 
 - Version:
 - Platform:
+- Compiler:

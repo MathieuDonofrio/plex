@@ -1,8 +1,8 @@
-#include "genebits/engine/math/mat3x3.h"
+#include "plex/math/mat3x3.h"
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 
 static_assert(std::is_trivially_copy_constructible_v<float3x3>, "Mat3x3 Must be trivially copy constructable");
@@ -415,4 +415,4 @@ TYPED_TEST(Mat3x3_Tests, Mult_Mat_Reversed)
   EXPECT_EQ(result[2][2], 246);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

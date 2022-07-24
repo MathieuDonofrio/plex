@@ -1,12 +1,12 @@
-#include "genebits/engine/math/swizzle.h"
+#include "plex/math/swizzle.h"
 
 #include <gtest/gtest.h>
 
-#include "genebits/engine/math/vec2.h"
-#include "genebits/engine/math/vec3.h"
-#include "genebits/engine/math/vec4.h"
+#include "plex/math/vec2.h"
+#include "plex/math/vec3.h"
+#include "plex/math/vec4.h"
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 
 template<typename T>
@@ -402,4 +402,4 @@ TYPED_TEST(Swizzle_Tests, DivAssign_Vec)
   EXPECT_EQ(vec3.x, 2 / static_cast<TypeParam>(4));
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

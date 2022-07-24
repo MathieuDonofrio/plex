@@ -1,12 +1,12 @@
-#include "genebits/engine/math/matrix_compute.h"
+#include "plex/math/matrix_compute.h"
 
 #include <gtest/gtest.h>
 
-#include "genebits/engine/math/mat2x2.h"
-#include "genebits/engine/math/mat3x3.h"
-#include "genebits/engine/math/mat4x4.h"
+#include "plex/math/mat2x2.h"
+#include "plex/math/mat3x3.h"
+#include "plex/math/mat4x4.h"
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 template<typename T>
 class MatrixCompute_Tests : public testing::Test
@@ -175,4 +175,4 @@ TYPED_TEST(MatrixComputeF_Tests, Inverse_Mat4x4)
   EXPECT_NEAR(inv[3][3], 7.0 / 88.0, 0.00001);
 }
 
-} // namespace genebits::engine::tests
+} // namespace plex::tests

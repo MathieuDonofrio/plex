@@ -1,10 +1,10 @@
-#include "genebits/engine/async/sync_wait.h"
+#include "plex/async/sync_wait.h"
 
 #include <thread>
 
 #include <gmock/gmock.h>
 
-namespace genebits::engine
+namespace plex
 {
 namespace
 {
@@ -321,4 +321,4 @@ TEST(SyncWaitTask_Tests, SyncWait_ResultTask_CorrectValue)
 
   if (thread.joinable()) thread.join();
 }
-} // namespace genebits::engine
+} // namespace plex

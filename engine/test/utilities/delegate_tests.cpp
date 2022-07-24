@@ -1,10 +1,10 @@
-#include "genebits/engine/utilities/delegate.h"
+#include "plex/utilities/delegate.h"
 
 #include <type_traits>
 
 #include <gtest/gtest.h>
 
-namespace genebits::engine::tests
+namespace plex::tests
 {
 namespace
 {
@@ -392,4 +392,4 @@ TEST(Delegate_Tests, Invoke_NonVoidReturnType_CorrectValue)
   EXPECT_EQ(4, handler.Invoke(2));
   EXPECT_EQ(20, handler.Invoke(10));
 }
-} // namespace genebits::engine::tests
+} // namespace plex::tests

@@ -1,12 +1,12 @@
-#include "genebits/engine/scheduler/scheduler.h"
+#include "plex/scheduler/scheduler.h"
 
 #include <benchmark/benchmark.h>
 
 #include "common/fake_work.h"
-#include "genebits/engine/async/sync_wait.h"
-#include "genebits/engine/async/thread_pool.h"
+#include "plex/async/sync_wait.h"
+#include "plex/async/thread_pool.h"
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 namespace
 {
@@ -516,4 +516,4 @@ BENCHMARK(Scheduler_AsyncWork_10Stages16SystemsEach)
   ->Unit(benchmark::kMillisecond)
   ->MeasureProcessCPUTime()
   ->UseRealTime();
-} // namespace genebits::engine::bench
+} // namespace plex::bench

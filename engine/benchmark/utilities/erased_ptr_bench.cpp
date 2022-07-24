@@ -1,10 +1,10 @@
-#include "genebits/engine/utilities/erased_ptr.h"
+#include "plex/utilities/erased_ptr.h"
 
 #include <memory>
 
 #include <benchmark/benchmark.h>
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 static void ErasedPtr_STD_Reference_SharedPtr_Cast(benchmark::State& state)
 {
@@ -34,4 +34,4 @@ static void ErasedPtr_Cast(benchmark::State& state)
 
 BENCHMARK(ErasedPtr_Cast);
 
-} // namespace genebits::engine::bench
+} // namespace plex::bench

@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_BENCHMARK_COMMON_REPEAT_H
 #define GENEBITS_ENGINE_BENCHMARK_COMMON_REPEAT_H
 
-namespace genebits::engine::bench
+namespace plex::bench
 {
 #define REPEAT2(expression) \
   expression;               \
@@ -22,6 +22,6 @@ namespace genebits::engine::bench
 #define REPEAT32(expression) \
   REPEAT16(expression);      \
   REPEAT16(expression);
-} // namespace genebits::engine::bench
+} // namespace plex::bench
 
 #endif
