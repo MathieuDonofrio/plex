@@ -18,7 +18,7 @@ These tasks are small or large updates that are non-breaking for non deprecated 
 
 Async
 
-- [x] None
+- [ ] Work stealing thread pool
 
 Config
 
@@ -27,31 +27,20 @@ Config
 Containers
 
 - [ ] Bitset (SIMD optimized)
-- [ ] Dequeue
+- [ ] Deque
 - [ ] Map
 - [ ] Set
-
-Debug
-
-- [ ] Implement stack tracing for linux
-- [ ] Verify logging functionality for linux
-
-OS
-
-- [ ] CPUInfo for linux
-- [ ] Thread utilities for linux
 
 ECS
 
 - [ ] Archetype swapping
 - [ ] Empty type optimizations
-- [ ] Hierarchies
-- [ ] Scripts
-- [ ] Const views
+- [ ] Investigate Hierarchies
+- [ ] Investigate Scripting
 - [ ] Storage extra indirection for very large components. (Speeds up insert/destroy/swapping)
 - [ ] Optimize scheduler graph computations
 - [ ] Optimize scheduler execution
-- [ ] Scheduler dynamic reordering
+- [ ] Scheduler profile guided optimization for dynamic reordering of systems
 - [ ] Scheduler debug info & statistics
 
 Events
@@ -61,19 +50,13 @@ Events
 
 IO
 
+- [ ] IO Service
+- [ ] File IO
+- [ ] Networking abstraction
 - [ ] Serialization/Deserialization
 - [ ] YAML Parser
 - [ ] JSON Parser
 - [ ] XML Parser
-
-Audio
-
-- [ ] OpenAL Integration
-
-Physics
-
-- [ ] 2D Physics
-- [ ] 3D Physics
 
 Math
 
@@ -83,6 +66,11 @@ Math
 - [ ] Make trigonometric functions constexpr
 - [ ] Add documentation
 
+OS
+
+- [ ] CPUInfo for linux
+- [ ] Thread utilities for linux
+
 Graph
 
 - [ ] Dense adjacency matrix
@@ -91,16 +79,17 @@ Graph
 
 Utilities
 
-- [ ] TypeInfo PrettyName (Same for every compiler)
 - [ ] UUID
 
 Other
 
 - [ ] Static analysis
 - [ ] Sanitizers
+- [ ] Code coverage
 - [ ] Architecture optimization
 - [ ] Link time optimizations (LTO)
-- [ ] Linux build
+- [ ] Linux GCC build
+- [ ] Github Actions
 - [ ] Precompiled headers
 - [ ] Update style guide
 - [ ] Add CONTRIBUTING.md
@@ -114,13 +103,10 @@ Official C++ 20 Support
 
 These tasks are large updates with potentially breaking changes.
 
-- [ ] Make engine more generic than "genebits". (Use different name for the engine)
-- [ ] Move graphics to separate lib
-- [ ] Rename 'Containers' to 'adt' or 'container'
+- [ ] Rename framework
+- [ ] Split libraries (Core, ...)
 - [ ] Restructure test folders to include mock, unit and system
-- [ ] Restructure benchmark folders to include helper, micro and macro (or similar structure)
-- [ ] Update version.h
-- [ ] Update cmake structure
+- [ ] Restructure bench folder
 
 ## Experimental
 
