@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTILITIES_ENUMERATOR_H
-#define GENEBITS_ENGINE_UTILITIES_ENUMERATOR_H
+#ifndef PLEX_UTILITIES_ENUMERATOR_H
+#define PLEX_UTILITIES_ENUMERATOR_H
 
 #include <concepts>
 #include <type_traits>
@@ -15,28 +15,27 @@ namespace plex
 /// @tparam EnumType Enum type to check
 ///
 template<typename EnumType>
-concept EnumFlag = std::is_enum_v<EnumType> && requires(EnumType lhs, EnumType rhs)
-{
-  {
-    lhs | rhs
-    } -> std::convertible_to<EnumType>;
-  {
-    lhs& rhs
-    } -> std::convertible_to<EnumType>;
-  {
-    lhs ^ rhs
-    } -> std::convertible_to<EnumType>;
-  {
-    lhs |= rhs
-    } -> std::convertible_to<EnumType&>;
-  {
-    lhs &= rhs
-    } -> std::convertible_to<EnumType&>;
-  {
-    lhs ^= rhs
-    } -> std::convertible_to<EnumType&>;
-  ~lhs;
-};
+concept EnumFlag = std::is_enum_v<EnumType> && requires(EnumType lhs, EnumType rhs) {
+                                                 {
+                                                   lhs | rhs
+                                                   } -> std::convertible_to<EnumType>;
+                                                 {
+                                                   lhs& rhs
+                                                   } -> std::convertible_to<EnumType>;
+                                                 {
+                                                   lhs ^ rhs
+                                                   } -> std::convertible_to<EnumType>;
+                                                 {
+                                                   lhs |= rhs
+                                                   } -> std::convertible_to<EnumType&>;
+                                                 {
+                                                   lhs &= rhs
+                                                   } -> std::convertible_to<EnumType&>;
+                                                 {
+                                                   lhs ^= rhs
+                                                   } -> std::convertible_to<EnumType&>;
+                                                 ~lhs;
+                                               };
 
 // Utility for defining enum flag operators.
 // Defines all bitwise operators and equality operators with the underlying type.

@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_MATH_FUNCS_COMMON_H
-#define GENEBITS_ENGINE_MATH_FUNCS_COMMON_H
+#ifndef PLEX_MATH_FUNCS_COMMON_H
+#define PLEX_MATH_FUNCS_COMMON_H
 
 #include "genebits/engine/config/compiler.h"
 

@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_OS_CPU_INFO_H
-#define GENEBITS_ENGINE_OS_CPU_INFO_H
+#ifndef PLEX_OS_CPU_INFO_H
+#define PLEX_OS_CPU_INFO_H
 
 #include <atomic>
 #include <vector>

@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_ASYNC_TASK_H
-#define GENEBITS_ENGINE_ASYNC_TASK_H
+#ifndef PLEX_ASYNC_TASK_H
+#define PLEX_ASYNC_TASK_H
 
 #include <thread>
 

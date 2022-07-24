@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_SCHEDULER_SCHEDULER_H
-#define GENEBITS_ENGINE_SCHEDULER_SCHEDULER_H
+#ifndef PLEX_SCHEDULER_SCHEDULER_H
+#define PLEX_SCHEDULER_SCHEDULER_H
 
 #include "genebits/engine/async/shared_task.h"
 #include "genebits/engine/async/when_all.h"

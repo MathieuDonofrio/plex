@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_ASYNC_THREAD_POOL_H
-#define GENEBITS_ENGINE_ASYNC_THREAD_POOL_H
+#ifndef PLEX_ASYNC_THREAD_POOL_H
+#define PLEX_ASYNC_THREAD_POOL_H
 
 #include <atomic>
 #include <mutex>

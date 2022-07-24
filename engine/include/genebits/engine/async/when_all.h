@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_ASYNC_WHEN_ALL_H
-#define GENEBITS_ENGINE_ASYNC_WHEN_ALL_H
+#ifndef PLEX_ASYNC_WHEN_ALL_H
+#define PLEX_ASYNC_WHEN_ALL_H
 
 #include <atomic>
 

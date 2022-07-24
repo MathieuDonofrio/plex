@@ -1,4 +1,4 @@
-#ifndef GENEBITS_ENGINE_MATH_VEC3_H
+#ifndef PLEX_MATH_VEC3_H
 #define GENEBITS_ENGINE_MATH_VEC3_H
 
 #include <numeric>

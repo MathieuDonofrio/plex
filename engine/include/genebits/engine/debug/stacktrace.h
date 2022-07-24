@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_DEBUG_STACKTRACE_H
-#define GENEBITS_ENGINE_DEBUG_STACKTRACE_H
+#ifndef PLEX_DEBUG_STACKTRACE_H
+#define PLEX_DEBUG_STACKTRACE_H
 
 #include <string>
 #include <vector>

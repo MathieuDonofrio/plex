@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_ECS_ARCHETYPE_H
-#define GENEBITS_ENGINE_ECS_ARCHETYPE_H
+#ifndef PLEX_ECS_ARCHETYPE_H
+#define PLEX_ECS_ARCHETYPE_H
 
 #include <algorithm>
 #include <memory>

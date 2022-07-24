@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_ASYNC_TRIGGER_TASK_H
-#define GENEBITS_ENGINE_ASYNC_TRIGGER_TASK_H
+#ifndef PLEX_ASYNC_TRIGGER_TASK_H
+#define PLEX_ASYNC_TRIGGER_TASK_H
 
 #include "genebits/engine/async/task.h"
 
@@ -11,10 +11,7 @@ namespace plex
 /// @tparam Impl Type to check.
 ///
 template<typename Impl>
-concept Trigger = requires(Impl event)
-{
-  event.Fire();
-};
+concept Trigger = requires(Impl event) { event.Fire(); };
 
 template<typename Type, Trigger Trigger>
 class TriggerTask;

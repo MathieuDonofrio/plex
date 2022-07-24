@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_MATH_MATRIX_COMPUTE_H
-#define GENEBITS_ENGINE_MATH_MATRIX_COMPUTE_H
+#ifndef PLEX_MATH_MATRIX_COMPUTE_H
+#define PLEX_MATH_MATRIX_COMPUTE_H
 
 #include "genebits/engine/debug/assertion.h"
 

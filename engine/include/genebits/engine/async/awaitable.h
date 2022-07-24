@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_ASYNC_AWAITABLE_H
-#define GENEBITS_ENGINE_ASYNC_AWAITABLE_H
+#ifndef PLEX_ASYNC_AWAITABLE_H
+#define PLEX_ASYNC_AWAITABLE_H
 
 // Patch for CLion IDE errors.
 // TODO Remove once fixed
@@ -47,8 +47,9 @@
     }                                                                             \
   }
 #else
-#define COROUTINE_UNHANDLED_EXCEPTION \
-  void unhandled_exception() const noexcept {}
+#define COROUTINE_UNHANDLED_EXCEPTION       \
+  void unhandled_exception() const noexcept \
+  {}
 #endif
 
 namespace plex
@@ -60,20 +61,19 @@ namespace plex
 /// @tparam Type Type to check.
 ///
 template<typename Type>
-concept Awaiter = requires(Type awaiter, std::coroutine_handle<> handle)
-{
-  {
-    awaiter.await_ready()
-    } -> std::same_as<bool>;
+concept Awaiter = requires(Type awaiter, std::coroutine_handle<> handle) {
+                    {
+                      awaiter.await_ready()
+                      } -> std::same_as<bool>;
 
-  awaiter.await_resume();
+                    awaiter.await_resume();
 
-  awaiter.await_suspend(handle);
+                    awaiter.await_suspend(handle);
 
-  requires std::is_void_v<decltype(std::declval<Type>().await_suspend(
+                    requires std::is_void_v<decltype(std::declval<Type>().await_suspend(
     handle))> || std::same_as<decltype(std::declval<Type>().await_suspend(handle)),
     bool> || std::same_as<decltype(std::declval<Type>().await_suspend(handle)), std::coroutine_handle<>>;
-};
+                  };
 
 ///
 /// Concept used to determine if a type an awaitable. All awaiters are awaitables, and any type that implements the
@@ -83,9 +83,9 @@ concept Awaiter = requires(Type awaiter, std::coroutine_handle<> handle)
 ///
 template<typename Type>
 concept Awaitable = Awaiter<Type> || // Or defines co_await
-  (
-    requires(Type awaitable) { awaitable.operator co_await(); } // Member operator co_await
-    || requires(Type awaitable) { operator co_await(awaitable); }); // Non-Member operator co_await
+                    (
+                      requires(Type awaitable) { awaitable.operator co_await(); } // Member operator co_await
+                      || requires(Type awaitable) { operator co_await(awaitable); }); // Non-Member operator co_await
 
 ///
 /// Concept that determines whether or not a type can provide a WhenReady awaitable.
@@ -95,12 +95,11 @@ concept Awaitable = Awaiter<Type> || // Or defines co_await
 /// @tparam Type Awaitable to check
 ///
 template<typename Type>
-concept WhenReadyAwaitable = requires(Type awaitable)
-{
-  {
-    awaitable.WhenReady()
-    } -> Awaitable;
-};
+concept WhenReadyAwaitable = requires(Type awaitable) {
+                               {
+                                 awaitable.WhenReady()
+                                 } -> Awaitable;
+                             };
 
 ///
 /// Holds type traits of an awaitable

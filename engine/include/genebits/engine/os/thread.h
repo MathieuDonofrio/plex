@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_OS_THREAD_H
-#define GENEBITS_ENGINE_OS_THREAD_H
+#ifndef PLEX_OS_THREAD_H
+#define PLEX_OS_THREAD_H
 
 #include <immintrin.h>
 #include <thread>

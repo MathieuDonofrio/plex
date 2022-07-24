@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_CONTAINERS_TYPE_MAP_H
-#define GENEBITS_ENGINE_CONTAINERS_TYPE_MAP_H
+#ifndef PLEX_CONTAINERS_TYPE_MAP_H
+#define PLEX_CONTAINERS_TYPE_MAP_H
 
 #include "genebits/engine/containers/vector.h"
 #include "genebits/engine/debug/assertion.h"

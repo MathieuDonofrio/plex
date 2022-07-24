@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_MATH_FUNCS_VEC_H
-#define GENEBITS_ENGINE_MATH_FUNCS_VEC_H
+#ifndef PLEX_MATH_FUNCS_VEC_H
+#define PLEX_MATH_FUNCS_VEC_H
 
 #include "genebits/engine/math/funcs_common.h"
 #include "genebits/engine/math/vec2.h"
@@ -286,7 +286,8 @@ constexpr Vec<float, 4> Sqrt(const Vec<float, 4>& v)
 
 #ifdef ISA_SSE3
 template<size_t L>
-requires(L == 2 || L == 4) constexpr Vec<double, L> Sqrt(const Vec<double, L>& v)
+requires(L == 2 || L == 4)
+constexpr Vec<double, L> Sqrt(const Vec<double, L>& v)
 {
   if (std::is_constant_evaluated())
   {

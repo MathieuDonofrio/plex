@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_SCHEDULER_STAGE_H
-#define GENEBITS_ENGINE_SCHEDULER_STAGE_H
+#ifndef PLEX_SCHEDULER_STAGE_H
+#define PLEX_SCHEDULER_STAGE_H
 
 #include "genebits/engine/containers/vector.h"
 #include "genebits/engine/system/system.h"

@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_ECS_REGISTRY_H
-#define GENEBITS_ENGINE_ECS_REGISTRY_H
+#ifndef PLEX_ECS_REGISTRY_H
+#define PLEX_ECS_REGISTRY_H
 
 #include <algorithm>
 #include <concepts>

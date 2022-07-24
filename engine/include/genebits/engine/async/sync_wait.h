@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_ASYNC_SYNC_WAIT_H
-#define GENEBITS_ENGINE_ASYNC_SYNC_WAIT_H
+#ifndef PLEX_ASYNC_SYNC_WAIT_H
+#define PLEX_ASYNC_SYNC_WAIT_H
 
 #include <atomic>
 
@@ -13,11 +13,10 @@ namespace plex
 /// @tparam Type Type to check.
 ///
 template<typename Type>
-concept SyncWaitTrigger = Trigger<Type> && requires(Type trigger)
-{
-  trigger.Wait();
-  trigger.IsDone();
-};
+concept SyncWaitTrigger = Trigger<Type> && requires(Type trigger) {
+                                             trigger.Wait();
+                                             trigger.IsDone();
+                                           };
 
 ///
 /// Sync wait trigger that uses an atomic counter to count down the events needed to be fired before notifying all

@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_STORAGE_H
-#define GENEBITS_ENGINE_STORAGE_H
+#ifndef PLEX_STORAGE_H
+#define PLEX_STORAGE_H
 
 #include "genebits/engine/containers/type_map.h"
 #include "genebits/engine/containers/vector.h"

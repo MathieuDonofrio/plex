@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_LOCAL_THREAD_VALIDATOR_H
-#define GENEBITS_ENGINE_LOCAL_THREAD_VALIDATOR_H
+#ifndef PLEX_LOCAL_THREAD_VALIDATOR_H
+#define PLEX_LOCAL_THREAD_VALIDATOR_H
 
 #ifndef NDEBUG
 
@@ -32,7 +32,10 @@
     auto ctx = context;                                                                              \
     if (ctx)                                                                                         \
     {                                                                                                \
-      if (!ctx->__local_thread__) [[unlikely]] { LOCAL_THREAD_INIT(ctx); }                           \
+      if (!ctx->__local_thread__) [[unlikely]]                                                       \
+      {                                                                                              \
+        LOCAL_THREAD_INIT(ctx);                                                                      \
+      }                                                                                              \
       else                                                                                           \
       {                                                                                              \
         ASSERT(::std::this_thread::get_id() == ctx->__local_thread__, "Called on different thread"); \

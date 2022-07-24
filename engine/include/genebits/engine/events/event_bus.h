@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_EVENTBUS_H
-#define GENEBITS_ENGINE_UTIL_EVENTBUS_H
+#ifndef PLEX_UTIL_EVENTBUS_H
+#define PLEX_UTIL_EVENTBUS_H
 
 #include <memory>
 #include <mutex>

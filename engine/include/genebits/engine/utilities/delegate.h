@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTILITIES_DELEGATE_H
-#define GENEBITS_ENGINE_UTILITIES_DELEGATE_H
+#ifndef PLEX_UTILITIES_DELEGATE_H
+#define PLEX_UTILITIES_DELEGATE_H
 
 #include <type_traits>
 #include <utility>

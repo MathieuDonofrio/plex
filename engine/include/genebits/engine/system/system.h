@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_SYSTEM_SYSTEM_H
-#define GENEBITS_ENGINE_SYSTEM_SYSTEM_H
+#ifndef PLEX_SYSTEM_SYSTEM_H
+#define PLEX_SYSTEM_SYSTEM_H
 
 #include "genebits/engine/async/task.h"
 #include "genebits/engine/system/context.h"

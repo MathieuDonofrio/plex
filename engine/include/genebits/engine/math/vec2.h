@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_MATH_VEC2_H
-#define GENEBITS_ENGINE_MATH_VEC2_H
+#ifndef PLEX_MATH_VEC2_H
+#define PLEX_MATH_VEC2_H
 
 #include <numeric>
 

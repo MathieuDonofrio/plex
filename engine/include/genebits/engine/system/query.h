@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_SYSTEM_QUERY_H
-#define GENEBITS_ENGINE_SYSTEM_QUERY_H
+#ifndef PLEX_SYSTEM_QUERY_H
+#define PLEX_SYSTEM_QUERY_H
 
 #include <string_view>
 

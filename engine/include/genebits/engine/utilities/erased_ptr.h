@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTILITIES_ERASED_PTR_H
-#define GENEBITS_ENGINE_UTILITIES_ERASED_PTR_H
+#ifndef PLEX_UTILITIES_ERASED_PTR_H
+#define PLEX_UTILITIES_ERASED_PTR_H
 
 #include "genebits/engine/utilities/type_traits.h"
 

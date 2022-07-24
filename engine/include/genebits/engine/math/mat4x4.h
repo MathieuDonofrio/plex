@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_MATH_MAT4X4_H
-#define GENEBITS_ENGINE_MATH_MAT4X4_H
+#ifndef PLEX_MATH_MAT4X4_H
+#define PLEX_MATH_MAT4X4_H
 
 #include "genebits/engine/math/vec4.h"
 

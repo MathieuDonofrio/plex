@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_RANDOM_SEED_H
-#define GENEBITS_ENGINE_RANDOM_SEED_H
+#ifndef PLEX_RANDOM_SEED_H
+#define PLEX_RANDOM_SEED_H
 
 #include <atomic>
 #include <cstdint>
