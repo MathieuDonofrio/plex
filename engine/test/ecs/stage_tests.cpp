@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/stage.h"
+#include "genebits/engine/scheduler/stage.h"
 
 #include <gtest/gtest.h>
 

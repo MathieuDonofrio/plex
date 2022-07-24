@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/query.h"
+#include "genebits/engine/system/query.h"
 
 #include <gmock/gmock.h>
 

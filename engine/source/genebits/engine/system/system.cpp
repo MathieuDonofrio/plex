@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/system.h"
+#include "genebits/engine/system/system.h"
 
 namespace genebits::engine
 {

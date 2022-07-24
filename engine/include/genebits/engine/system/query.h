@@ -1,10 +1,10 @@
-#ifndef GENEBITS_ENGINE_ECS_QUERY_H
-#define GENEBITS_ENGINE_ECS_QUERY_H
+#ifndef GENEBITS_ENGINE_SYSTEM_QUERY_H
+#define GENEBITS_ENGINE_SYSTEM_QUERY_H
 
 #include <string_view>
 
 #include "genebits/engine/containers/array.h"
-#include "genebits/engine/ecs/context.h"
+#include "genebits/engine/system/context.h"
 
 namespace genebits::engine
 {

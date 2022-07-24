@@ -1,9 +1,9 @@
-#ifndef GENEBITS_ENGINE_ECS_SYSTEM_H
-#define GENEBITS_ENGINE_ECS_SYSTEM_H
+#ifndef GENEBITS_ENGINE_SYSTEM_SYSTEM_H
+#define GENEBITS_ENGINE_SYSTEM_SYSTEM_H
 
 #include "genebits/engine/async/task.h"
-#include "genebits/engine/ecs/context.h"
-#include "genebits/engine/ecs/query.h"
+#include "genebits/engine/system/context.h"
+#include "genebits/engine/system/query.h"
 #include "genebits/engine/utilities/ref.h"
 
 namespace genebits::engine

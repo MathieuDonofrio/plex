@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/scheduler.h"
+#include "genebits/engine/scheduler/scheduler.h"
 
 #include "genebits/engine/containers/deque.h"
 

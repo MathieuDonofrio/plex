@@ -1,5 +1,5 @@
 
-#include "genebits/engine/ecs/system.h"
+#include "genebits/engine/system/system.h"
 
 #include <gmock/gmock.h>
 

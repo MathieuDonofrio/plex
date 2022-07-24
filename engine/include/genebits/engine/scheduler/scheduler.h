@@ -1,10 +1,10 @@
-#ifndef GENEBITS_ENGINE_ECS_SCHEDULER_H
-#define GENEBITS_ENGINE_ECS_SCHEDULER_H
+#ifndef GENEBITS_ENGINE_SCHEDULER_SCHEDULER_H
+#define GENEBITS_ENGINE_SCHEDULER_SCHEDULER_H
 
 #include "genebits/engine/async/shared_task.h"
 #include "genebits/engine/async/when_all.h"
-#include "genebits/engine/ecs/stage.h"
-#include "genebits/engine/ecs/system.h"
+#include "genebits/engine/scheduler/stage.h"
+#include "genebits/engine/system/system.h"
 #include "genebits/engine/utilities/ref.h"
 
 namespace genebits::engine

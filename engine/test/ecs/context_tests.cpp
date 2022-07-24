@@ -1,4 +1,4 @@
-#include "genebits/engine/ecs/context.h"
+#include "genebits/engine/system/context.h"
 
 #include <gtest/gtest.h>
 
