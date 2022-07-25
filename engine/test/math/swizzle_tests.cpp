@@ -362,19 +362,34 @@ TYPED_TEST(Swizzle_Tests, DivAssign_Scalar)
   Vec3 vec2 { 1, 2, 3 };
   Vec4 vec3 { 1, 2, 3, 4 };
 
-  vec.yx /= 3;
-  vec2.zyx /= 4;
-  vec3.wzyx /= 5;
+  vec.yx /= TypeParam(3);
+  vec2.zyx /= TypeParam(4);
+  vec3.wzyx /= TypeParam(5);
 
-  EXPECT_EQ(vec.x, 1 / static_cast<TypeParam>(3));
-  EXPECT_EQ(vec.y, 2 / static_cast<TypeParam>(3));
-  EXPECT_EQ(vec2.z, 3 / static_cast<TypeParam>(4));
-  EXPECT_EQ(vec2.y, 2 / static_cast<TypeParam>(4));
-  EXPECT_EQ(vec2.x, 1 / static_cast<TypeParam>(4));
-  EXPECT_EQ(vec3.w, 4 / static_cast<TypeParam>(5));
-  EXPECT_EQ(vec3.z, 3 / static_cast<TypeParam>(5));
-  EXPECT_EQ(vec3.y, 2 / static_cast<TypeParam>(5));
-  EXPECT_EQ(vec3.x, 1 / static_cast<TypeParam>(5));
+  if constexpr (std::same_as<TypeParam, double>)
+  {
+    EXPECT_DOUBLE_EQ(vec.x, 1 / static_cast<TypeParam>(3));
+    EXPECT_DOUBLE_EQ(vec.y, 2 / static_cast<TypeParam>(3));
+    EXPECT_DOUBLE_EQ(vec2.z, 3 / static_cast<TypeParam>(4));
+    EXPECT_DOUBLE_EQ(vec2.y, 2 / static_cast<TypeParam>(4));
+    EXPECT_DOUBLE_EQ(vec2.x, 1 / static_cast<TypeParam>(4));
+    EXPECT_DOUBLE_EQ(vec3.w, 4 / static_cast<TypeParam>(5));
+    EXPECT_DOUBLE_EQ(vec3.z, 3 / static_cast<TypeParam>(5));
+    EXPECT_DOUBLE_EQ(vec3.y, 2 / static_cast<TypeParam>(5));
+    EXPECT_DOUBLE_EQ(vec3.x, 1 / static_cast<TypeParam>(5));
+  }
+  else
+  {
+    EXPECT_EQ(vec.x, 1 / static_cast<TypeParam>(3));
+    EXPECT_EQ(vec.y, 2 / static_cast<TypeParam>(3));
+    EXPECT_EQ(vec2.z, 3 / static_cast<TypeParam>(4));
+    EXPECT_EQ(vec2.y, 2 / static_cast<TypeParam>(4));
+    EXPECT_EQ(vec2.x, 1 / static_cast<TypeParam>(4));
+    EXPECT_EQ(vec3.w, 4 / static_cast<TypeParam>(5));
+    EXPECT_EQ(vec3.z, 3 / static_cast<TypeParam>(5));
+    EXPECT_EQ(vec3.y, 2 / static_cast<TypeParam>(5));
+    EXPECT_EQ(vec3.x, 1 / static_cast<TypeParam>(5));
+  }
 }
 
 TYPED_TEST(Swizzle_Tests, DivAssign_Vec)
