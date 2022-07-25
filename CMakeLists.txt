@@ -18,7 +18,7 @@ endif ()
 #
 
 set(PLEX_VERSION_REGEX "#define PLEX_VERSION_.*[ \t]+(.+)")
-file(STRINGS "engine/include/plex/config/version.h" PLEX_VERSION REGEX ${PLEX_VERSION_REGEX})
+file(STRINGS "core/include/plex/config/version.h" PLEX_VERSION REGEX ${PLEX_VERSION_REGEX})
 list(TRANSFORM PLEX_VERSION REPLACE ${PLEX_VERSION_REGEX} "\\1")
 string(JOIN "." PLEX_VERSION ${PLEX_VERSION})
 
@@ -60,10 +60,11 @@ endif ()
 run_conan()
 
 #
-# Engine
+# Libraries
 #
 
-add_subdirectory(engine)
+add_subdirectory(core)
+add_subdirectory(graphics)
 
 #
 # Sandboxes

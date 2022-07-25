@@ -4,7 +4,7 @@
 
 #include <benchmark/benchmark.h>
 
-#include "common/repeat.h"
+#include "micro/common/repeat.h"
 
 namespace plex::bench
 {

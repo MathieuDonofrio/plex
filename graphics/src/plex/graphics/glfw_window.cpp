@@ -1,4 +1,4 @@
-#include "glfw_window.h"
+#include "plex/graphics/glfw_window.h"
 
 #include <atomic>
 
@@ -17,7 +17,7 @@ namespace
 /// @param[in] error_code
 /// @param[in] error_description
 ///
-void GlfwErrorCallback(int error_code, const char* error_description)
+void GlfwErrorCallback([[maybe_unused]] int error_code, [[maybe_unused]] const char* error_description)
 {
   LOG_ERROR("GLFW Error {}: {}", error_code, error_description);
 }

@@ -2,7 +2,7 @@
 
 #include <benchmark/benchmark.h>
 
-#include "common/fake_work.h"
+#include "micro/common/fake_work.h"
 #include "plex/async/sync_wait.h"
 #include "plex/async/thread_pool.h"
 

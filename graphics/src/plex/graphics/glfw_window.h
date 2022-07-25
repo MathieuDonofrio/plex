@@ -11,7 +11,7 @@
 namespace
 {
 // Forward declare
-class GLFWwindow; // from glfw
+struct GLFWwindow; // from glfw
 } // namespace
 
 namespace plex
