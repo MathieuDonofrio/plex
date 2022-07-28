@@ -19,7 +19,7 @@ function(add_unit_test subdirectory)
   target_include_directories(test_${subdirectory} PRIVATE ..)
   target_include_directories(test_${subdirectory} PRIVATE ${core_source_directories} ${GTest_INCLUDE_DIRS})
 
-  target_link_libraries(test_${subdirectory} PRIVATE plex-core ${GTest_LIBRARIES})
+  target_link_libraries(test_${subdirectory} PRIVATE plex-ecs ${GTest_LIBRARIES})
 
   add_test(NAME test_${subdirectory} COMMAND test_${subdirectory})
 endfunction()
@@ -28,10 +28,4 @@ endfunction()
 # Tests
 #
 
-add_unit_test(async)
-add_unit_test(containers)
-add_unit_test(events)
-add_unit_test(math)
-add_unit_test(os)
-add_unit_test(random)
-add_unit_test(utilities)
+add_unit_test(ecs)

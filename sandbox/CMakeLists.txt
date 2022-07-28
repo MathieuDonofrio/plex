@@ -12,9 +12,9 @@ function(add_sandbox_project subdirectory)
   file(GLOB_RECURSE ${subdirectory}_sandbox_headers ${CMAKE_CURRENT_SOURCE_DIR}/${subdirectory}/*.h)
   file(GLOB_RECURSE ${subdirectory}_sandbox_headers ${CMAKE_CURRENT_SOURCE_DIR}/${subdirectory}/*.cpp)
 
-  add_executable(${subdirectory}_sandbox ${${subdirectory}_sandbox_headers} ${${subdirectory}_sandbox_headers})
+  add_executable(sandbox_${subdirectory} ${${subdirectory}_sandbox_headers} ${${subdirectory}_sandbox_headers})
 
-  target_link_libraries(${subdirectory}_sandbox PRIVATE plex-core plex-graphics)
+  target_link_libraries(sandbox_${subdirectory} PRIVATE plex-core plex-ecs plex-graphics)
 endfunction()
 
 #

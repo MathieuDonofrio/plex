@@ -19,16 +19,11 @@ function(add_micro_benchmark subdirectory)
   target_include_directories(bench_${subdirectory} PRIVATE ..)
   target_include_directories(bench_${subdirectory} PRIVATE ${benchmark_INCLUDE_DIRS})
 
-  target_link_libraries(bench_${subdirectory} PRIVATE plex-core ${benchmark_LIBRARIES})
+  target_link_libraries(bench_${subdirectory} PRIVATE plex-ecs ${benchmark_LIBRARIES})
 endfunction()
 
 #
 # Benchmarks
 #
 
-add_micro_benchmark(async)
-add_micro_benchmark(containers)
-add_micro_benchmark(math)
-add_micro_benchmark(random)
-add_micro_benchmark(scheduler)
-add_micro_benchmark(utilities)
+add_micro_benchmark(ecs)

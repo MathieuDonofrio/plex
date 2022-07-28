@@ -1,5 +1,5 @@
-#ifndef PLEX_STORAGE_H
-#define PLEX_STORAGE_H
+#ifndef PLEX_ECS_STORAGE_H
+#define PLEX_ECS_STORAGE_H
 
 #include "plex/containers/type_map.h"
 #include "plex/containers/vector.h"
