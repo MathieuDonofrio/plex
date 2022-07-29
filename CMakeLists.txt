@@ -18,7 +18,7 @@ endif ()
 #
 
 set(PLEX_VERSION_REGEX "#define PLEX_VERSION_.*[ \t]+(.+)")
-file(STRINGS "engine/include/plex/config/version.h" PLEX_VERSION REGEX ${PLEX_VERSION_REGEX})
+file(STRINGS "core/include/plex/config/version.h" PLEX_VERSION REGEX ${PLEX_VERSION_REGEX})
 list(TRANSFORM PLEX_VERSION REPLACE ${PLEX_VERSION_REGEX} "\\1")
 string(JOIN "." PLEX_VERSION ${PLEX_VERSION})
 
@@ -34,7 +34,6 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_BINARY_DIR})
 
-include(cmake/Debugging.cmake)
 include(cmake/Testing.cmake)
 include(cmake/Benchmarking.cmake)
 include(cmake/ColorDiagnostics.cmake)
@@ -60,10 +59,12 @@ endif ()
 run_conan()
 
 #
-# Engine
+# Libraries
 #
 
-add_subdirectory(engine)
+add_subdirectory(core)
+add_subdirectory(ecs)
+add_subdirectory(graphics)
 
 #
 # Sandboxes
