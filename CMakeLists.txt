@@ -49,6 +49,7 @@ include(cmake/ArchitectureOptimizations.cmake)
 include(cmake/Conan.cmake)
 
 add_conan_package(glfw/3.3.4)
+add_conan_package(vulkan-memory-allocator/3.0.1)
 
 if (BUILD_TESTS)
   add_conan_package(gtest/1.11.0)
