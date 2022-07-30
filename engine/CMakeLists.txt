@@ -23,10 +23,11 @@ set_project_warnings(engine)
 
 find_package(glfw3 REQUIRED)
 find_package(Vulkan REQUIRED)
+find_package(vulkan-memory-allocator REQUIRED)
 
 target_include_directories(engine PRIVATE ${glfw_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(engine ${glfw_LIBRARIES} ${Vulkan_LIBRARIES})
-
+target_link_libraries(engine vulkan-memory-allocator::vulkan-memory-allocator)
 #
 # Tests
 #
