@@ -49,4 +49,4 @@
 #define LOCAL_THREAD_ASSERT
 #endif
 
-#endif // GENEBITS_LOCAL_THREAD_VALIDATOR_H
+#endif

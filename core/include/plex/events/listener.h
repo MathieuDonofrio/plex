@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTIL_LISTENER_H
-#define GENEBITS_ENGINE_UTIL_LISTENER_H
+#ifndef PLEX_UTIL_LISTENER_H
+#define PLEX_UTIL_LISTENER_H
 
 #include <type_traits>
 
