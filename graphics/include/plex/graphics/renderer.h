@@ -17,6 +17,8 @@ public:
   Renderer& operator=(Renderer&&) = delete;
 
   virtual ~Renderer() = default;
+
+  virtual void Draw(uint32_t frame_index) = 0;
 };
 
 std::shared_ptr<Renderer> CreateRenderer(std::shared_ptr<Window> window_handle,

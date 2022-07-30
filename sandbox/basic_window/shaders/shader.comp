@@ -23,9 +23,10 @@ layout (set = 0, binding = 0) uniform writeonly image2D swapchain_images[];
 
 layout(push_constant, scalar, std430) uniform PushConstants {
     uint swapchain_info;
+    uint frame_index;
     vec4 color;
 //padding
-    vec3 padding;
+//vec3 padding;
 //vec4 color2;
 //GeometryBuffer geometry_ref;
 //OuputBuffer output_ref;
@@ -36,11 +37,20 @@ void main() {
     const uint swapchain_height = (pushConstants.swapchain_info & 0x00003FFF0) >> 4;
     const uint swapchain_index = pushConstants.swapchain_info & 0x0000000F;
 
+    //    vec4 color = pushConstants.color;
+    //
+    //    if (pushConstants.swapchain_info == 0) {
+    //        color = vec4(1.0, 0.0, 1.0, 1.0);
+    //    }
+
+    debugPrintfEXT("%1.2v4f", pushConstants.color);
+
     for (uint x = 0; x < swapchain_width; x++) {
         for (uint y = 0; y < swapchain_height; y++) {
             imageStore(swapchain_images[swapchain_index], ivec2(x, y), pushConstants.color);
         }
     }
+
 
     //    for (int i = 0; i < 100; i++) {
     //        ivec2 pos = ivec2(i, sin(i / 10.0) * 50.0);

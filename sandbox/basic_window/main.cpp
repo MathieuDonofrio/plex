@@ -107,12 +107,14 @@ int main(int, char**)
 
   [[maybe_unused]] std::shared_ptr<Renderer> renderer =
     CreateRenderer(window, "Genebits", GraphicsDebugLevel::Info, RenderingBackend::VULKAN);
+  uint32_t frame_index = 0;
 
   // Window loop
   while (!window->IsClosing())
   {
     window->WaitEvents(0.5);
     window->PollEvents();
+    renderer->Draw(frame_index++);
   }
 
   return 0;
