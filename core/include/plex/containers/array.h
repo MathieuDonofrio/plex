@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_CONTAINERS_C_ARRAY_H
-#define GENEBITS_ENGINE_CONTAINERS_C_ARRAY_H
+#ifndef PLEX_CONTAINERS_C_ARRAY_H
+#define PLEX_CONTAINERS_C_ARRAY_H
 
 #include <cstdint>
 
@@ -202,4 +202,4 @@ struct IsTriviallyRelocatable<Array<Type, N>> : public std::bool_constant<IsTriv
 {};
 } // namespace plex
 
-#endif // GENEBITS_C_ARRAY_H
+#endif

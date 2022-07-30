@@ -208,13 +208,20 @@ public:
   void SetFullScreenRefreshRate(uint32_t refresh_rate) override;
 
   ///
+  /// Obtains the size of the window's frame buffer.
+  ///
+  /// @return Frame buffer size pair.
+  ///
+  [[nodiscard]] std::pair<int32_t, int32_t> GetFrameBufferSize() const override;
+
+  ///
   /// Creates a Vulkan surface for the window's drawable area.
   ///
   /// @param[in] instance Vulkan instance of the application.
   ///
   /// @Return Vulkan surface
   ///
-  VkSurfaceKHR* CreateWindowSurface(VkInstance instance) override;
+  VkSurfaceKHR CreateWindowSurface(VkInstance instance) override;
 
   ///
   /// Returns the names of vulkan instance extensions required by the window API to create

@@ -1,11 +1,11 @@
-#include "plex/graphics/glfw_window.h"
+#include "plex/graphics/glfw/glfw_window.h"
 
 #include <atomic>
 
 #include "plex/debug/logging.h"
 
 #define GLFW_INCLUDE_NONE // Removes OpenGL
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
 
 namespace
 {
@@ -385,13 +385,23 @@ void GLFWWindow::SetFullScreenRefreshRate(uint32_t refresh_rate)
   glfwWindowHint(GLFW_REFRESH_RATE, static_cast<int>(refresh_rate));
 }
 
-VkSurfaceKHR* GLFWWindow::CreateWindowSurface(VkInstance instance)
+std::pair<int32_t, int32_t> GLFWWindow::GetFrameBufferSize() const
 {
-  VkSurfaceKHR* surface = nullptr;
+  int width = 0;
+  int height = 0;
 
-  [[maybe_unused]] VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, surface);
+  glfwGetFramebufferSize(handle_, &width, &height);
 
-  ASSERT(result == VK_SUCCESS, "Vulkan window surface creation failed");
+  return { width, height };
+}
+
+VkSurfaceKHR GLFWWindow::CreateWindowSurface(VkInstance instance)
+{
+  VkSurfaceKHR surface;
+
+  [[maybe_unused]] VkResult result = glfwCreateWindowSurface(instance, handle_, nullptr, &surface);
+
+  ASSERT(result == VK_SUCCESS, "Failed to create Vulkan window surface");
 
   return surface;
 }

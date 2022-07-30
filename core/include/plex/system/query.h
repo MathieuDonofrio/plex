@@ -113,4 +113,4 @@ struct QueryDataAccessFactory
 };
 } // namespace plex
 
-#endif // GENEBITS_QUERY_H
+#endif

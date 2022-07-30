@@ -1,5 +1,5 @@
-#ifndef GENEBITS_ENGINE_UTILITIES_TIGHT_PAIR_H
-#define GENEBITS_ENGINE_UTILITIES_TIGHT_PAIR_H
+#ifndef PLEX_UTILITIES_TIGHT_PAIR_H
+#define PLEX_UTILITIES_TIGHT_PAIR_H
 
 #include <cstdint>
 
@@ -151,4 +151,4 @@ struct IsTriviallyRelocatable<TightPair<FirstType, SecondType>>
 {};
 } // namespace plex
 
-#endif // GENEBITS_C_ARRAY_H
+#endif

@@ -230,6 +230,13 @@ public:
   /// @note A value of 0 will disable the refresh rate limit.
   ///
   virtual void SetFullScreenRefreshRate(uint32_t refresh_rate) = 0;
+
+  ///
+  /// Obtains the size of the window's frame buffer.
+  ///
+  /// @return Frame buffer size pair.
+  ///
+  [[nodiscard]] virtual std::pair<int32_t, int32_t> GetFrameBufferSize() const = 0;
 };
 
 ///
@@ -436,7 +443,7 @@ struct WindowFramebufferResizeEvent : public WindowEvent
 ///
 /// @return Window instance pointer.
 ///
-Window* CreateWindow(const std::string& title,
+std::shared_ptr<Window> CreateWindow(const std::string& title,
   uint32_t width,
   uint32_t height,
   EventBus* bus,

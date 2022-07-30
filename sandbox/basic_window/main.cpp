@@ -1,7 +1,9 @@
+
 #include <iostream>
 
 #include "plex/debug/logging.h"
 #include "plex/events/listener.h"
+#include "plex/graphics/renderer.h"
 #include "plex/graphics/window.h"
 
 using namespace plex;
@@ -101,19 +103,17 @@ int main(int, char**)
 
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
 
-  Window* window = CreateWindow("Hello world", 256, 256, &bus, hints);
+  std::shared_ptr<Window> window = CreateWindow("Hello world", 256, 256, &bus, hints);
+
+  [[maybe_unused]] std::shared_ptr<Renderer> renderer =
+    CreateRenderer(window, "Genebits", GraphicsDebugLevel::Info, RenderingBackend::VULKAN);
 
   // Window loop
-
   while (!window->IsClosing())
   {
     window->WaitEvents(0.5);
     window->PollEvents();
   }
-
-  // Cleanup
-
-  delete window;
 
   return 0;
 }

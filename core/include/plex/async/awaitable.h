@@ -61,19 +61,20 @@ namespace plex
 /// @tparam Type Type to check.
 ///
 template<typename Type>
-concept Awaiter = requires(Type awaiter, std::coroutine_handle<> handle) {
-                    {
-                      awaiter.await_ready()
-                      } -> std::same_as<bool>;
+concept Awaiter =
+  requires(Type awaiter, std::coroutine_handle<> handle) {
+    {
+      awaiter.await_ready()
+      } -> std::same_as<bool>;
 
-                    awaiter.await_resume();
+    awaiter.await_resume();
 
-                    awaiter.await_suspend(handle);
+    awaiter.await_suspend(handle);
 
-                    requires std::is_void_v<decltype(std::declval<Type>().await_suspend(
-    handle))> || std::same_as<decltype(std::declval<Type>().await_suspend(handle)),
-    bool> || std::same_as<decltype(std::declval<Type>().await_suspend(handle)), std::coroutine_handle<>>;
-                  };
+    requires std::is_void_v<decltype(std::declval<Type>().await_suspend(handle))>
+               || std::same_as<decltype(std::declval<Type>().await_suspend(handle)), bool>
+               || std::same_as<decltype(std::declval<Type>().await_suspend(handle)), std::coroutine_handle<>>;
+  };
 
 ///
 /// Concept used to determine if a type an awaitable. All awaiters are awaitables, and any type that implements the
@@ -150,4 +151,4 @@ using AgrAwaitResult =
 
 } // namespace plex
 
-#endif // GENEBITS_AWAITABLE_H
+#endif
