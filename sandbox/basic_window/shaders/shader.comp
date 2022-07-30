@@ -1,0 +1,52 @@
+#version 450
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
+#extension GL_ARB_separate_shader_objects : enable
+//#extension GL_EXT_buffer_reference2 : require
+//#extension GL_EXT_buffer_reference_uvec2 : require
+#extension GL_EXT_nonuniform_qualifier : enable
+#extension GL_ARB_gpu_shader_int64 : enable
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_EXT_debug_printf : enable
+
+layout (set = 0, binding = 0) uniform writeonly image2D swapchain_images[];
+
+
+//layout(buffer_reference, buffer_reference_align=32, scalar) readonly buffer GeometryBuffer {
+//    vec2 top_left;
+//    vec2 bottom_right;
+//    vec4 color;
+//};
+//
+//layout(buffer_reference, buffer_reference_align=16, scalar) writeonly buffer OuputBuffer {
+//    vec4 color;
+//};
+
+layout(push_constant, scalar, std430) uniform PushConstants {
+    uint swapchain_info;
+    vec4 color;
+//padding
+    vec3 padding;
+//vec4 color2;
+//GeometryBuffer geometry_ref;
+//OuputBuffer output_ref;
+} pushConstants;
+
+void main() {
+    const uint swapchain_width = (pushConstants.swapchain_info & 0xFFFC0000) >> 16;
+    const uint swapchain_height = (pushConstants.swapchain_info & 0x00003FFF0) >> 4;
+    const uint swapchain_index = pushConstants.swapchain_info & 0x0000000F;
+
+    for (uint x = 0; x < swapchain_width; x++) {
+        for (uint y = 0; y < swapchain_height; y++) {
+            imageStore(swapchain_images[swapchain_index], ivec2(x, y), pushConstants.color);
+        }
+    }
+
+    //    for (int i = 0; i < 100; i++) {
+    //        ivec2 pos = ivec2(i, sin(i / 10.0) * 50.0);
+    //        imageStore(swapchain_image, pos + ivec2(0, 50), pushConstants.color);
+    //    }
+    //imageStore(swapchain_image, pos + ivec2(0, 50), pushConstants.color);
+
+    //outColor = texture(texSampler, fragTexCoord);
+}
