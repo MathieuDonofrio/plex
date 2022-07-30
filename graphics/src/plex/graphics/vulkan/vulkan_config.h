@@ -18,6 +18,10 @@ const std::vector<const char*> cVulkanDeviceExtensions = {
   VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
 };
 
+const std::vector<VkValidationFeatureEnableEXT> cVulkanValidationFeatures = {
+  VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT,
+};
+
 } // namespace plex
 
 #endif

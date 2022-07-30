@@ -81,7 +81,13 @@ bool VulkanInstance::Initialize(VulkanCapableWindow* window)
   debug_create_info.pfnUserCallback = DebugMessengerCallback;
   debug_create_info.pUserData = nullptr;
 
-  create_info.pNext = &debug_create_info;
+  VkValidationFeaturesEXT validation_features {};
+  validation_features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+  validation_features.enabledValidationFeatureCount = static_cast<uint32_t>(cVulkanValidationFeatures.size());
+  validation_features.pEnabledValidationFeatures = cVulkanValidationFeatures.data();
+  validation_features.pNext = &debug_create_info;
+
+  create_info.pNext = &validation_features;
 #else
   create_info.enabledLayerCount = 0;
   create_info.pNext = nullptr;
