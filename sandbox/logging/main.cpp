@@ -1,8 +1,8 @@
 
-#include "genebits/engine/debug/logging.h"
-#include "genebits/engine/os/cpu_info.h"
+#include "plex/debug/logging.h"
+#include "plex/os/cpu_info.h"
 
-using namespace genebits::engine;
+using namespace plex;
 
 namespace my_namespace
 {

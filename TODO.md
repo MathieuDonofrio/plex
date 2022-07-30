@@ -1,4 +1,4 @@
-# Genebits TODO
+# TODO Checklist
 
 Completed tasks are marked with and 'x', they will be removed at the next release.
 
@@ -16,95 +16,83 @@ These tasks may be minor bug fixes or optimizations. They do not change the inte
 
 These tasks are small or large updates that are non-breaking for non deprecated functionalities.
 
-Debug
+Async
 
-- [ ] Implement stack tracing for GCC
-- [ ] Implement stack tracing for Clang
-- [ ] Verify logging functionality for linux (gcc and clang)
+- [ ] Work stealing thread pool
 
-OS
+Config
 
-- [ ] Implement CPUInfo for linux
-- [ ] Very thread utilities for linux
+- [ ] Split compiler.h
+
+Containers
+
+- [ ] Bitset (SIMD optimized)
+- [ ] Deque
+- [ ] Map
+- [ ] Set
 
 ECS
 
 - [ ] Archetype swapping
-- [ ] Hierarchies
-- [ ] Scripts
-- [ ] Resources
-- [ ] Pipelined parallel systems
-- [ ] Phase parallelization statistics (for debug/profiling)
-- [ ] Phase dynamic reordering optimization?
-- [ ] For large components (or medium non-relocatable) use pointer-based storage. (Maybe)
+- [ ] Empty type optimizations
+- [ ] Investigate Hierarchies
+- [ ] Investigate Scripting
+- [ ] Storage extra indirection for very large components. (Speeds up insert/destroy/swapping)
+- [ ] Optimize scheduler graph computations
+- [ ] Optimize scheduler execution
+- [ ] Scheduler profile guided optimization for dynamic reordering of systems
+- [ ] Scheduler debug info & statistics
 
 Events
 
 - [ ] Rewrite event system to be integrated with ECS
-
-Async
-
-- [ ] WhenAll/WhenAllReady optimizations and benchmarks
-- [ ] Thread local storage
+- [ ] Move to ECS and erase
 
 IO
 
+- [ ] IO Service
+- [ ] File IO
+- [ ] Networking abstraction
 - [ ] Serialization/Deserialization
 - [ ] YAML Parser
 - [ ] JSON Parser
 - [ ] XML Parser
 
-Audio
-
-- [ ] OpenAL Integration
-
-Physics
-
-- [ ] Custom Top-Down 2D Physics
-- [ ] Box2D Integration (2D)
-- [ ] Nvidia PhysX Integration (3D)
-
-Editor
-
-- [ ] IMGUI Integration
-
 Math
 
 - [ ] Non-square matrices
-- [ ] Optimize matrix computations
-- [ ] Improve matrix and vector hashing
 - [ ] Make exponential functions constexpr
 - [ ] Make power functions constexpr
 - [ ] Make trigonometric functions constexpr
 - [ ] Add documentation
 
-Containers
+OS
 
-- [ ] Bitset (SIMD optimized)
-- [ ] Map
-- [ ] Set
-- [ ] Vector range operations
-- [ ] SmallVector
-- [ ] StaticVector
+- [ ] CPUInfo for linux
+- [ ] Thread utilities for linux
+
+Graph
+
+- [ ] Dense adjacency matrix
+- [ ] Optimized BFS based topological sort
+- [ ] Optimized Transitive reduction algorithm
 
 Utilities
 
-- [ ] TypeInfo PrettyName (Same for every compiler)
-- [ ] TypeInfo UniqueId Investigation & Cross-Boundaries tests
-- [ ] TypeInfo use class static vs function static (2x performance on prototype)
-- [ ] Smart pointer casting
-- [ ] Intrusive to non-intrusive ref conversion. (Would allow better type erasure)
-- [ ] AllocateRef, AllocateRefWithDeleter and MakeRefWithDeleter
 - [ ] UUID
 
 Other
 
-- [ ] Build sandboxes/examples cmake option
-- [ ] Precompiled headers
-- [ ] Added info about tests and benchmark to style guide
-- [ ] Add CONTRIBUTING.md
+- [ ] Static analysis
 - [ ] Sanitizers
-- [ ] cppcheck
+- [ ] Code coverage
+- [ ] Architecture optimization
+- [ ] Link time optimizations (LTO)
+- [ ] Linux GCC build
+- [ ] Github Actions
+- [ ] Precompiled headers
+- [ ] Update style guide
+- [ ] Add CONTRIBUTING.md
 
 Official C++ 20 Support
 
@@ -115,7 +103,10 @@ Official C++ 20 Support
 
 These tasks are large updates with potentially breaking changes.
 
-- [ ] Make engine more generic than "genebits". (Use different name for the engine)
+- [ ] Rename framework
+- [ ] Split libraries (Core, ...)
+- [ ] Restructure test folders to include mock, unit and system
+- [ ] Restructure bench folder
 
 ## Experimental
 
