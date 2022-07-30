@@ -1,11 +1,10 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_SWAPCHAIN_H
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_SWAPCHAIN_H
 
-#include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment_2.h"
+#include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment.h"
 #include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment_group.h"
-#include "genebits/engine/graphics/vulkan/images/images2/vulkan_image2.h"
-#include "genebits/engine/graphics/vulkan/images/images2/vulkan_image_factory.h"
-#include "genebits/engine/graphics/vulkan/images/vulkan_present_attachment.h"
+#include "genebits/engine/graphics/vulkan/images/vulkan_image.h"
+#include "genebits/engine/graphics/vulkan/images/vulkan_image_factory.h"
 
 #include <array>
 #include <iostream>
@@ -80,14 +79,14 @@ public:
 
     if (swapchain_images_.IsEmpty())
     {
-      std::vector<std::shared_ptr<VulkanAttachment2>> attachments;
+      std::vector<std::shared_ptr<VulkanAttachment>> attachments;
       attachments.reserve(swapchain_images_handles_.size());
       for (const auto& image_handle : swapchain_images_handles_)
       {
         const auto image_view_create_info = VulkanImageFactory::CreateImageViewCreateInfo(
           surface_format_.format, VK_IMAGE_ASPECT_COLOR_BIT, image_handle);
         const auto image = VulkanImageFactory::CreateNonMemoryOwningImage(device_, image_view_create_info);
-        attachments.emplace_back(std::make_shared<VulkanAttachment2>(image, attachment_create_info));
+        attachments.emplace_back(std::make_shared<VulkanAttachment>(image, attachment_create_info));
       }
       swapchain_images_ = std::move(attachments);
     }

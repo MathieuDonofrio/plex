@@ -2,7 +2,7 @@
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_ATTACHMENT_2_H
 
 #include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment_type.h"
-#include "genebits/engine/graphics/vulkan/images/images2/vulkan_image2.h"
+#include "genebits/engine/graphics/vulkan/images/vulkan_image.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -40,10 +40,10 @@ struct VulkanAttachmentCreateInfo
   {}
 };
 
-class VulkanAttachment2
+class VulkanAttachment
 {
 public:
-  VulkanAttachment2(std::shared_ptr<VulkanImage2> image, const VulkanAttachmentCreateInfo& create_info)
+  VulkanAttachment(std::shared_ptr<VulkanImage> image, const VulkanAttachmentCreateInfo& create_info)
     : image_(std::move(image))
   {
     attachment_type_ = create_info.attachment_type;
@@ -87,7 +87,7 @@ public:
     return attachment_description_;
   }
 
-  [[nodiscard]] const VulkanImage2& GetImage() const noexcept
+  [[nodiscard]] const VulkanImage& GetImage() const noexcept
   {
     return *image_;
   }
@@ -97,7 +97,7 @@ private:
   VkAttachmentReference attachment_reference_ {};
   AttachmentType attachment_type_ { AttachmentType::None };
 
-  std::shared_ptr<VulkanImage2> image_;
+  std::shared_ptr<VulkanImage> image_;
 };
 
 } // namespace genebits::engine

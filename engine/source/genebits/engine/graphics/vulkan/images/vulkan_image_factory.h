@@ -1,10 +1,10 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_IMAGE_UTILS_H
 #define GENEBITS_ENGINE_GRAPHICS_IMAGE_UTILS_H
 
-#include "genebits/engine/graphics/vulkan/images/images2/vulkan_image2.h"
-#include "genebits/engine/graphics/vulkan/images/images2/vulkan_memory_owning_image.h"
-#include "genebits/engine/graphics/vulkan/images/images2/vulkan_non_memory_owning_image.h"
 #include "genebits/engine/graphics/vulkan/vulkan_device.h"
+#include "vulkan_image.h"
+#include "vulkan_memory_owning_image.h"
+#include "vulkan_non_memory_owning_image.h"
 
 #include <memory>
 #include <utility>
@@ -82,7 +82,7 @@ public:
    * @param image_create_info The image create info.
    * @return The vulkan image.
    */
-  static std::shared_ptr<VulkanImage2> CreateNonMemoryOwningImage(
+  static std::shared_ptr<VulkanImage> CreateNonMemoryOwningImage(
     std::shared_ptr<VulkanDevice> device, const VkImageViewCreateInfo& image_view_create_info)
   {
     return std::make_shared<VulkanNonMemoryOwningImage>(std::move(device), image_view_create_info);
@@ -97,7 +97,7 @@ public:
    * @note The image handle inside the image view create info is not required as it is set by when the image is created.
    * @return The vulkan image.
    */
-  static std::shared_ptr<VulkanImage2> CreateImage(std::shared_ptr<VulkanDevice> device,
+  static std::shared_ptr<VulkanImage> CreateImage(std::shared_ptr<VulkanDevice> device,
     const VkImageCreateInfo& image_create_info,
     const VkImageViewCreateInfo& image_view_create_info)
   {

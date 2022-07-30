@@ -1,20 +1,14 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_RENDERER_H
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_RENDERER_H
 
-#include "genebits/engine/debug/logging.h"
 #include "genebits/engine/graphics/renderer.h"
-#include "genebits/engine/graphics/vulkan/images/vulkan_depth_attachment.h"
-#include "genebits/engine/graphics/vulkan/resources/vertex/vulkan_vertex_buffer.h"
-#include "genebits/engine/graphics/vulkan/resources/vulkan_sampler.h"
 #include "genebits/engine/graphics/vulkan/shaders/vulkan_shader_program.h"
 #include "genebits/engine/graphics/vulkan/vulkan_device.h"
 #include "genebits/engine/graphics/vulkan/vulkan_surface.h"
 #include "genebits/engine/graphics/vulkan/vulkan_swapchain.h"
 #include "pipeline/vulkan_compute_pipeline.h"
-#include "proto/texture_manager.h"
-#include "render_pass_sequence.h"
-#include "vulkan_buffer.h"
-#include "vulkan_render_pass.h"
+
+#include "genebits/engine/debug/logging.h"
 
 #include <memory>
 
@@ -406,8 +400,6 @@ private:
   std::shared_ptr<VulkanSurface> surface_;
   std::shared_ptr<VulkanDevice> device_;
   std::shared_ptr<VulkanSwapchain> swapchain_;
-
-  std::shared_ptr<RenderPassSequence> render_pass_sequence_;
 
   VkCommandPool command_pool_;
   VkDescriptorPool descriptor_pool_;

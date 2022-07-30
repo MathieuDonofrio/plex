@@ -39,7 +39,6 @@ public:
     const VkDescriptorSetLayout& descriptor_set_layout)
     : VulkanPipeline(), device_(std::move(device))
   {
-    pipeline_type_ = PipelineType::Compute;
 
     std::size_t total_size = 0;
     std::vector<VkPushConstantRange> vk_push_ranges;

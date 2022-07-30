@@ -1,8 +1,8 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_MEMORY_OWNING_IMAGE_H
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_MEMORY_OWNING_IMAGE_H
 
-#include "genebits/engine/graphics/vulkan/images/images2/vulkan_image2.h"
 #include "genebits/engine/graphics/vulkan/vulkan_device.h"
+#include "vulkan_image.h"
 
 #include "genebits/engine/debug/logging.h"
 
@@ -15,13 +15,13 @@
 namespace genebits::engine
 {
 
-class VulkanMemoryOwningImage : public VulkanImage2
+class VulkanMemoryOwningImage : public VulkanImage
 {
 public:
   VulkanMemoryOwningImage(std::shared_ptr<VulkanDevice> device,
     const VkImageCreateInfo& image_create_info,
     const VkImageViewCreateInfo& image_view_create_info)
-    : VulkanImage2(std::move(device), image_view_create_info.format)
+    : VulkanImage(std::move(device), image_view_create_info.format)
   {
     image_handle_ = CreateVkImage(*device_, image_create_info, allocation_handle_);
 

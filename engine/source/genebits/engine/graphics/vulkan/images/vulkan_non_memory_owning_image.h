@@ -1,8 +1,8 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_NON_MEMORY_OWNING_IMAGE_H
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_NON_MEMORY_OWNING_IMAGE_H
 
-#include "genebits/engine/graphics/vulkan/images/images2/vulkan_image2.h"
 #include "genebits/engine/graphics/vulkan/vulkan_device.h"
+#include "vulkan_image.h"
 
 #include "genebits/engine/debug/logging.h"
 
@@ -14,11 +14,11 @@
 namespace genebits::engine
 {
 
-class VulkanNonMemoryOwningImage : public VulkanImage2
+class VulkanNonMemoryOwningImage : public VulkanImage
 {
 public:
   VulkanNonMemoryOwningImage(std::shared_ptr<VulkanDevice> device, const VkImageViewCreateInfo& image_view_create_info)
-    : VulkanImage2(std::move(device), image_view_create_info.format)
+    : VulkanImage(std::move(device), image_view_create_info.format)
   {
     image_view_handle_ = CreateVkImageView(*device_, image_view_create_info);
   }

@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_ATTACHMENT_GROUP_H
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_ATTACHMENT_GROUP_H
 
-#include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment_2.h"
+#include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment.h"
 
 #include "genebits/engine/debug/assertion.h"
 
@@ -20,12 +20,12 @@ class VulkanAttachmentGroup
 public:
   VulkanAttachmentGroup() = default;
 
-  VulkanAttachmentGroup(std::shared_ptr<VulkanAttachment2> attachment) : attachments_ { std::move(attachment) } {}
+  VulkanAttachmentGroup(std::shared_ptr<VulkanAttachment> attachment) : attachments_ { std::move(attachment) } {}
 
-  VulkanAttachmentGroup(const std::vector<std::shared_ptr<VulkanAttachment2>>& attachments) : attachments_(attachments)
+  VulkanAttachmentGroup(const std::vector<std::shared_ptr<VulkanAttachment>>& attachments) : attachments_(attachments)
   {}
 
-  VulkanAttachmentGroup(std::vector<std::shared_ptr<VulkanAttachment2>>&& attachments)
+  VulkanAttachmentGroup(std::vector<std::shared_ptr<VulkanAttachment>>&& attachments)
     : attachments_(std::move(attachments))
   {}
 
@@ -75,7 +75,7 @@ private:
 
 private:
   uint64_t group_id_ { GetNextGroupId() };
-  std::vector<std::shared_ptr<VulkanAttachment2>> attachments_;
+  std::vector<std::shared_ptr<VulkanAttachment>> attachments_;
 };
 
 } // namespace genebits::engine

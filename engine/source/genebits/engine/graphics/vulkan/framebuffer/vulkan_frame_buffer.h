@@ -1,7 +1,7 @@
 #ifndef GENEBITS_ENGINE_GRAPHICS_VULKAN_FRAME_BUFFER_2_H
 #define GENEBITS_ENGINE_GRAPHICS_VULKAN_FRAME_BUFFER_2_H
 
-#include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment_2.h"
+#include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment.h"
 #include "genebits/engine/graphics/vulkan/attachments/vulkan_attachment_type.h"
 #include "genebits/engine/graphics/vulkan/vulkan_device.h"
 
