@@ -7,6 +7,7 @@
 #include "plex/graphics/vulkan/vulkan_device.h"
 #include "plex/graphics/vulkan/vulkan_surface.h"
 #include "plex/graphics/vulkan/vulkan_swapchain.h"
+#include "plex/graphics/vulkan/vulkan2/vulkan_api.h"
 
 #include "plex/debug/logging.h"
 
