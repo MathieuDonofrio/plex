@@ -20,3 +20,6 @@ cmake-build-*
 .vs
 .vscode
 .idea
+
+#SPIR-V
+*.*.spv
