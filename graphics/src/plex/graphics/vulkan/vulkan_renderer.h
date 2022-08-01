@@ -4,10 +4,10 @@
 #include "plex/graphics/renderer.h"
 #include "plex/graphics/vulkan/pipeline/vulkan_compute_pipeline.h"
 #include "plex/graphics/vulkan/shaders/vulkan_shader_program.h"
+#include "plex/graphics/vulkan/vulkan2/vulkan_api.h"
 #include "plex/graphics/vulkan/vulkan_device.h"
 #include "plex/graphics/vulkan/vulkan_surface.h"
 #include "plex/graphics/vulkan/vulkan_swapchain.h"
-#include "plex/graphics/vulkan/vulkan2/vulkan_api.h"
 
 #include "plex/debug/logging.h"
 
@@ -87,9 +87,13 @@ public:
 
     images_in_flight_[current_frame_] = in_flight_fences_[current_frame_];
 
-    push_constant_data_.width = static_cast<uint32_t>(swapchain_->GetExtent().width);
-    push_constant_data_.height = static_cast<uint32_t>(swapchain_->GetExtent().height);
-    push_constant_data_.swapchain_index = swapchain_index;
+    push_constant_data_.swapchain_info = swapchain_index & 0xF;
+    push_constant_data_.swapchain_info |= (static_cast<uint32_t>(swapchain_->GetExtent().height) << 4) & 0x00003FFF0;
+    push_constant_data_.swapchain_info |= (static_cast<uint32_t>(swapchain_->GetExtent().width) << 16) & 0xFFFC0000;
+    // width : 14, height : 14, swapchain_index : 4;
+    // push_constant_data_.width = static_cast<uint32_t>(swapchain_->GetExtent().width);
+    // push_constant_data_.height = static_cast<uint32_t>(swapchain_->GetExtent().height);
+    // push_constant_data_.swapchain_index = swapchain_index;
     push_constant_data_.frame_index = frame_index;
     push_constant_data_.color[0] = 0.0f;
     push_constant_data_.color[1] = 0.0f;
@@ -228,10 +232,11 @@ public:
 private:
   struct PushConstantData
   {
-    uint32_t width : 14, height : 14, swapchain_index : 4;
+    uint32_t swapchain_info;
     uint32_t frame_index;
+    uint32_t padding[2];
     float color[4];
-   // uint32_t padding[2];
+    // uint32_t padding[2];
   };
 
   bool Initialize(const std::string& application_name, GraphicsDebugLevel debug_level)
