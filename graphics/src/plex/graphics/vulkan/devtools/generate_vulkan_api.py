@@ -1,24 +1,28 @@
-import copy
 import os
 import sys
+import textwrap
 
 from vulkan_api_utils import *
+from custom_api_wrappers import *
+
+# TODO add command recorder object, binds all Cmd functions to a command buffer
+# TODO add VulkanResult object, groups call result and data together
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print('Usage: generate_vulkan_api.py <vulkan_core.h path>')
-        print('example: generate_vulkan_api.py C:\\VulkanSDK\\1.3.211.0\\Include\\vulkan\\vulkan_core.h')
-        sys.exit(1)
+    # if len(sys.argv) < 2:
+    #     print('Usage: generate_vulkan_api.py <vulkan_core.h path>')
+    #     print('example: generate_vulkan_api.py C:\\VulkanSDK\\1.3.211.0\\Include\\vulkan\\vulkan_core.h')
+    #     sys.exit(1)
 
     if not os.path.abspath('.').endswith('devtools'):
         print('This script needs to be called from the devtools folder.')
         sys.exit(1)
 
-    if not os.path.exists(sys.argv[1]):
-        print('The file ' + sys.argv[1] + ' does not exist.')
-        sys.exit(1)
+    # if not os.path.exists(sys.argv[1]):
+    #     print('The file ' + sys.argv[1] + ' does not exist.')
+    #     sys.exit(1)
 
-    vulkan_core_header_path = sys.argv[1]
+    vulkan_core_header_path = R"C:\VulkanSDK\1.3.211.0\Include\vulkan\vulkan_core.h"
     max_width = 120
     file_name = 'vulkan_api'
     device_var_name = 'device_'
@@ -30,73 +34,73 @@ if __name__ == '__main__':
     api_file = VulkanApiFile(vulkan_core_header_path)
     functions = api_file.get_functions()
 
+    functions_to_replace = []
+    for i, function in enumerate(functions):
+        # TODO move check to respective class -> is_candidate(function)
+        # if parameter := function.parameter_list.get_parameter_by_type('uint32_t*'):
+        #     if parameter.name.startswith('p') and parameter.name.endswith('Count'):
+        #         count_parameter_index = function.parameter_list.get_parameter_index_by_type('uint32_t*')
+        #         if count_parameter_index is not None and count_parameter_index + 1 < len(function.parameter_list) - 1:
+        #             data_parameter = function.parameter_list.parameters[count_parameter_index + 1]
+        #             if data_parameter.name.startswith('p'):
+        #                 pass
 
-    def get_implementation(function: VulkanFunction):
-        function_without_device_parameter = copy.deepcopy(function)
-        function_without_device_parameter.remove_parameter_by_type('VkDevice')
+        if function.parameter_list.get_parameter_by_type('VkDevice') is not None:
+            functions_to_replace.append((i, DeviceBoundFunction(function, device_var_name)))
 
-        function_with_renamed_device_parameter = copy.deepcopy(function)
-        if param := function_with_renamed_device_parameter.get_parameter_by_type('VkDevice'):
-            param.name = device_var_name
-
-        implementation = function_without_device_parameter.get_signature(0, max_width)[:-1]
-        implementation += '\n{\n'
-        call_prefix = '    return ::'
-        call = function_with_renamed_device_parameter.get_call(len(call_prefix), max_width)
-        implementation += f'{call_prefix}{call}\n'
-        implementation += '}\n'
-
-        return implementation
-
+    for i, function in functions_to_replace:
+        functions[i] = function
 
     header_guard = header_guard_prefix + file_name.upper() + '_H'
 
-    header_file = f'#ifndef {header_guard}\n'
-    header_file += f'#define {header_guard}\n'
-    header_file += '\n'
-    header_file += '#include <vulkan/vulkan_core.h>\n'
-    header_file += '\n'
-    header_file += f'namespace {namespace}\n{{\n'
-    header_file += '\n'
-    header_file += '// clang-format off\n'
-    header_file += '\n'
+    newline = '\n'
 
-    header_file += 'void ' + init_function_name + '(VkDevice device);\n\n'
-
-    for f in copy.deepcopy(functions):
-        f.remove_parameter_by_type('VkDevice')
-        header_file += f.get_signature(0, max_width) + '\n'
-        header_file += '\n'
-    header_file += '// clang-format on\n'
-    header_file += '\n'
-    header_file += f'}} // namespace {namespace}\n'
-    header_file += '\n'
-    header_file += f'#endif // {header_guard}\n'
+    header_file = textwrap.dedent(f"""\
+    #ifndef {header_guard}
+    #define {header_guard}
+    
+    #include <vulkan/vulkan_core.h>
+    
+    namespace {namespace}
+    {{
+    
+    // clang-format off
+    
+    void {init_function_name}(VkDevice device);
+    
+    {newline.join([indent(f.get_signature(max_width), '    ') + newline for f in functions])[4:]}
+    // clang-format on
+    
+    }} // namespace {namespace}
+    
+    #endif // {header_guard}
+    """)
 
     with open(output_path + file_name + '.h', 'w') as f:
         f.write(header_file)
 
-    implementation_file = f'#include "{file_name}.h"\n'
-    implementation_file += f'namespace {namespace}\n{{\n'
-    implementation_file += '\n'
-    implementation_file += '// clang-format off\n'
-    implementation_file += '\n'
-    implementation_file += f'namespace\n{{\n'
-    implementation_file += f'static VkDevice {device_var_name} = VK_NULL_HANDLE; '
-    implementation_file += '// NOLINT(cppcoreguidelines-avoid-non-const-global-variables)\n'
-    implementation_file += '} // namespace\n'
-    implementation_file += '\n'
-    implementation_file += 'void ' + init_function_name + '(VkDevice device)\n'
-    implementation_file += '{\n'
-    implementation_file += f'    {device_var_name} = device;\n'
-    implementation_file += '}\n'
-    implementation_file += '\n'
-    for f in copy.deepcopy(functions):
-        implementation_file += get_implementation(f) + '\n'
-
-    implementation_file += '// clang-format on\n'
-    implementation_file += '\n'
-    implementation_file += f'}} // namespace {namespace}\n'
+    implementation_file = textwrap.dedent(f"""\
+    #include "{file_name}.h"
+    namespace {namespace}
+    {{
+    
+    // clang-format off
+    
+    namespace
+    {{
+    static VkDevice {device_var_name} = VK_NULL_HANDLE; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+    }} // namespace
+    
+    void {init_function_name}(VkDevice device)
+    {{
+        {device_var_name} = device;
+    }}
+    
+    {(''.join([indent(f.get_implementation(max_width), '    ') + newline for f in functions]))[4:]}
+    // clang-format on
+    
+    }} // namespace {namespace}
+    """)
 
     with open(output_path + file_name + '.cpp', 'w') as f:
         f.write(implementation_file)

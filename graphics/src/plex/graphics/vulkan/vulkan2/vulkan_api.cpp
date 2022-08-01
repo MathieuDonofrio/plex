@@ -423,7 +423,12 @@ VkResult vkCreateGraphicsPipelines(VkPipelineCache pipelineCache,
                                    const VkAllocationCallbacks* pAllocator,
                                    VkPipeline* pPipelines)
 {
-    return ::vkCreateGraphicsPipelines(device_, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
+    return ::vkCreateGraphicsPipelines(device_,
+                                       pipelineCache,
+                                       createInfoCount,
+                                       pCreateInfos,
+                                       pAllocator,
+                                       pPipelines);
 }
 
 VkResult vkCreateComputePipelines(VkPipelineCache pipelineCache,
@@ -746,7 +751,13 @@ void vkCmdCopyImage(VkCommandBuffer commandBuffer,
                     uint32_t regionCount,
                     const VkImageCopy* pRegions)
 {
-    return ::vkCmdCopyImage(commandBuffer, srcImage, srcImageLayout, dstImage, dstImageLayout, regionCount, pRegions);
+    return ::vkCmdCopyImage(commandBuffer,
+                            srcImage,
+                            srcImageLayout,
+                            dstImage,
+                            dstImageLayout,
+                            regionCount,
+                            pRegions);
 }
 
 void vkCmdBlitImage(VkCommandBuffer commandBuffer,
@@ -1111,7 +1122,10 @@ void vkGetPhysicalDeviceSparseImageFormatProperties2(VkPhysicalDevice physicalDe
                                                      uint32_t* pPropertyCount,
                                                      VkSparseImageFormatProperties2* pProperties)
 {
-    return ::vkGetPhysicalDeviceSparseImageFormatProperties2(physicalDevice, pFormatInfo, pPropertyCount, pProperties);
+    return ::vkGetPhysicalDeviceSparseImageFormatProperties2(physicalDevice,
+                                                             pFormatInfo,
+                                                             pPropertyCount,
+                                                             pProperties);
 }
 
 void vkTrimCommandPool(VkCommandPool commandPool, VkCommandPoolTrimFlags flags)
@@ -1169,7 +1183,9 @@ void vkGetPhysicalDeviceExternalFenceProperties(VkPhysicalDevice physicalDevice,
                                                 const VkPhysicalDeviceExternalFenceInfo* pExternalFenceInfo,
                                                 VkExternalFenceProperties* pExternalFenceProperties)
 {
-    return ::vkGetPhysicalDeviceExternalFenceProperties(physicalDevice, pExternalFenceInfo, pExternalFenceProperties);
+    return ::vkGetPhysicalDeviceExternalFenceProperties(physicalDevice,
+                                                        pExternalFenceInfo,
+                                                        pExternalFenceProperties);
 }
 
 void vkGetPhysicalDeviceExternalSemaphoreProperties(VkPhysicalDevice physicalDevice,
@@ -1426,7 +1442,13 @@ void vkCmdBindVertexBuffers2(VkCommandBuffer commandBuffer,
                              const VkDeviceSize* pSizes,
                              const VkDeviceSize* pStrides)
 {
-    return ::vkCmdBindVertexBuffers2(commandBuffer, firstBinding, bindingCount, pBuffers, pOffsets, pSizes, pStrides);
+    return ::vkCmdBindVertexBuffers2(commandBuffer,
+                                     firstBinding,
+                                     bindingCount,
+                                     pBuffers,
+                                     pOffsets,
+                                     pSizes,
+                                     pStrides);
 }
 
 void vkCmdSetDepthTestEnable(VkCommandBuffer commandBuffer, VkBool32 depthTestEnable)
@@ -1938,7 +1960,10 @@ VkResult vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice physicalDevice,
                                                uint32_t* pSurfaceFormatCount,
                                                VkSurfaceFormat2KHR* pSurfaceFormats)
 {
-    return ::vkGetPhysicalDeviceSurfaceFormats2KHR(physicalDevice, pSurfaceInfo, pSurfaceFormatCount, pSurfaceFormats);
+    return ::vkGetPhysicalDeviceSurfaceFormats2KHR(physicalDevice,
+                                                   pSurfaceInfo,
+                                                   pSurfaceFormatCount,
+                                                   pSurfaceFormats);
 }
 
 VkResult vkGetPhysicalDeviceDisplayProperties2KHR(VkPhysicalDevice physicalDevice,
@@ -2699,7 +2724,10 @@ void vkCmdSetCoarseSampleOrderNV(VkCommandBuffer commandBuffer,
                                  uint32_t customSampleOrderCount,
                                  const VkCoarseSampleOrderCustomNV* pCustomSampleOrders)
 {
-    return ::vkCmdSetCoarseSampleOrderNV(commandBuffer, sampleOrderType, customSampleOrderCount, pCustomSampleOrders);
+    return ::vkCmdSetCoarseSampleOrderNV(commandBuffer,
+                                         sampleOrderType,
+                                         customSampleOrderCount,
+                                         pCustomSampleOrders);
 }
 
 VkResult vkCreateAccelerationStructureNV(const VkAccelerationStructureCreateInfoNV* pCreateInfo,
@@ -3518,6 +3546,7 @@ void vkCmdSetRayTracingPipelineStackSizeKHR(VkCommandBuffer commandBuffer, uint3
 {
     return ::vkCmdSetRayTracingPipelineStackSizeKHR(commandBuffer, pipelineStackSize);
 }
+
 
 // clang-format on
 
