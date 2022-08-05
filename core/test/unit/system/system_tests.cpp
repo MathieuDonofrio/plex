@@ -14,9 +14,9 @@ namespace
   size_t entities_mock_get_call_counter;
 
   template<typename... Types>
-  struct ResourcesMock : public QueryDataAccessFactory<ResourcesMock<Types...>, Types...>
+  struct ResourcesMock : public BasicQueryDataAccessFactory<ResourcesMock<Types...>, Types...>
   {
-    static ResourcesMock FetchData(void*, Context&, Context&)
+    static ResourcesMock Fetch(void*, Context&, Context&)
     {
       resources_mock_get_call_counter++;
 
@@ -30,9 +30,9 @@ namespace
   };
 
   template<typename... Components>
-  struct EntitiesMock : public QueryDataAccessFactory<EntitiesMock<Components...>, Components...>
+  struct EntitiesMock : public BasicQueryDataAccessFactory<EntitiesMock<Components...>, Components...>
   {
-    static EntitiesMock FetchData(void*, Context&, Context&)
+    static EntitiesMock Fetch(void*, Context&, Context&)
     {
       entities_mock_get_call_counter++;
 
@@ -104,27 +104,7 @@ static_assert(SystemTraits<decltype(SystemMock2<ResourcesMock<int>, EntitiesMock
 static_assert(
   SystemTraits<decltype(SystemMock2<ResourcesMock<int>, EntitiesMock<float>, EntitiesMock<int>>)>::QueryCount == 3);
 
-static_assert(SystemTraits<decltype(SystemMock1<>)>::ContainsQueryType<ResourcesMock>::value == false);
-static_assert(SystemTraits<decltype(SystemMock1<ResourcesMock<>>)>::ContainsQueryType<ResourcesMock>::value == true);
-static_assert(SystemTraits<decltype(SystemMock1<ResourcesMock<int>>)>::ContainsQueryType<ResourcesMock>::value == true);
-static_assert(
-  SystemTraits<decltype(SystemMock1<ResourcesMock<int, float>>)>::ContainsQueryType<ResourcesMock>::value == true);
-static_assert(SystemTraits<decltype(SystemMock1<EntitiesMock<>>)>::ContainsQueryType<ResourcesMock>::value == false);
-static_assert(SystemTraits<decltype(SystemMock1<EntitiesMock<int>>)>::ContainsQueryType<ResourcesMock>::value == false);
-static_assert(
-  SystemTraits<decltype(SystemMock1<ResourcesMock<>, EntitiesMock<>>)>::ContainsQueryType<ResourcesMock>::value
-  == true);
-static_assert(
-  SystemTraits<decltype(SystemMock1<ResourcesMock<int>, EntitiesMock<>>)>::ContainsQueryType<ResourcesMock>::value
-  == true);
-static_assert(
-  SystemTraits<decltype(SystemMock1<ResourcesMock<>, EntitiesMock<int>>)>::ContainsQueryType<ResourcesMock>::value
-  == true);
-static_assert(
-  SystemTraits<decltype(SystemMock1<ResourcesMock<int>, EntitiesMock<float>>)>::ContainsQueryType<ResourcesMock>::value
-  == true);
-
-TEST(SystemTraits, Invoke_NoQueries_SystemCalled)
+TEST(SystemTraits_Tests, Invoke_NoQueries_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -139,7 +119,7 @@ TEST(SystemTraits, Invoke_NoQueries_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_VoidReturnAndNoQueries_SystemCalled)
+TEST(SystemTraits_Tests, Invoke_VoidReturnAndNoQueries_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -154,7 +134,7 @@ TEST(SystemTraits, Invoke_VoidReturnAndNoQueries_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_EmptyEntitiesQuery_SystemCalled)
+TEST(SystemTraits_Tests, Invoke_EmptyEntitiesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -169,7 +149,7 @@ TEST(SystemTraits, Invoke_EmptyEntitiesQuery_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_EmptyResourcesQuery_SystemCalled)
+TEST(SystemTraits_Tests, Invoke_EmptyResourcesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -184,7 +164,7 @@ TEST(SystemTraits, Invoke_EmptyResourcesQuery_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_EmptyEntitiesAndResourcesQuery_SystemCalled)
+TEST(SystemTraits_Tests, Invoke_EmptyEntitiesAndResourcesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -199,7 +179,7 @@ TEST(SystemTraits, Invoke_EmptyEntitiesAndResourcesQuery_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_EntitiesWithComponentsQuery_SystemCalled)
+TEST(SystemTraits_Tests, Invoke_EntitiesWithComponentsQuery_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -214,7 +194,7 @@ TEST(SystemTraits, Invoke_EntitiesWithComponentsQuery_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_EntitiesWithComponentsAndResourcesQuery_SystemCalled)
+TEST(SystemTraits_Tests, Invoke_EntitiesWithComponentsAndResourcesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -229,7 +209,7 @@ TEST(SystemTraits, Invoke_EntitiesWithComponentsAndResourcesQuery_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_VoidReturnEntitiesWithComponentsAndResourcesQuery_SystemCalled)
+TEST(SystemTraits_Tests, Invoke_VoidReturnEntitiesWithComponentsAndResourcesQuery_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -244,7 +224,7 @@ TEST(SystemTraits, Invoke_VoidReturnEntitiesWithComponentsAndResourcesQuery_Syst
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_SingleQuery_QueryGetCalled)
+TEST(SystemTraits_Tests, Invoke_SingleQuery_QueryGetCalled)
 {
   resources_mock_get_call_counter = 0;
 
@@ -259,7 +239,7 @@ TEST(SystemTraits, Invoke_SingleQuery_QueryGetCalled)
   EXPECT_EQ(resources_mock_get_call_counter, 1);
 }
 
-TEST(SystemTraits, Invoke_DoubleQuerySameType_QueryGetCalled)
+TEST(SystemTraits_Tests, Invoke_DoubleQuerySameType_QueryGetCalled)
 {
   resources_mock_get_call_counter = 0;
 
@@ -274,7 +254,7 @@ TEST(SystemTraits, Invoke_DoubleQuerySameType_QueryGetCalled)
   EXPECT_EQ(resources_mock_get_call_counter, 2);
 }
 
-TEST(SystemTraits, Invoke_DoubleQueryDifferent_QueryGetCalled)
+TEST(SystemTraits_Tests, Invoke_DoubleQueryDifferent_QueryGetCalled)
 {
   resources_mock_get_call_counter = 0;
   entities_mock_get_call_counter = 0;
@@ -291,7 +271,74 @@ TEST(SystemTraits, Invoke_DoubleQueryDifferent_QueryGetCalled)
   EXPECT_EQ(entities_mock_get_call_counter, 1);
 }
 
-TEST(SystemExecutor, Constructor_Coroutine)
+TEST(SystemTraits_Tests, Invoke_ImplicitGlobal_CorrectData)
+{
+  Context context;
+  context.Emplace<int>(10);
+
+  static int call_count;
+  call_count = 0;
+
+  struct TestSystem
+  {
+    static void Run(const int& value)
+    {
+      call_count++;
+      EXPECT_EQ(value, 10);
+    }
+  };
+
+  auto system = TestSystem::Run;
+
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
+
+  SyncWait(task);
+
+  EXPECT_EQ(call_count, 1);
+}
+
+TEST(SystemTraits_Tests, Invoke_ExplicitGlobal_CorrectData)
+{
+  Context context;
+  context.Emplace<int>(10);
+
+  static int call_count;
+  call_count = 0;
+
+  struct TestSystem
+  {
+    static void Run(Global<int> value)
+    {
+      call_count++;
+      EXPECT_EQ(value, 10);
+    }
+  };
+
+  auto system = TestSystem::Run;
+
+  auto task = SystemTraits<decltype(system)>::Invoke(system, context, context);
+
+  SyncWait(task);
+
+  EXPECT_EQ(call_count, 1);
+}
+
+TEST(SystemTraits_Tests, GetDataAccess_ImplicitGlobalByCopy_IsReadOnly)
+{
+  struct TestSystem
+  {
+    static void Run(int) {}
+  };
+
+  auto system = TestSystem::Run;
+
+  auto access = SystemTraits<decltype(system)>::GetDataAccess();
+
+  EXPECT_EQ(access.size(), 1);
+  EXPECT_TRUE(access[0].read_only);
+}
+
+TEST(SystemExecutor_Tests, Constructor_Coroutine)
 {
   auto system = SystemMock1<ResourcesMock<>, EntitiesMock<>>;
 
@@ -300,7 +347,7 @@ TEST(SystemExecutor, Constructor_Coroutine)
   EXPECT_EQ(system, executor.Handle());
 }
 
-TEST(SystemExecutor, Constructor_Subroutine)
+TEST(SystemExecutor_Tests, Constructor_Subroutine)
 {
   auto system = SystemMock2<ResourcesMock<>, EntitiesMock<>>;
 
@@ -309,7 +356,7 @@ TEST(SystemExecutor, Constructor_Subroutine)
   EXPECT_EQ(system, executor.Handle());
 }
 
-TEST(SystemExecutor, Execute_NoData_SystemCalled)
+TEST(SystemExecutor_Tests, Execute_NoData_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -326,7 +373,7 @@ TEST(SystemExecutor, Execute_NoData_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemExecutor, Execute_WithData_SystemCalled)
+TEST(SystemExecutor_Tests, Execute_WithData_SystemCalled)
 {
   system_call_counter = 0;
 
@@ -343,7 +390,7 @@ TEST(SystemExecutor, Execute_WithData_SystemCalled)
   EXPECT_EQ(system_call_counter, 1);
 }
 
-TEST(SystemObject, Constructor_Coroutine)
+TEST(SystemObject_Tests, Constructor_Coroutine)
 {
   auto system = SystemMock1<ResourcesMock<>, EntitiesMock<>>;
 
@@ -352,7 +399,7 @@ TEST(SystemObject, Constructor_Coroutine)
   EXPECT_EQ(system, object.Handle());
 }
 
-TEST(SystemObject, Constructor_Subroutine)
+TEST(SystemObject_Tests, Constructor_Subroutine)
 {
   auto system = SystemMock2<ResourcesMock<>, EntitiesMock<>>;
 
@@ -361,7 +408,7 @@ TEST(SystemObject, Constructor_Subroutine)
   EXPECT_EQ(system, object.Handle());
 }
 
-TEST(SystemObject, HasDependency_SystemNoDependencies_NoDependency)
+TEST(SystemObject_Tests, HasDependency_SystemNoDependencies_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<>>;
   auto system2 = SystemMock2<>;
@@ -372,7 +419,7 @@ TEST(SystemObject, HasDependency_SystemNoDependencies_NoDependency)
   EXPECT_FALSE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_SimpleNoDependencies_NoDependency)
+TEST(SystemObject_Tests, HasDependency_SimpleNoDependencies_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<>>;
   auto system2 = SystemMock2<ResourcesMock<>>;
@@ -383,7 +430,7 @@ TEST(SystemObject, HasDependency_SimpleNoDependencies_NoDependency)
   EXPECT_FALSE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_MultipleQueriesNoDependencies_NoDependency)
+TEST(SystemObject_Tests, HasDependency_MultipleQueriesNoDependencies_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<>, EntitiesMock<>>;
   auto system2 = SystemMock2<ResourcesMock<>, EntitiesMock<>>;
@@ -394,7 +441,7 @@ TEST(SystemObject, HasDependency_MultipleQueriesNoDependencies_NoDependency)
   EXPECT_FALSE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_WriteWrite_Dependency)
+TEST(SystemObject_Tests, HasDependency_WriteWrite_Dependency)
 {
   auto system1 = SystemMock2<ResourcesMock<int>>;
   auto system2 = SystemMock2<ResourcesMock<int>>;
@@ -405,7 +452,7 @@ TEST(SystemObject, HasDependency_WriteWrite_Dependency)
   EXPECT_TRUE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_ReadRead_NoDependency)
+TEST(SystemObject_Tests, HasDependency_ReadRead_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<const int>>;
   auto system2 = SystemMock2<ResourcesMock<const int>>;
@@ -416,7 +463,7 @@ TEST(SystemObject, HasDependency_ReadRead_NoDependency)
   EXPECT_FALSE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_WriteRead_NoDependency)
+TEST(SystemObject_Tests, HasDependency_WriteRead_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<int>>;
   auto system2 = SystemMock2<ResourcesMock<const int>>;
@@ -427,7 +474,7 @@ TEST(SystemObject, HasDependency_WriteRead_NoDependency)
   EXPECT_TRUE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_ReadWrite_NoDependency)
+TEST(SystemObject_Tests, HasDependency_ReadWrite_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<const int>>;
   auto system2 = SystemMock2<ResourcesMock<int>>;
@@ -438,7 +485,7 @@ TEST(SystemObject, HasDependency_ReadWrite_NoDependency)
   EXPECT_TRUE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_WriteWriteDifferentCategory_NoDependency)
+TEST(SystemObject_Tests, HasDependency_WriteWriteDifferentCategory_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<int>, EntitiesMock<>>;
   auto system2 = SystemMock2<ResourcesMock<>, EntitiesMock<int>>;
@@ -449,7 +496,7 @@ TEST(SystemObject, HasDependency_WriteWriteDifferentCategory_NoDependency)
   EXPECT_FALSE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_Complex_NoDependency)
+TEST(SystemObject_Tests, HasDependency_Complex_NoDependency)
 {
   auto system1 = SystemMock2<ResourcesMock<const int>, EntitiesMock<const float, int>>;
   auto system2 = SystemMock2<ResourcesMock<const int, float>, EntitiesMock<const float>>;
@@ -460,7 +507,7 @@ TEST(SystemObject, HasDependency_Complex_NoDependency)
   EXPECT_FALSE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_Complex_Dependency)
+TEST(SystemObject_Tests, HasDependency_Complex_Dependency)
 {
   auto system1 = SystemMock2<ResourcesMock<const int>, EntitiesMock<const float, int>>;
   auto system2 = SystemMock2<ResourcesMock<int, float>, EntitiesMock<const float>>;
@@ -471,7 +518,7 @@ TEST(SystemObject, HasDependency_Complex_Dependency)
   EXPECT_TRUE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject, HasDependency_WriteWriteThreadSafe_NoDependency)
+TEST(SystemObject_Tests, HasDependency_WriteWriteThreadSafe_NoDependency)
 {
   struct ThreadSafeRessource
   {

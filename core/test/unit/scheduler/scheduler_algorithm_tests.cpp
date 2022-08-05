@@ -19,9 +19,9 @@ namespace
   {};
 
   template<typename... Components>
-  struct MockQuery : public QueryDataAccessFactory<MockQuery<Components...>, Components...>
+  struct MockQuery : public BasicQueryDataAccessFactory<MockQuery<Components...>, Components...>
   {
-    static MockQuery FetchData(void*, Context&, Context&)
+    static MockQuery Fetch(void*, Context&, Context&)
     {
       return MockQuery();
     }

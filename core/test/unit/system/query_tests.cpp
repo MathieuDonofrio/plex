@@ -7,9 +7,9 @@ namespace plex::tests
 namespace
 {
   template<typename... Components>
-  struct QueryMock : public QueryDataAccessFactory<QueryMock<Components...>, Components...>
+  struct QueryMock : public BasicQueryDataAccessFactory<QueryMock<Components...>, Components...>
   {
-    static QueryMock FetchData(void*, Context&, Context&)
+    static QueryMock Fetch(void*, Context&, Context&)
     {
       return QueryMock();
     }
@@ -37,14 +37,14 @@ static_assert(Query<QueryMock<int, double>>);
 static_assert(Query<QueryMock<float, double>>);
 static_assert(Query<QueryMock<>&&>);
 
-TEST(QueryDataAccessFactoryTests, GetDataAccess_Nothing_ReturnsEmpty)
+TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_Nothing_ReturnsEmpty)
 {
   QueryDataAccessList auto array = QueryMock<>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 0);
 }
 
-TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadOnly_CorrectDataAccess)
+TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleReadOnly_CorrectDataAccess)
 {
   QueryDataAccessList auto array = QueryMock<const int>::GetDataAccess();
 
@@ -56,7 +56,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadOnly_CorrectDataAccess
   EXPECT_FALSE(array[0].thread_safe);
 }
 
-TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadWrite_CorrectDataAccessy)
+TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleReadWrite_CorrectDataAccessy)
 {
   QueryDataAccessList auto array = QueryMock<int>::GetDataAccess();
 
@@ -68,7 +68,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleReadWrite_CorrectDataAcces
   EXPECT_FALSE(array[0].thread_safe);
 }
 
-TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleThreadSafe_CorrectDataAccessy)
+TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleThreadSafe_CorrectDataAccessy)
 {
   QueryDataAccessList auto array = QueryMock<ThreadSafeType>::GetDataAccess();
 
@@ -80,7 +80,7 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_SingleThreadSafe_CorrectDataAcce
   EXPECT_TRUE(array[0].thread_safe);
 }
 
-TEST(QueryDataAccessFactoryTests, GetDataAccess_Multiple_CorrectDataAccesses)
+TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_Multiple_CorrectDataAccesses)
 {
   QueryDataAccessList auto array = QueryMock<const int, float, const ThreadSafeType>::GetDataAccess();
 
@@ -100,6 +100,31 @@ TEST(QueryDataAccessFactoryTests, GetDataAccess_Multiple_CorrectDataAccesses)
   EXPECT_EQ(array[2].category, "Test");
   EXPECT_TRUE(array[2].read_only);
   EXPECT_TRUE(array[2].thread_safe);
+}
+
+TEST(Global_Tests, Fetch_SingleExistsInContext_CorrectValue)
+{
+  Context context;
+  context.Emplace<int>(10);
+
+  Global<int> global = Global<int>::Fetch(nullptr, context, context);
+
+  EXPECT_EQ(*global, 10);
+}
+
+TEST(Global_Tests, Fetch_SingleReadOnlyExistsInContext_CorrectValue)
+{
+  struct TestStruct
+  {
+    int value;
+  };
+
+  Context context;
+  context.Emplace<TestStruct>(TestStruct { 10 });
+
+  Global<const TestStruct> global = Global<const TestStruct>::Fetch(nullptr, context, context);
+
+  EXPECT_EQ(global->value, 10);
 }
 
 } // namespace plex::tests

@@ -75,7 +75,7 @@ concept Query = requires(void* handle, Context global_context, Context local_con
   { std::remove_cvref_t<Type>::GetDataAccess() } -> QueryDataAccessList;
 
   // Obtains the data for the query.
-  { std::remove_cvref_t<Type>::FetchData(handle, global_context, local_context) } -> std::same_as<std::remove_cvref_t<Type>>;
+  { std::remove_cvref_t<Type>::Fetch(handle, global_context, local_context) } -> std::same_as<std::remove_cvref_t<Type>>;
 };
 
 // clang-format on
@@ -83,7 +83,7 @@ concept Query = requires(void* handle, Context global_context, Context local_con
 ///
 /// Implementation of the GetDataAccess requirement of a query.
 ///
-/// @note Queries are not required to use this for generating GetDataAccess, but this is the standard way to do it.
+/// @note Queries are not required to use this for generating GetDataAccess.
 ///
 /// Uses const qualification to check if a type is read-only.
 /// Uses IsThreadSafe trait to check if a type is thread-safe.
@@ -92,7 +92,7 @@ concept Query = requires(void* handle, Context global_context, Context local_con
 /// @tparam Types The types to check.
 ///
 template<typename Query, typename... Types>
-struct QueryDataAccessFactory
+struct BasicQueryDataAccessFactory
 {
   ///
   /// Returns all the data accesses for the query at compile-time.
@@ -109,6 +109,99 @@ struct QueryDataAccessFactory
       std::is_const_v<Types>, // Check const qualifier to see if the access is read-only.
       IsThreadSafe<Types>::value // Check ThreadSafe trait to see if the access is thread-safe.
     }... };
+  }
+};
+
+namespace details
+{
+  template<typename... Types>
+  class BasicQueryBase;
+
+  // Fancy pointer specializations for single type
+
+  template<typename Type>
+  class BasicQueryBase<Type>
+  {
+  public:
+    constexpr BasicQueryBase(Type* value) noexcept : value_(value) {}
+
+    const Type& operator*() const noexcept
+    {
+      return *value_;
+    }
+
+    Type& operator*() noexcept
+    {
+      return *value_;
+    }
+
+    const Type* operator->() const noexcept
+    {
+      return value_;
+    }
+
+    Type* operator->() noexcept
+    {
+      return value_;
+    }
+
+    operator Type() const noexcept
+    {
+      return *value_;
+    }
+
+  private:
+    Type* value_;
+  };
+
+  template<typename Type>
+  class BasicQueryBase<Type const>
+  {
+  public:
+    constexpr BasicQueryBase(const Type* value) noexcept : value_(value) {}
+
+    const Type& operator*() const noexcept
+    {
+      return *value_;
+    }
+
+    const Type* operator->() const noexcept
+    {
+      return value_;
+    }
+
+    operator Type() const noexcept
+    {
+      return *value_;
+    }
+
+  private:
+    const Type* value_;
+  };
+} // namespace details
+
+///
+/// Global query.
+///
+/// Fetches the data directly from the global context.
+///
+/// @warning If the queried objects do not exist in the global context, the behaviour of this query is undefined.
+///
+/// @tparam Types The types of objects to query.
+///
+template<typename... Types>
+struct Global : public details::BasicQueryBase<Types...>, public BasicQueryDataAccessFactory<Global<Types...>, Types...>
+{
+  constexpr Global(Types*... values) noexcept : details::BasicQueryBase<Types...>(values...) {}
+
+  static Global Fetch(void*, Context& global_context, Context&)
+  {
+    return { (&global_context.template Get<Types>())... };
+  }
+
+  static constexpr std::string_view GetCategory()
+  {
+    return "Global";
   }
 };
 } // namespace plex
