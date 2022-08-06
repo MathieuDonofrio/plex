@@ -76,7 +76,7 @@ private:
     {
       return std::remove_cvref_t<QueryType>::Fetch(system, global_context, local_context);
     }
-    else // Global Query
+    else
     {
       return global_context.template Get<QueryType>();
     }
@@ -99,16 +99,13 @@ private:
     {
       return std::remove_cvref_t<QueryType>::GetDataAccess();
     }
-    else // Global Query
+    else if constexpr (std::is_reference_v<QueryType>)
     {
-      if constexpr (std::is_reference_v<QueryType>)
-      {
-        return Global<std::remove_reference_t<QueryType>>::GetDataAccess();
-      }
-      else
-      {
-        return Global<std::add_const_t<QueryType>>::GetDataAccess();
-      }
+      return Global<std::remove_reference_t<QueryType>>::GetDataAccess();
+    }
+    else
+    {
+      return Global<std::add_const_t<QueryType>>::GetDataAccess();
     }
   }
 
