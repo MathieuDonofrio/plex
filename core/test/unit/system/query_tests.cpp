@@ -104,12 +104,14 @@ TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_Multiple_CorrectDataAccess
 
 TEST(Global_Tests, Fetch_SingleExistsInContext_CorrectValue)
 {
+  Context dummy_context;
+
   Context context;
   context.Emplace<int>(10);
 
-  Global<int> global = Global<int>::Fetch(nullptr, context, context);
+  auto local = Global<int>::Fetch(nullptr, context, dummy_context);
 
-  EXPECT_EQ(*global, 10);
+  EXPECT_EQ(*local, 10);
 }
 
 TEST(Global_Tests, Fetch_SingleReadOnlyExistsInContext_CorrectValue)
@@ -119,12 +121,130 @@ TEST(Global_Tests, Fetch_SingleReadOnlyExistsInContext_CorrectValue)
     int value;
   };
 
+  Context dummy_context;
+
   Context context;
   context.Emplace<TestStruct>(TestStruct { 10 });
 
-  Global<const TestStruct> global = Global<const TestStruct>::Fetch(nullptr, context, context);
+  auto local = Global<const TestStruct>::Fetch(nullptr, context, dummy_context);
 
-  EXPECT_EQ(global->value, 10);
+  EXPECT_EQ(local->value, 10);
 }
 
+TEST(Global_Tests, Fetch_Multiple_CorrectValues)
+{
+  struct TestStruct
+  {
+    int value;
+  };
+
+  Context dummy_context;
+
+  Context context;
+  context.Emplace<TestStruct>(TestStruct { 10 });
+  context.Emplace<double>(0.5);
+  context.Emplace<int>(99);
+
+  auto local = Global<const TestStruct, double, const int>::Fetch(nullptr, context, dummy_context);
+
+  EXPECT_EQ(std::get<const TestStruct>(local).value, 10);
+  EXPECT_EQ(std::get<double>(local), 0.5);
+  EXPECT_EQ(std::get<const int>(local), 99);
+}
+
+TEST(Global_Tests, Fetch_MultipleStructuedBindings_CorrectValues)
+{
+  struct TestStruct
+  {
+    int value;
+  };
+
+  Context dummy_context;
+
+  Context context;
+  context.Emplace<TestStruct>(TestStruct { 10 });
+  context.Emplace<double>(0.5);
+  context.Emplace<int>(99);
+
+  auto local = Global<const TestStruct, double, const int>::Fetch(nullptr, context, dummy_context);
+
+  auto [a, b, c] = local;
+
+  EXPECT_EQ(a.value, 10);
+  EXPECT_EQ(b, 0.5);
+  EXPECT_EQ(c, 99);
+}
+
+TEST(Local_Tests, Fetch_SingleExistsInContext_CorrectValue)
+{
+  Context dummy_context;
+
+  Context context;
+  context.Emplace<int>(10);
+
+  auto local = Local<int>::Fetch(nullptr, dummy_context, context);
+
+  EXPECT_EQ(*local, 10);
+}
+
+TEST(Local_Tests, Fetch_SingleReadOnlyExistsInContext_CorrectValue)
+{
+  struct TestStruct
+  {
+    int value;
+  };
+
+  Context dummy_context;
+
+  Context context;
+  context.Emplace<TestStruct>(TestStruct { 10 });
+
+  auto local = Local<const TestStruct>::Fetch(nullptr, dummy_context, context);
+
+  EXPECT_EQ(local->value, 10);
+}
+
+TEST(Local_Tests, Fetch_Multiple_CorrectValues)
+{
+  struct TestStruct
+  {
+    int value;
+  };
+
+  Context dummy_context;
+
+  Context context;
+  context.Emplace<TestStruct>(TestStruct { 10 });
+  context.Emplace<double>(0.5);
+  context.Emplace<int>(99);
+
+  auto local = Local<const TestStruct, double, const int>::Fetch(nullptr, dummy_context, context);
+
+  EXPECT_EQ(std::get<const TestStruct>(local).value, 10);
+  EXPECT_EQ(std::get<double>(local), 0.5);
+  EXPECT_EQ(std::get<const int>(local), 99);
+}
+
+TEST(Local_Tests, Fetch_MultipleStructuedBindings_CorrectValues)
+{
+  struct TestStruct
+  {
+    int value;
+  };
+
+  Context dummy_context;
+
+  Context context;
+  context.Emplace<TestStruct>(TestStruct { 10 });
+  context.Emplace<double>(0.5);
+  context.Emplace<int>(99);
+
+  auto local = Local<const TestStruct, double, const int>::Fetch(nullptr, dummy_context, context);
+
+  auto [a, b, c] = local;
+
+  EXPECT_EQ(a.value, 10);
+  EXPECT_EQ(b, 0.5);
+  EXPECT_EQ(c, 99);
+}
 } // namespace plex::tests

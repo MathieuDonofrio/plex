@@ -5,6 +5,7 @@
 
 #include "plex/containers/array.h"
 #include "plex/system/context.h"
+#include "plex/utilities/puple.h"
 
 namespace plex
 {
@@ -112,74 +113,6 @@ struct BasicQueryDataAccessFactory
   }
 };
 
-namespace details
-{
-  template<typename... Types>
-  class BasicQueryBase;
-
-  // Fancy pointer specializations for single type
-
-  template<typename Type>
-  class BasicQueryBase<Type>
-  {
-  public:
-    constexpr BasicQueryBase(Type* value) noexcept : value_(value) {}
-
-    const Type& operator*() const noexcept
-    {
-      return *value_;
-    }
-
-    Type& operator*() noexcept
-    {
-      return *value_;
-    }
-
-    const Type* operator->() const noexcept
-    {
-      return value_;
-    }
-
-    Type* operator->() noexcept
-    {
-      return value_;
-    }
-
-    operator Type() const noexcept
-    {
-      return *value_;
-    }
-
-  private:
-    Type* value_;
-  };
-
-  template<typename Type>
-  class BasicQueryBase<Type const>
-  {
-  public:
-    constexpr BasicQueryBase(const Type* value) noexcept : value_(value) {}
-
-    const Type& operator*() const noexcept
-    {
-      return *value_;
-    }
-
-    const Type* operator->() const noexcept
-    {
-      return value_;
-    }
-
-    operator Type() const noexcept
-    {
-      return *value_;
-    }
-
-  private:
-    const Type* value_;
-  };
-} // namespace details
-
 ///
 /// Global query.
 ///
@@ -190,9 +123,9 @@ namespace details
 /// @tparam Types The types of objects to query.
 ///
 template<typename... Types>
-struct Global : public details::BasicQueryBase<Types...>, public BasicQueryDataAccessFactory<Global<Types...>, Types...>
+struct Global : public Puple<Types...>, public BasicQueryDataAccessFactory<Global<Types...>, Types...>
 {
-  constexpr Global(Types*... values) noexcept : details::BasicQueryBase<Types...>(values...) {}
+  using Puple<Types...>::Puple;
 
   static Global Fetch(void*, Context& global_context, Context&)
   {
@@ -204,6 +137,34 @@ struct Global : public details::BasicQueryBase<Types...>, public BasicQueryDataA
     return "Global";
   }
 };
+
+///
+/// Global query.
+///
+/// Fetches the data directly from the global context.
+///
+/// @warning If the queried objects do not exist in the global context, the behaviour of this query is undefined.
+///
+/// @tparam Types The types of objects to query.
+///
+template<typename... Types>
+struct Local : public Puple<Types...>, public BasicQueryDataAccessFactory<Local<Types...>, Types...>
+{
+  using Puple<Types...>::Puple;
+
+  static Local Fetch(void*, Context&, Context& local_context)
+  {
+    return { (&local_context.template Get<Types>())... };
+  }
+
+  static consteval std::string_view GetCategory()
+  {
+    return "Local";
+  }
+};
 } // namespace plex
+
+DEFINE_PUPLE_LIKE(::plex::Global)
+DEFINE_PUPLE_LIKE(::plex::Local)
 
 #endif

@@ -93,7 +93,9 @@ struct IsUniqueTypes : std::true_type
 
 template<typename Type, typename... Types>
 struct IsUniqueTypes<Type, Types...>
-  : std::conjunction<std::negation<std::disjunction<std::is_same<Type, Types>...>>, IsUniqueTypes<Types...>>
+  : std::conjunction<
+      std::negation<std::disjunction<std::is_same<std::remove_cvref_t<Type>, std::remove_cvref_t<Types>>...>>,
+      IsUniqueTypes<Types...>>
 {};
 
 ///

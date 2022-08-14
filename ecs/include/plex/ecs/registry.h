@@ -3,12 +3,12 @@
 
 #include <algorithm>
 #include <concepts>
-#include <tuple>
 #include <type_traits>
 
 #include "plex/ecs/archetype.h"
 #include "plex/ecs/entity_manager.h"
 #include "plex/ecs/storage.h"
+#include "plex/utilities/puple.h"
 
 namespace plex
 {
@@ -160,8 +160,8 @@ public:
   /// @return Amount of entities with provided component types.
   ///
   template<typename... Components>
-  requires(sizeof...(Components) > 0) [
-    [nodiscard]] size_t EntityCount() noexcept
+  requires(sizeof...(Components) > 0)
+  [[nodiscard]] size_t EntityCount() noexcept
   {
     return ViewFor<Components...>().Size();
   }
@@ -253,7 +253,7 @@ namespace details
   public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
-    using pointers = std::tuple<std::remove_cvref_t<DataTypes>*...>;
+    using pointers = Puple<DataTypes...>;
 
     constexpr SubViewIterator() noexcept = default;
 
@@ -265,32 +265,32 @@ namespace details
     SubViewIterator& operator=(const SubViewIterator&) noexcept = default;
 
     template<typename... OtherDataTypes>
-    SubViewIterator(const SubViewIterator<OtherDataTypes...>& other) : data_(std::get<DataTypes*>(other.data_)...)
+    SubViewIterator(const SubViewIterator<OtherDataTypes...>& other) : data_(get<DataTypes>(other.data_)...)
     {}
 
     // clang-format off
 
     Self& operator+=(difference_type amount) noexcept
     {
-      ((std::get<std::remove_cvref_t<DataTypes>*>(data_) += amount), ...);
+      ((data_.template get_pointer<DataTypes>() += amount), ...);
       return *this;
     }
 
     Self& operator-=(difference_type amount) noexcept
     {
-      ((std::get<std::remove_cvref_t<DataTypes>*>(data_) -= amount), ...);
+      ((data_.template get_pointer<DataTypes>() -= amount), ...);
       return *this;
     }
 
     Self& operator++() noexcept
     {
-      (++std::get<std::remove_cvref_t<DataTypes>*>(data_), ...);
+      (++data_.template get_pointer<DataTypes>(), ...);
       return *this;
     }
 
     Self& operator--() noexcept
     {
-      (--std::get<std::remove_cvref_t<DataTypes>*>(data_), ...);
+      (--data_.template get_pointer<DataTypes>(), ...);
       return *this;
     }
 
@@ -304,19 +304,19 @@ namespace details
     [[nodiscard]] friend Self operator+(difference_type amount, const Self& it) noexcept
     { return it + amount; }
 
+    pointers& operator*() noexcept { return data_; }
+    const pointers& operator*() const noexcept { return data_; }
+
+    // clang-format on
+
     [[nodiscard]] friend difference_type operator-(const Self& lhs, const Self& rhs) noexcept
     {
-      return std::get<0>(lhs.data_) - std::get<0>(rhs.data_);
-    }
-
-    const pointers& operator*() const noexcept
-    {
-      return data_;
+      return lhs.data_.template get_pointer<0>() - rhs.data_.template get_pointer<0>();
     }
 
     [[nodiscard]] friend bool operator==(const Self& lhs, const Self& rhs) noexcept
     {
-      return std::get<0>(lhs.data_) == std::get<0>(rhs.data_);
+      return lhs.data_.template get_pointer<0>() == rhs.data_.template get_pointer<0>();
     }
 
     [[nodiscard]] friend bool operator!=(const Self& lhs, const Self& rhs) noexcept
@@ -324,13 +324,10 @@ namespace details
       return !(lhs == rhs);
     }
 
-    [[nodiscard]]
-    friend std::strong_ordering operator<=>(const Self& lhs, const Self& rhs) noexcept
+    [[nodiscard]] friend std::strong_ordering operator<=>(const Self& lhs, const Self& rhs) noexcept
     {
-      return std::get<0>(lhs.data_) <=> std::get<0>(rhs.data_);
+      return lhs.data_.template get_pointer<0>() <=> rhs.data_.template get_pointer<0>();
     }
-
-    // clang-format on
 
   private:
     template<typename DataType>
@@ -764,55 +761,67 @@ namespace details
   {};
 
   template<typename... DataTypes>
-  struct IsInstanceOfEntityApplyData<std::tuple<DataTypes*...>> : std::true_type
+  struct IsInstanceOfEntityApplyData<Puple<DataTypes...>> : std::true_type
   {};
 
   template<typename Type>
   concept InstanceOfEntityApplyData = IsInstanceOfEntityApplyData<std::remove_cvref_t<Type>>::value;
 
+  template<typename... Args>
+  struct EntityApplyHelperBase
+  {
+    template<typename Function, typename... DataTypes>
+    ALWAYS_INLINE static constexpr void Apply(Function&& function, Puple<DataTypes...>& data)
+    {
+      function(data.template get<std::remove_reference_t<Args>>()...);
+    }
+  };
+
   template<typename Function>
   struct EntityApplyHelper;
 
   template<typename Class, typename... Args>
-  struct EntityApplyHelper<void (Class::*)(Args...) const>
-  {
-    template<typename Function, typename... DataTypes>
-    FLATTEN ALWAYS_INLINE static constexpr void Apply(Function&& function, const std::tuple<DataTypes*...>& data)
-    {
-      function(*std::get<std::remove_cvref_t<Args>*>(data)...);
-    }
-  };
+  struct EntityApplyHelper<void (Class::*)(Args...) const> : public EntityApplyHelperBase<Args...>
+  {};
 
   template<typename Class, typename... Args>
-  struct EntityApplyHelper<void (Class::*)(Args...)>
+  struct EntityApplyHelper<void (Class::*)(Args...)> : public EntityApplyHelperBase<Args...>
+  {};
+
+  template<typename... Args>
+  struct EntityApplyHelper<void (*)(Args...)> : public EntityApplyHelperBase<Args...>
+  {};
+
+  template<typename SubViewType, typename... Args>
+  struct EntityForEachHelperBase;
+
+  template<typename... Components, typename... Args>
+  struct EntityForEachHelperBase<SubView<Components...>, Args...>
   {
-    template<typename Function, typename... DataTypes>
-    FLATTEN ALWAYS_INLINE static constexpr void Apply(Function&& function, const std::tuple<DataTypes*...>& data)
-    {
-      function(*std::get<std::remove_cvref_t<Args>*>(data)...);
-    }
+    // clang-format off
+    static auto begin(const SubView<Components...>& view) noexcept
+    { return view.template begin<std::remove_reference_t<Args>...>(); }
+    static auto end(const SubView<Components...>& view) noexcept
+    { return view.template end<std::remove_reference_t<Args>...>(); }
+    // clang-format on
   };
 
   template<typename SubViewType, typename Function>
   struct EntityForEachHelper;
 
-  template<typename... Components, typename Class, typename... Args>
-  struct EntityForEachHelper<SubView<Components...>, void (Class::*)(Args...) const>
-  {
-    // clang-format off
-    static auto begin(const SubView<Components...>& view) noexcept { return view.template begin<Args...>(); }
-    static auto end(const SubView<Components...>& view) noexcept { return view.template end<Args...>(); }
-    // clang-format on
-  };
+  template<typename SubViewType, typename Class, typename... Args>
+  struct EntityForEachHelper<SubViewType, void (Class::*)(Args...) const>
+    : public EntityForEachHelperBase<SubViewType, Args...>
+  {};
 
-  template<typename... Components, typename Class, typename... Args>
-  struct EntityForEachHelper<SubView<Components...>, void (Class::*)(Args...)>
-  {
-    // clang-format off
-    static auto begin(const SubView<Components...>& view) noexcept { return view.template begin<Args...>(); }
-    static auto end(const SubView<Components...>& view) noexcept { return view.template end<Args...>(); }
-    // clang-format on
-  };
+  template<typename SubViewType, typename Class, typename... Args>
+  struct EntityForEachHelper<SubViewType, void (Class::*)(Args...)>
+    : public EntityForEachHelperBase<SubViewType, Args...>
+  {};
+
+  template<typename SubViewType, typename... Args>
+  struct EntityForEachHelper<SubViewType, void (*)(Args...)> : public EntityForEachHelperBase<SubViewType, Args...>
+  {};
 } // namespace details
 
 // clang-format off

@@ -47,9 +47,9 @@ static void Registry_Iterate_SimpleWork_ManualFor(benchmark::State& state)
       {
         auto data = *first;
 
-        std::get<Position*>(data)->data += std::get<Velocity*>(data)->data * std::get<Velocity*>(data)->data;
+        std::get<Position>(data).data += std::get<Velocity>(data).data * std::get<Velocity>(data).data;
 
-        benchmark::DoNotOptimize(*std::get<Position*>(data));
+        benchmark::DoNotOptimize(std::get<Position>(data));
       }
     }
   }
@@ -79,7 +79,7 @@ static void Registry_Iterate_SimpleWork_ForEach(benchmark::State& state)
 
   for (auto _ : state)
   {
-    EntityForEach(registry.ViewFor<Position, Velocity>(),
+    EntityForEach(registry.ViewFor<Position, const Velocity>(),
       [](Position& position, const Velocity& velocity)
       {
         position.data += velocity.data * velocity.data;

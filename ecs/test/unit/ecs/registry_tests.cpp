@@ -593,7 +593,7 @@ TEST(SubViewIterator_Tests, Dereference_Single_CorrectEntity)
 
   auto it = mono_view.begin();
 
-  int value = *std::get<int*>(*mono_view.begin());
+  int value = (*mono_view.begin()).get<int>();
 
   EXPECT_EQ(value, 99);
 }
@@ -607,8 +607,8 @@ TEST(SubViewIterator_Tests, PreIncrement_Double_CorrectEntities)
 
   SubView mono_view = *registry.ViewFor<int>().begin();
 
-  int value1 = *std::get<int*>(*mono_view.begin());
-  int value2 = *std::get<int*>(*(++mono_view.begin()));
+  int value1 = (*mono_view.begin()).get<int>();
+  int value2 = (*(++mono_view.begin())).get<int>();
 
   EXPECT_EQ(value1 + value2, 3);
 }
@@ -624,8 +624,8 @@ TEST(SubViewIterator_Tests, PreDecrement_Double_CorrectEntities)
 
   auto it = ++sub_view.begin();
 
-  int value1 = *std::get<int*>(*it);
-  int value2 = *std::get<int*>(*(--it));
+  int value1 = (*it).get<int>();
+  int value2 = (*(--it)).get<int>();
 
   EXPECT_EQ(value1 + value2, 3);
 }
@@ -641,11 +641,11 @@ TEST(SubViewIterator_Tests, PostIncrement_Double_CorrectEntities)
 
   auto it = sub_view.begin();
 
-  int value1 = *std::get<int*>(*it);
+  int value1 = (*it).get<int>();
 
   it++;
 
-  int value2 = *std::get<int*>(*it);
+  int value2 = (*it).get<int>();
 
   EXPECT_EQ(value1 + value2, 3);
 }
@@ -661,11 +661,11 @@ TEST(SubViewIterator_Tests, PostDecrement_Double_CorrectEntities)
 
   auto value = ++sub_view.begin();
 
-  int value1 = *std::get<int*>(*value);
+  int value1 = (*value).get<int>();
 
   value--;
 
-  int value2 = *std::get<int*>(*(value));
+  int value2 = (*(value)).get<int>();
 
   EXPECT_EQ(value1 + value2, 3);
 }
@@ -682,11 +682,11 @@ TEST(SubViewIterator_Tests, AddAssign_Multiple_CorrectEntities)
 
   auto value = sub_view.begin();
 
-  int value1 = *std::get<int*>(*value);
+  int value1 = (*value).get<int>();
 
   value += 2;
 
-  int value2 = *std::get<int*>(*value);
+  int value2 = (*value).get<int>();
 
   EXPECT_EQ(value1 + value2, 4);
 }
@@ -703,11 +703,11 @@ TEST(SubViewIterator_Tests, SubstractAssign_Multiple_CorrectEntities)
 
   auto value = ++(++sub_view.begin());
 
-  int value1 = *std::get<int*>(*value);
+  int value1 = (*value).get<int>();
 
   value -= 2;
 
-  int value2 = *std::get<int*>(*value);
+  int value2 = (*value).get<int>();
 
   EXPECT_EQ(value1 + value2, 4);
 }
@@ -722,8 +722,8 @@ TEST(SubViewIterator_Tests, Add_Multiple_CorrectEntities)
 
   SubView sub_view = *registry.ViewFor<int>().begin();
 
-  int value1 = *std::get<int*>(*(sub_view.begin() + 1));
-  int value2 = *std::get<int*>(*(sub_view.begin() + 2));
+  int value1 = (*(sub_view.begin() + 1)).get<int>();
+  int value2 = (*(sub_view.begin() + 2)).get<int>();
 
   EXPECT_EQ(value1 + value2, 5);
 }
@@ -740,8 +740,8 @@ TEST(SubViewIterator_Tests, Subtract_Multiple_CorrectEntities)
 
   auto value = sub_view.begin() + 2;
 
-  int value1 = *std::get<int*>(*(value - 1));
-  int value2 = *std::get<int*>(*(value - 2));
+  int value1 = (*(value - 1)).get<int>();
+  int value2 = (*(value - 2)).get<int>();
 
   EXPECT_EQ(value1 + value2, 3);
 }
@@ -760,7 +760,7 @@ TEST(SubViewIterator_Tests, CopyAssign_Single_CorrectEntity)
 
   it = (it - 1);
 
-  int value = *std::get<int*>(*it);
+  int value = (*it).get<int>();
 
   EXPECT_EQ(value, 99);
 }
