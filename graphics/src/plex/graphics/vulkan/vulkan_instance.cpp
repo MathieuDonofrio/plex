@@ -2,6 +2,7 @@
 
 #include "plex/config/version.h"
 #include "plex/debug/logging.h"
+#include "plex/graphics/vulkan/vulkan2/vulkan_loader.h"
 #include "plex/graphics/vulkan/vulkan_config.h"
 
 #include <format>
@@ -93,6 +94,18 @@ bool VulkanInstance::Initialize(VulkanCapableWindow* window)
   create_info.pNext = nullptr;
 #endif
 
+  if (vkapi::loader::CreateInstance(app_info, extensions, cVulkanValidationLayers, &validation_features))
+  {
+    LOG_ERROR("Failed to create vulkan instance");
+    return false;
+  }
+
+  if (vkapi::loader::LoadFunctionTableWithInstance(extensions))
+  {
+    LOG_ERROR("Failed to load vulkan function table");
+    return false;
+  }
+
   if (vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS)
   {
     LOG_ERROR("Failed to create vulkan instance");
@@ -114,17 +127,18 @@ bool VulkanInstance::Initialize(VulkanCapableWindow* window)
 
 bool VulkanInstance::CheckValidationLayerSupport()
 {
-  for (const auto& layer_name : cVulkanValidationLayers)
-  {
-    if (!IsValidationLayerSupported(layer_name))
-    {
-      LOG_ERROR("Validation layer not supported: {}", layer_name);
-
-      return false;
-    }
-  }
-
-  return true;
+  return true; // TODO implement function loading
+  //  for (const auto& layer_name : cVulkanValidationLayers)
+  //  {
+  //    if (!IsValidationLayerSupported(layer_name))
+  //    {
+  //      LOG_ERROR("Validation layer not supported: {}", layer_name);
+  //
+  //      return false;
+  //    }
+  //  }
+  //
+  //  return true;
 }
 
 bool VulkanInstance::IsValidationLayerSupported(const std::string& layer_name)

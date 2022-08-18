@@ -81,6 +81,12 @@ Utilities
 
 - [ ] UUID
 
+Graphics
+
+- [ ] Make Vulkan loader work for linux
+- [ ] Make the Vulkan api wrapper generate extension functions
+- [ ] Implement shader check script for Vulkan
+
 Other
 
 - [ ] Static analysis
