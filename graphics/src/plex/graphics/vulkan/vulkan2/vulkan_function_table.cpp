@@ -31,7 +31,6 @@ const std::vector<const char*>& GetExtensions() noexcept
 
 namespace
 {
- // name, offset, size
 using FunctionName = std::string;
 const std::tuple<FunctionName, FunctionGroupStartIndex, FunctionGroupCount> offset_list[] = { // NOLINT(cert-err58-cpp)
   {"vkGetInstanceProcAddr", 0, 1},
@@ -650,7 +649,6 @@ std::pair<FunctionGroupStartIndex, FunctionGroupCount> GetFunctionGroupLoadInfo(
             return {offset, size};
         }
     }
-    LOG_ERROR("Unknown group name: " + group_name);
     return {0, 0};
 }
 

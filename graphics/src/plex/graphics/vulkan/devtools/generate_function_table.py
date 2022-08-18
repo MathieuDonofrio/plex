@@ -148,12 +148,11 @@ if __name__ == '__main__':
         offset += len(functions)
 
     offset_list_str = dedent(f'''
-    // name, offset, size
     using FunctionName = std::string;
     const std::tuple<FunctionName, FunctionGroupStartIndex, FunctionGroupCount> offset_list[] = {{ // NOLINT(cert-err58-cpp)
     {''.join([f'{" " * (4 + 2)}{offset_str},{new_line}' for offset_str in offset_list])[4:-2]}
     }};
-    ''')
+    ''')[1:]
 
     # Generate function pointer table
     function_pointers_list = []
