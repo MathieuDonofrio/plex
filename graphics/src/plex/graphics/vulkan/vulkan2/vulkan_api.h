@@ -13,39 +13,39 @@ namespace plex::vkapi
 template<typename T>
 struct VulkanResultWithValue
 {
-    VkResult result { VK_SUCCESS };
-    T value {};
+  VkResult result { VK_SUCCESS };
+  T value {};
 
-    VulkanResultWithValue(T&& value = {}) : value(std::move(value)) {}
+  VulkanResultWithValue(T&& value = {}) : value(std::move(value)) {}
 
-    operator bool() const
-    {
-        return result == VK_SUCCESS;
-    }
+  operator bool() const
+  {
+    return result == VK_SUCCESS;
+  }
 };
 
 struct VulkanResult
 {
-    VkResult result;
+  VkResult result;
 
-    VulkanResult(VkResult result) : result(result) {}
+  VulkanResult(VkResult result) : result(result) {}
 
-    operator bool() const
-    {
-        return result == VK_SUCCESS;
-    }
+  operator bool() const
+  {
+    return result == VK_SUCCESS;
+  }
 };
 
 struct VulkanFunctionPointer
 {
-    void (*callback)() {};
+  void (*callback)() {};
 
-    VulkanFunctionPointer(void (*callback)()) : callback(callback) {}
+  VulkanFunctionPointer(void (*callback)()) : callback(callback) {}
 
-    operator bool() const
-    {
-        return callback != nullptr;
-    }
+  operator bool() const
+  {
+    return callback != nullptr;
+  }
 };
 
 void InitVulkanApi(VkDevice device);
@@ -670,368 +670,368 @@ VulkanResultWithValue<VkDeviceSize> vkGetRayTracingShaderGroupStackSizeKHR(VkPip
 
 class VulkanCommandRecorder {
 private:
-    VkCommandBuffer _command_buffer { VK_NULL_HANDLE };
+  VkCommandBuffer _command_buffer { VK_NULL_HANDLE };
 
 public:
-    VulkanCommandRecorder(VkCommandBuffer command_buffer);
+  VulkanCommandRecorder(VkCommandBuffer command_buffer);
 
-    VulkanResult vkBeginCommandBuffer(const VkCommandBufferBeginInfo* pBeginInfo) const noexcept;
+  VulkanResult Begin(const VkCommandBufferBeginInfo* pBeginInfo) const noexcept;
 
-    VulkanResult vkEndCommandBuffer() const noexcept;
+  VulkanResult End() const noexcept;
 
-    VulkanResult vkResetCommandBuffer(VkCommandBufferResetFlags flags) const noexcept;
+  VulkanResult Reset(VkCommandBufferResetFlags flags) const noexcept;
 
-    void vkCmdBindPipeline(VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline) const noexcept;
+  void BindPipeline(VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline) const noexcept;
 
-    void vkCmdSetViewport(uint32_t firstViewport, uint32_t viewportCount, const VkViewport* pViewports) const noexcept;
+  void SetViewport(uint32_t firstViewport, uint32_t viewportCount, const VkViewport* pViewports) const noexcept;
 
-    void vkCmdSetScissor(uint32_t firstScissor, uint32_t scissorCount, const VkRect2D* pScissors) const noexcept;
+  void SetScissor(uint32_t firstScissor, uint32_t scissorCount, const VkRect2D* pScissors) const noexcept;
 
-    void vkCmdSetLineWidth(float lineWidth) const noexcept;
+  void SetLineWidth(float lineWidth) const noexcept;
 
-    void vkCmdSetDepthBias(float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) const noexcept;
+  void SetDepthBias(float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor) const noexcept;
 
-    void vkCmdSetBlendConstants(const float blendConstants[4]) const noexcept;
+  void SetBlendConstants(const float blendConstants[4]) const noexcept;
 
-    void vkCmdSetDepthBounds(float minDepthBounds, float maxDepthBounds) const noexcept;
+  void SetDepthBounds(float minDepthBounds, float maxDepthBounds) const noexcept;
 
-    void vkCmdSetStencilCompareMask(VkStencilFaceFlags faceMask, uint32_t compareMask) const noexcept;
+  void SetStencilCompareMask(VkStencilFaceFlags faceMask, uint32_t compareMask) const noexcept;
 
-    void vkCmdSetStencilWriteMask(VkStencilFaceFlags faceMask, uint32_t writeMask) const noexcept;
+  void SetStencilWriteMask(VkStencilFaceFlags faceMask, uint32_t writeMask) const noexcept;
 
-    void vkCmdSetStencilReference(VkStencilFaceFlags faceMask, uint32_t reference) const noexcept;
+  void SetStencilReference(VkStencilFaceFlags faceMask, uint32_t reference) const noexcept;
 
-    void vkCmdBindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t firstSet, uint32_t descriptorSetCount, const VkDescriptorSet* pDescriptorSets, uint32_t dynamicOffsetCount, const uint32_t* pDynamicOffsets) const noexcept;
+  void BindDescriptorSets(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t firstSet, uint32_t descriptorSetCount, const VkDescriptorSet* pDescriptorSets, uint32_t dynamicOffsetCount, const uint32_t* pDynamicOffsets) const noexcept;
 
-    void vkCmdBindIndexBuffer(VkBuffer buffer, VkDeviceSize offset, VkIndexType indexType) const noexcept;
+  void BindIndexBuffer(VkBuffer buffer, VkDeviceSize offset, VkIndexType indexType) const noexcept;
 
-    void vkCmdBindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets) const noexcept;
+  void BindVertexBuffers(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets) const noexcept;
 
-    void vkCmdDraw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) const noexcept;
+  void Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) const noexcept;
 
-    void vkCmdDrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) const noexcept;
+  void DrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) const noexcept;
 
-    void vkCmdDrawIndirect(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride) const noexcept;
+  void DrawIndirect(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride) const noexcept;
 
-    void vkCmdDrawIndexedIndirect(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride) const noexcept;
+  void DrawIndexedIndirect(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride) const noexcept;
 
-    void vkCmdDispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) const noexcept;
+  void Dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) const noexcept;
 
-    void vkCmdDispatchIndirect(VkBuffer buffer, VkDeviceSize offset) const noexcept;
+  void DispatchIndirect(VkBuffer buffer, VkDeviceSize offset) const noexcept;
 
-    void vkCmdCopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t regionCount, const VkBufferCopy* pRegions) const noexcept;
+  void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t regionCount, const VkBufferCopy* pRegions) const noexcept;
 
-    void vkCmdCopyImage(VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageCopy* pRegions) const noexcept;
+  void CopyImage(VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageCopy* pRegions) const noexcept;
 
-    void vkCmdBlitImage(VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageBlit* pRegions, VkFilter filter) const noexcept;
+  void BlitImage(VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageBlit* pRegions, VkFilter filter) const noexcept;
 
-    void vkCmdCopyBufferToImage(VkBuffer srcBuffer, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkBufferImageCopy* pRegions) const noexcept;
+  void CopyBufferToImage(VkBuffer srcBuffer, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkBufferImageCopy* pRegions) const noexcept;
 
-    void vkCmdCopyImageToBuffer(VkImage srcImage, VkImageLayout srcImageLayout, VkBuffer dstBuffer, uint32_t regionCount, const VkBufferImageCopy* pRegions) const noexcept;
+  void CopyImageToBuffer(VkImage srcImage, VkImageLayout srcImageLayout, VkBuffer dstBuffer, uint32_t regionCount, const VkBufferImageCopy* pRegions) const noexcept;
 
-    void vkCmdUpdateBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize dataSize, const void* pData) const noexcept;
+  void UpdateBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize dataSize, const void* pData) const noexcept;
 
-    void vkCmdFillBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize size, uint32_t data) const noexcept;
+  void FillBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize size, uint32_t data) const noexcept;
 
-    void vkCmdClearColorImage(VkImage image, VkImageLayout imageLayout, const VkClearColorValue* pColor, uint32_t rangeCount, const VkImageSubresourceRange* pRanges) const noexcept;
+  void ClearColorImage(VkImage image, VkImageLayout imageLayout, const VkClearColorValue* pColor, uint32_t rangeCount, const VkImageSubresourceRange* pRanges) const noexcept;
 
-    void vkCmdClearDepthStencilImage(VkImage image, VkImageLayout imageLayout, const VkClearDepthStencilValue* pDepthStencil, uint32_t rangeCount, const VkImageSubresourceRange* pRanges) const noexcept;
+  void ClearDepthStencilImage(VkImage image, VkImageLayout imageLayout, const VkClearDepthStencilValue* pDepthStencil, uint32_t rangeCount, const VkImageSubresourceRange* pRanges) const noexcept;
 
-    void vkCmdClearAttachments(uint32_t attachmentCount, const VkClearAttachment* pAttachments, uint32_t rectCount, const VkClearRect* pRects) const noexcept;
+  void ClearAttachments(uint32_t attachmentCount, const VkClearAttachment* pAttachments, uint32_t rectCount, const VkClearRect* pRects) const noexcept;
 
-    void vkCmdResolveImage(VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageResolve* pRegions) const noexcept;
+  void ResolveImage(VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage, VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageResolve* pRegions) const noexcept;
 
-    void vkCmdSetEvent(VkEvent event, VkPipelineStageFlags stageMask) const noexcept;
+  void SetEvent(VkEvent event, VkPipelineStageFlags stageMask) const noexcept;
 
-    void vkCmdResetEvent(VkEvent event, VkPipelineStageFlags stageMask) const noexcept;
+  void ResetEvent(VkEvent event, VkPipelineStageFlags stageMask) const noexcept;
 
-    void vkCmdWaitEvents(uint32_t eventCount, const VkEvent* pEvents, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, uint32_t memoryBarrierCount, const VkMemoryBarrier* pMemoryBarriers, uint32_t bufferMemoryBarrierCount, const VkBufferMemoryBarrier* pBufferMemoryBarriers, uint32_t imageMemoryBarrierCount, const VkImageMemoryBarrier* pImageMemoryBarriers) const noexcept;
+  void WaitEvents(uint32_t eventCount, const VkEvent* pEvents, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, uint32_t memoryBarrierCount, const VkMemoryBarrier* pMemoryBarriers, uint32_t bufferMemoryBarrierCount, const VkBufferMemoryBarrier* pBufferMemoryBarriers, uint32_t imageMemoryBarrierCount, const VkImageMemoryBarrier* pImageMemoryBarriers) const noexcept;
 
-    void vkCmdPipelineBarrier(VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, uint32_t memoryBarrierCount, const VkMemoryBarrier* pMemoryBarriers, uint32_t bufferMemoryBarrierCount, const VkBufferMemoryBarrier* pBufferMemoryBarriers, uint32_t imageMemoryBarrierCount, const VkImageMemoryBarrier* pImageMemoryBarriers) const noexcept;
+  void PipelineBarrier(VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags, uint32_t memoryBarrierCount, const VkMemoryBarrier* pMemoryBarriers, uint32_t bufferMemoryBarrierCount, const VkBufferMemoryBarrier* pBufferMemoryBarriers, uint32_t imageMemoryBarrierCount, const VkImageMemoryBarrier* pImageMemoryBarriers) const noexcept;
 
-    void vkCmdBeginQuery(VkQueryPool queryPool, uint32_t query, VkQueryControlFlags flags) const noexcept;
+  void BeginQuery(VkQueryPool queryPool, uint32_t query, VkQueryControlFlags flags) const noexcept;
 
-    void vkCmdEndQuery(VkQueryPool queryPool, uint32_t query) const noexcept;
+  void EndQuery(VkQueryPool queryPool, uint32_t query) const noexcept;
 
-    void vkCmdResetQueryPool(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount) const noexcept;
+  void ResetQueryPool(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount) const noexcept;
 
-    void vkCmdWriteTimestamp(VkPipelineStageFlagBits pipelineStage, VkQueryPool queryPool, uint32_t query) const noexcept;
+  void WriteTimestamp(VkPipelineStageFlagBits pipelineStage, VkQueryPool queryPool, uint32_t query) const noexcept;
 
-    void vkCmdCopyQueryPoolResults(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize stride, VkQueryResultFlags flags) const noexcept;
+  void CopyQueryPoolResults(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize stride, VkQueryResultFlags flags) const noexcept;
 
-    void vkCmdPushConstants(VkPipelineLayout layout, VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size, const void* pValues) const noexcept;
+  void PushConstants(VkPipelineLayout layout, VkShaderStageFlags stageFlags, uint32_t offset, uint32_t size, const void* pValues) const noexcept;
 
-    void vkCmdBeginRenderPass(const VkRenderPassBeginInfo* pRenderPassBegin, VkSubpassContents contents) const noexcept;
+  void BeginRenderPass(const VkRenderPassBeginInfo* pRenderPassBegin, VkSubpassContents contents) const noexcept;
 
-    void vkCmdNextSubpass(VkSubpassContents contents) const noexcept;
+  void NextSubpass(VkSubpassContents contents) const noexcept;
 
-    void vkCmdEndRenderPass() const noexcept;
+  void EndRenderPass() const noexcept;
 
-    void vkCmdExecuteCommands(uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers) const noexcept;
+  void ExecuteCommands(uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers) const noexcept;
 
-    void vkCmdSetDeviceMask(uint32_t deviceMask) const noexcept;
+  void SetDeviceMask(uint32_t deviceMask) const noexcept;
 
-    void vkCmdDispatchBase(uint32_t baseGroupX, uint32_t baseGroupY, uint32_t baseGroupZ, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) const noexcept;
+  void DispatchBase(uint32_t baseGroupX, uint32_t baseGroupY, uint32_t baseGroupZ, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) const noexcept;
 
-    void vkCmdDrawIndirectCount(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
+  void DrawIndirectCount(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
 
-    void vkCmdDrawIndexedIndirectCount(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
+  void DrawIndexedIndirectCount(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
 
-    void vkCmdBeginRenderPass2(const VkRenderPassBeginInfo* pRenderPassBegin, const VkSubpassBeginInfo* pSubpassBeginInfo) const noexcept;
+  void BeginRenderPass2(const VkRenderPassBeginInfo* pRenderPassBegin, const VkSubpassBeginInfo* pSubpassBeginInfo) const noexcept;
 
-    void vkCmdNextSubpass2(const VkSubpassBeginInfo* pSubpassBeginInfo, const VkSubpassEndInfo* pSubpassEndInfo) const noexcept;
+  void NextSubpass2(const VkSubpassBeginInfo* pSubpassBeginInfo, const VkSubpassEndInfo* pSubpassEndInfo) const noexcept;
 
-    void vkCmdEndRenderPass2(const VkSubpassEndInfo* pSubpassEndInfo) const noexcept;
+  void EndRenderPass2(const VkSubpassEndInfo* pSubpassEndInfo) const noexcept;
 
-    void vkCmdSetEvent2(VkEvent event, const VkDependencyInfo* pDependencyInfo) const noexcept;
+  void SetEvent2(VkEvent event, const VkDependencyInfo* pDependencyInfo) const noexcept;
 
-    void vkCmdResetEvent2(VkEvent event, VkPipelineStageFlags2 stageMask) const noexcept;
+  void ResetEvent2(VkEvent event, VkPipelineStageFlags2 stageMask) const noexcept;
 
-    void vkCmdWaitEvents2(uint32_t eventCount, const VkEvent* pEvents, const VkDependencyInfo* pDependencyInfos) const noexcept;
+  void WaitEvents2(uint32_t eventCount, const VkEvent* pEvents, const VkDependencyInfo* pDependencyInfos) const noexcept;
 
-    void vkCmdPipelineBarrier2(const VkDependencyInfo* pDependencyInfo) const noexcept;
+  void PipelineBarrier2(const VkDependencyInfo* pDependencyInfo) const noexcept;
 
-    void vkCmdWriteTimestamp2(VkPipelineStageFlags2 stage, VkQueryPool queryPool, uint32_t query) const noexcept;
+  void WriteTimestamp2(VkPipelineStageFlags2 stage, VkQueryPool queryPool, uint32_t query) const noexcept;
 
-    void vkCmdCopyBuffer2(const VkCopyBufferInfo2* pCopyBufferInfo) const noexcept;
+  void CopyBuffer2(const VkCopyBufferInfo2* pCopyBufferInfo) const noexcept;
 
-    void vkCmdCopyImage2(const VkCopyImageInfo2* pCopyImageInfo) const noexcept;
+  void CopyImage2(const VkCopyImageInfo2* pCopyImageInfo) const noexcept;
 
-    void vkCmdCopyBufferToImage2(const VkCopyBufferToImageInfo2* pCopyBufferToImageInfo) const noexcept;
+  void CopyBufferToImage2(const VkCopyBufferToImageInfo2* pCopyBufferToImageInfo) const noexcept;
 
-    void vkCmdCopyImageToBuffer2(const VkCopyImageToBufferInfo2* pCopyImageToBufferInfo) const noexcept;
+  void CopyImageToBuffer2(const VkCopyImageToBufferInfo2* pCopyImageToBufferInfo) const noexcept;
 
-    void vkCmdBlitImage2(const VkBlitImageInfo2* pBlitImageInfo) const noexcept;
+  void BlitImage2(const VkBlitImageInfo2* pBlitImageInfo) const noexcept;
 
-    void vkCmdResolveImage2(const VkResolveImageInfo2* pResolveImageInfo) const noexcept;
+  void ResolveImage2(const VkResolveImageInfo2* pResolveImageInfo) const noexcept;
 
-    void vkCmdBeginRendering(const VkRenderingInfo* pRenderingInfo) const noexcept;
+  void BeginRendering(const VkRenderingInfo* pRenderingInfo) const noexcept;
 
-    void vkCmdEndRendering() const noexcept;
+  void EndRendering() const noexcept;
 
-    void vkCmdSetCullMode(VkCullModeFlags cullMode) const noexcept;
+  void SetCullMode(VkCullModeFlags cullMode) const noexcept;
 
-    void vkCmdSetFrontFace(VkFrontFace frontFace) const noexcept;
+  void SetFrontFace(VkFrontFace frontFace) const noexcept;
 
-    void vkCmdSetPrimitiveTopology(VkPrimitiveTopology primitiveTopology) const noexcept;
+  void SetPrimitiveTopology(VkPrimitiveTopology primitiveTopology) const noexcept;
 
-    void vkCmdSetViewportWithCount(uint32_t viewportCount, const VkViewport* pViewports) const noexcept;
+  void SetViewportWithCount(uint32_t viewportCount, const VkViewport* pViewports) const noexcept;
 
-    void vkCmdSetScissorWithCount(uint32_t scissorCount, const VkRect2D* pScissors) const noexcept;
+  void SetScissorWithCount(uint32_t scissorCount, const VkRect2D* pScissors) const noexcept;
 
-    void vkCmdBindVertexBuffers2(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets, const VkDeviceSize* pSizes, const VkDeviceSize* pStrides) const noexcept;
+  void BindVertexBuffers2(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets, const VkDeviceSize* pSizes, const VkDeviceSize* pStrides) const noexcept;
 
-    void vkCmdSetDepthTestEnable(VkBool32 depthTestEnable) const noexcept;
+  void SetDepthTestEnable(VkBool32 depthTestEnable) const noexcept;
 
-    void vkCmdSetDepthWriteEnable(VkBool32 depthWriteEnable) const noexcept;
+  void SetDepthWriteEnable(VkBool32 depthWriteEnable) const noexcept;
 
-    void vkCmdSetDepthCompareOp(VkCompareOp depthCompareOp) const noexcept;
+  void SetDepthCompareOp(VkCompareOp depthCompareOp) const noexcept;
 
-    void vkCmdSetDepthBoundsTestEnable(VkBool32 depthBoundsTestEnable) const noexcept;
+  void SetDepthBoundsTestEnable(VkBool32 depthBoundsTestEnable) const noexcept;
 
-    void vkCmdSetStencilTestEnable(VkBool32 stencilTestEnable) const noexcept;
+  void SetStencilTestEnable(VkBool32 stencilTestEnable) const noexcept;
 
-    void vkCmdSetStencilOp(VkStencilFaceFlags faceMask, VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp) const noexcept;
+  void SetStencilOp(VkStencilFaceFlags faceMask, VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp) const noexcept;
 
-    void vkCmdSetRasterizerDiscardEnable(VkBool32 rasterizerDiscardEnable) const noexcept;
+  void SetRasterizerDiscardEnable(VkBool32 rasterizerDiscardEnable) const noexcept;
 
-    void vkCmdSetDepthBiasEnable(VkBool32 depthBiasEnable) const noexcept;
+  void SetDepthBiasEnable(VkBool32 depthBiasEnable) const noexcept;
 
-    void vkCmdSetPrimitiveRestartEnable(VkBool32 primitiveRestartEnable) const noexcept;
+  void SetPrimitiveRestartEnable(VkBool32 primitiveRestartEnable) const noexcept;
 
-    void vkCmdBeginRenderingKHR(const VkRenderingInfo* pRenderingInfo) const noexcept;
+  void BeginRenderingKHR(const VkRenderingInfo* pRenderingInfo) const noexcept;
 
-    void vkCmdEndRenderingKHR() const noexcept;
+  void EndRenderingKHR() const noexcept;
 
-    void vkCmdSetDeviceMaskKHR(uint32_t deviceMask) const noexcept;
+  void SetDeviceMaskKHR(uint32_t deviceMask) const noexcept;
 
-    void vkCmdDispatchBaseKHR(uint32_t baseGroupX, uint32_t baseGroupY, uint32_t baseGroupZ, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) const noexcept;
+  void DispatchBaseKHR(uint32_t baseGroupX, uint32_t baseGroupY, uint32_t baseGroupZ, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) const noexcept;
 
-    void vkCmdPushDescriptorSetKHR(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t set, uint32_t descriptorWriteCount, const VkWriteDescriptorSet* pDescriptorWrites) const noexcept;
+  void PushDescriptorSetKHR(VkPipelineBindPoint pipelineBindPoint, VkPipelineLayout layout, uint32_t set, uint32_t descriptorWriteCount, const VkWriteDescriptorSet* pDescriptorWrites) const noexcept;
 
-    void vkCmdPushDescriptorSetWithTemplateKHR(VkDescriptorUpdateTemplate descriptorUpdateTemplate, VkPipelineLayout layout, uint32_t set, const void* pData) const noexcept;
+  void PushDescriptorSetWithTemplateKHR(VkDescriptorUpdateTemplate descriptorUpdateTemplate, VkPipelineLayout layout, uint32_t set, const void* pData) const noexcept;
 
-    void vkCmdBeginRenderPass2KHR(const VkRenderPassBeginInfo* pRenderPassBegin, const VkSubpassBeginInfo* pSubpassBeginInfo) const noexcept;
+  void BeginRenderPass2KHR(const VkRenderPassBeginInfo* pRenderPassBegin, const VkSubpassBeginInfo* pSubpassBeginInfo) const noexcept;
 
-    void vkCmdNextSubpass2KHR(const VkSubpassBeginInfo* pSubpassBeginInfo, const VkSubpassEndInfo* pSubpassEndInfo) const noexcept;
+  void NextSubpass2KHR(const VkSubpassBeginInfo* pSubpassBeginInfo, const VkSubpassEndInfo* pSubpassEndInfo) const noexcept;
 
-    void vkCmdEndRenderPass2KHR(const VkSubpassEndInfo* pSubpassEndInfo) const noexcept;
+  void EndRenderPass2KHR(const VkSubpassEndInfo* pSubpassEndInfo) const noexcept;
 
-    void vkCmdDrawIndirectCountKHR(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
+  void DrawIndirectCountKHR(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
 
-    void vkCmdDrawIndexedIndirectCountKHR(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
+  void DrawIndexedIndirectCountKHR(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
 
-    void vkCmdSetFragmentShadingRateKHR(const VkExtent2D* pFragmentSize, const VkFragmentShadingRateCombinerOpKHR combinerOps[2]) const noexcept;
+  void SetFragmentShadingRateKHR(const VkExtent2D* pFragmentSize, const VkFragmentShadingRateCombinerOpKHR combinerOps[2]) const noexcept;
 
-    void vkCmdSetEvent2KHR(VkEvent event, const VkDependencyInfo* pDependencyInfo) const noexcept;
+  void SetEvent2KHR(VkEvent event, const VkDependencyInfo* pDependencyInfo) const noexcept;
 
-    void vkCmdResetEvent2KHR(VkEvent event, VkPipelineStageFlags2 stageMask) const noexcept;
+  void ResetEvent2KHR(VkEvent event, VkPipelineStageFlags2 stageMask) const noexcept;
 
-    void vkCmdWaitEvents2KHR(uint32_t eventCount, const VkEvent* pEvents, const VkDependencyInfo* pDependencyInfos) const noexcept;
+  void WaitEvents2KHR(uint32_t eventCount, const VkEvent* pEvents, const VkDependencyInfo* pDependencyInfos) const noexcept;
 
-    void vkCmdPipelineBarrier2KHR(const VkDependencyInfo* pDependencyInfo) const noexcept;
+  void PipelineBarrier2KHR(const VkDependencyInfo* pDependencyInfo) const noexcept;
 
-    void vkCmdWriteTimestamp2KHR(VkPipelineStageFlags2 stage, VkQueryPool queryPool, uint32_t query) const noexcept;
+  void WriteTimestamp2KHR(VkPipelineStageFlags2 stage, VkQueryPool queryPool, uint32_t query) const noexcept;
 
-    void vkCmdWriteBufferMarker2AMD(VkPipelineStageFlags2 stage, VkBuffer dstBuffer, VkDeviceSize dstOffset, uint32_t marker) const noexcept;
+  void WriteBufferMarker2AMD(VkPipelineStageFlags2 stage, VkBuffer dstBuffer, VkDeviceSize dstOffset, uint32_t marker) const noexcept;
 
-    void vkCmdCopyBuffer2KHR(const VkCopyBufferInfo2* pCopyBufferInfo) const noexcept;
+  void CopyBuffer2KHR(const VkCopyBufferInfo2* pCopyBufferInfo) const noexcept;
 
-    void vkCmdCopyImage2KHR(const VkCopyImageInfo2* pCopyImageInfo) const noexcept;
+  void CopyImage2KHR(const VkCopyImageInfo2* pCopyImageInfo) const noexcept;
 
-    void vkCmdCopyBufferToImage2KHR(const VkCopyBufferToImageInfo2* pCopyBufferToImageInfo) const noexcept;
+  void CopyBufferToImage2KHR(const VkCopyBufferToImageInfo2* pCopyBufferToImageInfo) const noexcept;
 
-    void vkCmdCopyImageToBuffer2KHR(const VkCopyImageToBufferInfo2* pCopyImageToBufferInfo) const noexcept;
+  void CopyImageToBuffer2KHR(const VkCopyImageToBufferInfo2* pCopyImageToBufferInfo) const noexcept;
 
-    void vkCmdBlitImage2KHR(const VkBlitImageInfo2* pBlitImageInfo) const noexcept;
+  void BlitImage2KHR(const VkBlitImageInfo2* pBlitImageInfo) const noexcept;
 
-    void vkCmdResolveImage2KHR(const VkResolveImageInfo2* pResolveImageInfo) const noexcept;
+  void ResolveImage2KHR(const VkResolveImageInfo2* pResolveImageInfo) const noexcept;
 
-    void vkCmdDebugMarkerBeginEXT(const VkDebugMarkerMarkerInfoEXT* pMarkerInfo) const noexcept;
+  void DebugMarkerBeginEXT(const VkDebugMarkerMarkerInfoEXT* pMarkerInfo) const noexcept;
 
-    void vkCmdDebugMarkerEndEXT() const noexcept;
+  void DebugMarkerEndEXT() const noexcept;
 
-    void vkCmdDebugMarkerInsertEXT(const VkDebugMarkerMarkerInfoEXT* pMarkerInfo) const noexcept;
+  void DebugMarkerInsertEXT(const VkDebugMarkerMarkerInfoEXT* pMarkerInfo) const noexcept;
 
-    void vkCmdBindTransformFeedbackBuffersEXT(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets, const VkDeviceSize* pSizes) const noexcept;
+  void BindTransformFeedbackBuffersEXT(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets, const VkDeviceSize* pSizes) const noexcept;
 
-    void vkCmdBeginTransformFeedbackEXT(uint32_t firstCounterBuffer, uint32_t counterBufferCount, const VkBuffer* pCounterBuffers, const VkDeviceSize* pCounterBufferOffsets) const noexcept;
+  void BeginTransformFeedbackEXT(uint32_t firstCounterBuffer, uint32_t counterBufferCount, const VkBuffer* pCounterBuffers, const VkDeviceSize* pCounterBufferOffsets) const noexcept;
 
-    void vkCmdEndTransformFeedbackEXT(uint32_t firstCounterBuffer, uint32_t counterBufferCount, const VkBuffer* pCounterBuffers, const VkDeviceSize* pCounterBufferOffsets) const noexcept;
+  void EndTransformFeedbackEXT(uint32_t firstCounterBuffer, uint32_t counterBufferCount, const VkBuffer* pCounterBuffers, const VkDeviceSize* pCounterBufferOffsets) const noexcept;
 
-    void vkCmdBeginQueryIndexedEXT(VkQueryPool queryPool, uint32_t query, VkQueryControlFlags flags, uint32_t index) const noexcept;
+  void BeginQueryIndexedEXT(VkQueryPool queryPool, uint32_t query, VkQueryControlFlags flags, uint32_t index) const noexcept;
 
-    void vkCmdEndQueryIndexedEXT(VkQueryPool queryPool, uint32_t query, uint32_t index) const noexcept;
+  void EndQueryIndexedEXT(VkQueryPool queryPool, uint32_t query, uint32_t index) const noexcept;
 
-    void vkCmdDrawIndirectByteCountEXT(uint32_t instanceCount, uint32_t firstInstance, VkBuffer counterBuffer, VkDeviceSize counterBufferOffset, uint32_t counterOffset, uint32_t vertexStride) const noexcept;
+  void DrawIndirectByteCountEXT(uint32_t instanceCount, uint32_t firstInstance, VkBuffer counterBuffer, VkDeviceSize counterBufferOffset, uint32_t counterOffset, uint32_t vertexStride) const noexcept;
 
-    void vkCmdCuLaunchKernelNVX(const VkCuLaunchInfoNVX* pLaunchInfo) const noexcept;
+  void CuLaunchKernelNVX(const VkCuLaunchInfoNVX* pLaunchInfo) const noexcept;
 
-    void vkCmdDrawIndirectCountAMD(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
+  void DrawIndirectCountAMD(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
 
-    void vkCmdDrawIndexedIndirectCountAMD(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
+  void DrawIndexedIndirectCountAMD(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
 
-    void vkCmdBeginConditionalRenderingEXT(const VkConditionalRenderingBeginInfoEXT* pConditionalRenderingBegin) const noexcept;
+  void BeginConditionalRenderingEXT(const VkConditionalRenderingBeginInfoEXT* pConditionalRenderingBegin) const noexcept;
 
-    void vkCmdEndConditionalRenderingEXT() const noexcept;
+  void EndConditionalRenderingEXT() const noexcept;
 
-    void vkCmdSetViewportWScalingNV(uint32_t firstViewport, uint32_t viewportCount, const VkViewportWScalingNV* pViewportWScalings) const noexcept;
+  void SetViewportWScalingNV(uint32_t firstViewport, uint32_t viewportCount, const VkViewportWScalingNV* pViewportWScalings) const noexcept;
 
-    void vkCmdSetDiscardRectangleEXT(uint32_t firstDiscardRectangle, uint32_t discardRectangleCount, const VkRect2D* pDiscardRectangles) const noexcept;
+  void SetDiscardRectangleEXT(uint32_t firstDiscardRectangle, uint32_t discardRectangleCount, const VkRect2D* pDiscardRectangles) const noexcept;
 
-    void vkCmdBeginDebugUtilsLabelEXT(const VkDebugUtilsLabelEXT* pLabelInfo) const noexcept;
+  void BeginDebugUtilsLabelEXT(const VkDebugUtilsLabelEXT* pLabelInfo) const noexcept;
 
-    void vkCmdEndDebugUtilsLabelEXT() const noexcept;
+  void EndDebugUtilsLabelEXT() const noexcept;
 
-    void vkCmdInsertDebugUtilsLabelEXT(const VkDebugUtilsLabelEXT* pLabelInfo) const noexcept;
+  void InsertDebugUtilsLabelEXT(const VkDebugUtilsLabelEXT* pLabelInfo) const noexcept;
 
-    void vkCmdSetSampleLocationsEXT(const VkSampleLocationsInfoEXT* pSampleLocationsInfo) const noexcept;
+  void SetSampleLocationsEXT(const VkSampleLocationsInfoEXT* pSampleLocationsInfo) const noexcept;
 
-    void vkCmdBindShadingRateImageNV(VkImageView imageView, VkImageLayout imageLayout) const noexcept;
+  void BindShadingRateImageNV(VkImageView imageView, VkImageLayout imageLayout) const noexcept;
 
-    void vkCmdSetViewportShadingRatePaletteNV(uint32_t firstViewport, uint32_t viewportCount, const VkShadingRatePaletteNV* pShadingRatePalettes) const noexcept;
+  void SetViewportShadingRatePaletteNV(uint32_t firstViewport, uint32_t viewportCount, const VkShadingRatePaletteNV* pShadingRatePalettes) const noexcept;
 
-    void vkCmdSetCoarseSampleOrderNV(VkCoarseSampleOrderTypeNV sampleOrderType, uint32_t customSampleOrderCount, const VkCoarseSampleOrderCustomNV* pCustomSampleOrders) const noexcept;
+  void SetCoarseSampleOrderNV(VkCoarseSampleOrderTypeNV sampleOrderType, uint32_t customSampleOrderCount, const VkCoarseSampleOrderCustomNV* pCustomSampleOrders) const noexcept;
 
-    void vkCmdBuildAccelerationStructureNV(const VkAccelerationStructureInfoNV* pInfo, VkBuffer instanceData, VkDeviceSize instanceOffset, VkBool32 update, VkAccelerationStructureNV dst, VkAccelerationStructureNV src, VkBuffer scratch, VkDeviceSize scratchOffset) const noexcept;
+  void BuildAccelerationStructureNV(const VkAccelerationStructureInfoNV* pInfo, VkBuffer instanceData, VkDeviceSize instanceOffset, VkBool32 update, VkAccelerationStructureNV dst, VkAccelerationStructureNV src, VkBuffer scratch, VkDeviceSize scratchOffset) const noexcept;
 
-    void vkCmdCopyAccelerationStructureNV(VkAccelerationStructureNV dst, VkAccelerationStructureNV src, VkCopyAccelerationStructureModeKHR mode) const noexcept;
+  void CopyAccelerationStructureNV(VkAccelerationStructureNV dst, VkAccelerationStructureNV src, VkCopyAccelerationStructureModeKHR mode) const noexcept;
 
-    void vkCmdTraceRaysNV(VkBuffer raygenShaderBindingTableBuffer, VkDeviceSize raygenShaderBindingOffset, VkBuffer missShaderBindingTableBuffer, VkDeviceSize missShaderBindingOffset, VkDeviceSize missShaderBindingStride, VkBuffer hitShaderBindingTableBuffer, VkDeviceSize hitShaderBindingOffset, VkDeviceSize hitShaderBindingStride, VkBuffer callableShaderBindingTableBuffer, VkDeviceSize callableShaderBindingOffset, VkDeviceSize callableShaderBindingStride, uint32_t width, uint32_t height, uint32_t depth) const noexcept;
+  void TraceRaysNV(VkBuffer raygenShaderBindingTableBuffer, VkDeviceSize raygenShaderBindingOffset, VkBuffer missShaderBindingTableBuffer, VkDeviceSize missShaderBindingOffset, VkDeviceSize missShaderBindingStride, VkBuffer hitShaderBindingTableBuffer, VkDeviceSize hitShaderBindingOffset, VkDeviceSize hitShaderBindingStride, VkBuffer callableShaderBindingTableBuffer, VkDeviceSize callableShaderBindingOffset, VkDeviceSize callableShaderBindingStride, uint32_t width, uint32_t height, uint32_t depth) const noexcept;
 
-    void vkCmdWriteAccelerationStructuresPropertiesNV(uint32_t accelerationStructureCount, const VkAccelerationStructureNV* pAccelerationStructures, VkQueryType queryType, VkQueryPool queryPool, uint32_t firstQuery) const noexcept;
+  void WriteAccelerationStructuresPropertiesNV(uint32_t accelerationStructureCount, const VkAccelerationStructureNV* pAccelerationStructures, VkQueryType queryType, VkQueryPool queryPool, uint32_t firstQuery) const noexcept;
 
-    void vkCmdWriteBufferMarkerAMD(VkPipelineStageFlagBits pipelineStage, VkBuffer dstBuffer, VkDeviceSize dstOffset, uint32_t marker) const noexcept;
+  void WriteBufferMarkerAMD(VkPipelineStageFlagBits pipelineStage, VkBuffer dstBuffer, VkDeviceSize dstOffset, uint32_t marker) const noexcept;
 
-    void vkCmdDrawMeshTasksNV(uint32_t taskCount, uint32_t firstTask) const noexcept;
+  void DrawMeshTasksNV(uint32_t taskCount, uint32_t firstTask) const noexcept;
 
-    void vkCmdDrawMeshTasksIndirectNV(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride) const noexcept;
+  void DrawMeshTasksIndirectNV(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount, uint32_t stride) const noexcept;
 
-    void vkCmdDrawMeshTasksIndirectCountNV(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
+  void DrawMeshTasksIndirectCountNV(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) const noexcept;
 
-    void vkCmdSetExclusiveScissorNV(uint32_t firstExclusiveScissor, uint32_t exclusiveScissorCount, const VkRect2D* pExclusiveScissors) const noexcept;
+  void SetExclusiveScissorNV(uint32_t firstExclusiveScissor, uint32_t exclusiveScissorCount, const VkRect2D* pExclusiveScissors) const noexcept;
 
-    void vkCmdSetCheckpointNV(const void* pCheckpointMarker) const noexcept;
+  void SetCheckpointNV(const void* pCheckpointMarker) const noexcept;
 
-    VulkanResult vkCmdSetPerformanceMarkerINTEL(const VkPerformanceMarkerInfoINTEL* pMarkerInfo) const noexcept;
+  VulkanResult SetPerformanceMarkerINTEL(const VkPerformanceMarkerInfoINTEL* pMarkerInfo) const noexcept;
 
-    VulkanResult vkCmdSetPerformanceStreamMarkerINTEL(const VkPerformanceStreamMarkerInfoINTEL* pMarkerInfo) const noexcept;
+  VulkanResult SetPerformanceStreamMarkerINTEL(const VkPerformanceStreamMarkerInfoINTEL* pMarkerInfo) const noexcept;
 
-    VulkanResult vkCmdSetPerformanceOverrideINTEL(const VkPerformanceOverrideInfoINTEL* pOverrideInfo) const noexcept;
+  VulkanResult SetPerformanceOverrideINTEL(const VkPerformanceOverrideInfoINTEL* pOverrideInfo) const noexcept;
 
-    void vkCmdSetLineStippleEXT(uint32_t lineStippleFactor, uint16_t lineStipplePattern) const noexcept;
+  void SetLineStippleEXT(uint32_t lineStippleFactor, uint16_t lineStipplePattern) const noexcept;
 
-    void vkCmdSetCullModeEXT(VkCullModeFlags cullMode) const noexcept;
+  void SetCullModeEXT(VkCullModeFlags cullMode) const noexcept;
 
-    void vkCmdSetFrontFaceEXT(VkFrontFace frontFace) const noexcept;
+  void SetFrontFaceEXT(VkFrontFace frontFace) const noexcept;
 
-    void vkCmdSetPrimitiveTopologyEXT(VkPrimitiveTopology primitiveTopology) const noexcept;
+  void SetPrimitiveTopologyEXT(VkPrimitiveTopology primitiveTopology) const noexcept;
 
-    void vkCmdSetViewportWithCountEXT(uint32_t viewportCount, const VkViewport* pViewports) const noexcept;
+  void SetViewportWithCountEXT(uint32_t viewportCount, const VkViewport* pViewports) const noexcept;
 
-    void vkCmdSetScissorWithCountEXT(uint32_t scissorCount, const VkRect2D* pScissors) const noexcept;
+  void SetScissorWithCountEXT(uint32_t scissorCount, const VkRect2D* pScissors) const noexcept;
 
-    void vkCmdBindVertexBuffers2EXT(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets, const VkDeviceSize* pSizes, const VkDeviceSize* pStrides) const noexcept;
+  void BindVertexBuffers2EXT(uint32_t firstBinding, uint32_t bindingCount, const VkBuffer* pBuffers, const VkDeviceSize* pOffsets, const VkDeviceSize* pSizes, const VkDeviceSize* pStrides) const noexcept;
 
-    void vkCmdSetDepthTestEnableEXT(VkBool32 depthTestEnable) const noexcept;
+  void SetDepthTestEnableEXT(VkBool32 depthTestEnable) const noexcept;
 
-    void vkCmdSetDepthWriteEnableEXT(VkBool32 depthWriteEnable) const noexcept;
+  void SetDepthWriteEnableEXT(VkBool32 depthWriteEnable) const noexcept;
 
-    void vkCmdSetDepthCompareOpEXT(VkCompareOp depthCompareOp) const noexcept;
+  void SetDepthCompareOpEXT(VkCompareOp depthCompareOp) const noexcept;
 
-    void vkCmdSetDepthBoundsTestEnableEXT(VkBool32 depthBoundsTestEnable) const noexcept;
+  void SetDepthBoundsTestEnableEXT(VkBool32 depthBoundsTestEnable) const noexcept;
 
-    void vkCmdSetStencilTestEnableEXT(VkBool32 stencilTestEnable) const noexcept;
+  void SetStencilTestEnableEXT(VkBool32 stencilTestEnable) const noexcept;
 
-    void vkCmdSetStencilOpEXT(VkStencilFaceFlags faceMask, VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp) const noexcept;
+  void SetStencilOpEXT(VkStencilFaceFlags faceMask, VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp) const noexcept;
 
-    void vkCmdPreprocessGeneratedCommandsNV(const VkGeneratedCommandsInfoNV* pGeneratedCommandsInfo) const noexcept;
+  void PreprocessGeneratedCommandsNV(const VkGeneratedCommandsInfoNV* pGeneratedCommandsInfo) const noexcept;
 
-    void vkCmdExecuteGeneratedCommandsNV(VkBool32 isPreprocessed, const VkGeneratedCommandsInfoNV* pGeneratedCommandsInfo) const noexcept;
+  void ExecuteGeneratedCommandsNV(VkBool32 isPreprocessed, const VkGeneratedCommandsInfoNV* pGeneratedCommandsInfo) const noexcept;
 
-    void vkCmdBindPipelineShaderGroupNV(VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline, uint32_t groupIndex) const noexcept;
+  void BindPipelineShaderGroupNV(VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline, uint32_t groupIndex) const noexcept;
 
-    void vkCmdSetFragmentShadingRateEnumNV(VkFragmentShadingRateNV shadingRate, const VkFragmentShadingRateCombinerOpKHR combinerOps[2]) const noexcept;
+  void SetFragmentShadingRateEnumNV(VkFragmentShadingRateNV shadingRate, const VkFragmentShadingRateCombinerOpKHR combinerOps[2]) const noexcept;
 
-    void vkCmdSetVertexInputEXT(uint32_t vertexBindingDescriptionCount, const VkVertexInputBindingDescription2EXT* pVertexBindingDescriptions, uint32_t vertexAttributeDescriptionCount, const VkVertexInputAttributeDescription2EXT* pVertexAttributeDescriptions) const noexcept;
+  void SetVertexInputEXT(uint32_t vertexBindingDescriptionCount, const VkVertexInputBindingDescription2EXT* pVertexBindingDescriptions, uint32_t vertexAttributeDescriptionCount, const VkVertexInputAttributeDescription2EXT* pVertexAttributeDescriptions) const noexcept;
 
-    void vkCmdSubpassShadingHUAWEI() const noexcept;
+  void SubpassShadingHUAWEI() const noexcept;
 
-    void vkCmdBindInvocationMaskHUAWEI(VkImageView imageView, VkImageLayout imageLayout) const noexcept;
+  void BindInvocationMaskHUAWEI(VkImageView imageView, VkImageLayout imageLayout) const noexcept;
 
-    void vkCmdSetPatchControlPointsEXT(uint32_t patchControlPoints) const noexcept;
+  void SetPatchControlPointsEXT(uint32_t patchControlPoints) const noexcept;
 
-    void vkCmdSetRasterizerDiscardEnableEXT(VkBool32 rasterizerDiscardEnable) const noexcept;
+  void SetRasterizerDiscardEnableEXT(VkBool32 rasterizerDiscardEnable) const noexcept;
 
-    void vkCmdSetDepthBiasEnableEXT(VkBool32 depthBiasEnable) const noexcept;
+  void SetDepthBiasEnableEXT(VkBool32 depthBiasEnable) const noexcept;
 
-    void vkCmdSetLogicOpEXT(VkLogicOp logicOp) const noexcept;
+  void SetLogicOpEXT(VkLogicOp logicOp) const noexcept;
 
-    void vkCmdSetPrimitiveRestartEnableEXT(VkBool32 primitiveRestartEnable) const noexcept;
+  void SetPrimitiveRestartEnableEXT(VkBool32 primitiveRestartEnable) const noexcept;
 
-    void vkCmdSetColorWriteEnableEXT(uint32_t attachmentCount, const VkBool32* pColorWriteEnables) const noexcept;
+  void SetColorWriteEnableEXT(uint32_t attachmentCount, const VkBool32* pColorWriteEnables) const noexcept;
 
-    void vkCmdDrawMultiEXT(uint32_t drawCount, const VkMultiDrawInfoEXT* pVertexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride) const noexcept;
+  void DrawMultiEXT(uint32_t drawCount, const VkMultiDrawInfoEXT* pVertexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride) const noexcept;
 
-    void vkCmdDrawMultiIndexedEXT(uint32_t drawCount, const VkMultiDrawIndexedInfoEXT* pIndexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride, const int32_t* pVertexOffset) const noexcept;
+  void DrawMultiIndexedEXT(uint32_t drawCount, const VkMultiDrawIndexedInfoEXT* pIndexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride, const int32_t* pVertexOffset) const noexcept;
 
-    void vkCmdBuildAccelerationStructuresKHR(uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos) const noexcept;
+  void BuildAccelerationStructuresKHR(uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos) const noexcept;
 
-    void vkCmdBuildAccelerationStructuresIndirectKHR(uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkDeviceAddress* pIndirectDeviceAddresses, const uint32_t* pIndirectStrides, const uint32_t* const* ppMaxPrimitiveCounts) const noexcept;
+  void BuildAccelerationStructuresIndirectKHR(uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkDeviceAddress* pIndirectDeviceAddresses, const uint32_t* pIndirectStrides, const uint32_t* const* ppMaxPrimitiveCounts) const noexcept;
 
-    void vkCmdCopyAccelerationStructureKHR(const VkCopyAccelerationStructureInfoKHR* pInfo) const noexcept;
+  void CopyAccelerationStructureKHR(const VkCopyAccelerationStructureInfoKHR* pInfo) const noexcept;
 
-    void vkCmdCopyAccelerationStructureToMemoryKHR(const VkCopyAccelerationStructureToMemoryInfoKHR* pInfo) const noexcept;
+  void CopyAccelerationStructureToMemoryKHR(const VkCopyAccelerationStructureToMemoryInfoKHR* pInfo) const noexcept;
 
-    void vkCmdCopyMemoryToAccelerationStructureKHR(const VkCopyMemoryToAccelerationStructureInfoKHR* pInfo) const noexcept;
+  void CopyMemoryToAccelerationStructureKHR(const VkCopyMemoryToAccelerationStructureInfoKHR* pInfo) const noexcept;
 
-    void vkCmdWriteAccelerationStructuresPropertiesKHR(uint32_t accelerationStructureCount, const VkAccelerationStructureKHR* pAccelerationStructures, VkQueryType queryType, VkQueryPool queryPool, uint32_t firstQuery) const noexcept;
+  void WriteAccelerationStructuresPropertiesKHR(uint32_t accelerationStructureCount, const VkAccelerationStructureKHR* pAccelerationStructures, VkQueryType queryType, VkQueryPool queryPool, uint32_t firstQuery) const noexcept;
 
-    void vkCmdTraceRaysKHR(const VkStridedDeviceAddressRegionKHR* pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pCallableShaderBindingTable, uint32_t width, uint32_t height, uint32_t depth) const noexcept;
+  void TraceRaysKHR(const VkStridedDeviceAddressRegionKHR* pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pCallableShaderBindingTable, uint32_t width, uint32_t height, uint32_t depth) const noexcept;
 
-    void vkCmdTraceRaysIndirectKHR(const VkStridedDeviceAddressRegionKHR* pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pCallableShaderBindingTable, VkDeviceAddress indirectDeviceAddress) const noexcept;
+  void TraceRaysIndirectKHR(const VkStridedDeviceAddressRegionKHR* pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR* pCallableShaderBindingTable, VkDeviceAddress indirectDeviceAddress) const noexcept;
 
-    void vkCmdSetRayTracingPipelineStackSizeKHR(uint32_t pipelineStackSize) const noexcept;
+  void SetRayTracingPipelineStackSizeKHR(uint32_t pipelineStackSize) const noexcept;
 
 };
 

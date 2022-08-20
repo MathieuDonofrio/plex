@@ -74,39 +74,39 @@ if __name__ == '__main__':
     template<typename T>
     struct VulkanResultWithValue
     {{
-        VkResult result {{ VK_SUCCESS }};
-        T value {{}};
-        
-        VulkanResultWithValue(T&& value = {{}}) : value(std::move(value)) {{}}
-        
-        operator bool() const
-        {{
-            return result == VK_SUCCESS;
-        }}
+      VkResult result {{ VK_SUCCESS }};
+      T value {{}};
+      
+      VulkanResultWithValue(T&& value = {{}}) : value(std::move(value)) {{}}
+      
+      operator bool() const
+      {{
+        return result == VK_SUCCESS;
+      }}
     }};
 
     struct VulkanResult
     {{
-        VkResult result;
-        
-        VulkanResult(VkResult result) : result(result) {{}}
-        
-        operator bool() const
-        {{
-            return result == VK_SUCCESS;
-        }}
+      VkResult result;
+      
+      VulkanResult(VkResult result) : result(result) {{}}
+      
+      operator bool() const
+      {{
+        return result == VK_SUCCESS;
+      }}
     }};
     
     struct VulkanFunctionPointer
     {{
-        void (*callback)() {{}};
-    
-        VulkanFunctionPointer(void (*callback)()) : callback(callback) {{}}
-    
-        operator bool() const
-        {{
-            return callback != nullptr;
-        }}
+      void (*callback)() {{}};
+
+      VulkanFunctionPointer(void (*callback)()) : callback(callback) {{}}
+
+      operator bool() const
+      {{
+        return callback != nullptr;
+      }}
     }};
     
     void {init_function_name}(VkDevice device);
@@ -116,8 +116,12 @@ if __name__ == '__main__':
     implementation_file = dedent(f"""\
     #include "{file_name}.h"
     
+    #include "vulkan_function_table.h"
+    
     namespace {namespace}
     {{
+    
+    using namespace loader;
     
     // clang-format off
     
@@ -128,7 +132,7 @@ if __name__ == '__main__':
     
     void {init_function_name}(VkDevice device)
     {{
-        {device_var_name} = device;
+      {device_var_name} = device;
     }}
     
     """)
@@ -138,10 +142,10 @@ if __name__ == '__main__':
     command_recorder_class = dedent(f"""\
     class VulkanCommandRecorder {{
     private:
-        VkCommandBuffer _command_buffer {{ VK_NULL_HANDLE }};
+      VkCommandBuffer _command_buffer {{ VK_NULL_HANDLE }};
         
     public:
-        VulkanCommandRecorder(VkCommandBuffer command_buffer);
+      VulkanCommandRecorder(VkCommandBuffer command_buffer);
         
     """)
 
@@ -182,9 +186,9 @@ if __name__ == '__main__':
                 function['tags'].append('command_buffer')
                 function['original_function_name'] = function['function_name']
                 if function['function_name'] in special_functions_vk_cmd_functions:
-                    function['name'] = function['function_name'][2:].replace('CommandBuffer', '')
+                    function['function_name'] = function['function_name'][2:].replace('CommandBuffer', '')
                 else:
-                    function['name'] = function['function_name'].replace('vkCmd', '')
+                    function['function_name'] = function['function_name'].replace('vkCmd', '')
 
         # Convert return type
         if function['return_type'] != 'void':
@@ -199,7 +203,7 @@ if __name__ == '__main__':
         parameters_str = ', '.join([f'{parameter["type"]} {parameter["name"]}' for parameter in parameters])
         signature = f'{function["return_type"]} {function["function_name"]}({parameters_str});'
         if 'command_buffer' in function['tags']:
-            command_recorder_class += f'    {signature[:-1]} const noexcept;\n\n'
+            command_recorder_class += f'  {signature[:-1]} const noexcept;\n\n'
         else:
             header_file += f'{signature}\n\n'
 
@@ -209,36 +213,39 @@ if __name__ == '__main__':
             implementation = ""
             if len(function['tags']) == 0 or function['tags'] == ['device_bound']:
                 call_arguments_str = ', '.join(function['call_arguments'])
-                implementation += f'return ::{function["function_name"]}({call_arguments_str});'
+                implementation += f'return GetFunctionTable().{function["function_name"]}({call_arguments_str});'
             elif 'count_query' in function['tags']:
                 call_arguments_str = ', '.join(function['call_arguments'])
+                implementation += f'const auto& fp = GetFunctionTable().{function["function_name"]};\n'
                 implementation += f'uint32_t count = 0;\n'
-                implementation += f'::{function["function_name"]}({call_arguments_str}, &count, nullptr);\n'
+                implementation += f'fp({call_arguments_str}, &count, nullptr);\n'
                 implementation += f'{function["return_type"]} result;\n'
                 implementation += f'result.value.resize(count);\n'
                 if function['original_return_type'] != 'void':
                     implementation += 'result.result = '
-                implementation += f'::{function["function_name"]}({call_arguments_str}, &count, result.value.data());\n'
+                implementation += f'fp({call_arguments_str}, &count, result.value.data());\n'
                 implementation += f'return result;'
 
-            implementation = indent(implementation, '    ')
+            implementation = indent(implementation, '  ')
 
             implementation_end = '\n}\n\n'
             implementation_file += implementation_start + implementation + implementation_end
         else:
-            command_recorder_implementation += f'{function["return_type"]}  ' \
-                                               f'VulkanCommandRecorder::{function["function_name"]}(' \
-                                               f'{parameters_str}) const noexcept\n{{\n'
+            command_recorder_implementation += f'{function["return_type"]} ' \
+                                               f'VulkanCommandRecorder::' \
+                                               f'{function["function_name"].replace("vkCmd","")}' \
+                                               f'({parameters_str}) const noexcept\n{{\n'
             call_arguments_str = ', '.join(function['call_arguments'])
             if function['return_type'] == 'void':
-                command_recorder_implementation += f'    ::{function["function_name"]}({call_arguments_str});\n'
+                command_recorder_implementation += f'  GetFunctionTable().{function["original_function_name"]}' \
+                                                   f'({call_arguments_str});\n'
             else:
-                command_recorder_implementation += f'    return ::{function["function_name"]}({call_arguments_str});\n'
+                command_recorder_implementation += f' return GetFunctionTable().{function["original_function_name"]}' \
+                                                   f'({call_arguments_str});\n'
             command_recorder_implementation += '}\n\n'
 
     # Append command recorder class to header file
     command_recorder_class += '};\n\n'
-    command_recorder_implementation += '}\n'
     header_file += command_recorder_class
     implementation_file += command_recorder_implementation
 
