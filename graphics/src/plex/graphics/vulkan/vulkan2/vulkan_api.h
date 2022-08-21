@@ -1,60 +1,25 @@
 #ifndef PLEX_GRAPHICS_VULKAN_API_H
 #define PLEX_GRAPHICS_VULKAN_API_H
 
+#include "vulkan_api_helpers.h"
+
 #include <vulkan/vulkan_core.h>
 
 #include <vector>
 
-namespace plex::vkapi
+namespace plex::graphics::vkapi
 {
 
 // clang-format off
 
-template<typename T>
-struct VulkanResultWithValue
-{
-  VkResult result { VK_SUCCESS };
-  T value {};
+VulkanResult CreateInstance(const VkApplicationInfo& app_info,
+const std::vector<const char*>& extensions,
+const std::vector<const char*>& layers,
+const void* create_info_extension)
 
-  VulkanResultWithValue(T&& value = {}) : value(std::move(value)) {}
+VulkanResult UseDevice(VkDevice device);
 
-  operator bool() const
-  {
-    return result == VK_SUCCESS;
-  }
-};
-
-struct VulkanResult
-{
-  VkResult result;
-
-  VulkanResult(VkResult result) : result(result) {}
-
-  operator bool() const
-  {
-    return result == VK_SUCCESS;
-  }
-};
-
-struct VulkanFunctionPointer
-{
-  void (*callback)() {};
-
-  VulkanFunctionPointer(void (*callback)()) : callback(callback) {}
-
-  operator bool() const
-  {
-    return callback != nullptr;
-  }
-};
-
-void InitVulkanApi(VkDevice device);
-
-VulkanResult vkCreateInstance(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkInstance* pInstance);
-
-void vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks* pAllocator);
-
-VulkanResultWithValue<std::vector<VkPhysicalDevice>> vkEnumeratePhysicalDevices(VkInstance instance);
+VulkanResult vkEnumeratePhysicalDevices(uint32_t* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
 
 void vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures);
 
@@ -68,13 +33,11 @@ VulkanResultWithValue<std::vector<VkQueueFamilyProperties>> vkGetPhysicalDeviceQ
 
 void vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties);
 
-VulkanFunctionPointer vkGetInstanceProcAddr(VkInstance instance, const char* pName);
+VulkanFunctionPointer vkGetInstanceProcAddr(const char* pName);
 
 VulkanFunctionPointer vkGetDeviceProcAddr(const char* pName);
 
 VulkanResult vkCreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDevice* pDevice);
-
-void vkDestroyDevice(const VkAllocationCallbacks* pAllocator);
 
 VulkanResultWithValue<std::vector<VkExtensionProperties>> vkEnumerateInstanceExtensionProperties(const char* pLayerName);
 
@@ -238,7 +201,7 @@ VulkanResult vkBindImageMemory2(uint32_t bindInfoCount, const VkBindImageMemoryI
 
 void vkGetDeviceGroupPeerMemoryFeatures(uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags* pPeerMemoryFeatures);
 
-VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> vkEnumeratePhysicalDeviceGroups(VkInstance instance);
+VulkanResult vkEnumeratePhysicalDeviceGroups(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties);
 
 void vkGetImageMemoryRequirements2(const VkImageMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements);
 
@@ -316,7 +279,7 @@ void vkGetDeviceImageMemoryRequirements(const VkDeviceImageMemoryRequirements* p
 
 void vkGetDeviceImageSparseMemoryRequirements(const VkDeviceImageMemoryRequirements* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements);
 
-void vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator);
+void vkDestroySurfaceKHR(VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator);
 
 VulkanResult vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkSurfaceKHR surface, VkBool32* pSupported);
 
@@ -356,7 +319,7 @@ VulkanResult vkCreateDisplayModeKHR(VkPhysicalDevice physicalDevice, VkDisplayKH
 
 VulkanResult vkGetDisplayPlaneCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkDisplayModeKHR mode, uint32_t planeIndex, VkDisplayPlaneCapabilitiesKHR* pCapabilities);
 
-VulkanResult vkCreateDisplayPlaneSurfaceKHR(VkInstance instance, const VkDisplaySurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
+VulkanResult vkCreateDisplayPlaneSurfaceKHR(const VkDisplaySurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 
 VulkanResult vkCreateSharedSwapchainsKHR(uint32_t swapchainCount, const VkSwapchainCreateInfoKHR* pCreateInfos, const VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchains);
 
@@ -378,7 +341,7 @@ void vkGetDeviceGroupPeerMemoryFeaturesKHR(uint32_t heapIndex, uint32_t localDev
 
 void vkTrimCommandPoolKHR(VkCommandPool commandPool, VkCommandPoolTrimFlags flags);
 
-VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance);
+VulkanResult vkEnumeratePhysicalDeviceGroupsKHR(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties);
 
 void vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo* pExternalBufferInfo, VkExternalBufferProperties* pExternalBufferProperties);
 
@@ -486,11 +449,11 @@ void vkGetDeviceImageMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements
 
 void vkGetDeviceImageSparseMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements);
 
-VulkanResult vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback);
+VulkanResult vkCreateDebugReportCallbackEXT(const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback);
 
-void vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator);
+void vkDestroyDebugReportCallbackEXT(VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator);
 
-void vkDebugReportMessageEXT(VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage);
+void vkDebugReportMessageEXT(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage);
 
 VulkanResult vkDebugMarkerSetObjectTagEXT(const VkDebugMarkerObjectTagInfoEXT* pTagInfo);
 
@@ -540,11 +503,11 @@ void vkQueueEndDebugUtilsLabelEXT(VkQueue queue);
 
 void vkQueueInsertDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT* pLabelInfo);
 
-VulkanResult vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger);
+VulkanResult vkCreateDebugUtilsMessengerEXT(const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger);
 
-void vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks* pAllocator);
+void vkDestroyDebugUtilsMessengerEXT(VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks* pAllocator);
 
-void vkSubmitDebugUtilsMessageEXT(VkInstance instance, VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData);
+void vkSubmitDebugUtilsMessageEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData);
 
 void vkGetPhysicalDeviceMultisamplePropertiesEXT(VkPhysicalDevice physicalDevice, VkSampleCountFlagBits samples, VkMultisamplePropertiesEXT* pMultisampleProperties);
 
@@ -606,7 +569,7 @@ VulkanResultWithValue<std::vector<VkCooperativeMatrixPropertiesNV>> vkGetPhysica
 
 VulkanResultWithValue<std::vector<VkFramebufferMixedSamplesCombinationNV>> vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV(VkPhysicalDevice physicalDevice);
 
-VulkanResult vkCreateHeadlessSurfaceEXT(VkInstance instance, const VkHeadlessSurfaceCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
+VulkanResult vkCreateHeadlessSurfaceEXT(const VkHeadlessSurfaceCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 
 void vkResetQueryPoolEXT(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount);
 
@@ -1037,6 +1000,6 @@ public:
 
 // clang-format on
 
-} // namespace plex::vkapi
+} // namespace plex::graphics::vkapi
 
 #endif // PLEX_GRAPHICS_VULKAN_API_H

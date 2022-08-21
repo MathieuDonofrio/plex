@@ -22,7 +22,7 @@ using SECURITY_ATTRIBUTES = struct _SECURITY_ATTRIBUTES; // NOLINT
 
 // clang-format off
 
-namespace plex::vkapi::loader
+namespace plex::graphics::vkapi::loader
 {
 
 struct FunctionTable;
@@ -566,7 +566,7 @@ struct FunctionTable
   PFN_vkGetDeviceGroupSurfacePresentModes2EXT vkGetDeviceGroupSurfacePresentModes2EXT { nullptr };
 };
 
-} // namespace plex::vkapi::loader
+} // namespace plex::graphics::vkapi::loader
 
 // clang-format on
 

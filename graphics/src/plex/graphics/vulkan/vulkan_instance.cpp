@@ -30,12 +30,8 @@ VulkanInstance::~VulkanInstance()
 #ifndef NDEBUG
   DestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
   debug_messenger_ = nullptr;
+  LOG_INFO("Vulkan debug messenger destroyed");
 #endif
-
-  vkDestroyInstance(instance_, nullptr);
-  instance_ = VK_NULL_HANDLE;
-
-  LOG_INFO("Vulkan instance destroyed");
 }
 
 bool VulkanInstance::Initialize(VulkanCapableWindow* window)
@@ -241,6 +237,8 @@ VkResult VulkanInstance::CreateDebugUtilsMessengerEXT(VkInstance handle,
 void VulkanInstance::DestroyDebugUtilsMessengerEXT(
   VkInstance handle, VkDebugUtilsMessengerEXT debug_messenger, const VkAllocationCallbacks* allocator_ptr)
 {
+  vkapi::vkDestroyDebugUtilsMessengerEXT(handle, debug_messenger, allocator_ptr);
+
   auto destroy_debug_messenger_function = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
     vkGetInstanceProcAddr(handle, "vkDestroyDebugUtilsMessengerEXT"));
 

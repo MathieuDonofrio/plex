@@ -1,43 +1,30 @@
 #include "vulkan_api.h"
 
 #include "vulkan_function_table.h"
+#include "vulkan_loader.h"
 
-namespace plex::vkapi
+namespace plex::graphics::vkapi
 {
 
 using namespace loader;
 
 // clang-format off
 
-namespace
-{
-static VkDevice device_ = VK_NULL_HANDLE; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-} // namespace
-
-void InitVulkanApi(VkDevice device)
-{
-  device_ = device;
+VulkanResult CreateInstance(const VkApplicationInfo& app_info,
+const std::vector<const char*>& extensions,
+const std::vector<const char*>& layers,
+const void* create_info_extension) {
+  loader::CreateInstance(app_info, extensions, layers, create_info_extension);
 }
 
-VulkanResult vkCreateInstance(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkInstance* pInstance)
+VulkanResult UseDevice(VkDevice device)
 {
-  return GetFunctionTable().vkCreateInstance(pCreateInfo, pAllocator, pInstance);
-}
+    return loader::UseDevice(device);
+};
 
-void vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks* pAllocator)
+VulkanResult vkEnumeratePhysicalDevices(uint32_t* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices)
 {
-  return GetFunctionTable().vkDestroyInstance(instance, pAllocator);
-}
-
-VulkanResultWithValue<std::vector<VkPhysicalDevice>> vkEnumeratePhysicalDevices(VkInstance instance)
-{
-  const auto& fp = GetFunctionTable().vkEnumeratePhysicalDevices;
-  uint32_t count = 0;
-  fp(instance, &count, nullptr);
-  VulkanResultWithValue<std::vector<VkPhysicalDevice>> result;
-  result.value.resize(count);
-  result.result = fp(instance, &count, result.value.data());
-  return result;
+  return GetFunctionTable().vkEnumeratePhysicalDevices(GetInstance(), pPhysicalDeviceCount, pPhysicalDevices);
 }
 
 void vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures)
@@ -76,24 +63,19 @@ void vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice, VkPhys
   return GetFunctionTable().vkGetPhysicalDeviceMemoryProperties(physicalDevice, pMemoryProperties);
 }
 
-VulkanFunctionPointer vkGetInstanceProcAddr(VkInstance instance, const char* pName)
+VulkanFunctionPointer vkGetInstanceProcAddr(const char* pName)
 {
-  return GetFunctionTable().vkGetInstanceProcAddr(instance, pName);
+  return GetFunctionTable().vkGetInstanceProcAddr(GetInstance(), pName);
 }
 
 VulkanFunctionPointer vkGetDeviceProcAddr(const char* pName)
 {
-  return GetFunctionTable().vkGetDeviceProcAddr(device_, pName);
+  return GetFunctionTable().vkGetDeviceProcAddr(GetDevice(), pName);
 }
 
 VulkanResult vkCreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDevice* pDevice)
 {
   return GetFunctionTable().vkCreateDevice(physicalDevice, pCreateInfo, pAllocator, pDevice);
-}
-
-void vkDestroyDevice(const VkAllocationCallbacks* pAllocator)
-{
-  return GetFunctionTable().vkDestroyDevice(device_, pAllocator);
 }
 
 VulkanResultWithValue<std::vector<VkExtensionProperties>> vkEnumerateInstanceExtensionProperties(const char* pLayerName)
@@ -136,7 +118,7 @@ VulkanResultWithValue<std::vector<VkLayerProperties>> vkEnumerateDeviceLayerProp
 
 void vkGetDeviceQueue(uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue)
 {
-  return GetFunctionTable().vkGetDeviceQueue(device_, queueFamilyIndex, queueIndex, pQueue);
+  return GetFunctionTable().vkGetDeviceQueue(GetDevice(), queueFamilyIndex, queueIndex, pQueue);
 }
 
 VulkanResult vkQueueSubmit(VkQueue queue, uint32_t submitCount, const VkSubmitInfo* pSubmits, VkFence fence)
@@ -151,67 +133,67 @@ VulkanResult vkQueueWaitIdle(VkQueue queue)
 
 VulkanResult vkDeviceWaitIdle()
 {
-  return GetFunctionTable().vkDeviceWaitIdle(device_);
+  return GetFunctionTable().vkDeviceWaitIdle(GetDevice());
 }
 
 VulkanResult vkAllocateMemory(const VkMemoryAllocateInfo* pAllocateInfo, const VkAllocationCallbacks* pAllocator, VkDeviceMemory* pMemory)
 {
-  return GetFunctionTable().vkAllocateMemory(device_, pAllocateInfo, pAllocator, pMemory);
+  return GetFunctionTable().vkAllocateMemory(GetDevice(), pAllocateInfo, pAllocator, pMemory);
 }
 
 void vkFreeMemory(VkDeviceMemory memory, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkFreeMemory(device_, memory, pAllocator);
+  return GetFunctionTable().vkFreeMemory(GetDevice(), memory, pAllocator);
 }
 
 VulkanResult vkMapMemory(VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags, void** ppData)
 {
-  return GetFunctionTable().vkMapMemory(device_, memory, offset, size, flags, ppData);
+  return GetFunctionTable().vkMapMemory(GetDevice(), memory, offset, size, flags, ppData);
 }
 
 void vkUnmapMemory(VkDeviceMemory memory)
 {
-  return GetFunctionTable().vkUnmapMemory(device_, memory);
+  return GetFunctionTable().vkUnmapMemory(GetDevice(), memory);
 }
 
 VulkanResult vkFlushMappedMemoryRanges(uint32_t memoryRangeCount, const VkMappedMemoryRange* pMemoryRanges)
 {
-  return GetFunctionTable().vkFlushMappedMemoryRanges(device_, memoryRangeCount, pMemoryRanges);
+  return GetFunctionTable().vkFlushMappedMemoryRanges(GetDevice(), memoryRangeCount, pMemoryRanges);
 }
 
 VulkanResult vkInvalidateMappedMemoryRanges(uint32_t memoryRangeCount, const VkMappedMemoryRange* pMemoryRanges)
 {
-  return GetFunctionTable().vkInvalidateMappedMemoryRanges(device_, memoryRangeCount, pMemoryRanges);
+  return GetFunctionTable().vkInvalidateMappedMemoryRanges(GetDevice(), memoryRangeCount, pMemoryRanges);
 }
 
 void vkGetDeviceMemoryCommitment(VkDeviceMemory memory, VkDeviceSize* pCommittedMemoryInBytes)
 {
-  return GetFunctionTable().vkGetDeviceMemoryCommitment(device_, memory, pCommittedMemoryInBytes);
+  return GetFunctionTable().vkGetDeviceMemoryCommitment(GetDevice(), memory, pCommittedMemoryInBytes);
 }
 
 VulkanResult vkBindBufferMemory(VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset)
 {
-  return GetFunctionTable().vkBindBufferMemory(device_, buffer, memory, memoryOffset);
+  return GetFunctionTable().vkBindBufferMemory(GetDevice(), buffer, memory, memoryOffset);
 }
 
 VulkanResult vkBindImageMemory(VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset)
 {
-  return GetFunctionTable().vkBindImageMemory(device_, image, memory, memoryOffset);
+  return GetFunctionTable().vkBindImageMemory(GetDevice(), image, memory, memoryOffset);
 }
 
 void vkGetBufferMemoryRequirements(VkBuffer buffer, VkMemoryRequirements* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetBufferMemoryRequirements(device_, buffer, pMemoryRequirements);
+  return GetFunctionTable().vkGetBufferMemoryRequirements(GetDevice(), buffer, pMemoryRequirements);
 }
 
 void vkGetImageMemoryRequirements(VkImage image, VkMemoryRequirements* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetImageMemoryRequirements(device_, image, pMemoryRequirements);
+  return GetFunctionTable().vkGetImageMemoryRequirements(GetDevice(), image, pMemoryRequirements);
 }
 
 void vkGetImageSparseMemoryRequirements(VkImage image, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements* pSparseMemoryRequirements)
 {
-  return GetFunctionTable().vkGetImageSparseMemoryRequirements(device_, image, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  return GetFunctionTable().vkGetImageSparseMemoryRequirements(GetDevice(), image, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
 }
 
 VulkanResultWithValue<std::vector<VkSparseImageFormatProperties>> vkGetPhysicalDeviceSparseImageFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkImageType type, VkSampleCountFlagBits samples, VkImageUsageFlags usage, VkImageTiling tiling)
@@ -232,277 +214,277 @@ VulkanResult vkQueueBindSparse(VkQueue queue, uint32_t bindInfoCount, const VkBi
 
 VulkanResult vkCreateFence(const VkFenceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkFence* pFence)
 {
-  return GetFunctionTable().vkCreateFence(device_, pCreateInfo, pAllocator, pFence);
+  return GetFunctionTable().vkCreateFence(GetDevice(), pCreateInfo, pAllocator, pFence);
 }
 
 void vkDestroyFence(VkFence fence, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyFence(device_, fence, pAllocator);
+  return GetFunctionTable().vkDestroyFence(GetDevice(), fence, pAllocator);
 }
 
 VulkanResult vkResetFences(uint32_t fenceCount, const VkFence* pFences)
 {
-  return GetFunctionTable().vkResetFences(device_, fenceCount, pFences);
+  return GetFunctionTable().vkResetFences(GetDevice(), fenceCount, pFences);
 }
 
 VulkanResult vkGetFenceStatus(VkFence fence)
 {
-  return GetFunctionTable().vkGetFenceStatus(device_, fence);
+  return GetFunctionTable().vkGetFenceStatus(GetDevice(), fence);
 }
 
 VulkanResult vkWaitForFences(uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout)
 {
-  return GetFunctionTable().vkWaitForFences(device_, fenceCount, pFences, waitAll, timeout);
+  return GetFunctionTable().vkWaitForFences(GetDevice(), fenceCount, pFences, waitAll, timeout);
 }
 
 VulkanResult vkCreateSemaphore(const VkSemaphoreCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSemaphore* pSemaphore)
 {
-  return GetFunctionTable().vkCreateSemaphore(device_, pCreateInfo, pAllocator, pSemaphore);
+  return GetFunctionTable().vkCreateSemaphore(GetDevice(), pCreateInfo, pAllocator, pSemaphore);
 }
 
 void vkDestroySemaphore(VkSemaphore semaphore, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroySemaphore(device_, semaphore, pAllocator);
+  return GetFunctionTable().vkDestroySemaphore(GetDevice(), semaphore, pAllocator);
 }
 
 VulkanResult vkCreateEvent(const VkEventCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkEvent* pEvent)
 {
-  return GetFunctionTable().vkCreateEvent(device_, pCreateInfo, pAllocator, pEvent);
+  return GetFunctionTable().vkCreateEvent(GetDevice(), pCreateInfo, pAllocator, pEvent);
 }
 
 void vkDestroyEvent(VkEvent event, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyEvent(device_, event, pAllocator);
+  return GetFunctionTable().vkDestroyEvent(GetDevice(), event, pAllocator);
 }
 
 VulkanResult vkGetEventStatus(VkEvent event)
 {
-  return GetFunctionTable().vkGetEventStatus(device_, event);
+  return GetFunctionTable().vkGetEventStatus(GetDevice(), event);
 }
 
 VulkanResult vkSetEvent(VkEvent event)
 {
-  return GetFunctionTable().vkSetEvent(device_, event);
+  return GetFunctionTable().vkSetEvent(GetDevice(), event);
 }
 
 VulkanResult vkResetEvent(VkEvent event)
 {
-  return GetFunctionTable().vkResetEvent(device_, event);
+  return GetFunctionTable().vkResetEvent(GetDevice(), event);
 }
 
 VulkanResult vkCreateQueryPool(const VkQueryPoolCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkQueryPool* pQueryPool)
 {
-  return GetFunctionTable().vkCreateQueryPool(device_, pCreateInfo, pAllocator, pQueryPool);
+  return GetFunctionTable().vkCreateQueryPool(GetDevice(), pCreateInfo, pAllocator, pQueryPool);
 }
 
 void vkDestroyQueryPool(VkQueryPool queryPool, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyQueryPool(device_, queryPool, pAllocator);
+  return GetFunctionTable().vkDestroyQueryPool(GetDevice(), queryPool, pAllocator);
 }
 
 VulkanResult vkGetQueryPoolResults(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount, size_t dataSize, void* pData, VkDeviceSize stride, VkQueryResultFlags flags)
 {
-  return GetFunctionTable().vkGetQueryPoolResults(device_, queryPool, firstQuery, queryCount, dataSize, pData, stride, flags);
+  return GetFunctionTable().vkGetQueryPoolResults(GetDevice(), queryPool, firstQuery, queryCount, dataSize, pData, stride, flags);
 }
 
 VulkanResult vkCreateBuffer(const VkBufferCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkBuffer* pBuffer)
 {
-  return GetFunctionTable().vkCreateBuffer(device_, pCreateInfo, pAllocator, pBuffer);
+  return GetFunctionTable().vkCreateBuffer(GetDevice(), pCreateInfo, pAllocator, pBuffer);
 }
 
 void vkDestroyBuffer(VkBuffer buffer, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyBuffer(device_, buffer, pAllocator);
+  return GetFunctionTable().vkDestroyBuffer(GetDevice(), buffer, pAllocator);
 }
 
 VulkanResult vkCreateBufferView(const VkBufferViewCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkBufferView* pView)
 {
-  return GetFunctionTable().vkCreateBufferView(device_, pCreateInfo, pAllocator, pView);
+  return GetFunctionTable().vkCreateBufferView(GetDevice(), pCreateInfo, pAllocator, pView);
 }
 
 void vkDestroyBufferView(VkBufferView bufferView, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyBufferView(device_, bufferView, pAllocator);
+  return GetFunctionTable().vkDestroyBufferView(GetDevice(), bufferView, pAllocator);
 }
 
 VulkanResult vkCreateImage(const VkImageCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkImage* pImage)
 {
-  return GetFunctionTable().vkCreateImage(device_, pCreateInfo, pAllocator, pImage);
+  return GetFunctionTable().vkCreateImage(GetDevice(), pCreateInfo, pAllocator, pImage);
 }
 
 void vkDestroyImage(VkImage image, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyImage(device_, image, pAllocator);
+  return GetFunctionTable().vkDestroyImage(GetDevice(), image, pAllocator);
 }
 
 void vkGetImageSubresourceLayout(VkImage image, const VkImageSubresource* pSubresource, VkSubresourceLayout* pLayout)
 {
-  return GetFunctionTable().vkGetImageSubresourceLayout(device_, image, pSubresource, pLayout);
+  return GetFunctionTable().vkGetImageSubresourceLayout(GetDevice(), image, pSubresource, pLayout);
 }
 
 VulkanResult vkCreateImageView(const VkImageViewCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkImageView* pView)
 {
-  return GetFunctionTable().vkCreateImageView(device_, pCreateInfo, pAllocator, pView);
+  return GetFunctionTable().vkCreateImageView(GetDevice(), pCreateInfo, pAllocator, pView);
 }
 
 void vkDestroyImageView(VkImageView imageView, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyImageView(device_, imageView, pAllocator);
+  return GetFunctionTable().vkDestroyImageView(GetDevice(), imageView, pAllocator);
 }
 
 VulkanResult vkCreateShaderModule(const VkShaderModuleCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkShaderModule* pShaderModule)
 {
-  return GetFunctionTable().vkCreateShaderModule(device_, pCreateInfo, pAllocator, pShaderModule);
+  return GetFunctionTable().vkCreateShaderModule(GetDevice(), pCreateInfo, pAllocator, pShaderModule);
 }
 
 void vkDestroyShaderModule(VkShaderModule shaderModule, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyShaderModule(device_, shaderModule, pAllocator);
+  return GetFunctionTable().vkDestroyShaderModule(GetDevice(), shaderModule, pAllocator);
 }
 
 VulkanResult vkCreatePipelineCache(const VkPipelineCacheCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkPipelineCache* pPipelineCache)
 {
-  return GetFunctionTable().vkCreatePipelineCache(device_, pCreateInfo, pAllocator, pPipelineCache);
+  return GetFunctionTable().vkCreatePipelineCache(GetDevice(), pCreateInfo, pAllocator, pPipelineCache);
 }
 
 void vkDestroyPipelineCache(VkPipelineCache pipelineCache, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyPipelineCache(device_, pipelineCache, pAllocator);
+  return GetFunctionTable().vkDestroyPipelineCache(GetDevice(), pipelineCache, pAllocator);
 }
 
 VulkanResult vkGetPipelineCacheData(VkPipelineCache pipelineCache, size_t* pDataSize, void* pData)
 {
-  return GetFunctionTable().vkGetPipelineCacheData(device_, pipelineCache, pDataSize, pData);
+  return GetFunctionTable().vkGetPipelineCacheData(GetDevice(), pipelineCache, pDataSize, pData);
 }
 
 VulkanResult vkMergePipelineCaches(VkPipelineCache dstCache, uint32_t srcCacheCount, const VkPipelineCache* pSrcCaches)
 {
-  return GetFunctionTable().vkMergePipelineCaches(device_, dstCache, srcCacheCount, pSrcCaches);
+  return GetFunctionTable().vkMergePipelineCaches(GetDevice(), dstCache, srcCacheCount, pSrcCaches);
 }
 
 VulkanResult vkCreateGraphicsPipelines(VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkGraphicsPipelineCreateInfo* pCreateInfos, const VkAllocationCallbacks* pAllocator, VkPipeline* pPipelines)
 {
-  return GetFunctionTable().vkCreateGraphicsPipelines(device_, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
+  return GetFunctionTable().vkCreateGraphicsPipelines(GetDevice(), pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
 }
 
 VulkanResult vkCreateComputePipelines(VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo* pCreateInfos, const VkAllocationCallbacks* pAllocator, VkPipeline* pPipelines)
 {
-  return GetFunctionTable().vkCreateComputePipelines(device_, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
+  return GetFunctionTable().vkCreateComputePipelines(GetDevice(), pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
 }
 
 void vkDestroyPipeline(VkPipeline pipeline, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyPipeline(device_, pipeline, pAllocator);
+  return GetFunctionTable().vkDestroyPipeline(GetDevice(), pipeline, pAllocator);
 }
 
 VulkanResult vkCreatePipelineLayout(const VkPipelineLayoutCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkPipelineLayout* pPipelineLayout)
 {
-  return GetFunctionTable().vkCreatePipelineLayout(device_, pCreateInfo, pAllocator, pPipelineLayout);
+  return GetFunctionTable().vkCreatePipelineLayout(GetDevice(), pCreateInfo, pAllocator, pPipelineLayout);
 }
 
 void vkDestroyPipelineLayout(VkPipelineLayout pipelineLayout, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyPipelineLayout(device_, pipelineLayout, pAllocator);
+  return GetFunctionTable().vkDestroyPipelineLayout(GetDevice(), pipelineLayout, pAllocator);
 }
 
 VulkanResult vkCreateSampler(const VkSamplerCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSampler* pSampler)
 {
-  return GetFunctionTable().vkCreateSampler(device_, pCreateInfo, pAllocator, pSampler);
+  return GetFunctionTable().vkCreateSampler(GetDevice(), pCreateInfo, pAllocator, pSampler);
 }
 
 void vkDestroySampler(VkSampler sampler, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroySampler(device_, sampler, pAllocator);
+  return GetFunctionTable().vkDestroySampler(GetDevice(), sampler, pAllocator);
 }
 
 VulkanResult vkCreateDescriptorSetLayout(const VkDescriptorSetLayoutCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDescriptorSetLayout* pSetLayout)
 {
-  return GetFunctionTable().vkCreateDescriptorSetLayout(device_, pCreateInfo, pAllocator, pSetLayout);
+  return GetFunctionTable().vkCreateDescriptorSetLayout(GetDevice(), pCreateInfo, pAllocator, pSetLayout);
 }
 
 void vkDestroyDescriptorSetLayout(VkDescriptorSetLayout descriptorSetLayout, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyDescriptorSetLayout(device_, descriptorSetLayout, pAllocator);
+  return GetFunctionTable().vkDestroyDescriptorSetLayout(GetDevice(), descriptorSetLayout, pAllocator);
 }
 
 VulkanResult vkCreateDescriptorPool(const VkDescriptorPoolCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDescriptorPool* pDescriptorPool)
 {
-  return GetFunctionTable().vkCreateDescriptorPool(device_, pCreateInfo, pAllocator, pDescriptorPool);
+  return GetFunctionTable().vkCreateDescriptorPool(GetDevice(), pCreateInfo, pAllocator, pDescriptorPool);
 }
 
 void vkDestroyDescriptorPool(VkDescriptorPool descriptorPool, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyDescriptorPool(device_, descriptorPool, pAllocator);
+  return GetFunctionTable().vkDestroyDescriptorPool(GetDevice(), descriptorPool, pAllocator);
 }
 
 VulkanResult vkResetDescriptorPool(VkDescriptorPool descriptorPool, VkDescriptorPoolResetFlags flags)
 {
-  return GetFunctionTable().vkResetDescriptorPool(device_, descriptorPool, flags);
+  return GetFunctionTable().vkResetDescriptorPool(GetDevice(), descriptorPool, flags);
 }
 
 VulkanResult vkAllocateDescriptorSets(const VkDescriptorSetAllocateInfo* pAllocateInfo, VkDescriptorSet* pDescriptorSets)
 {
-  return GetFunctionTable().vkAllocateDescriptorSets(device_, pAllocateInfo, pDescriptorSets);
+  return GetFunctionTable().vkAllocateDescriptorSets(GetDevice(), pAllocateInfo, pDescriptorSets);
 }
 
 VulkanResult vkFreeDescriptorSets(VkDescriptorPool descriptorPool, uint32_t descriptorSetCount, const VkDescriptorSet* pDescriptorSets)
 {
-  return GetFunctionTable().vkFreeDescriptorSets(device_, descriptorPool, descriptorSetCount, pDescriptorSets);
+  return GetFunctionTable().vkFreeDescriptorSets(GetDevice(), descriptorPool, descriptorSetCount, pDescriptorSets);
 }
 
 void vkUpdateDescriptorSets(uint32_t descriptorWriteCount, const VkWriteDescriptorSet* pDescriptorWrites, uint32_t descriptorCopyCount, const VkCopyDescriptorSet* pDescriptorCopies)
 {
-  return GetFunctionTable().vkUpdateDescriptorSets(device_, descriptorWriteCount, pDescriptorWrites, descriptorCopyCount, pDescriptorCopies);
+  return GetFunctionTable().vkUpdateDescriptorSets(GetDevice(), descriptorWriteCount, pDescriptorWrites, descriptorCopyCount, pDescriptorCopies);
 }
 
 VulkanResult vkCreateFramebuffer(const VkFramebufferCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkFramebuffer* pFramebuffer)
 {
-  return GetFunctionTable().vkCreateFramebuffer(device_, pCreateInfo, pAllocator, pFramebuffer);
+  return GetFunctionTable().vkCreateFramebuffer(GetDevice(), pCreateInfo, pAllocator, pFramebuffer);
 }
 
 void vkDestroyFramebuffer(VkFramebuffer framebuffer, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyFramebuffer(device_, framebuffer, pAllocator);
+  return GetFunctionTable().vkDestroyFramebuffer(GetDevice(), framebuffer, pAllocator);
 }
 
 VulkanResult vkCreateRenderPass(const VkRenderPassCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass)
 {
-  return GetFunctionTable().vkCreateRenderPass(device_, pCreateInfo, pAllocator, pRenderPass);
+  return GetFunctionTable().vkCreateRenderPass(GetDevice(), pCreateInfo, pAllocator, pRenderPass);
 }
 
 void vkDestroyRenderPass(VkRenderPass renderPass, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyRenderPass(device_, renderPass, pAllocator);
+  return GetFunctionTable().vkDestroyRenderPass(GetDevice(), renderPass, pAllocator);
 }
 
 void vkGetRenderAreaGranularity(VkRenderPass renderPass, VkExtent2D* pGranularity)
 {
-  return GetFunctionTable().vkGetRenderAreaGranularity(device_, renderPass, pGranularity);
+  return GetFunctionTable().vkGetRenderAreaGranularity(GetDevice(), renderPass, pGranularity);
 }
 
 VulkanResult vkCreateCommandPool(const VkCommandPoolCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkCommandPool* pCommandPool)
 {
-  return GetFunctionTable().vkCreateCommandPool(device_, pCreateInfo, pAllocator, pCommandPool);
+  return GetFunctionTable().vkCreateCommandPool(GetDevice(), pCreateInfo, pAllocator, pCommandPool);
 }
 
 void vkDestroyCommandPool(VkCommandPool commandPool, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyCommandPool(device_, commandPool, pAllocator);
+  return GetFunctionTable().vkDestroyCommandPool(GetDevice(), commandPool, pAllocator);
 }
 
 VulkanResult vkResetCommandPool(VkCommandPool commandPool, VkCommandPoolResetFlags flags)
 {
-  return GetFunctionTable().vkResetCommandPool(device_, commandPool, flags);
+  return GetFunctionTable().vkResetCommandPool(GetDevice(), commandPool, flags);
 }
 
 VulkanResult vkAllocateCommandBuffers(const VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers)
 {
-  return GetFunctionTable().vkAllocateCommandBuffers(device_, pAllocateInfo, pCommandBuffers);
+  return GetFunctionTable().vkAllocateCommandBuffers(GetDevice(), pAllocateInfo, pCommandBuffers);
 }
 
 void vkFreeCommandBuffers(VkCommandPool commandPool, uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers)
 {
-  return GetFunctionTable().vkFreeCommandBuffers(device_, commandPool, commandBufferCount, pCommandBuffers);
+  return GetFunctionTable().vkFreeCommandBuffers(GetDevice(), commandPool, commandBufferCount, pCommandBuffers);
 }
 
 VulkanResult vkEnumerateInstanceVersion(uint32_t* pApiVersion)
@@ -512,43 +494,37 @@ VulkanResult vkEnumerateInstanceVersion(uint32_t* pApiVersion)
 
 VulkanResult vkBindBufferMemory2(uint32_t bindInfoCount, const VkBindBufferMemoryInfo* pBindInfos)
 {
-  return GetFunctionTable().vkBindBufferMemory2(device_, bindInfoCount, pBindInfos);
+  return GetFunctionTable().vkBindBufferMemory2(GetDevice(), bindInfoCount, pBindInfos);
 }
 
 VulkanResult vkBindImageMemory2(uint32_t bindInfoCount, const VkBindImageMemoryInfo* pBindInfos)
 {
-  return GetFunctionTable().vkBindImageMemory2(device_, bindInfoCount, pBindInfos);
+  return GetFunctionTable().vkBindImageMemory2(GetDevice(), bindInfoCount, pBindInfos);
 }
 
 void vkGetDeviceGroupPeerMemoryFeatures(uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags* pPeerMemoryFeatures)
 {
-  return GetFunctionTable().vkGetDeviceGroupPeerMemoryFeatures(device_, heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
+  return GetFunctionTable().vkGetDeviceGroupPeerMemoryFeatures(GetDevice(), heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
 }
 
-VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> vkEnumeratePhysicalDeviceGroups(VkInstance instance)
+VulkanResult vkEnumeratePhysicalDeviceGroups(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties)
 {
-  const auto& fp = GetFunctionTable().vkEnumeratePhysicalDeviceGroups;
-  uint32_t count = 0;
-  fp(instance, &count, nullptr);
-  VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> result;
-  result.value.resize(count);
-  result.result = fp(instance, &count, result.value.data());
-  return result;
+  return GetFunctionTable().vkEnumeratePhysicalDeviceGroups(GetInstance(), pPhysicalDeviceGroupCount, pPhysicalDeviceGroupProperties);
 }
 
 void vkGetImageMemoryRequirements2(const VkImageMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetImageMemoryRequirements2(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetImageMemoryRequirements2(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 void vkGetBufferMemoryRequirements2(const VkBufferMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetBufferMemoryRequirements2(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetBufferMemoryRequirements2(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 void vkGetImageSparseMemoryRequirements2(const VkImageSparseMemoryRequirementsInfo2* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements)
 {
-  return GetFunctionTable().vkGetImageSparseMemoryRequirements2(device_, pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  return GetFunctionTable().vkGetImageSparseMemoryRequirements2(GetDevice(), pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
 }
 
 void vkGetPhysicalDeviceFeatures2(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures2* pFeatures)
@@ -600,37 +576,37 @@ VulkanResultWithValue<std::vector<VkSparseImageFormatProperties2>> vkGetPhysical
 
 void vkTrimCommandPool(VkCommandPool commandPool, VkCommandPoolTrimFlags flags)
 {
-  return GetFunctionTable().vkTrimCommandPool(device_, commandPool, flags);
+  return GetFunctionTable().vkTrimCommandPool(GetDevice(), commandPool, flags);
 }
 
 void vkGetDeviceQueue2(const VkDeviceQueueInfo2* pQueueInfo, VkQueue* pQueue)
 {
-  return GetFunctionTable().vkGetDeviceQueue2(device_, pQueueInfo, pQueue);
+  return GetFunctionTable().vkGetDeviceQueue2(GetDevice(), pQueueInfo, pQueue);
 }
 
 VulkanResult vkCreateSamplerYcbcrConversion(const VkSamplerYcbcrConversionCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSamplerYcbcrConversion* pYcbcrConversion)
 {
-  return GetFunctionTable().vkCreateSamplerYcbcrConversion(device_, pCreateInfo, pAllocator, pYcbcrConversion);
+  return GetFunctionTable().vkCreateSamplerYcbcrConversion(GetDevice(), pCreateInfo, pAllocator, pYcbcrConversion);
 }
 
 void vkDestroySamplerYcbcrConversion(VkSamplerYcbcrConversion ycbcrConversion, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroySamplerYcbcrConversion(device_, ycbcrConversion, pAllocator);
+  return GetFunctionTable().vkDestroySamplerYcbcrConversion(GetDevice(), ycbcrConversion, pAllocator);
 }
 
 VulkanResult vkCreateDescriptorUpdateTemplate(const VkDescriptorUpdateTemplateCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDescriptorUpdateTemplate* pDescriptorUpdateTemplate)
 {
-  return GetFunctionTable().vkCreateDescriptorUpdateTemplate(device_, pCreateInfo, pAllocator, pDescriptorUpdateTemplate);
+  return GetFunctionTable().vkCreateDescriptorUpdateTemplate(GetDevice(), pCreateInfo, pAllocator, pDescriptorUpdateTemplate);
 }
 
 void vkDestroyDescriptorUpdateTemplate(VkDescriptorUpdateTemplate descriptorUpdateTemplate, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyDescriptorUpdateTemplate(device_, descriptorUpdateTemplate, pAllocator);
+  return GetFunctionTable().vkDestroyDescriptorUpdateTemplate(GetDevice(), descriptorUpdateTemplate, pAllocator);
 }
 
 void vkUpdateDescriptorSetWithTemplate(VkDescriptorSet descriptorSet, VkDescriptorUpdateTemplate descriptorUpdateTemplate, const void* pData)
 {
-  return GetFunctionTable().vkUpdateDescriptorSetWithTemplate(device_, descriptorSet, descriptorUpdateTemplate, pData);
+  return GetFunctionTable().vkUpdateDescriptorSetWithTemplate(GetDevice(), descriptorSet, descriptorUpdateTemplate, pData);
 }
 
 void vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo* pExternalBufferInfo, VkExternalBufferProperties* pExternalBufferProperties)
@@ -650,47 +626,47 @@ void vkGetPhysicalDeviceExternalSemaphoreProperties(VkPhysicalDevice physicalDev
 
 void vkGetDescriptorSetLayoutSupport(const VkDescriptorSetLayoutCreateInfo* pCreateInfo, VkDescriptorSetLayoutSupport* pSupport)
 {
-  return GetFunctionTable().vkGetDescriptorSetLayoutSupport(device_, pCreateInfo, pSupport);
+  return GetFunctionTable().vkGetDescriptorSetLayoutSupport(GetDevice(), pCreateInfo, pSupport);
 }
 
 VulkanResult vkCreateRenderPass2(const VkRenderPassCreateInfo2* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass)
 {
-  return GetFunctionTable().vkCreateRenderPass2(device_, pCreateInfo, pAllocator, pRenderPass);
+  return GetFunctionTable().vkCreateRenderPass2(GetDevice(), pCreateInfo, pAllocator, pRenderPass);
 }
 
 void vkResetQueryPool(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount)
 {
-  return GetFunctionTable().vkResetQueryPool(device_, queryPool, firstQuery, queryCount);
+  return GetFunctionTable().vkResetQueryPool(GetDevice(), queryPool, firstQuery, queryCount);
 }
 
 VulkanResult vkGetSemaphoreCounterValue(VkSemaphore semaphore, uint64_t* pValue)
 {
-  return GetFunctionTable().vkGetSemaphoreCounterValue(device_, semaphore, pValue);
+  return GetFunctionTable().vkGetSemaphoreCounterValue(GetDevice(), semaphore, pValue);
 }
 
 VulkanResult vkWaitSemaphores(const VkSemaphoreWaitInfo* pWaitInfo, uint64_t timeout)
 {
-  return GetFunctionTable().vkWaitSemaphores(device_, pWaitInfo, timeout);
+  return GetFunctionTable().vkWaitSemaphores(GetDevice(), pWaitInfo, timeout);
 }
 
 VulkanResult vkSignalSemaphore(const VkSemaphoreSignalInfo* pSignalInfo)
 {
-  return GetFunctionTable().vkSignalSemaphore(device_, pSignalInfo);
+  return GetFunctionTable().vkSignalSemaphore(GetDevice(), pSignalInfo);
 }
 
 VulkanResultWithValue<VkDeviceAddress> vkGetBufferDeviceAddress(const VkBufferDeviceAddressInfo* pInfo)
 {
-  return GetFunctionTable().vkGetBufferDeviceAddress(device_, pInfo);
+  return GetFunctionTable().vkGetBufferDeviceAddress(GetDevice(), pInfo);
 }
 
 VulkanResultWithValue<uint64_t> vkGetBufferOpaqueCaptureAddress(const VkBufferDeviceAddressInfo* pInfo)
 {
-  return GetFunctionTable().vkGetBufferOpaqueCaptureAddress(device_, pInfo);
+  return GetFunctionTable().vkGetBufferOpaqueCaptureAddress(GetDevice(), pInfo);
 }
 
 VulkanResultWithValue<uint64_t> vkGetDeviceMemoryOpaqueCaptureAddress(const VkDeviceMemoryOpaqueCaptureAddressInfo* pInfo)
 {
-  return GetFunctionTable().vkGetDeviceMemoryOpaqueCaptureAddress(device_, pInfo);
+  return GetFunctionTable().vkGetDeviceMemoryOpaqueCaptureAddress(GetDevice(), pInfo);
 }
 
 VulkanResultWithValue<std::vector<VkPhysicalDeviceToolProperties>> vkGetPhysicalDeviceToolProperties(VkPhysicalDevice physicalDevice)
@@ -706,22 +682,22 @@ VulkanResultWithValue<std::vector<VkPhysicalDeviceToolProperties>> vkGetPhysical
 
 VulkanResult vkCreatePrivateDataSlot(const VkPrivateDataSlotCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkPrivateDataSlot* pPrivateDataSlot)
 {
-  return GetFunctionTable().vkCreatePrivateDataSlot(device_, pCreateInfo, pAllocator, pPrivateDataSlot);
+  return GetFunctionTable().vkCreatePrivateDataSlot(GetDevice(), pCreateInfo, pAllocator, pPrivateDataSlot);
 }
 
 void vkDestroyPrivateDataSlot(VkPrivateDataSlot privateDataSlot, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyPrivateDataSlot(device_, privateDataSlot, pAllocator);
+  return GetFunctionTable().vkDestroyPrivateDataSlot(GetDevice(), privateDataSlot, pAllocator);
 }
 
 VulkanResult vkSetPrivateData(VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t data)
 {
-  return GetFunctionTable().vkSetPrivateData(device_, objectType, objectHandle, privateDataSlot, data);
+  return GetFunctionTable().vkSetPrivateData(GetDevice(), objectType, objectHandle, privateDataSlot, data);
 }
 
 void vkGetPrivateData(VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t* pData)
 {
-  return GetFunctionTable().vkGetPrivateData(device_, objectType, objectHandle, privateDataSlot, pData);
+  return GetFunctionTable().vkGetPrivateData(GetDevice(), objectType, objectHandle, privateDataSlot, pData);
 }
 
 VulkanResult vkQueueSubmit2(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2* pSubmits, VkFence fence)
@@ -731,22 +707,22 @@ VulkanResult vkQueueSubmit2(VkQueue queue, uint32_t submitCount, const VkSubmitI
 
 void vkGetDeviceBufferMemoryRequirements(const VkDeviceBufferMemoryRequirements* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetDeviceBufferMemoryRequirements(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetDeviceBufferMemoryRequirements(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 void vkGetDeviceImageMemoryRequirements(const VkDeviceImageMemoryRequirements* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetDeviceImageMemoryRequirements(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetDeviceImageMemoryRequirements(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 void vkGetDeviceImageSparseMemoryRequirements(const VkDeviceImageMemoryRequirements* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements)
 {
-  return GetFunctionTable().vkGetDeviceImageSparseMemoryRequirements(device_, pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  return GetFunctionTable().vkGetDeviceImageSparseMemoryRequirements(GetDevice(), pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
 }
 
-void vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator)
+void vkDestroySurfaceKHR(VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroySurfaceKHR(instance, surface, pAllocator);
+  return GetFunctionTable().vkDestroySurfaceKHR(GetInstance(), surface, pAllocator);
 }
 
 VulkanResult vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkSurfaceKHR surface, VkBool32* pSupported)
@@ -783,22 +759,22 @@ VulkanResultWithValue<std::vector<VkPresentModeKHR>> vkGetPhysicalDeviceSurfaceP
 
 VulkanResult vkCreateSwapchainKHR(const VkSwapchainCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchain)
 {
-  return GetFunctionTable().vkCreateSwapchainKHR(device_, pCreateInfo, pAllocator, pSwapchain);
+  return GetFunctionTable().vkCreateSwapchainKHR(GetDevice(), pCreateInfo, pAllocator, pSwapchain);
 }
 
 void vkDestroySwapchainKHR(VkSwapchainKHR swapchain, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroySwapchainKHR(device_, swapchain, pAllocator);
+  return GetFunctionTable().vkDestroySwapchainKHR(GetDevice(), swapchain, pAllocator);
 }
 
 VulkanResult vkGetSwapchainImagesKHR(VkSwapchainKHR swapchain, uint32_t* pSwapchainImageCount, VkImage* pSwapchainImages)
 {
-  return GetFunctionTable().vkGetSwapchainImagesKHR(device_, swapchain, pSwapchainImageCount, pSwapchainImages);
+  return GetFunctionTable().vkGetSwapchainImagesKHR(GetDevice(), swapchain, pSwapchainImageCount, pSwapchainImages);
 }
 
 VulkanResult vkAcquireNextImageKHR(VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t* pImageIndex)
 {
-  return GetFunctionTable().vkAcquireNextImageKHR(device_, swapchain, timeout, semaphore, fence, pImageIndex);
+  return GetFunctionTable().vkAcquireNextImageKHR(GetDevice(), swapchain, timeout, semaphore, fence, pImageIndex);
 }
 
 VulkanResult vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* pPresentInfo)
@@ -808,12 +784,12 @@ VulkanResult vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* pPresentIn
 
 VulkanResult vkGetDeviceGroupPresentCapabilitiesKHR(VkDeviceGroupPresentCapabilitiesKHR* pDeviceGroupPresentCapabilities)
 {
-  return GetFunctionTable().vkGetDeviceGroupPresentCapabilitiesKHR(device_, pDeviceGroupPresentCapabilities);
+  return GetFunctionTable().vkGetDeviceGroupPresentCapabilitiesKHR(GetDevice(), pDeviceGroupPresentCapabilities);
 }
 
 VulkanResult vkGetDeviceGroupSurfacePresentModesKHR(VkSurfaceKHR surface, VkDeviceGroupPresentModeFlagsKHR* pModes)
 {
-  return GetFunctionTable().vkGetDeviceGroupSurfacePresentModesKHR(device_, surface, pModes);
+  return GetFunctionTable().vkGetDeviceGroupSurfacePresentModesKHR(GetDevice(), surface, pModes);
 }
 
 VulkanResultWithValue<std::vector<VkRect2D>> vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
@@ -829,7 +805,7 @@ VulkanResultWithValue<std::vector<VkRect2D>> vkGetPhysicalDevicePresentRectangle
 
 VulkanResult vkAcquireNextImage2KHR(const VkAcquireNextImageInfoKHR* pAcquireInfo, uint32_t* pImageIndex)
 {
-  return GetFunctionTable().vkAcquireNextImage2KHR(device_, pAcquireInfo, pImageIndex);
+  return GetFunctionTable().vkAcquireNextImage2KHR(GetDevice(), pAcquireInfo, pImageIndex);
 }
 
 VulkanResultWithValue<std::vector<VkDisplayPropertiesKHR>> vkGetPhysicalDeviceDisplayPropertiesKHR(VkPhysicalDevice physicalDevice)
@@ -886,14 +862,14 @@ VulkanResult vkGetDisplayPlaneCapabilitiesKHR(VkPhysicalDevice physicalDevice, V
   return GetFunctionTable().vkGetDisplayPlaneCapabilitiesKHR(physicalDevice, mode, planeIndex, pCapabilities);
 }
 
-VulkanResult vkCreateDisplayPlaneSurfaceKHR(VkInstance instance, const VkDisplaySurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
+VulkanResult vkCreateDisplayPlaneSurfaceKHR(const VkDisplaySurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
 {
-  return GetFunctionTable().vkCreateDisplayPlaneSurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
+  return GetFunctionTable().vkCreateDisplayPlaneSurfaceKHR(GetInstance(), pCreateInfo, pAllocator, pSurface);
 }
 
 VulkanResult vkCreateSharedSwapchainsKHR(uint32_t swapchainCount, const VkSwapchainCreateInfoKHR* pCreateInfos, const VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchains)
 {
-  return GetFunctionTable().vkCreateSharedSwapchainsKHR(device_, swapchainCount, pCreateInfos, pAllocator, pSwapchains);
+  return GetFunctionTable().vkCreateSharedSwapchainsKHR(GetDevice(), swapchainCount, pCreateInfos, pAllocator, pSwapchains);
 }
 
 void vkGetPhysicalDeviceFeatures2KHR(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures2* pFeatures)
@@ -945,23 +921,17 @@ VulkanResultWithValue<std::vector<VkSparseImageFormatProperties2>> vkGetPhysical
 
 void vkGetDeviceGroupPeerMemoryFeaturesKHR(uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags* pPeerMemoryFeatures)
 {
-  return GetFunctionTable().vkGetDeviceGroupPeerMemoryFeaturesKHR(device_, heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
+  return GetFunctionTable().vkGetDeviceGroupPeerMemoryFeaturesKHR(GetDevice(), heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
 }
 
 void vkTrimCommandPoolKHR(VkCommandPool commandPool, VkCommandPoolTrimFlags flags)
 {
-  return GetFunctionTable().vkTrimCommandPoolKHR(device_, commandPool, flags);
+  return GetFunctionTable().vkTrimCommandPoolKHR(GetDevice(), commandPool, flags);
 }
 
-VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance)
+VulkanResult vkEnumeratePhysicalDeviceGroupsKHR(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties)
 {
-  const auto& fp = GetFunctionTable().vkEnumeratePhysicalDeviceGroupsKHR;
-  uint32_t count = 0;
-  fp(instance, &count, nullptr);
-  VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> result;
-  result.value.resize(count);
-  result.result = fp(instance, &count, result.value.data());
-  return result;
+  return GetFunctionTable().vkEnumeratePhysicalDeviceGroupsKHR(GetInstance(), pPhysicalDeviceGroupCount, pPhysicalDeviceGroupProperties);
 }
 
 void vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo* pExternalBufferInfo, VkExternalBufferProperties* pExternalBufferProperties)
@@ -971,12 +941,12 @@ void vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice physicalDev
 
 VulkanResult vkGetMemoryFdKHR(const VkMemoryGetFdInfoKHR* pGetFdInfo, int* pFd)
 {
-  return GetFunctionTable().vkGetMemoryFdKHR(device_, pGetFdInfo, pFd);
+  return GetFunctionTable().vkGetMemoryFdKHR(GetDevice(), pGetFdInfo, pFd);
 }
 
 VulkanResult vkGetMemoryFdPropertiesKHR(VkExternalMemoryHandleTypeFlagBits handleType, int fd, VkMemoryFdPropertiesKHR* pMemoryFdProperties)
 {
-  return GetFunctionTable().vkGetMemoryFdPropertiesKHR(device_, handleType, fd, pMemoryFdProperties);
+  return GetFunctionTable().vkGetMemoryFdPropertiesKHR(GetDevice(), handleType, fd, pMemoryFdProperties);
 }
 
 void vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalSemaphoreInfo* pExternalSemaphoreInfo, VkExternalSemaphoreProperties* pExternalSemaphoreProperties)
@@ -986,37 +956,37 @@ void vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDevice physical
 
 VulkanResult vkImportSemaphoreFdKHR(const VkImportSemaphoreFdInfoKHR* pImportSemaphoreFdInfo)
 {
-  return GetFunctionTable().vkImportSemaphoreFdKHR(device_, pImportSemaphoreFdInfo);
+  return GetFunctionTable().vkImportSemaphoreFdKHR(GetDevice(), pImportSemaphoreFdInfo);
 }
 
 VulkanResult vkGetSemaphoreFdKHR(const VkSemaphoreGetFdInfoKHR* pGetFdInfo, int* pFd)
 {
-  return GetFunctionTable().vkGetSemaphoreFdKHR(device_, pGetFdInfo, pFd);
+  return GetFunctionTable().vkGetSemaphoreFdKHR(GetDevice(), pGetFdInfo, pFd);
 }
 
 VulkanResult vkCreateDescriptorUpdateTemplateKHR(const VkDescriptorUpdateTemplateCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDescriptorUpdateTemplate* pDescriptorUpdateTemplate)
 {
-  return GetFunctionTable().vkCreateDescriptorUpdateTemplateKHR(device_, pCreateInfo, pAllocator, pDescriptorUpdateTemplate);
+  return GetFunctionTable().vkCreateDescriptorUpdateTemplateKHR(GetDevice(), pCreateInfo, pAllocator, pDescriptorUpdateTemplate);
 }
 
 void vkDestroyDescriptorUpdateTemplateKHR(VkDescriptorUpdateTemplate descriptorUpdateTemplate, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyDescriptorUpdateTemplateKHR(device_, descriptorUpdateTemplate, pAllocator);
+  return GetFunctionTable().vkDestroyDescriptorUpdateTemplateKHR(GetDevice(), descriptorUpdateTemplate, pAllocator);
 }
 
 void vkUpdateDescriptorSetWithTemplateKHR(VkDescriptorSet descriptorSet, VkDescriptorUpdateTemplate descriptorUpdateTemplate, const void* pData)
 {
-  return GetFunctionTable().vkUpdateDescriptorSetWithTemplateKHR(device_, descriptorSet, descriptorUpdateTemplate, pData);
+  return GetFunctionTable().vkUpdateDescriptorSetWithTemplateKHR(GetDevice(), descriptorSet, descriptorUpdateTemplate, pData);
 }
 
 VulkanResult vkCreateRenderPass2KHR(const VkRenderPassCreateInfo2* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass)
 {
-  return GetFunctionTable().vkCreateRenderPass2KHR(device_, pCreateInfo, pAllocator, pRenderPass);
+  return GetFunctionTable().vkCreateRenderPass2KHR(GetDevice(), pCreateInfo, pAllocator, pRenderPass);
 }
 
 VulkanResult vkGetSwapchainStatusKHR(VkSwapchainKHR swapchain)
 {
-  return GetFunctionTable().vkGetSwapchainStatusKHR(device_, swapchain);
+  return GetFunctionTable().vkGetSwapchainStatusKHR(GetDevice(), swapchain);
 }
 
 void vkGetPhysicalDeviceExternalFencePropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalFenceInfo* pExternalFenceInfo, VkExternalFenceProperties* pExternalFenceProperties)
@@ -1026,12 +996,12 @@ void vkGetPhysicalDeviceExternalFencePropertiesKHR(VkPhysicalDevice physicalDevi
 
 VulkanResult vkImportFenceFdKHR(const VkImportFenceFdInfoKHR* pImportFenceFdInfo)
 {
-  return GetFunctionTable().vkImportFenceFdKHR(device_, pImportFenceFdInfo);
+  return GetFunctionTable().vkImportFenceFdKHR(GetDevice(), pImportFenceFdInfo);
 }
 
 VulkanResult vkGetFenceFdKHR(const VkFenceGetFdInfoKHR* pGetFdInfo, int* pFd)
 {
-  return GetFunctionTable().vkGetFenceFdKHR(device_, pGetFdInfo, pFd);
+  return GetFunctionTable().vkGetFenceFdKHR(GetDevice(), pGetFdInfo, pFd);
 }
 
 VulkanResult vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, uint32_t* pCounterCount, VkPerformanceCounterKHR* pCounters, VkPerformanceCounterDescriptionKHR* pCounterDescriptions)
@@ -1046,12 +1016,12 @@ void vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(VkPhysicalDevice ph
 
 VulkanResult vkAcquireProfilingLockKHR(const VkAcquireProfilingLockInfoKHR* pInfo)
 {
-  return GetFunctionTable().vkAcquireProfilingLockKHR(device_, pInfo);
+  return GetFunctionTable().vkAcquireProfilingLockKHR(GetDevice(), pInfo);
 }
 
 void vkReleaseProfilingLockKHR()
 {
-  return GetFunctionTable().vkReleaseProfilingLockKHR(device_);
+  return GetFunctionTable().vkReleaseProfilingLockKHR(GetDevice());
 }
 
 VulkanResult vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR* pSurfaceInfo, VkSurfaceCapabilities2KHR* pSurfaceCapabilities)
@@ -1110,57 +1080,57 @@ VulkanResult vkGetDisplayPlaneCapabilities2KHR(VkPhysicalDevice physicalDevice, 
 
 void vkGetImageMemoryRequirements2KHR(const VkImageMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetImageMemoryRequirements2KHR(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetImageMemoryRequirements2KHR(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 void vkGetBufferMemoryRequirements2KHR(const VkBufferMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetBufferMemoryRequirements2KHR(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetBufferMemoryRequirements2KHR(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 void vkGetImageSparseMemoryRequirements2KHR(const VkImageSparseMemoryRequirementsInfo2* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements)
 {
-  return GetFunctionTable().vkGetImageSparseMemoryRequirements2KHR(device_, pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  return GetFunctionTable().vkGetImageSparseMemoryRequirements2KHR(GetDevice(), pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
 }
 
 VulkanResult vkCreateSamplerYcbcrConversionKHR(const VkSamplerYcbcrConversionCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSamplerYcbcrConversion* pYcbcrConversion)
 {
-  return GetFunctionTable().vkCreateSamplerYcbcrConversionKHR(device_, pCreateInfo, pAllocator, pYcbcrConversion);
+  return GetFunctionTable().vkCreateSamplerYcbcrConversionKHR(GetDevice(), pCreateInfo, pAllocator, pYcbcrConversion);
 }
 
 void vkDestroySamplerYcbcrConversionKHR(VkSamplerYcbcrConversion ycbcrConversion, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroySamplerYcbcrConversionKHR(device_, ycbcrConversion, pAllocator);
+  return GetFunctionTable().vkDestroySamplerYcbcrConversionKHR(GetDevice(), ycbcrConversion, pAllocator);
 }
 
 VulkanResult vkBindBufferMemory2KHR(uint32_t bindInfoCount, const VkBindBufferMemoryInfo* pBindInfos)
 {
-  return GetFunctionTable().vkBindBufferMemory2KHR(device_, bindInfoCount, pBindInfos);
+  return GetFunctionTable().vkBindBufferMemory2KHR(GetDevice(), bindInfoCount, pBindInfos);
 }
 
 VulkanResult vkBindImageMemory2KHR(uint32_t bindInfoCount, const VkBindImageMemoryInfo* pBindInfos)
 {
-  return GetFunctionTable().vkBindImageMemory2KHR(device_, bindInfoCount, pBindInfos);
+  return GetFunctionTable().vkBindImageMemory2KHR(GetDevice(), bindInfoCount, pBindInfos);
 }
 
 void vkGetDescriptorSetLayoutSupportKHR(const VkDescriptorSetLayoutCreateInfo* pCreateInfo, VkDescriptorSetLayoutSupport* pSupport)
 {
-  return GetFunctionTable().vkGetDescriptorSetLayoutSupportKHR(device_, pCreateInfo, pSupport);
+  return GetFunctionTable().vkGetDescriptorSetLayoutSupportKHR(GetDevice(), pCreateInfo, pSupport);
 }
 
 VulkanResult vkGetSemaphoreCounterValueKHR(VkSemaphore semaphore, uint64_t* pValue)
 {
-  return GetFunctionTable().vkGetSemaphoreCounterValueKHR(device_, semaphore, pValue);
+  return GetFunctionTable().vkGetSemaphoreCounterValueKHR(GetDevice(), semaphore, pValue);
 }
 
 VulkanResult vkWaitSemaphoresKHR(const VkSemaphoreWaitInfo* pWaitInfo, uint64_t timeout)
 {
-  return GetFunctionTable().vkWaitSemaphoresKHR(device_, pWaitInfo, timeout);
+  return GetFunctionTable().vkWaitSemaphoresKHR(GetDevice(), pWaitInfo, timeout);
 }
 
 VulkanResult vkSignalSemaphoreKHR(const VkSemaphoreSignalInfo* pSignalInfo)
 {
-  return GetFunctionTable().vkSignalSemaphoreKHR(device_, pSignalInfo);
+  return GetFunctionTable().vkSignalSemaphoreKHR(GetDevice(), pSignalInfo);
 }
 
 VulkanResultWithValue<std::vector<VkPhysicalDeviceFragmentShadingRateKHR>> vkGetPhysicalDeviceFragmentShadingRatesKHR(VkPhysicalDevice physicalDevice)
@@ -1176,62 +1146,62 @@ VulkanResultWithValue<std::vector<VkPhysicalDeviceFragmentShadingRateKHR>> vkGet
 
 VulkanResult vkWaitForPresentKHR(VkSwapchainKHR swapchain, uint64_t presentId, uint64_t timeout)
 {
-  return GetFunctionTable().vkWaitForPresentKHR(device_, swapchain, presentId, timeout);
+  return GetFunctionTable().vkWaitForPresentKHR(GetDevice(), swapchain, presentId, timeout);
 }
 
 VulkanResultWithValue<VkDeviceAddress> vkGetBufferDeviceAddressKHR(const VkBufferDeviceAddressInfo* pInfo)
 {
-  return GetFunctionTable().vkGetBufferDeviceAddressKHR(device_, pInfo);
+  return GetFunctionTable().vkGetBufferDeviceAddressKHR(GetDevice(), pInfo);
 }
 
 VulkanResultWithValue<uint64_t> vkGetBufferOpaqueCaptureAddressKHR(const VkBufferDeviceAddressInfo* pInfo)
 {
-  return GetFunctionTable().vkGetBufferOpaqueCaptureAddressKHR(device_, pInfo);
+  return GetFunctionTable().vkGetBufferOpaqueCaptureAddressKHR(GetDevice(), pInfo);
 }
 
 VulkanResultWithValue<uint64_t> vkGetDeviceMemoryOpaqueCaptureAddressKHR(const VkDeviceMemoryOpaqueCaptureAddressInfo* pInfo)
 {
-  return GetFunctionTable().vkGetDeviceMemoryOpaqueCaptureAddressKHR(device_, pInfo);
+  return GetFunctionTable().vkGetDeviceMemoryOpaqueCaptureAddressKHR(GetDevice(), pInfo);
 }
 
 VulkanResult vkCreateDeferredOperationKHR(const VkAllocationCallbacks* pAllocator, VkDeferredOperationKHR* pDeferredOperation)
 {
-  return GetFunctionTable().vkCreateDeferredOperationKHR(device_, pAllocator, pDeferredOperation);
+  return GetFunctionTable().vkCreateDeferredOperationKHR(GetDevice(), pAllocator, pDeferredOperation);
 }
 
 void vkDestroyDeferredOperationKHR(VkDeferredOperationKHR operation, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyDeferredOperationKHR(device_, operation, pAllocator);
+  return GetFunctionTable().vkDestroyDeferredOperationKHR(GetDevice(), operation, pAllocator);
 }
 
 VulkanResultWithValue<uint32_t> vkGetDeferredOperationMaxConcurrencyKHR(VkDeferredOperationKHR operation)
 {
-  return GetFunctionTable().vkGetDeferredOperationMaxConcurrencyKHR(device_, operation);
+  return GetFunctionTable().vkGetDeferredOperationMaxConcurrencyKHR(GetDevice(), operation);
 }
 
 VulkanResult vkGetDeferredOperationResultKHR(VkDeferredOperationKHR operation)
 {
-  return GetFunctionTable().vkGetDeferredOperationResultKHR(device_, operation);
+  return GetFunctionTable().vkGetDeferredOperationResultKHR(GetDevice(), operation);
 }
 
 VulkanResult vkDeferredOperationJoinKHR(VkDeferredOperationKHR operation)
 {
-  return GetFunctionTable().vkDeferredOperationJoinKHR(device_, operation);
+  return GetFunctionTable().vkDeferredOperationJoinKHR(GetDevice(), operation);
 }
 
 VulkanResult vkGetPipelineExecutablePropertiesKHR(const VkPipelineInfoKHR* pPipelineInfo, uint32_t* pExecutableCount, VkPipelineExecutablePropertiesKHR* pProperties)
 {
-  return GetFunctionTable().vkGetPipelineExecutablePropertiesKHR(device_, pPipelineInfo, pExecutableCount, pProperties);
+  return GetFunctionTable().vkGetPipelineExecutablePropertiesKHR(GetDevice(), pPipelineInfo, pExecutableCount, pProperties);
 }
 
 VulkanResult vkGetPipelineExecutableStatisticsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo, uint32_t* pStatisticCount, VkPipelineExecutableStatisticKHR* pStatistics)
 {
-  return GetFunctionTable().vkGetPipelineExecutableStatisticsKHR(device_, pExecutableInfo, pStatisticCount, pStatistics);
+  return GetFunctionTable().vkGetPipelineExecutableStatisticsKHR(GetDevice(), pExecutableInfo, pStatisticCount, pStatistics);
 }
 
 VulkanResult vkGetPipelineExecutableInternalRepresentationsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo, uint32_t* pInternalRepresentationCount, VkPipelineExecutableInternalRepresentationKHR* pInternalRepresentations)
 {
-  return GetFunctionTable().vkGetPipelineExecutableInternalRepresentationsKHR(device_, pExecutableInfo, pInternalRepresentationCount, pInternalRepresentations);
+  return GetFunctionTable().vkGetPipelineExecutableInternalRepresentationsKHR(GetDevice(), pExecutableInfo, pInternalRepresentationCount, pInternalRepresentations);
 }
 
 VulkanResult vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2* pSubmits, VkFence fence)
@@ -1252,77 +1222,77 @@ VulkanResultWithValue<std::vector<VkCheckpointData2NV>> vkGetQueueCheckpointData
 
 void vkGetDeviceBufferMemoryRequirementsKHR(const VkDeviceBufferMemoryRequirements* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetDeviceBufferMemoryRequirementsKHR(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetDeviceBufferMemoryRequirementsKHR(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 void vkGetDeviceImageMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetDeviceImageMemoryRequirementsKHR(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetDeviceImageMemoryRequirementsKHR(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 void vkGetDeviceImageSparseMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements)
 {
-  return GetFunctionTable().vkGetDeviceImageSparseMemoryRequirementsKHR(device_, pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  return GetFunctionTable().vkGetDeviceImageSparseMemoryRequirementsKHR(GetDevice(), pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
 }
 
-VulkanResult vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
+VulkanResult vkCreateDebugReportCallbackEXT(const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
 {
-  return GetFunctionTable().vkCreateDebugReportCallbackEXT(instance, pCreateInfo, pAllocator, pCallback);
+  return GetFunctionTable().vkCreateDebugReportCallbackEXT(GetInstance(), pCreateInfo, pAllocator, pCallback);
 }
 
-void vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator)
+void vkDestroyDebugReportCallbackEXT(VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyDebugReportCallbackEXT(instance, callback, pAllocator);
+  return GetFunctionTable().vkDestroyDebugReportCallbackEXT(GetInstance(), callback, pAllocator);
 }
 
-void vkDebugReportMessageEXT(VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage)
+void vkDebugReportMessageEXT(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage)
 {
-  return GetFunctionTable().vkDebugReportMessageEXT(instance, flags, objectType, object, location, messageCode, pLayerPrefix, pMessage);
+  return GetFunctionTable().vkDebugReportMessageEXT(GetInstance(), flags, objectType, object, location, messageCode, pLayerPrefix, pMessage);
 }
 
 VulkanResult vkDebugMarkerSetObjectTagEXT(const VkDebugMarkerObjectTagInfoEXT* pTagInfo)
 {
-  return GetFunctionTable().vkDebugMarkerSetObjectTagEXT(device_, pTagInfo);
+  return GetFunctionTable().vkDebugMarkerSetObjectTagEXT(GetDevice(), pTagInfo);
 }
 
 VulkanResult vkDebugMarkerSetObjectNameEXT(const VkDebugMarkerObjectNameInfoEXT* pNameInfo)
 {
-  return GetFunctionTable().vkDebugMarkerSetObjectNameEXT(device_, pNameInfo);
+  return GetFunctionTable().vkDebugMarkerSetObjectNameEXT(GetDevice(), pNameInfo);
 }
 
 VulkanResult vkCreateCuModuleNVX(const VkCuModuleCreateInfoNVX* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkCuModuleNVX* pModule)
 {
-  return GetFunctionTable().vkCreateCuModuleNVX(device_, pCreateInfo, pAllocator, pModule);
+  return GetFunctionTable().vkCreateCuModuleNVX(GetDevice(), pCreateInfo, pAllocator, pModule);
 }
 
 VulkanResult vkCreateCuFunctionNVX(const VkCuFunctionCreateInfoNVX* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkCuFunctionNVX* pFunction)
 {
-  return GetFunctionTable().vkCreateCuFunctionNVX(device_, pCreateInfo, pAllocator, pFunction);
+  return GetFunctionTable().vkCreateCuFunctionNVX(GetDevice(), pCreateInfo, pAllocator, pFunction);
 }
 
 void vkDestroyCuModuleNVX(VkCuModuleNVX module, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyCuModuleNVX(device_, module, pAllocator);
+  return GetFunctionTable().vkDestroyCuModuleNVX(GetDevice(), module, pAllocator);
 }
 
 void vkDestroyCuFunctionNVX(VkCuFunctionNVX function, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyCuFunctionNVX(device_, function, pAllocator);
+  return GetFunctionTable().vkDestroyCuFunctionNVX(GetDevice(), function, pAllocator);
 }
 
 VulkanResultWithValue<uint32_t> vkGetImageViewHandleNVX(const VkImageViewHandleInfoNVX* pInfo)
 {
-  return GetFunctionTable().vkGetImageViewHandleNVX(device_, pInfo);
+  return GetFunctionTable().vkGetImageViewHandleNVX(GetDevice(), pInfo);
 }
 
 VulkanResult vkGetImageViewAddressNVX(VkImageView imageView, VkImageViewAddressPropertiesNVX* pProperties)
 {
-  return GetFunctionTable().vkGetImageViewAddressNVX(device_, imageView, pProperties);
+  return GetFunctionTable().vkGetImageViewAddressNVX(GetDevice(), imageView, pProperties);
 }
 
 VulkanResult vkGetShaderInfoAMD(VkPipeline pipeline, VkShaderStageFlagBits shaderStage, VkShaderInfoTypeAMD infoType, size_t* pInfoSize, void* pInfo)
 {
-  return GetFunctionTable().vkGetShaderInfoAMD(device_, pipeline, shaderStage, infoType, pInfoSize, pInfo);
+  return GetFunctionTable().vkGetShaderInfoAMD(GetDevice(), pipeline, shaderStage, infoType, pInfoSize, pInfo);
 }
 
 VulkanResult vkGetPhysicalDeviceExternalImageFormatPropertiesNV(VkPhysicalDevice physicalDevice, VkFormat format, VkImageType type, VkImageTiling tiling, VkImageUsageFlags usage, VkImageCreateFlags flags, VkExternalMemoryHandleTypeFlagsNV externalHandleType, VkExternalImageFormatPropertiesNV* pExternalImageFormatProperties)
@@ -1342,47 +1312,47 @@ VulkanResult vkGetPhysicalDeviceSurfaceCapabilities2EXT(VkPhysicalDevice physica
 
 VulkanResult vkDisplayPowerControlEXT(VkDisplayKHR display, const VkDisplayPowerInfoEXT* pDisplayPowerInfo)
 {
-  return GetFunctionTable().vkDisplayPowerControlEXT(device_, display, pDisplayPowerInfo);
+  return GetFunctionTable().vkDisplayPowerControlEXT(GetDevice(), display, pDisplayPowerInfo);
 }
 
 VulkanResult vkRegisterDeviceEventEXT(const VkDeviceEventInfoEXT* pDeviceEventInfo, const VkAllocationCallbacks* pAllocator, VkFence* pFence)
 {
-  return GetFunctionTable().vkRegisterDeviceEventEXT(device_, pDeviceEventInfo, pAllocator, pFence);
+  return GetFunctionTable().vkRegisterDeviceEventEXT(GetDevice(), pDeviceEventInfo, pAllocator, pFence);
 }
 
 VulkanResult vkRegisterDisplayEventEXT(VkDisplayKHR display, const VkDisplayEventInfoEXT* pDisplayEventInfo, const VkAllocationCallbacks* pAllocator, VkFence* pFence)
 {
-  return GetFunctionTable().vkRegisterDisplayEventEXT(device_, display, pDisplayEventInfo, pAllocator, pFence);
+  return GetFunctionTable().vkRegisterDisplayEventEXT(GetDevice(), display, pDisplayEventInfo, pAllocator, pFence);
 }
 
 VulkanResult vkGetSwapchainCounterEXT(VkSwapchainKHR swapchain, VkSurfaceCounterFlagBitsEXT counter, uint64_t* pCounterValue)
 {
-  return GetFunctionTable().vkGetSwapchainCounterEXT(device_, swapchain, counter, pCounterValue);
+  return GetFunctionTable().vkGetSwapchainCounterEXT(GetDevice(), swapchain, counter, pCounterValue);
 }
 
 VulkanResult vkGetRefreshCycleDurationGOOGLE(VkSwapchainKHR swapchain, VkRefreshCycleDurationGOOGLE* pDisplayTimingProperties)
 {
-  return GetFunctionTable().vkGetRefreshCycleDurationGOOGLE(device_, swapchain, pDisplayTimingProperties);
+  return GetFunctionTable().vkGetRefreshCycleDurationGOOGLE(GetDevice(), swapchain, pDisplayTimingProperties);
 }
 
 VulkanResult vkGetPastPresentationTimingGOOGLE(VkSwapchainKHR swapchain, uint32_t* pPresentationTimingCount, VkPastPresentationTimingGOOGLE* pPresentationTimings)
 {
-  return GetFunctionTable().vkGetPastPresentationTimingGOOGLE(device_, swapchain, pPresentationTimingCount, pPresentationTimings);
+  return GetFunctionTable().vkGetPastPresentationTimingGOOGLE(GetDevice(), swapchain, pPresentationTimingCount, pPresentationTimings);
 }
 
 void vkSetHdrMetadataEXT(uint32_t swapchainCount, const VkSwapchainKHR* pSwapchains, const VkHdrMetadataEXT* pMetadata)
 {
-  return GetFunctionTable().vkSetHdrMetadataEXT(device_, swapchainCount, pSwapchains, pMetadata);
+  return GetFunctionTable().vkSetHdrMetadataEXT(GetDevice(), swapchainCount, pSwapchains, pMetadata);
 }
 
 VulkanResult vkSetDebugUtilsObjectNameEXT(const VkDebugUtilsObjectNameInfoEXT* pNameInfo)
 {
-  return GetFunctionTable().vkSetDebugUtilsObjectNameEXT(device_, pNameInfo);
+  return GetFunctionTable().vkSetDebugUtilsObjectNameEXT(GetDevice(), pNameInfo);
 }
 
 VulkanResult vkSetDebugUtilsObjectTagEXT(const VkDebugUtilsObjectTagInfoEXT* pTagInfo)
 {
-  return GetFunctionTable().vkSetDebugUtilsObjectTagEXT(device_, pTagInfo);
+  return GetFunctionTable().vkSetDebugUtilsObjectTagEXT(GetDevice(), pTagInfo);
 }
 
 void vkQueueBeginDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT* pLabelInfo)
@@ -1400,19 +1370,19 @@ void vkQueueInsertDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT* 
   return GetFunctionTable().vkQueueInsertDebugUtilsLabelEXT(queue, pLabelInfo);
 }
 
-VulkanResult vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger)
+VulkanResult vkCreateDebugUtilsMessengerEXT(const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger)
 {
-  return GetFunctionTable().vkCreateDebugUtilsMessengerEXT(instance, pCreateInfo, pAllocator, pMessenger);
+  return GetFunctionTable().vkCreateDebugUtilsMessengerEXT(GetInstance(), pCreateInfo, pAllocator, pMessenger);
 }
 
-void vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks* pAllocator)
+void vkDestroyDebugUtilsMessengerEXT(VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyDebugUtilsMessengerEXT(instance, messenger, pAllocator);
+  return GetFunctionTable().vkDestroyDebugUtilsMessengerEXT(GetInstance(), messenger, pAllocator);
 }
 
-void vkSubmitDebugUtilsMessageEXT(VkInstance instance, VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData)
+void vkSubmitDebugUtilsMessageEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData)
 {
-  return GetFunctionTable().vkSubmitDebugUtilsMessageEXT(instance, messageSeverity, messageTypes, pCallbackData);
+  return GetFunctionTable().vkSubmitDebugUtilsMessageEXT(GetInstance(), messageSeverity, messageTypes, pCallbackData);
 }
 
 void vkGetPhysicalDeviceMultisamplePropertiesEXT(VkPhysicalDevice physicalDevice, VkSampleCountFlagBits samples, VkMultisamplePropertiesEXT* pMultisampleProperties)
@@ -1422,77 +1392,77 @@ void vkGetPhysicalDeviceMultisamplePropertiesEXT(VkPhysicalDevice physicalDevice
 
 VulkanResult vkGetImageDrmFormatModifierPropertiesEXT(VkImage image, VkImageDrmFormatModifierPropertiesEXT* pProperties)
 {
-  return GetFunctionTable().vkGetImageDrmFormatModifierPropertiesEXT(device_, image, pProperties);
+  return GetFunctionTable().vkGetImageDrmFormatModifierPropertiesEXT(GetDevice(), image, pProperties);
 }
 
 VulkanResult vkCreateValidationCacheEXT(const VkValidationCacheCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkValidationCacheEXT* pValidationCache)
 {
-  return GetFunctionTable().vkCreateValidationCacheEXT(device_, pCreateInfo, pAllocator, pValidationCache);
+  return GetFunctionTable().vkCreateValidationCacheEXT(GetDevice(), pCreateInfo, pAllocator, pValidationCache);
 }
 
 void vkDestroyValidationCacheEXT(VkValidationCacheEXT validationCache, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyValidationCacheEXT(device_, validationCache, pAllocator);
+  return GetFunctionTable().vkDestroyValidationCacheEXT(GetDevice(), validationCache, pAllocator);
 }
 
 VulkanResult vkMergeValidationCachesEXT(VkValidationCacheEXT dstCache, uint32_t srcCacheCount, const VkValidationCacheEXT* pSrcCaches)
 {
-  return GetFunctionTable().vkMergeValidationCachesEXT(device_, dstCache, srcCacheCount, pSrcCaches);
+  return GetFunctionTable().vkMergeValidationCachesEXT(GetDevice(), dstCache, srcCacheCount, pSrcCaches);
 }
 
 VulkanResult vkGetValidationCacheDataEXT(VkValidationCacheEXT validationCache, size_t* pDataSize, void* pData)
 {
-  return GetFunctionTable().vkGetValidationCacheDataEXT(device_, validationCache, pDataSize, pData);
+  return GetFunctionTable().vkGetValidationCacheDataEXT(GetDevice(), validationCache, pDataSize, pData);
 }
 
 VulkanResult vkCreateAccelerationStructureNV(const VkAccelerationStructureCreateInfoNV* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureNV* pAccelerationStructure)
 {
-  return GetFunctionTable().vkCreateAccelerationStructureNV(device_, pCreateInfo, pAllocator, pAccelerationStructure);
+  return GetFunctionTable().vkCreateAccelerationStructureNV(GetDevice(), pCreateInfo, pAllocator, pAccelerationStructure);
 }
 
 void vkDestroyAccelerationStructureNV(VkAccelerationStructureNV accelerationStructure, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyAccelerationStructureNV(device_, accelerationStructure, pAllocator);
+  return GetFunctionTable().vkDestroyAccelerationStructureNV(GetDevice(), accelerationStructure, pAllocator);
 }
 
 void vkGetAccelerationStructureMemoryRequirementsNV(const VkAccelerationStructureMemoryRequirementsInfoNV* pInfo, VkMemoryRequirements2KHR* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetAccelerationStructureMemoryRequirementsNV(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetAccelerationStructureMemoryRequirementsNV(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 VulkanResult vkBindAccelerationStructureMemoryNV(uint32_t bindInfoCount, const VkBindAccelerationStructureMemoryInfoNV* pBindInfos)
 {
-  return GetFunctionTable().vkBindAccelerationStructureMemoryNV(device_, bindInfoCount, pBindInfos);
+  return GetFunctionTable().vkBindAccelerationStructureMemoryNV(GetDevice(), bindInfoCount, pBindInfos);
 }
 
 VulkanResult vkCreateRayTracingPipelinesNV(VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoNV* pCreateInfos, const VkAllocationCallbacks* pAllocator, VkPipeline* pPipelines)
 {
-  return GetFunctionTable().vkCreateRayTracingPipelinesNV(device_, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
+  return GetFunctionTable().vkCreateRayTracingPipelinesNV(GetDevice(), pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
 }
 
 VulkanResult vkGetRayTracingShaderGroupHandlesKHR(VkPipeline pipeline, uint32_t firstGroup, uint32_t groupCount, size_t dataSize, void* pData)
 {
-  return GetFunctionTable().vkGetRayTracingShaderGroupHandlesKHR(device_, pipeline, firstGroup, groupCount, dataSize, pData);
+  return GetFunctionTable().vkGetRayTracingShaderGroupHandlesKHR(GetDevice(), pipeline, firstGroup, groupCount, dataSize, pData);
 }
 
 VulkanResult vkGetRayTracingShaderGroupHandlesNV(VkPipeline pipeline, uint32_t firstGroup, uint32_t groupCount, size_t dataSize, void* pData)
 {
-  return GetFunctionTable().vkGetRayTracingShaderGroupHandlesNV(device_, pipeline, firstGroup, groupCount, dataSize, pData);
+  return GetFunctionTable().vkGetRayTracingShaderGroupHandlesNV(GetDevice(), pipeline, firstGroup, groupCount, dataSize, pData);
 }
 
 VulkanResult vkGetAccelerationStructureHandleNV(VkAccelerationStructureNV accelerationStructure, size_t dataSize, void* pData)
 {
-  return GetFunctionTable().vkGetAccelerationStructureHandleNV(device_, accelerationStructure, dataSize, pData);
+  return GetFunctionTable().vkGetAccelerationStructureHandleNV(GetDevice(), accelerationStructure, dataSize, pData);
 }
 
 VulkanResult vkCompileDeferredNV(VkPipeline pipeline, uint32_t shader)
 {
-  return GetFunctionTable().vkCompileDeferredNV(device_, pipeline, shader);
+  return GetFunctionTable().vkCompileDeferredNV(GetDevice(), pipeline, shader);
 }
 
 VulkanResult vkGetMemoryHostPointerPropertiesEXT(VkExternalMemoryHandleTypeFlagBits handleType, const void* pHostPointer, VkMemoryHostPointerPropertiesEXT* pMemoryHostPointerProperties)
 {
-  return GetFunctionTable().vkGetMemoryHostPointerPropertiesEXT(device_, handleType, pHostPointer, pMemoryHostPointerProperties);
+  return GetFunctionTable().vkGetMemoryHostPointerPropertiesEXT(GetDevice(), handleType, pHostPointer, pMemoryHostPointerProperties);
 }
 
 VulkanResultWithValue<std::vector<VkTimeDomainEXT>> vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice physicalDevice)
@@ -1508,7 +1478,7 @@ VulkanResultWithValue<std::vector<VkTimeDomainEXT>> vkGetPhysicalDeviceCalibrate
 
 VulkanResult vkGetCalibratedTimestampsEXT(uint32_t timestampCount, const VkCalibratedTimestampInfoEXT* pTimestampInfos, uint64_t* pTimestamps, uint64_t* pMaxDeviation)
 {
-  return GetFunctionTable().vkGetCalibratedTimestampsEXT(device_, timestampCount, pTimestampInfos, pTimestamps, pMaxDeviation);
+  return GetFunctionTable().vkGetCalibratedTimestampsEXT(GetDevice(), timestampCount, pTimestampInfos, pTimestamps, pMaxDeviation);
 }
 
 VulkanResultWithValue<std::vector<VkCheckpointDataNV>> vkGetQueueCheckpointDataNV(VkQueue queue)
@@ -1524,22 +1494,22 @@ VulkanResultWithValue<std::vector<VkCheckpointDataNV>> vkGetQueueCheckpointDataN
 
 VulkanResult vkInitializePerformanceApiINTEL(const VkInitializePerformanceApiInfoINTEL* pInitializeInfo)
 {
-  return GetFunctionTable().vkInitializePerformanceApiINTEL(device_, pInitializeInfo);
+  return GetFunctionTable().vkInitializePerformanceApiINTEL(GetDevice(), pInitializeInfo);
 }
 
 void vkUninitializePerformanceApiINTEL()
 {
-  return GetFunctionTable().vkUninitializePerformanceApiINTEL(device_);
+  return GetFunctionTable().vkUninitializePerformanceApiINTEL(GetDevice());
 }
 
 VulkanResult vkAcquirePerformanceConfigurationINTEL(const VkPerformanceConfigurationAcquireInfoINTEL* pAcquireInfo, VkPerformanceConfigurationINTEL* pConfiguration)
 {
-  return GetFunctionTable().vkAcquirePerformanceConfigurationINTEL(device_, pAcquireInfo, pConfiguration);
+  return GetFunctionTable().vkAcquirePerformanceConfigurationINTEL(GetDevice(), pAcquireInfo, pConfiguration);
 }
 
 VulkanResult vkReleasePerformanceConfigurationINTEL(VkPerformanceConfigurationINTEL configuration)
 {
-  return GetFunctionTable().vkReleasePerformanceConfigurationINTEL(device_, configuration);
+  return GetFunctionTable().vkReleasePerformanceConfigurationINTEL(GetDevice(), configuration);
 }
 
 VulkanResult vkQueueSetPerformanceConfigurationINTEL(VkQueue queue, VkPerformanceConfigurationINTEL configuration)
@@ -1549,17 +1519,17 @@ VulkanResult vkQueueSetPerformanceConfigurationINTEL(VkQueue queue, VkPerformanc
 
 VulkanResult vkGetPerformanceParameterINTEL(VkPerformanceParameterTypeINTEL parameter, VkPerformanceValueINTEL* pValue)
 {
-  return GetFunctionTable().vkGetPerformanceParameterINTEL(device_, parameter, pValue);
+  return GetFunctionTable().vkGetPerformanceParameterINTEL(GetDevice(), parameter, pValue);
 }
 
 void vkSetLocalDimmingAMD(VkSwapchainKHR swapChain, VkBool32 localDimmingEnable)
 {
-  return GetFunctionTable().vkSetLocalDimmingAMD(device_, swapChain, localDimmingEnable);
+  return GetFunctionTable().vkSetLocalDimmingAMD(GetDevice(), swapChain, localDimmingEnable);
 }
 
 VulkanResultWithValue<VkDeviceAddress> vkGetBufferDeviceAddressEXT(const VkBufferDeviceAddressInfo* pInfo)
 {
-  return GetFunctionTable().vkGetBufferDeviceAddressEXT(device_, pInfo);
+  return GetFunctionTable().vkGetBufferDeviceAddressEXT(GetDevice(), pInfo);
 }
 
 VulkanResultWithValue<std::vector<VkPhysicalDeviceToolProperties>> vkGetPhysicalDeviceToolPropertiesEXT(VkPhysicalDevice physicalDevice)
@@ -1595,29 +1565,29 @@ VulkanResultWithValue<std::vector<VkFramebufferMixedSamplesCombinationNV>> vkGet
   return result;
 }
 
-VulkanResult vkCreateHeadlessSurfaceEXT(VkInstance instance, const VkHeadlessSurfaceCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
+VulkanResult vkCreateHeadlessSurfaceEXT(const VkHeadlessSurfaceCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
 {
-  return GetFunctionTable().vkCreateHeadlessSurfaceEXT(instance, pCreateInfo, pAllocator, pSurface);
+  return GetFunctionTable().vkCreateHeadlessSurfaceEXT(GetInstance(), pCreateInfo, pAllocator, pSurface);
 }
 
 void vkResetQueryPoolEXT(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount)
 {
-  return GetFunctionTable().vkResetQueryPoolEXT(device_, queryPool, firstQuery, queryCount);
+  return GetFunctionTable().vkResetQueryPoolEXT(GetDevice(), queryPool, firstQuery, queryCount);
 }
 
 void vkGetGeneratedCommandsMemoryRequirementsNV(const VkGeneratedCommandsMemoryRequirementsInfoNV* pInfo, VkMemoryRequirements2* pMemoryRequirements)
 {
-  return GetFunctionTable().vkGetGeneratedCommandsMemoryRequirementsNV(device_, pInfo, pMemoryRequirements);
+  return GetFunctionTable().vkGetGeneratedCommandsMemoryRequirementsNV(GetDevice(), pInfo, pMemoryRequirements);
 }
 
 VulkanResult vkCreateIndirectCommandsLayoutNV(const VkIndirectCommandsLayoutCreateInfoNV* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkIndirectCommandsLayoutNV* pIndirectCommandsLayout)
 {
-  return GetFunctionTable().vkCreateIndirectCommandsLayoutNV(device_, pCreateInfo, pAllocator, pIndirectCommandsLayout);
+  return GetFunctionTable().vkCreateIndirectCommandsLayoutNV(GetDevice(), pCreateInfo, pAllocator, pIndirectCommandsLayout);
 }
 
 void vkDestroyIndirectCommandsLayoutNV(VkIndirectCommandsLayoutNV indirectCommandsLayout, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyIndirectCommandsLayoutNV(device_, indirectCommandsLayout, pAllocator);
+  return GetFunctionTable().vkDestroyIndirectCommandsLayoutNV(GetDevice(), indirectCommandsLayout, pAllocator);
 }
 
 VulkanResult vkAcquireDrmDisplayEXT(VkPhysicalDevice physicalDevice, int32_t drmFd, VkDisplayKHR display)
@@ -1632,22 +1602,22 @@ VulkanResult vkGetDrmDisplayEXT(VkPhysicalDevice physicalDevice, int32_t drmFd, 
 
 VulkanResult vkCreatePrivateDataSlotEXT(const VkPrivateDataSlotCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkPrivateDataSlot* pPrivateDataSlot)
 {
-  return GetFunctionTable().vkCreatePrivateDataSlotEXT(device_, pCreateInfo, pAllocator, pPrivateDataSlot);
+  return GetFunctionTable().vkCreatePrivateDataSlotEXT(GetDevice(), pCreateInfo, pAllocator, pPrivateDataSlot);
 }
 
 void vkDestroyPrivateDataSlotEXT(VkPrivateDataSlot privateDataSlot, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyPrivateDataSlotEXT(device_, privateDataSlot, pAllocator);
+  return GetFunctionTable().vkDestroyPrivateDataSlotEXT(GetDevice(), privateDataSlot, pAllocator);
 }
 
 VulkanResult vkSetPrivateDataEXT(VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t data)
 {
-  return GetFunctionTable().vkSetPrivateDataEXT(device_, objectType, objectHandle, privateDataSlot, data);
+  return GetFunctionTable().vkSetPrivateDataEXT(GetDevice(), objectType, objectHandle, privateDataSlot, data);
 }
 
 void vkGetPrivateDataEXT(VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t* pData)
 {
-  return GetFunctionTable().vkGetPrivateDataEXT(device_, objectType, objectHandle, privateDataSlot, pData);
+  return GetFunctionTable().vkGetPrivateDataEXT(GetDevice(), objectType, objectHandle, privateDataSlot, pData);
 }
 
 VulkanResult vkAcquireWinrtDisplayNV(VkPhysicalDevice physicalDevice, VkDisplayKHR display)
@@ -1662,92 +1632,92 @@ VulkanResult vkGetWinrtDisplayNV(VkPhysicalDevice physicalDevice, uint32_t devic
 
 VulkanResult vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(VkRenderPass renderpass, VkExtent2D* pMaxWorkgroupSize)
 {
-  return GetFunctionTable().vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(device_, renderpass, pMaxWorkgroupSize);
+  return GetFunctionTable().vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(GetDevice(), renderpass, pMaxWorkgroupSize);
 }
 
 VulkanResult vkGetMemoryRemoteAddressNV(const VkMemoryGetRemoteAddressInfoNV* pMemoryGetRemoteAddressInfo, VkRemoteAddressNV* pAddress)
 {
-  return GetFunctionTable().vkGetMemoryRemoteAddressNV(device_, pMemoryGetRemoteAddressInfo, pAddress);
+  return GetFunctionTable().vkGetMemoryRemoteAddressNV(GetDevice(), pMemoryGetRemoteAddressInfo, pAddress);
 }
 
 void vkSetDeviceMemoryPriorityEXT(VkDeviceMemory memory, float priority)
 {
-  return GetFunctionTable().vkSetDeviceMemoryPriorityEXT(device_, memory, priority);
+  return GetFunctionTable().vkSetDeviceMemoryPriorityEXT(GetDevice(), memory, priority);
 }
 
 void vkGetDescriptorSetLayoutHostMappingInfoVALVE(const VkDescriptorSetBindingReferenceVALVE* pBindingReference, VkDescriptorSetLayoutHostMappingInfoVALVE* pHostMapping)
 {
-  return GetFunctionTable().vkGetDescriptorSetLayoutHostMappingInfoVALVE(device_, pBindingReference, pHostMapping);
+  return GetFunctionTable().vkGetDescriptorSetLayoutHostMappingInfoVALVE(GetDevice(), pBindingReference, pHostMapping);
 }
 
 void vkGetDescriptorSetHostMappingVALVE(VkDescriptorSet descriptorSet, void** ppData)
 {
-  return GetFunctionTable().vkGetDescriptorSetHostMappingVALVE(device_, descriptorSet, ppData);
+  return GetFunctionTable().vkGetDescriptorSetHostMappingVALVE(GetDevice(), descriptorSet, ppData);
 }
 
 VulkanResult vkCreateAccelerationStructureKHR(const VkAccelerationStructureCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkAccelerationStructureKHR* pAccelerationStructure)
 {
-  return GetFunctionTable().vkCreateAccelerationStructureKHR(device_, pCreateInfo, pAllocator, pAccelerationStructure);
+  return GetFunctionTable().vkCreateAccelerationStructureKHR(GetDevice(), pCreateInfo, pAllocator, pAccelerationStructure);
 }
 
 void vkDestroyAccelerationStructureKHR(VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks* pAllocator)
 {
-  return GetFunctionTable().vkDestroyAccelerationStructureKHR(device_, accelerationStructure, pAllocator);
+  return GetFunctionTable().vkDestroyAccelerationStructureKHR(GetDevice(), accelerationStructure, pAllocator);
 }
 
 VulkanResult vkBuildAccelerationStructuresKHR(VkDeferredOperationKHR deferredOperation, uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos)
 {
-  return GetFunctionTable().vkBuildAccelerationStructuresKHR(device_, deferredOperation, infoCount, pInfos, ppBuildRangeInfos);
+  return GetFunctionTable().vkBuildAccelerationStructuresKHR(GetDevice(), deferredOperation, infoCount, pInfos, ppBuildRangeInfos);
 }
 
 VulkanResult vkCopyAccelerationStructureKHR(VkDeferredOperationKHR deferredOperation, const VkCopyAccelerationStructureInfoKHR* pInfo)
 {
-  return GetFunctionTable().vkCopyAccelerationStructureKHR(device_, deferredOperation, pInfo);
+  return GetFunctionTable().vkCopyAccelerationStructureKHR(GetDevice(), deferredOperation, pInfo);
 }
 
 VulkanResult vkCopyAccelerationStructureToMemoryKHR(VkDeferredOperationKHR deferredOperation, const VkCopyAccelerationStructureToMemoryInfoKHR* pInfo)
 {
-  return GetFunctionTable().vkCopyAccelerationStructureToMemoryKHR(device_, deferredOperation, pInfo);
+  return GetFunctionTable().vkCopyAccelerationStructureToMemoryKHR(GetDevice(), deferredOperation, pInfo);
 }
 
 VulkanResult vkCopyMemoryToAccelerationStructureKHR(VkDeferredOperationKHR deferredOperation, const VkCopyMemoryToAccelerationStructureInfoKHR* pInfo)
 {
-  return GetFunctionTable().vkCopyMemoryToAccelerationStructureKHR(device_, deferredOperation, pInfo);
+  return GetFunctionTable().vkCopyMemoryToAccelerationStructureKHR(GetDevice(), deferredOperation, pInfo);
 }
 
 VulkanResult vkWriteAccelerationStructuresPropertiesKHR(uint32_t accelerationStructureCount, const VkAccelerationStructureKHR* pAccelerationStructures, VkQueryType queryType, size_t dataSize, void* pData, size_t stride)
 {
-  return GetFunctionTable().vkWriteAccelerationStructuresPropertiesKHR(device_, accelerationStructureCount, pAccelerationStructures, queryType, dataSize, pData, stride);
+  return GetFunctionTable().vkWriteAccelerationStructuresPropertiesKHR(GetDevice(), accelerationStructureCount, pAccelerationStructures, queryType, dataSize, pData, stride);
 }
 
 VulkanResultWithValue<VkDeviceAddress> vkGetAccelerationStructureDeviceAddressKHR(const VkAccelerationStructureDeviceAddressInfoKHR* pInfo)
 {
-  return GetFunctionTable().vkGetAccelerationStructureDeviceAddressKHR(device_, pInfo);
+  return GetFunctionTable().vkGetAccelerationStructureDeviceAddressKHR(GetDevice(), pInfo);
 }
 
 void vkGetDeviceAccelerationStructureCompatibilityKHR(const VkAccelerationStructureVersionInfoKHR* pVersionInfo, VkAccelerationStructureCompatibilityKHR* pCompatibility)
 {
-  return GetFunctionTable().vkGetDeviceAccelerationStructureCompatibilityKHR(device_, pVersionInfo, pCompatibility);
+  return GetFunctionTable().vkGetDeviceAccelerationStructureCompatibilityKHR(GetDevice(), pVersionInfo, pCompatibility);
 }
 
 void vkGetAccelerationStructureBuildSizesKHR(VkAccelerationStructureBuildTypeKHR buildType, const VkAccelerationStructureBuildGeometryInfoKHR* pBuildInfo, const uint32_t* pMaxPrimitiveCounts, VkAccelerationStructureBuildSizesInfoKHR* pSizeInfo)
 {
-  return GetFunctionTable().vkGetAccelerationStructureBuildSizesKHR(device_, buildType, pBuildInfo, pMaxPrimitiveCounts, pSizeInfo);
+  return GetFunctionTable().vkGetAccelerationStructureBuildSizesKHR(GetDevice(), buildType, pBuildInfo, pMaxPrimitiveCounts, pSizeInfo);
 }
 
 VulkanResult vkCreateRayTracingPipelinesKHR(VkDeferredOperationKHR deferredOperation, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoKHR* pCreateInfos, const VkAllocationCallbacks* pAllocator, VkPipeline* pPipelines)
 {
-  return GetFunctionTable().vkCreateRayTracingPipelinesKHR(device_, deferredOperation, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
+  return GetFunctionTable().vkCreateRayTracingPipelinesKHR(GetDevice(), deferredOperation, pipelineCache, createInfoCount, pCreateInfos, pAllocator, pPipelines);
 }
 
 VulkanResult vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(VkPipeline pipeline, uint32_t firstGroup, uint32_t groupCount, size_t dataSize, void* pData)
 {
-  return GetFunctionTable().vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(device_, pipeline, firstGroup, groupCount, dataSize, pData);
+  return GetFunctionTable().vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(GetDevice(), pipeline, firstGroup, groupCount, dataSize, pData);
 }
 
 VulkanResultWithValue<VkDeviceSize> vkGetRayTracingShaderGroupStackSizeKHR(VkPipeline pipeline, uint32_t group, VkShaderGroupShaderKHR groupShader)
 {
-  return GetFunctionTable().vkGetRayTracingShaderGroupStackSizeKHR(device_, pipeline, group, groupShader);
+  return GetFunctionTable().vkGetRayTracingShaderGroupStackSizeKHR(GetDevice(), pipeline, group, groupShader);
 }
 
 VulkanCommandRecorder::VulkanCommandRecorder(VkCommandBuffer command_buffer) : _command_buffer(command_buffer) {}
@@ -2649,4 +2619,4 @@ void VulkanCommandRecorder::SetRayTracingPipelineStackSizeKHR(uint32_t pipelineS
 
 // clang-format on
 
-} // namespace plex::vkapi
+} // namespace plex::graphics::vkapi

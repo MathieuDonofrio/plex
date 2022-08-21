@@ -6,7 +6,6 @@ if __name__ == '__main__':
     vulkan_core_header_path = R"C:\VulkanSDK\1.3.211.0\Include\vulkan\vulkan_core.h"
     max_width = 120
     file_name = 'vulkan_api'
-    device_var_name = 'device_'
     header_guard_prefix = 'PLEX_GRAPHICS_'
     namespace = 'plex::graphics::vkapi'
     output_path = '../vulkan2/'
@@ -61,6 +60,8 @@ if __name__ == '__main__':
     #ifndef {header_guard}
     #define {header_guard}
     
+    #include "vulkan_api_helpers.h"
+    
     #include <vulkan/vulkan_core.h>
     
     #include <vector>
@@ -70,45 +71,12 @@ if __name__ == '__main__':
     
     // clang-format off
     
-    template<typename T>
-    struct VulkanResultWithValue
-    {{
-      VkResult result {{ VK_SUCCESS }};
-      T value {{}};
-      
-      VulkanResultWithValue(T&& value = {{}}) : value(std::move(value)) {{}}
-      
-      operator bool() const
-      {{
-        return result == VK_SUCCESS;
-      }}
-    }};
-
-    struct VulkanResult
-    {{
-      VkResult result;
-      
-      VulkanResult(VkResult result) : result(result) {{}}
-      
-      operator bool() const
-      {{
-        return result == VK_SUCCESS;
-      }}
-    }};
+    VulkanResult CreateInstance(const VkApplicationInfo& app_info,
+    const std::vector<const char*>& extensions,
+    const std::vector<const char*>& layers,
+    const void* create_info_extension)
     
-    struct VulkanFunctionPointer
-    {{
-      void (*callback)() {{}};
-
-      VulkanFunctionPointer(void (*callback)()) : callback(callback) {{}}
-
-      operator bool() const
-      {{
-        return callback != nullptr;
-      }}
-    }};
-    
-    void {init_function_name}(VkDevice device);
+    VulkanResult UseDevice(VkDevice device);
     
     """)
 
@@ -116,6 +84,7 @@ if __name__ == '__main__':
     #include "{file_name}.h"
     
     #include "vulkan_function_table.h"
+    #include "vulkan_loader.h"
     
     namespace {namespace}
     {{
@@ -124,15 +93,17 @@ if __name__ == '__main__':
     
     // clang-format off
     
-    namespace
-    {{
-    static VkDevice {device_var_name} = VK_NULL_HANDLE; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
-    }} // namespace
-    
-    void {init_function_name}(VkDevice device)
-    {{
-      {device_var_name} = device;
+    VulkanResult CreateInstance(const VkApplicationInfo& app_info,
+    const std::vector<const char*>& extensions,
+    const std::vector<const char*>& layers,
+    const void* create_info_extension) {{
+      loader::CreateInstance(app_info, extensions, layers, create_info_extension);
     }}
+    
+    VulkanResult UseDevice(VkDevice device)
+    {{
+        return loader::UseDevice(device);
+    }};
     
     """)
 
@@ -154,6 +125,11 @@ if __name__ == '__main__':
     # Command buffer related function that don't follow the vkCmd* naming convention
     special_functions_vk_cmd_functions = ['vkBeginCommandBuffer', 'vkEndCommandBuffer', 'vkResetCommandBuffer']
 
+    # remove vkCreateInstance, vkDestroyInstance, vkDestroyDevice from the list of functions as they are replaced
+    # by a custom CreateInstance that uses the loader and RAII for the destructors
+    functions = [function for function in functions if
+                 function['function_name'] not in ['vkCreateInstance', 'vkDestroyInstance', 'vkDestroyDevice']]
+
     for function in functions:
         parameters = function['parameters']
 
@@ -162,8 +138,14 @@ if __name__ == '__main__':
         # Bind device
         if 'VkDevice' in parameter_types:
             del parameters[0]
-            function['call_arguments'][0] = device_var_name
+            function['call_arguments'][0] = 'GetDevice()'
             function['tags'].append('device_bound')
+
+        # Bind instance
+        if 'VkInstance' in parameter_types:
+            del parameters[0]
+            function['call_arguments'][0] = 'GetInstance()'
+            function['tags'].append('instance_bound')
 
         # Make count query function return vector
         if uint32_t_ptr_index := parameter_types.index('uint32_t*') if 'uint32_t*' in parameter_types else None:
@@ -210,7 +192,8 @@ if __name__ == '__main__':
         if 'command_buffer' not in function['tags']:
             implementation_start = f'{signature[:-1]}\n{{\n'
             implementation = ""
-            if len(function['tags']) == 0 or function['tags'] == ['device_bound']:
+            if len(function['tags']) == 0 or function['tags'] == ['device_bound'] or function['tags'] == [
+                'instance_bound']:
                 call_arguments_str = ', '.join(function['call_arguments'])
                 implementation += f'return GetFunctionTable().{function["function_name"]}({call_arguments_str});'
             elif 'count_query' in function['tags']:
@@ -232,7 +215,7 @@ if __name__ == '__main__':
         else:
             command_recorder_implementation += f'{function["return_type"]} ' \
                                                f'VulkanCommandRecorder::' \
-                                               f'{function["function_name"].replace("vkCmd","")}' \
+                                               f'{function["function_name"].replace("vkCmd", "")}' \
                                                f'({parameters_str}) const noexcept\n{{\n'
             call_arguments_str = ', '.join(function['call_arguments'])
             if function['return_type'] == 'void':

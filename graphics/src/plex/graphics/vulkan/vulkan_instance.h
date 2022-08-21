@@ -6,7 +6,7 @@
 #include "plex/graphics/window.h"
 #include "plex/utilities/enumerator.h"
 
-#include <vulkan/vulkan_core.h>
+#include "vulkan2/vulkan_api.h"
 
 #include <string>
 
@@ -25,11 +25,6 @@ public:
   VulkanInstance& operator=(VulkanInstance&&) = delete;
 
   ~VulkanInstance();
-
-  [[nodiscard]] const VkInstance GetHandle() const noexcept
-  {
-    return instance_;
-  }
 
   const std::string& GetApplicationName()
   {
@@ -90,8 +85,6 @@ private:
     VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger, const VkAllocationCallbacks* allocator_ptr);
 
 private:
-  VkInstance instance_;
-
   std::string application_name_;
 
   VkDebugUtilsMessengerEXT debug_messenger_;

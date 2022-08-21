@@ -5,7 +5,7 @@
 
 // clang-format off
 
-namespace plex::vkapi::loader
+namespace plex::graphics::vkapi::loader
 {
 
 namespace
@@ -664,4 +664,4 @@ const char* GetFunctionName(uint32_t index) noexcept
 
 // clang-format on    
 
-} // namespace plex::vkapi::loader
+} // namespace plex::graphics::vkapi::loader
