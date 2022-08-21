@@ -8,8 +8,7 @@ if __name__ == '__main__':
     file_name = 'vulkan_api'
     device_var_name = 'device_'
     header_guard_prefix = 'PLEX_GRAPHICS_'
-    namespace = 'plex::vkapi'
-    init_function_name = 'InitVulkanApi'
+    namespace = 'plex::graphics::vkapi'
     output_path = '../vulkan2/'
 
     header_guard = header_guard_prefix + file_name.upper() + '_H'

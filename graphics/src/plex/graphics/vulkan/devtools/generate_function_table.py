@@ -7,7 +7,7 @@ if __name__ == '__main__':
     file_name = 'vulkan_function_table'
     device_var_name = 'device_'
     header_guard_prefix = 'PLEX_GRAPHICS_'
-    namespace = 'plex::vkapi::loader'
+    namespace = 'plex::graphics::vkapi::loader'
     init_function_name = 'InitVulkanApi'
     output_path = '../vulkan2/'
     headers = [
