@@ -1031,4 +1031,48 @@ TEST(EntityForEach_Tests, View_TwoArchetypes_CorrectEntities)
   EXPECT_EQ(call_count, total_amount);
   EXPECT_EQ(seen_entities.size(), total_amount);
 }
+
+TEST(EntityForEach_Tests, View_TwoArchetypesStructuredBindings_CorrectEntities)
+{
+  constexpr int arch1_amount = 2;
+  constexpr int arch2_amount = 9;
+
+  constexpr int total_amount = arch1_amount + arch2_amount;
+
+  Registry registry;
+
+  for (int i = 0; i < arch1_amount; i++)
+  {
+    registry.Create(i);
+  }
+
+  for (int i = arch1_amount; i < total_amount; i++)
+  {
+    registry.Create(i, 0.5);
+  }
+
+  auto view = registry.ViewFor<int>();
+
+  int call_count = 0;
+
+  std::set<int> seen_entities;
+
+  for (auto sub_view : view)
+  {
+    for (auto [entity, value] : sub_view)
+    {
+      (void)value;
+      seen_entities.emplace(entity);
+      ++call_count;
+    }
+  }
+
+  for (int i = 0; i < total_amount; i++)
+  {
+    EXPECT_TRUE(seen_entities.contains(i));
+  }
+
+  EXPECT_EQ(call_count, total_amount);
+  EXPECT_EQ(seen_entities.size(), total_amount);
+}
 } // namespace plex::tests

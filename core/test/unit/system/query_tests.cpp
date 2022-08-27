@@ -7,16 +7,17 @@ namespace plex::tests
 namespace
 {
   template<typename... Components>
-  struct QueryMock : public BasicQueryDataAccessFactory<QueryMock<Components...>, Components...>
+  struct QueryMock
   {
     static QueryMock Fetch(void*, Context&, Context&)
     {
       return QueryMock();
     }
 
-    static constexpr std::string_view GetCategory()
+    static consteval Array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
     {
-      return "Test";
+      return { QueryDataAccess {
+        TypeName<Components>(), {}, std::is_const_v<Components>, IsThreadSafe<Components>::value }... };
     }
   };
 
@@ -50,8 +51,8 @@ TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleReadOnly_CorrectData
 
   EXPECT_EQ(array.size(), 1);
 
-  EXPECT_EQ(array[0].name, TypeName<const int>());
-  EXPECT_EQ(array[0].category, "Test");
+  EXPECT_EQ(array[0].source, TypeName<const int>());
+  EXPECT_EQ(array[0].section, std::string_view {});
   EXPECT_TRUE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
 }
@@ -62,8 +63,8 @@ TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleReadWrite_CorrectDat
 
   EXPECT_EQ(array.size(), 1);
 
-  EXPECT_EQ(array[0].name, TypeName<int>());
-  EXPECT_EQ(array[0].category, "Test");
+  EXPECT_EQ(array[0].source, TypeName<int>());
+  EXPECT_EQ(array[0].section, std::string_view {});
   EXPECT_FALSE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
 }
@@ -74,8 +75,8 @@ TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleThreadSafe_CorrectDa
 
   EXPECT_EQ(array.size(), 1);
 
-  EXPECT_EQ(array[0].name, TypeName<ThreadSafeType>());
-  EXPECT_EQ(array[0].category, "Test");
+  EXPECT_EQ(array[0].source, TypeName<ThreadSafeType>());
+  EXPECT_EQ(array[0].section, std::string_view {});
   EXPECT_FALSE(array[0].read_only);
   EXPECT_TRUE(array[0].thread_safe);
 }
@@ -86,18 +87,18 @@ TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_Multiple_CorrectDataAccess
 
   EXPECT_EQ(array.size(), 3);
 
-  EXPECT_EQ(array[0].name, TypeName<const int>());
-  EXPECT_EQ(array[0].category, "Test");
+  EXPECT_EQ(array[0].source, TypeName<const int>());
+  EXPECT_EQ(array[0].section, std::string_view {});
   EXPECT_TRUE(array[0].read_only);
   EXPECT_FALSE(array[0].thread_safe);
 
-  EXPECT_EQ(array[1].name, TypeName<float>());
-  EXPECT_EQ(array[1].category, "Test");
+  EXPECT_EQ(array[1].source, TypeName<float>());
+  EXPECT_EQ(array[1].section, std::string_view {});
   EXPECT_FALSE(array[1].read_only);
   EXPECT_FALSE(array[1].thread_safe);
 
-  EXPECT_EQ(array[2].name, TypeName<const ThreadSafeType>());
-  EXPECT_EQ(array[2].category, "Test");
+  EXPECT_EQ(array[2].source, TypeName<const ThreadSafeType>());
+  EXPECT_EQ(array[2].section, std::string_view {});
   EXPECT_TRUE(array[2].read_only);
   EXPECT_TRUE(array[2].thread_safe);
 }

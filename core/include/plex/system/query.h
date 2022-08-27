@@ -17,8 +17,8 @@ namespace plex
 ///
 struct QueryDataAccess
 {
-  std::string_view name; // Name of the data obtained using: TypeInfo<Type>::Name()
-  std::string_view category; // Category of the data obtained using: Type::GetCategory()
+  std::string_view source; // Name of the data source
+  std::string_view section; // The section of the data source that is being accessed, empty if everything is accessed
 
   // Flags
   bool read_only; // Whether the data is read-only or not.
@@ -68,10 +68,6 @@ concept QueryDataAccessList = details::IsValidQueryDataAccessList<Type>::value;
 template<typename Type>
 concept Query = requires(void* handle, Context global_context, Context local_context)
 {
-  // Returns the data category of the query.
-  // This allows different query types to use the same data type.
-  { std::remove_cvref_t<Type>::GetCategory() } -> std::convertible_to<std::string_view>;
-
   // Returns information about every data access.
   { std::remove_cvref_t<Type>::GetDataAccess() } -> QueryDataAccessList;
 
@@ -82,31 +78,29 @@ concept Query = requires(void* handle, Context global_context, Context local_con
 // clang-format on
 
 ///
-/// Implementation of the GetDataAccess requirement of a query.
+/// Global query.
 ///
-/// @note Queries are not required to use this for generating GetDataAccess.
+/// Fetches the data directly from the global context.
 ///
-/// Uses const qualification to check if a type is read-only.
-/// Uses IsThreadSafe trait to check if a type is thread-safe.
+/// @warning If the queried objects do not exist in the global context, the behaviour of this query is undefined.
 ///
-/// @tparam Query The query type.
-/// @tparam Types The types to check.
+/// @tparam Types The types of objects to query.
 ///
-template<typename Query, typename... Types>
-struct BasicQueryDataAccessFactory
+template<typename... Types>
+struct Global : public Puple<Types...>
 {
-  ///
-  /// Returns all the data accesses for the query at compile-time.
-  ///
-  /// @return Array of data accesses.
-  ///
+  using Puple<Types...>::Puple;
+
+  static Global Fetch(void*, Context& global_context, Context&)
+  {
+    return { (&global_context.template Get<Types>())... };
+  }
+
   static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
   {
-    const std::string_view category = Query::GetCategory();
-
     return { QueryDataAccess {
-      TypeName<Types>(), // Name of the type
-      category, // Query category
+      TypeName<Types>(),
+      {}, // Access entire data source
       std::is_const_v<Types>, // Check const qualifier to see if the access is read-only.
       IsThreadSafe<Types>::value // Check ThreadSafe trait to see if the access is thread-safe.
     }... };
@@ -123,32 +117,7 @@ struct BasicQueryDataAccessFactory
 /// @tparam Types The types of objects to query.
 ///
 template<typename... Types>
-struct Global : public Puple<Types...>, public BasicQueryDataAccessFactory<Global<Types...>, Types...>
-{
-  using Puple<Types...>::Puple;
-
-  static Global Fetch(void*, Context& global_context, Context&)
-  {
-    return { (&global_context.template Get<Types>())... };
-  }
-
-  static constexpr std::string_view GetCategory()
-  {
-    return "Global";
-  }
-};
-
-///
-/// Global query.
-///
-/// Fetches the data directly from the global context.
-///
-/// @warning If the queried objects do not exist in the global context, the behaviour of this query is undefined.
-///
-/// @tparam Types The types of objects to query.
-///
-template<typename... Types>
-struct Local : public Puple<Types...>, public BasicQueryDataAccessFactory<Local<Types...>, Types...>
+struct Local : public Puple<Types...>
 {
   using Puple<Types...>::Puple;
 
@@ -157,9 +126,9 @@ struct Local : public Puple<Types...>, public BasicQueryDataAccessFactory<Local<
     return { (&local_context.template Get<Types>())... };
   }
 
-  static consteval std::string_view GetCategory()
+  static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
   {
-    return "Local";
+    return {};
   }
 };
 } // namespace plex

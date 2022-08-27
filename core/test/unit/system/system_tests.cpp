@@ -14,7 +14,7 @@ namespace
   size_t entities_mock_get_call_counter;
 
   template<typename... Types>
-  struct ResourcesMock : public BasicQueryDataAccessFactory<ResourcesMock<Types...>, Types...>
+  struct ResourcesMock
   {
     static ResourcesMock Fetch(void*, Context&, Context&)
     {
@@ -23,14 +23,15 @@ namespace
       return ResourcesMock();
     }
 
-    static constexpr std::string_view GetCategory()
+    static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
     {
-      return "resources";
+      return { QueryDataAccess {
+        "resources", TypeName<Types>(), std::is_const_v<Types>, IsThreadSafe<Types>::value }... };
     }
   };
 
   template<typename... Components>
-  struct EntitiesMock : public BasicQueryDataAccessFactory<EntitiesMock<Components...>, Components...>
+  struct EntitiesMock
   {
     static EntitiesMock Fetch(void*, Context&, Context&)
     {
@@ -39,9 +40,10 @@ namespace
       return EntitiesMock();
     }
 
-    static constexpr std::string_view GetCategory()
+    static consteval Array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
     {
-      return "components";
+      return { QueryDataAccess {
+        "components", TypeName<Components>(), std::is_const_v<Components>, IsThreadSafe<Components>::value }... };
     }
   };
 
