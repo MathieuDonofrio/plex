@@ -30,7 +30,7 @@ namespace
       return MockQuery();
     }
 
-    static consteval Array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
+    static consteval std::array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
     {
       return { QueryDataAccess {
         "mock", TypeName<Components>(), std::is_const_v<Components>, IsThreadSafe<Components>::value }... };

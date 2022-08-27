@@ -72,7 +72,7 @@ private:
   template<typename QueryType>
   static auto Fetch([[maybe_unused]] void* system, Context& global_context, [[maybe_unused]] Context& local_context)
   {
-    if constexpr (Query<QueryType>)
+    if constexpr (Query<std::remove_cvref_t<QueryType>>)
     {
       return std::remove_cvref_t<QueryType>::Fetch(system, global_context, local_context);
     }
@@ -95,7 +95,7 @@ private:
   template<typename QueryType>
   static consteval auto GetDataAccess() noexcept
   {
-    if constexpr (Query<QueryType>)
+    if constexpr (Query<std::remove_cvref_t<QueryType>>)
     {
       return std::remove_cvref_t<QueryType>::GetDataAccess();
     }
@@ -146,9 +146,11 @@ public:
   ///
   /// @return Array of data accesses.
   ///
-  static consteval auto GetDataAccess() noexcept
+  static Vector<QueryDataAccess> GetDataAccess() noexcept
   {
-    return ConcatArrays<QueryDataAccess>(GetDataAccess<Queries>()...);
+    Vector<QueryDataAccess> joined;
+    ((std::ranges::copy(GetDataAccess<Queries>(), std::back_inserter(joined))), ...);
+    return joined;
   }
 };
 

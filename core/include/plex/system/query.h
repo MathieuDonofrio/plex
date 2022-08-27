@@ -1,9 +1,11 @@
 #ifndef PLEX_SYSTEM_QUERY_H
 #define PLEX_SYSTEM_QUERY_H
 
+#include <array>
+#include <ranges>
 #include <string_view>
 
-#include "plex/containers/array.h"
+#include "plex/containers/carray.h"
 #include "plex/system/context.h"
 #include "plex/utilities/puple.h"
 
@@ -25,36 +27,14 @@ struct QueryDataAccess
   bool thread_safe; // Whether the data is thread-safe or not.
 };
 
-namespace details
-{
-  ///
-  /// Checks whether or not a type is a valid query data access list.
-  ///
-  /// @tparam Type Type to check.
-  ///
-  template<typename Type>
-  struct IsValidQueryDataAccessList : public std::false_type
-  {};
-
-  ///
-  /// Checks whether or not a type is a valid query data access list.
-  ///
-  /// Specialization for arrays.
-  ///
-  /// @tparam N Number of elements for array.
-  ///
-  template<size_t N>
-  struct IsValidQueryDataAccessList<Array<QueryDataAccess, N>> : public std::true_type
-  {};
-} // namespace details
-
 ///
-/// Concept used to determine whether or not a type is a valid list of QueryDataAccess.
+/// Concept used to determine whether or not a type is a valid range of QueryDataAccess.
 ///
 /// @tparam Type The type to check.
 ///
 template<typename Type>
-concept QueryDataAccessList = details::IsValidQueryDataAccessList<Type>::value;
+concept QueryDataAccessRange =
+  std::ranges::random_access_range<Type> && std::same_as<std::ranges::range_value_t<Type>, QueryDataAccess>;
 
 // clang-format off
 
@@ -69,10 +49,10 @@ template<typename Type>
 concept Query = requires(void* handle, Context global_context, Context local_context)
 {
   // Returns information about every data access.
-  { std::remove_cvref_t<Type>::GetDataAccess() } -> QueryDataAccessList;
+  { Type::GetDataAccess() } -> QueryDataAccessRange;
 
   // Obtains the data for the query.
-  { std::remove_cvref_t<Type>::Fetch(handle, global_context, local_context) } -> std::same_as<std::remove_cvref_t<Type>>;
+  { Type::Fetch(handle, global_context, local_context) } -> std::convertible_to<Type>;
 };
 
 // clang-format on
@@ -87,6 +67,7 @@ concept Query = requires(void* handle, Context global_context, Context local_con
 /// @tparam Types The types of objects to query.
 ///
 template<typename... Types>
+requires(sizeof...(Types) > 0)
 struct Global : public Puple<Types...>
 {
   using Puple<Types...>::Puple;
@@ -96,7 +77,7 @@ struct Global : public Puple<Types...>
     return { (&global_context.template Get<Types>())... };
   }
 
-  static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
+  static consteval std::array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
   {
     return { QueryDataAccess {
       TypeName<Types>(),
@@ -117,6 +98,7 @@ struct Global : public Puple<Types...>
 /// @tparam Types The types of objects to query.
 ///
 template<typename... Types>
+requires(sizeof...(Types) > 0)
 struct Local : public Puple<Types...>
 {
   using Puple<Types...>::Puple;
@@ -126,7 +108,7 @@ struct Local : public Puple<Types...>
     return { (&local_context.template Get<Types>())... };
   }
 
-  static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
+  static consteval std::array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
   {
     return {};
   }

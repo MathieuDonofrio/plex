@@ -14,7 +14,7 @@ namespace
       return QueryMock();
     }
 
-    static consteval Array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
+    static consteval std::array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
     {
       return { QueryDataAccess {
         TypeName<Components>(), {}, std::is_const_v<Components>, IsThreadSafe<Components>::value }... };
@@ -36,18 +36,18 @@ static_assert(Query<QueryMock<int>>);
 static_assert(Query<QueryMock<float>>);
 static_assert(Query<QueryMock<int, double>>);
 static_assert(Query<QueryMock<float, double>>);
-static_assert(Query<QueryMock<>&&>);
+static_assert(Query<QueryMock<>>);
 
 TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_Nothing_ReturnsEmpty)
 {
-  QueryDataAccessList auto array = QueryMock<>::GetDataAccess();
+  QueryDataAccessRange auto array = QueryMock<>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 0);
 }
 
 TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleReadOnly_CorrectDataAccess)
 {
-  QueryDataAccessList auto array = QueryMock<const int>::GetDataAccess();
+  QueryDataAccessRange auto array = QueryMock<const int>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 1);
 
@@ -59,7 +59,7 @@ TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleReadOnly_CorrectData
 
 TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleReadWrite_CorrectDataAccessy)
 {
-  QueryDataAccessList auto array = QueryMock<int>::GetDataAccess();
+  QueryDataAccessRange auto array = QueryMock<int>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 1);
 
@@ -71,7 +71,7 @@ TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleReadWrite_CorrectDat
 
 TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleThreadSafe_CorrectDataAccessy)
 {
-  QueryDataAccessList auto array = QueryMock<ThreadSafeType>::GetDataAccess();
+  QueryDataAccessRange auto array = QueryMock<ThreadSafeType>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 1);
 
@@ -83,7 +83,7 @@ TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_SingleThreadSafe_CorrectDa
 
 TEST(BasicQueryDataAccessFactory_Tests, GetDataAccess_Multiple_CorrectDataAccesses)
 {
-  QueryDataAccessList auto array = QueryMock<const int, float, const ThreadSafeType>::GetDataAccess();
+  QueryDataAccessRange auto array = QueryMock<const int, float, const ThreadSafeType>::GetDataAccess();
 
   EXPECT_EQ(array.size(), 3);
 

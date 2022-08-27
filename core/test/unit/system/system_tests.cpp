@@ -23,7 +23,7 @@ namespace
       return ResourcesMock();
     }
 
-    static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
+    static consteval std::array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
     {
       return { QueryDataAccess {
         "resources", TypeName<Types>(), std::is_const_v<Types>, IsThreadSafe<Types>::value }... };
@@ -40,7 +40,7 @@ namespace
       return EntitiesMock();
     }
 
-    static consteval Array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
+    static consteval std::array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
     {
       return { QueryDataAccess {
         "components", TypeName<Components>(), std::is_const_v<Components>, IsThreadSafe<Components>::value }... };
