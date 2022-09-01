@@ -4,6 +4,11 @@
 
 namespace plex
 {
+App::App()
+{
+  global_context_.Insert(&work_pool_, [](void*) {});
+}
+
 void App::AddPackage(const Package& package)
 {
   package.DoAdd(*this);

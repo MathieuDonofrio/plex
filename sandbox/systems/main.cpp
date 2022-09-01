@@ -43,8 +43,10 @@ public:
     LOG_INFO("System1");
   }
 
-  static void system2()
+  static Task<void> system2(ThreadPool& pool)
   {
+    co_await pool.Schedule();
+
     LOG_INFO("System2");
   }
 

@@ -16,6 +16,11 @@ class Package;
 class App
 {
 public:
+  ///
+  /// Default constructor.
+  ///
+  App();
+
   virtual ~App() = default;
 
   ///

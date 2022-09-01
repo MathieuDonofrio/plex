@@ -5,6 +5,7 @@
 #include <mutex>
 
 #include "plex/async/task.h"
+#include "plex/utilities/type_traits.h"
 
 namespace plex
 {
@@ -240,6 +241,10 @@ private:
   std::thread* threads_;
   size_t thread_count_;
 };
+
+template<>
+struct IsThreadSafe<ThreadPool> : std::true_type
+{};
 } // namespace plex
 
 #endif
