@@ -70,7 +70,8 @@ private:
   /// @return The populated query object.
   ///
   template<typename QueryType>
-  static auto Fetch([[maybe_unused]] void* system, Context& global_context, [[maybe_unused]] Context& local_context)
+  static decltype(auto) Fetch(
+    [[maybe_unused]] void* system, Context& global_context, [[maybe_unused]] Context& local_context)
   {
     if constexpr (Query<std::remove_cvref_t<QueryType>>)
     {
