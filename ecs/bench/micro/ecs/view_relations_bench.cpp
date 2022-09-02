@@ -6,7 +6,7 @@ namespace plex::bench
 {
 static void ViewRelations_AssureArchetype(benchmark::State& state)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   for (auto _ : state)
   {
@@ -20,7 +20,7 @@ BENCHMARK(ViewRelations_AssureArchetype);
 
 static void ViewRelations_AssureView(benchmark::State& state)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   for (auto _ : state)
   {

@@ -303,10 +303,10 @@ const Vector<ComponentId>& GetComponentIds()
 ///
 /// Keeps track of what archetypes are in every view in an array ready for lookup.
 ///
-class ViewRelations final
+class ArchetypeViewMappings final
 {
 public:
-  ViewRelations()
+  ArchetypeViewMappings()
   {
     archetype_states_.resize(MaxArchetypes);
     view_states_.resize(MaxViews);

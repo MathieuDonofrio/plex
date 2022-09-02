@@ -79,7 +79,7 @@ Utilities
 - [ ] Investigate Groups
 - [ ] Investigate Hierarchies
 - [ ] Investigate Scripting
-- [ ] Storage extra indirection for very large components. (Speeds up insert/destroy/swapping)
+- [ ] ArchetypeStorage extra indirection for very large components. (Speeds up insert/destroy/swapping)
 
 ### Events
 

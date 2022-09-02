@@ -22,13 +22,13 @@ namespace plex
 /// @tparam AllocatorImpl Allocator to allocate memory with.
 ///
 template<std::unsigned_integral Entity>
-class SharedSparseArray
+class ArchetypeStorageSparseArray
 {
 public:
   ///
   /// Constructor.
   ///
-  constexpr SharedSparseArray() noexcept : capacity_(32)
+  constexpr ArchetypeStorageSparseArray() noexcept : capacity_(32)
   {
     array_ = static_cast<Entity*>(std::malloc(sizeof(Entity) * capacity_));
   }
@@ -36,15 +36,15 @@ public:
   ///
   /// Destructor.
   ///
-  ~SharedSparseArray()
+  ~ArchetypeStorageSparseArray()
   {
     std::free(array_);
   }
 
-  SharedSparseArray(const SharedSparseArray&) = delete;
-  SharedSparseArray(SharedSparseArray&&) = delete;
-  SharedSparseArray& operator=(const SharedSparseArray&) = delete;
-  SharedSparseArray& operator=(SharedSparseArray&&) = delete;
+  ArchetypeStorageSparseArray(const ArchetypeStorageSparseArray&) = delete;
+  ArchetypeStorageSparseArray(ArchetypeStorageSparseArray&&) = delete;
+  ArchetypeStorageSparseArray& operator=(const ArchetypeStorageSparseArray&) = delete;
+  ArchetypeStorageSparseArray& operator=(ArchetypeStorageSparseArray&&) = delete;
 
   ///
   /// Assures that the entity can be mapped in the sparse array.
@@ -113,7 +113,7 @@ private:
 /// @warning Never assume any kind of order. Storage reserves the right to reorder entities and components.
 ///
 template<std::unsigned_integral Entity>
-class Storage
+class ArchetypeStorage
 {
 public:
   // Style Exception: STL
@@ -187,7 +187,7 @@ public:
   ///
   /// @param[in] sparse Shared sparse array.
   ///
-  explicit Storage(SharedSparseArray<Entity>* sparse) noexcept
+  explicit ArchetypeStorage(ArchetypeStorageSparseArray<Entity>* sparse) noexcept
   {
     ASSERT(sparse != nullptr, "Sparse array cannot be nullptr");
 
@@ -197,12 +197,12 @@ public:
   ///
   /// Destructor.
   ///
-  ~Storage() = default;
+  ~ArchetypeStorage() = default;
 
-  Storage(const Storage&) = delete;
-  Storage(Storage&&) = delete;
-  Storage& operator=(const Storage&) = delete;
-  Storage& operator=(Storage&&) = delete;
+  ArchetypeStorage(const ArchetypeStorage&) = delete;
+  ArchetypeStorage(ArchetypeStorage&&) = delete;
+  ArchetypeStorage& operator=(const ArchetypeStorage&) = delete;
+  ArchetypeStorage& operator=(ArchetypeStorage&&) = delete;
 
   ///
   /// Initializes the storage for the component types.
@@ -216,9 +216,8 @@ public:
   /// @tparam Components List of component types.
   ///
   template<typename... Components>
-  requires UniqueTypes<std::remove_cvref_t<Components>
-    ...>
-    COLD_SECTION NO_INLINE void Initialize() noexcept
+  requires UniqueTypes<std::remove_cvref_t<Components>...>
+  COLD_SECTION NO_INLINE void Initialize() noexcept
   {
     ASSERT(!initialized_, "Already initialized");
 
@@ -252,9 +251,8 @@ public:
   /// @param[in] components Component data to move into the storage.
   ///
   template<typename... Components>
-  requires UniqueTypes<std::remove_cvref_t<Components>
-    ...> void
-    Insert(const Entity entity, Components&&... components) noexcept
+  requires UniqueTypes<std::remove_cvref_t<Components>...>
+  void Insert(const Entity entity, Components&&... components) noexcept
   {
     ASSERT(initialized_, "Not initialized");
     ASSERT(!Contains(entity), "Entity already exists");
@@ -356,7 +354,7 @@ public:
   template<typename Component>
   [[nodiscard]] Component& Unpack(const Entity entity) noexcept
   {
-    return const_cast<Component&>(static_cast<const Storage*>(this)->Unpack<Component>(entity));
+    return const_cast<Component&>(static_cast<const ArchetypeStorage*>(this)->Unpack<Component>(entity));
   }
 
   ///
@@ -385,7 +383,7 @@ public:
   template<typename Component>
   [[nodiscard]] Vector<Component>& Access() noexcept
   {
-    return const_cast<Vector<Component>&>(static_cast<const Storage*>(this)->Access<Component>());
+    return const_cast<Vector<Component>&>(static_cast<const ArchetypeStorage*>(this)->Access<Component>());
   }
 
   ///
@@ -433,17 +431,17 @@ private:
   /// @param[in] index Index to erase at.
   ///
   template<typename Component>
-  static void AccessAndEraseAt(Storage<Entity>* storage, size_t index)
+  static void AccessAndEraseAt(ArchetypeStorage<Entity>* storage, size_t index)
   {
     auto& component_array = storage->template Access<Component>();
     component_array.SwapAndPop(component_array.begin() + index);
   }
 
 private:
-  using EraseFunction = void (*)(Storage<Entity>* storage, const size_t);
-  using ClearFunction = void (*)(Storage<Entity>* storage);
+  using EraseFunction = void (*)(ArchetypeStorage<Entity>* storage, const size_t);
+  using ClearFunction = void (*)(ArchetypeStorage<Entity>* storage);
 
-  SharedSparseArray<Entity>* sparse_;
+  ArchetypeStorageSparseArray<Entity>* sparse_;
   Vector<Entity> dense_;
 
   TypeMap<ErasedPtr<void>> component_arrays_;

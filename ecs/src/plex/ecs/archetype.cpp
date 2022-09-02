@@ -2,7 +2,7 @@
 
 namespace plex
 {
-void ViewRelations::AddView(ViewId id)
+void ArchetypeViewMappings::AddView(ViewId id)
 {
   if (id >= view_archetypes_.size()) view_archetypes_.resize(id + 1);
 
@@ -29,7 +29,7 @@ void ViewRelations::AddView(ViewId id)
   }
 }
 
-void ViewRelations::AddArchetype(ArchetypeId id)
+void ArchetypeViewMappings::AddArchetype(ArchetypeId id)
 {
   auto& archetype_components = archetype_components_[id];
 

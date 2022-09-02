@@ -1,21 +1,21 @@
-#include "plex/ecs/registry.h"
+#include "plex/ecs/entity_registry.h"
 
 #include <gtest/gtest.h>
 
 namespace plex::tests
 {
-TEST(Registry_Tests, EntityCount_AfterInitialization_Zero)
+TEST(EntityRegistry_Tests, EntityCount_AfterInitialization_Zero)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   EXPECT_EQ(registry.EntityCount(), 0);
   EXPECT_EQ(registry.EntityCount<int>(), 0);
   EXPECT_EQ(registry.EntityCount<double>(), 0);
 }
 
-TEST(Registry_Tests, Create_AfterInitialization_IncreaseEntityCount)
+TEST(EntityRegistry_Tests, Create_AfterInitialization_IncreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int>(10);
 
@@ -25,9 +25,9 @@ TEST(Registry_Tests, Create_AfterInitialization_IncreaseEntityCount)
   EXPECT_EQ(entity, 0u);
 }
 
-TEST(Registry_Tests, Create_Multiple_IncreaseEntityCount)
+TEST(EntityRegistry_Tests, Create_Multiple_IncreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   for (size_t i = 0; i < 10; i++)
   {
@@ -39,9 +39,9 @@ TEST(Registry_Tests, Create_Multiple_IncreaseEntityCount)
   EXPECT_EQ(registry.EntityCount<double>(), 0);
 }
 
-TEST(Registry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseEntityCount)
+TEST(EntityRegistry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity1 = registry.Create<int, double, float>(10, 0.5, 0.2f);
   auto entity2 = registry.Create<int, float>(11, 0.8f);
@@ -58,9 +58,9 @@ TEST(Registry_Tests, Create_MultipleEntitiesMultipleComponents_IncreaseEntityCou
   EXPECT_EQ(entity2, 1u);
 }
 
-TEST(Registry_Tests, Destroy_Single_DecreaseEntityCount)
+TEST(EntityRegistry_Tests, Destroy_Single_DecreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int>(10);
 
@@ -70,9 +70,9 @@ TEST(Registry_Tests, Destroy_Single_DecreaseEntityCount)
   EXPECT_EQ(registry.EntityCount<int>(), 0);
 }
 
-TEST(Registry_Tests, Destroy_WithView_DecreaseEntityCount)
+TEST(EntityRegistry_Tests, Destroy_WithView_DecreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int>(10);
 
@@ -82,9 +82,9 @@ TEST(Registry_Tests, Destroy_WithView_DecreaseEntityCount)
   EXPECT_EQ(registry.EntityCount<int>(), 0);
 }
 
-TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseEntityCount)
+TEST(EntityRegistry_Tests, Destroy_WithEmptyView_DecreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int, double>(10, 0.5);
 
@@ -96,9 +96,9 @@ TEST(Registry_Tests, Destroy_WithEmptyView_DecreaseEntityCount)
   EXPECT_EQ((registry.EntityCount<double, int>()), 0);
 }
 
-TEST(Registry_Tests, Destroy_WithPartialView_DecreaseEntityCount)
+TEST(EntityRegistry_Tests, Destroy_WithPartialView_DecreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int, double>(10, 0.5);
 
@@ -110,9 +110,9 @@ TEST(Registry_Tests, Destroy_WithPartialView_DecreaseEntityCount)
   EXPECT_EQ((registry.EntityCount<double, int>()), 0);
 }
 
-TEST(Registry_Tests, Destroy_WithExactView_DecreaseEntityCount)
+TEST(EntityRegistry_Tests, Destroy_WithExactView_DecreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int, double>(10, 0.5);
 
@@ -124,9 +124,9 @@ TEST(Registry_Tests, Destroy_WithExactView_DecreaseEntityCount)
   EXPECT_EQ((registry.EntityCount<double, int>()), 0);
 }
 
-TEST(Registry_Tests, Create_AfterDestroy_Restore)
+TEST(EntityRegistry_Tests, Create_AfterDestroy_Restore)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity1 = registry.Create<int, double>(10, 0.5);
 
@@ -143,9 +143,9 @@ TEST(Registry_Tests, Create_AfterDestroy_Restore)
   EXPECT_EQ(entity1, entity2);
 }
 
-TEST(Registry_Tests, DestroyAll_MultipleEntities_DecreaseEntityCount)
+TEST(EntityRegistry_Tests, DestroyAll_MultipleEntities_DecreaseEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int, double>(10, 0.5);
   registry.Create<int>(10);
@@ -167,9 +167,9 @@ TEST(Registry_Tests, DestroyAll_MultipleEntities_DecreaseEntityCount)
   EXPECT_EQ((registry.EntityCount<float>()), 0);
 }
 
-TEST(Registry_Tests, DestroyAll_WithView_DecreaseEntityCountCorrectly)
+TEST(EntityRegistry_Tests, DestroyAll_WithView_DecreaseEntityCountCorrectly)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int, double>(10, 0.5);
   registry.Create<int>(10);
@@ -201,9 +201,9 @@ TEST(Registry_Tests, DestroyAll_WithView_DecreaseEntityCountCorrectly)
   EXPECT_EQ((registry.EntityCount<double>()), 0);
 }
 
-TEST(Registry_Tests, Unpack_Single_Correct)
+TEST(EntityRegistry_Tests, Unpack_Single_Correct)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto created_entity = registry.Create<int, double>(10, 0.5);
 
@@ -211,9 +211,9 @@ TEST(Registry_Tests, Unpack_Single_Correct)
   EXPECT_EQ(0.5, registry.Unpack<double>(created_entity));
 }
 
-TEST(Registry_Tests, Unpack_Modify_ModifiedValue)
+TEST(EntityRegistry_Tests, Unpack_Modify_ModifiedValue)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto created_entity = registry.Create<int, double>(10, 0.5);
 
@@ -228,27 +228,27 @@ TEST(Registry_Tests, Unpack_Modify_ModifiedValue)
   EXPECT_EQ(1.5, registry.Unpack<double>(created_entity));
 }
 
-TEST(Registry_Tests, HasComponents_Zero_False)
+TEST(EntityRegistry_Tests, HasComponents_Zero_False)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto created_entity = registry.Create<int>(10);
 
   EXPECT_FALSE(registry.HasComponents<double>(created_entity));
 }
 
-TEST(Registry_Tests, HasComponents_One_False)
+TEST(EntityRegistry_Tests, HasComponents_One_False)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto created_entity = registry.Create<int>(10);
 
   EXPECT_TRUE(registry.HasComponents<int>(created_entity));
 }
 
-TEST(Registry_Tests, HasComponents_Multiple_False)
+TEST(EntityRegistry_Tests, HasComponents_Multiple_False)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto created_entity = registry.Create<int, double, float>(10, 0.5, 0.2f);
 
@@ -269,7 +269,7 @@ TEST(Registry_Tests, HasComponents_Multiple_False)
 
 TEST(ViewIterator_Tests, PreIncrement_Empty_NoIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   View view = registry.ViewFor();
 
@@ -285,7 +285,7 @@ TEST(ViewIterator_Tests, PreIncrement_Empty_NoIterations)
 
 TEST(ViewIterator_Tests, PreIncrement_Single_OneIteration)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
 
@@ -303,7 +303,7 @@ TEST(ViewIterator_Tests, PreIncrement_Single_OneIteration)
 
 TEST(ViewIterator_Tests, PreIncrement_Double_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<double>(0);
@@ -322,7 +322,7 @@ TEST(ViewIterator_Tests, PreIncrement_Double_CorrectIterations)
 
 TEST(ViewIterator_Tests, PreIncrement_Multiple_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<float>(0);
@@ -343,7 +343,7 @@ TEST(ViewIterator_Tests, PreIncrement_Multiple_CorrectIterations)
 
 TEST(ViewIterator_Tests, PreIncrement_WithMultipleEntities_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<int>(0);
@@ -365,7 +365,7 @@ TEST(ViewIterator_Tests, PreIncrement_WithMultipleEntities_CorrectIterations)
 
 TEST(ViewIterator_Tests, PostIncrement_Single_OneIteration)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
 
@@ -383,7 +383,7 @@ TEST(ViewIterator_Tests, PostIncrement_Single_OneIteration)
 
 TEST(ViewIterator_Tests, PostIncrement_Multiple_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<float>(0);
@@ -404,7 +404,7 @@ TEST(ViewIterator_Tests, PostIncrement_Multiple_CorrectIterations)
 
 TEST(ViewIterator_Tests, PreDecrement_Single_OneIteration)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
 
@@ -422,7 +422,7 @@ TEST(ViewIterator_Tests, PreDecrement_Single_OneIteration)
 
 TEST(ViewIterator_Tests, PostDecrement_Multiple_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<float>(0);
@@ -443,7 +443,7 @@ TEST(ViewIterator_Tests, PostDecrement_Multiple_CorrectIterations)
 
 TEST(ViewIterator_Tests, AddAssign_Multiple_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<float>(0);
@@ -467,7 +467,7 @@ TEST(ViewIterator_Tests, AddAssign_Multiple_CorrectIterations)
 
 TEST(ViewIterator_Tests, SubtractAssign_Multiple_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<float>(0);
@@ -492,7 +492,7 @@ TEST(ViewIterator_Tests, SubtractAssign_Multiple_CorrectIterations)
 
 TEST(ViewIterator_Tests, Add_Multiple_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<float>(0);
@@ -515,7 +515,7 @@ TEST(ViewIterator_Tests, Add_Multiple_CorrectIterations)
 
 TEST(ViewIterator_Tests, Subtract_Multiple_CorrectIterations)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<float>(0);
@@ -538,7 +538,7 @@ TEST(ViewIterator_Tests, Subtract_Multiple_CorrectIterations)
 
 TEST(SubView_Tests, Contains_SingleExact_True)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int>(0);
 
@@ -549,7 +549,7 @@ TEST(SubView_Tests, Contains_SingleExact_True)
 
 TEST(SubView_Tests, Contains_SingleDestroyed_False)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int>(0);
   registry.Destroy(entity);
@@ -561,7 +561,7 @@ TEST(SubView_Tests, Contains_SingleDestroyed_False)
 
 TEST(SubView_Tests, EntityCount_Multiple_CorrectEntityCount)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(0);
   registry.Create<int>(0);
@@ -574,7 +574,7 @@ TEST(SubView_Tests, EntityCount_Multiple_CorrectEntityCount)
 
 TEST(SubView_Tests, Unpack_Single_CorrectValue)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity = registry.Create<int>(10);
 
@@ -585,7 +585,7 @@ TEST(SubView_Tests, Unpack_Single_CorrectValue)
 
 TEST(SubViewIterator_Tests, Dereference_Single_CorrectEntity)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(99);
 
@@ -600,7 +600,7 @@ TEST(SubViewIterator_Tests, Dereference_Single_CorrectEntity)
 
 TEST(SubViewIterator_Tests, PreIncrement_Double_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
@@ -615,7 +615,7 @@ TEST(SubViewIterator_Tests, PreIncrement_Double_CorrectEntities)
 
 TEST(SubViewIterator_Tests, PreDecrement_Double_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
@@ -632,7 +632,7 @@ TEST(SubViewIterator_Tests, PreDecrement_Double_CorrectEntities)
 
 TEST(SubViewIterator_Tests, PostIncrement_Double_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
@@ -652,7 +652,7 @@ TEST(SubViewIterator_Tests, PostIncrement_Double_CorrectEntities)
 
 TEST(SubViewIterator_Tests, PostDecrement_Double_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
@@ -672,7 +672,7 @@ TEST(SubViewIterator_Tests, PostDecrement_Double_CorrectEntities)
 
 TEST(SubViewIterator_Tests, AddAssign_Multiple_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
@@ -693,7 +693,7 @@ TEST(SubViewIterator_Tests, AddAssign_Multiple_CorrectEntities)
 
 TEST(SubViewIterator_Tests, SubstractAssign_Multiple_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
@@ -714,7 +714,7 @@ TEST(SubViewIterator_Tests, SubstractAssign_Multiple_CorrectEntities)
 
 TEST(SubViewIterator_Tests, Add_Multiple_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
@@ -730,7 +730,7 @@ TEST(SubViewIterator_Tests, Add_Multiple_CorrectEntities)
 
 TEST(SubViewIterator_Tests, Subtract_Multiple_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(1);
   registry.Create<int>(2);
@@ -748,7 +748,7 @@ TEST(SubViewIterator_Tests, Subtract_Multiple_CorrectEntities)
 
 TEST(SubViewIterator_Tests, CopyAssign_Single_CorrectEntity)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(99);
 
@@ -767,7 +767,7 @@ TEST(SubViewIterator_Tests, CopyAssign_Single_CorrectEntity)
 
 TEST(SubViewEntityIterator_Tests, Increment_Double_CorrectEntities)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   auto entity1 = registry.Create<int>(1);
   auto entity2 = registry.Create<int>(2);
@@ -796,7 +796,7 @@ TEST(SubViewEntityIterator_Tests, Increment_Double_CorrectEntities)
 
 TEST(EntityForEach_Tests, SubView_Single_CorrectEntity)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   registry.Create<int>(99);
 
@@ -818,7 +818,7 @@ TEST(EntityForEach_Tests, SubView_3_CorrectEntities)
 {
   constexpr int amount = 3;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < amount; i++)
   {
@@ -843,7 +843,7 @@ TEST(EntityForEach_Tests, SubView_4_CorrectEntities)
 {
   constexpr int amount = 4;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < amount; i++)
   {
@@ -868,7 +868,7 @@ TEST(EntityForEach_Tests, SubView_7_CorrectEntities)
 {
   constexpr int amount = 7;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < amount; i++)
   {
@@ -893,7 +893,7 @@ TEST(EntityForEach_Tests, SubView_8_CorrectEntities)
 {
   constexpr int amount = 8;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < amount; i++)
   {
@@ -918,7 +918,7 @@ TEST(EntityForEach_Tests, SubView_9_CorrectEntities)
 {
   constexpr int amount = 9;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < amount; i++)
   {
@@ -943,7 +943,7 @@ TEST(EntityForEach_Tests, SubView_65_CorrectEntities)
 {
   constexpr int amount = 65;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < amount; i++)
   {
@@ -970,7 +970,7 @@ TEST(EntityForEach_Tests, View_SingleArchetype_CorrectEntities)
 
   constexpr int total_amount = arch1_amount;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < arch1_amount; i++)
   {
@@ -998,7 +998,7 @@ TEST(EntityForEach_Tests, View_TwoArchetypes_CorrectEntities)
 
   constexpr int total_amount = arch1_amount + arch2_amount;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < arch1_amount; i++)
   {
@@ -1039,7 +1039,7 @@ TEST(EntityForEach_Tests, View_TwoArchetypesStructuredBindings_CorrectEntities)
 
   constexpr int total_amount = arch1_amount + arch2_amount;
 
-  Registry registry;
+  EntityRegistry registry;
 
   for (int i = 0; i < arch1_amount; i++)
   {

@@ -1,13 +1,13 @@
-#ifndef PLEX_ECS_REGISTRY_H
-#define PLEX_ECS_REGISTRY_H
+#ifndef PLEX_ECS_ENTITY_REGISTRY_H
+#define PLEX_ECS_ENTITY_REGISTRY_H
 
 #include <algorithm>
 #include <concepts>
 #include <type_traits>
 
 #include "plex/ecs/archetype.h"
+#include "plex/ecs/archetype_storage.h"
 #include "plex/ecs/entity_manager.h"
-#include "plex/ecs/storage.h"
 #include "plex/utilities/puple.h"
 
 namespace plex
@@ -23,7 +23,7 @@ template<typename...>
 class View;
 
 ///
-/// Registry is where all entities and their components are stored and managed.
+/// The EntityRegistry is where all entities and their components are stored and managed.
 ///
 /// This registry is an archetype aware ECS container. It organizes entities and components based on their archetype.
 /// Archetypes are simply the set of components that an entity has.
@@ -33,7 +33,7 @@ class View;
 ///
 /// To access data from the registry, you must create a view of the registry with the desired components.
 ///
-class Registry final
+class EntityRegistry final
 {
 public:
   template<typename...>
@@ -42,7 +42,7 @@ public:
   ///
   /// Constructor.
   ///
-  Registry()
+  EntityRegistry()
   {
     storages_.resize(MaxArchetypes);
   }
@@ -50,7 +50,7 @@ public:
   ///
   /// Destructor.
   ///
-  ~Registry()
+  ~EntityRegistry()
   {
     for (auto storage : storages_)
     {
@@ -58,10 +58,10 @@ public:
     }
   }
 
-  Registry(const Registry&) = delete;
-  Registry(Registry&&) = delete;
-  Registry& operator=(const Registry&) = delete;
-  Registry& operator=(Registry&&) = delete;
+  EntityRegistry(const EntityRegistry&) = delete;
+  EntityRegistry(EntityRegistry&&) = delete;
+  EntityRegistry& operator=(const EntityRegistry&) = delete;
+  EntityRegistry& operator=(EntityRegistry&&) = delete;
 
   ///
   /// Creates a new entity and with the given components.
@@ -202,7 +202,7 @@ private:
   /// @return Reference to assured storage.
   ///
   template<typename... Components>
-  Storage<Entity>& AssureStorage()
+  ArchetypeStorage<Entity>& AssureStorage()
   {
     const ArchetypeId id = relations_.template AssureArchetype<std::remove_cvref_t<Components>...>();
 
@@ -224,22 +224,22 @@ private:
   /// @tparam Components Components that make up the archetype.
   ///
   template<typename... Components>
-  COLD_SECTION NO_INLINE Storage<Entity>& InitializeStorage()
+  COLD_SECTION NO_INLINE ArchetypeStorage<Entity>& InitializeStorage()
   {
     const ArchetypeId archetype = relations_.template AssureArchetype<Components...>();
 
-    storages_[archetype] = new Storage<Entity>(&mappings_);
+    storages_[archetype] = new ArchetypeStorage<Entity>(&mappings_);
     storages_[archetype]->template Initialize<Components...>();
 
     return *storages_[archetype];
   }
 
 private:
-  SharedSparseArray<Entity> mappings_;
+  ArchetypeStorageSparseArray<Entity> mappings_;
   EntityManager<Entity> entity_manager_;
-  ViewRelations relations_;
+  ArchetypeViewMappings relations_;
 
-  Vector<Storage<Entity>*> storages_;
+  Vector<ArchetypeStorage<Entity>*> storages_;
 };
 
 namespace details
@@ -257,7 +257,7 @@ namespace details
 
     constexpr SubViewIterator() noexcept = default;
 
-    SubViewIterator(Storage<Entity>* storage, size_t offset) noexcept
+    SubViewIterator(ArchetypeStorage<Entity>* storage, size_t offset) noexcept
       : data_(AccessFromStorage<std::remove_cvref_t<DataTypes>>(storage, offset)...)
     {}
 
@@ -331,7 +331,7 @@ namespace details
 
   private:
     template<typename DataType>
-    DataType* AccessFromStorage(Storage<Entity>* storage, size_t offset) noexcept
+    DataType* AccessFromStorage(ArchetypeStorage<Entity>* storage, size_t offset) noexcept
     {
       if constexpr (std::same_as<DataType, Entity>)
       {
@@ -453,10 +453,10 @@ private:
   ///
   /// @param[in] storage Storage to construct view with.
   ///
-  constexpr SubView(Storage<Entity>* storage) : storage_(storage) {}
+  constexpr SubView(ArchetypeStorage<Entity>* storage) : storage_(storage) {}
 
 private:
-  Storage<Entity>* storage_;
+  ArchetypeStorage<Entity>* storage_;
 };
 
 ///
@@ -487,7 +487,7 @@ public:
     using difference_type = ptrdiff_t;
     using value_type = SubView<std::remove_cvref_t<Components>...>;
 
-    constexpr ViewIterator(const ArchetypeId* archetype, Registry& registry) noexcept
+    constexpr ViewIterator(const ArchetypeId* archetype, EntityRegistry& registry) noexcept
       : archetype_(archetype), registry_(registry)
     {}
 
@@ -542,7 +542,7 @@ public:
 
   private:
     const ArchetypeId* archetype_;
-    Registry& registry_;
+    EntityRegistry& registry_;
   };
 
   using iterator = ViewIterator;
@@ -566,7 +566,7 @@ public:
   ///
   /// @param[in] registry Registry to construct view for.
   ///
-  constexpr explicit View(Registry& registry)
+  constexpr explicit View(EntityRegistry& registry)
     : registry_(registry),
       archetypes_(registry.relations_.ViewArchetypes(registry.relations_.template AssureView<Components...>()))
   {}
@@ -734,7 +734,7 @@ public:
   }
 
 private:
-  Registry& registry_;
+  EntityRegistry& registry_;
   const Vector<ArchetypeId>& archetypes_;
 };
 

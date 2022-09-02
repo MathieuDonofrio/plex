@@ -6,7 +6,7 @@ namespace plex::tests
 {
 TEST(ViewRelations_Tests, AssureArchetype_Single_UniqueId)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_NE(relations.AssureArchetype<>(), relations.AssureArchetype<int>());
   EXPECT_NE(relations.AssureArchetype<double>(), relations.AssureArchetype<int>());
@@ -14,7 +14,7 @@ TEST(ViewRelations_Tests, AssureArchetype_Single_UniqueId)
 
 TEST(ViewRelations_Tests, AssureArchetype_SingleTwice_SameId)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_EQ(relations.AssureArchetype<int>(), relations.AssureArchetype<int>());
   EXPECT_EQ(relations.AssureArchetype<float>(), relations.AssureArchetype<float>());
@@ -22,7 +22,7 @@ TEST(ViewRelations_Tests, AssureArchetype_SingleTwice_SameId)
 
 TEST(ViewRelations_Tests, AssureArchetype_MultipleSameOrder_SameId)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_EQ((relations.AssureArchetype<int, double>()), (relations.AssureArchetype<int, double>()));
   EXPECT_EQ((relations.AssureArchetype<int, double, float>()), (relations.AssureArchetype<int, double, float>()));
@@ -30,7 +30,7 @@ TEST(ViewRelations_Tests, AssureArchetype_MultipleSameOrder_SameId)
 
 TEST(ViewRelations_Tests, AssureArchetype_MultipleDifferentOrder_SameId)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_EQ((relations.AssureArchetype<int, double>()), (relations.AssureArchetype<double, int>()));
   EXPECT_EQ((relations.AssureArchetype<float, double, int>()), (relations.AssureArchetype<int, float, double>()));
@@ -38,7 +38,7 @@ TEST(ViewRelations_Tests, AssureArchetype_MultipleDifferentOrder_SameId)
 
 TEST(ViewRelations_Tests, AssureArchetype_MultipleDifferentValues_DifferentIds)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_NE((relations.AssureArchetype<int, double>()), (relations.AssureArchetype<int>()));
   EXPECT_NE((relations.AssureArchetype<int, float>()), (relations.AssureArchetype<double, int>()));
@@ -47,7 +47,7 @@ TEST(ViewRelations_Tests, AssureArchetype_MultipleDifferentValues_DifferentIds)
 
 TEST(ViewRelations_Tests, AssureView_Single_UniqueId)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_NE(relations.AssureView<>(), relations.AssureView<int>());
   EXPECT_NE(relations.AssureView<double>(), relations.AssureView<int>());
@@ -55,7 +55,7 @@ TEST(ViewRelations_Tests, AssureView_Single_UniqueId)
 
 TEST(ViewRelations_Tests, AssureView_SingleTwice_SameId)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_EQ(relations.AssureView<int>(), relations.AssureView<int>());
   EXPECT_EQ(relations.AssureView<float>(), relations.AssureView<float>());
@@ -63,7 +63,7 @@ TEST(ViewRelations_Tests, AssureView_SingleTwice_SameId)
 
 TEST(ViewRelations_Tests, AssureView_MultipleSameOrder_SameId)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_EQ((relations.AssureView<int, double>()), (relations.AssureView<int, double>()));
   EXPECT_EQ((relations.AssureView<int, double, float>()), (relations.AssureView<int, double, float>()));
@@ -71,7 +71,7 @@ TEST(ViewRelations_Tests, AssureView_MultipleSameOrder_SameId)
 
 TEST(ViewRelations_Tests, AssureView_MultipleDifferentOrder_SameId)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_EQ((relations.AssureView<int, double>()), (relations.AssureView<double, int>()));
   EXPECT_EQ((relations.AssureView<float, double, int>()), (relations.AssureView<int, float, double>()));
@@ -79,7 +79,7 @@ TEST(ViewRelations_Tests, AssureView_MultipleDifferentOrder_SameId)
 
 TEST(ViewRelations_Tests, AssureView_MultipleDifferentValues_DifferentIds)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   EXPECT_NE((relations.AssureView<int, double>()), (relations.AssureView<int>()));
   EXPECT_NE((relations.AssureView<int, float>()), (relations.AssureView<double, int>()));
@@ -88,7 +88,7 @@ TEST(ViewRelations_Tests, AssureView_MultipleDifferentValues_DifferentIds)
 
 TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectSize)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   relations.AssureArchetype<int>();
   relations.AssureArchetype<float>();
@@ -117,7 +117,7 @@ TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectSize)
 
 TEST(ViewRelations_Tests, ViewArchetypes_AfterView_CorrectSize)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   relations.AssureArchetype<int>();
   relations.AssureArchetype<float>();
@@ -138,7 +138,7 @@ TEST(ViewRelations_Tests, ViewArchetypes_AfterView_CorrectSize)
 
 TEST(ViewRelations_Tests, ViewArchetypes_Multiple_CorrectArchetypes)
 {
-  ViewRelations relations;
+  ArchetypeViewMappings relations;
 
   Vector<ArchetypeId> archetypes;
   Vector<ArchetypeId> view_archetypes;
