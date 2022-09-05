@@ -1,8 +1,8 @@
-#include "plex/ecs/archetype.h"
+#include "plex/ecs/view_relations.h"
 
 namespace plex
 {
-void ArchetypeViewMappings::AddView(ViewId id)
+void ViewRelations::AddView(ViewId id)
 {
   if (id >= view_archetypes_.size()) view_archetypes_.resize(id + 1);
 
@@ -29,7 +29,7 @@ void ArchetypeViewMappings::AddView(ViewId id)
   }
 }
 
-void ArchetypeViewMappings::AddArchetype(ArchetypeId id)
+void ViewRelations::AddArchetype(ArchetypeId id)
 {
   auto& archetype_components = archetype_components_[id];
 

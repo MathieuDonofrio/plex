@@ -1,4 +1,4 @@
-#include "plex/ecs/archetype.h"
+#include "plex/ecs/view_relations.h"
 
 #include <benchmark/benchmark.h>
 
@@ -6,7 +6,7 @@ namespace plex::bench
 {
 static void ViewRelations_AssureArchetype(benchmark::State& state)
 {
-  ArchetypeViewMappings relations;
+  ViewRelations relations;
 
   for (auto _ : state)
   {
@@ -20,7 +20,7 @@ BENCHMARK(ViewRelations_AssureArchetype);
 
 static void ViewRelations_AssureView(benchmark::State& state)
 {
-  ArchetypeViewMappings relations;
+  ViewRelations relations;
 
   for (auto _ : state)
   {

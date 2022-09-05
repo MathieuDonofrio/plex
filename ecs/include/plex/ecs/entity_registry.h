@@ -5,20 +5,14 @@
 #include <concepts>
 #include <type_traits>
 
-#include "plex/ecs/archetype.h"
 #include "plex/ecs/archetype_storage.h"
 #include "plex/ecs/entity_manager.h"
+#include "plex/ecs/types.h"
+#include "plex/ecs/view_relations.h"
 #include "plex/utilities/puple.h"
 
 namespace plex
 {
-///
-/// Entity identifier type.
-///
-/// 32 bit should always be sufficient (~4.2 billion entities).
-///
-using Entity = uint_fast32_t;
-
 template<typename...>
 class View;
 
@@ -42,21 +36,12 @@ public:
   ///
   /// Constructor.
   ///
-  EntityRegistry()
-  {
-    storages_.resize(MaxArchetypes);
-  }
+  EntityRegistry();
 
   ///
   /// Destructor.
   ///
-  ~EntityRegistry()
-  {
-    for (auto storage : storages_)
-    {
-      if (storage) delete storage;
-    }
-  }
+  ~EntityRegistry();
 
   EntityRegistry(const EntityRegistry&) = delete;
   EntityRegistry(EntityRegistry&&) = delete;
@@ -237,7 +222,7 @@ private:
 private:
   ArchetypeStorageSparseArray<Entity> mappings_;
   EntityManager<Entity> entity_manager_;
-  ArchetypeViewMappings relations_;
+  ViewRelations relations_;
 
   Vector<ArchetypeStorage<Entity>*> storages_;
 };
