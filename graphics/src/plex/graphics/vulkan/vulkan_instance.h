@@ -52,7 +52,7 @@ private:
   ///
   static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
     VkDebugUtilsMessageTypeFlagsEXT message_type,
-    const VkDebugUtilsMessengerCallbackDataEXT* callback_data_ptr,
+    [[maybe_unused]] const VkDebugUtilsMessengerCallbackDataEXT* callback_data_ptr,
     void*);
 
   ///

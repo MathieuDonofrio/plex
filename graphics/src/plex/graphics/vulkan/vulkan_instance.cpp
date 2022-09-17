@@ -181,7 +181,7 @@ bool VulkanInstance::SetupDebugMessenger()
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInstance::DebugMessengerCallback(
   VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
   VkDebugUtilsMessageTypeFlagsEXT,
-  const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
+  [[maybe_unused]] const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
   void*)
 {
   switch (message_severity)

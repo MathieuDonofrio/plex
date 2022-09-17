@@ -63,7 +63,15 @@ void Log(LogMetadata metadata, std::string_view message);
 
 #ifndef NDEBUG
 
-#ifdef __cpp_lib_format
+#ifdef __CLION_IDE__
+// CLion syntax highlighting is broken for std::format but still compiles.
+// This is a workaround to use the non std::format version only during development since __CLION_IDE__ is not defined
+// when compiling.
+// TODO: Remove this when CLion fixes the false positive syntax highlighting error.
+#define USING_CLION_IDE
+#endif
+
+#if defined(__cpp_lib_format) && !defined(USING_CLION_IDE)
 #define LOG(level, ...) ::plex::debug::Log(CREATE_LOG_METADATA(level), ::std::format(__VA_ARGS__))
 #else
 // Formatting not supported, print message without formatting
