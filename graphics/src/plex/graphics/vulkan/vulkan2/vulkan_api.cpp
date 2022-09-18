@@ -14,7 +14,7 @@ VulkanResult CreateInstance(const VkApplicationInfo& app_info,
 const std::vector<const char*>& extensions,
 const std::vector<const char*>& layers,
 const void* create_info_extension) {
-  loader::CreateInstance(app_info, extensions, layers, create_info_extension);
+  return loader::CreateInstance(app_info, extensions, layers, create_info_extension);
 }
 
 VulkanResult UseDevice(VkDevice device)
