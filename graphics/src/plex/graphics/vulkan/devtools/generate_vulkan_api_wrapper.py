@@ -62,7 +62,7 @@ if __name__ == '__main__':
     
     #include "vulkan_api_helpers.h"
     
-    #include <vulkan/vulkan_core.h>
+    #include "vulkan_types.h"
     
     #include <vector>
     
@@ -90,8 +90,6 @@ if __name__ == '__main__':
     
     namespace {namespace}
     {{
-    
-    using namespace loader;
     
     // clang-format off
     
@@ -145,7 +143,7 @@ if __name__ == '__main__':
         # Bind device
         if 'VkDevice' in parameter_types:
             del parameters[0]
-            function['call_arguments'][0] = 'GetDevice()'
+            function['call_arguments'][0] = 'loader::GetDevice()'
             function['tags'].append('device_bound')
 
         # Bind instance
@@ -202,10 +200,10 @@ if __name__ == '__main__':
             if len(function['tags']) == 0 or function['tags'] == ['device_bound'] or function['tags'] == [
                 'instance_bound']:
                 call_arguments_str = ', '.join(function['call_arguments'])
-                implementation += f'return GetFunctionTable().{function["function_name"]}({call_arguments_str});'
+                implementation += f'return loader::GetFunctionTable().{function["function_name"]}({call_arguments_str});'
             elif 'count_query' in function['tags']:
                 call_arguments_str = ', '.join(function['call_arguments'])
-                implementation += f'const auto& fp = GetFunctionTable().{function["function_name"]};\n'
+                implementation += f'const auto& fp = loader::GetFunctionTable().{function["function_name"]};\n'
                 implementation += f'uint32_t count = 0;\n'
                 implementation += f'fp({call_arguments_str}, &count, nullptr);\n'
                 implementation += f'{function["return_type"]} result;\n'
@@ -226,10 +224,10 @@ if __name__ == '__main__':
                                                f'({parameters_str}) const noexcept\n{{\n'
             call_arguments_str = ', '.join(function['call_arguments'])
             if function['return_type'] == 'void':
-                command_recorder_implementation += f'  GetFunctionTable().{function["original_function_name"]}' \
+                command_recorder_implementation += f'  loader::GetFunctionTable().{function["original_function_name"]}' \
                                                    f'({call_arguments_str});\n'
             else:
-                command_recorder_implementation += f' return GetFunctionTable().{function["original_function_name"]}' \
+                command_recorder_implementation += f' return loader::GetFunctionTable().{function["original_function_name"]}' \
                                                    f'({call_arguments_str});\n'
             command_recorder_implementation += '}\n\n'
 
