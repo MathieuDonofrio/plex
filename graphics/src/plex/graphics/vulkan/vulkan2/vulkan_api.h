@@ -3,7 +3,7 @@
 
 #include "vulkan_api_helpers.h"
 
-#include <vulkan/vulkan_core.h>
+#include "vulkan_types.h"
 
 #include <vector>
 
@@ -18,6 +18,8 @@ const std::vector<const char*>& layers,
 const void* create_info_extension);
 
 VulkanResult UseDevice(VkDevice device);
+
+VkInstance GetInstance() noexcept;
 
 VulkanResult vkEnumeratePhysicalDevices(uint32_t* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
 

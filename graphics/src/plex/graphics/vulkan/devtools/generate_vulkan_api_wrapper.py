@@ -78,6 +78,8 @@ if __name__ == '__main__':
     
     VulkanResult UseDevice(VkDevice device);
     
+    VkInstance GetInstance() noexcept;
+    
     """)
 
     implementation_file = dedent(f"""\
@@ -104,6 +106,11 @@ if __name__ == '__main__':
     {{
         return loader::UseDevice(device);
     }};
+    
+    VkInstance GetInstance() noexcept
+    {{
+        return loader::GetInstance();
+    }}
     
     """)
 

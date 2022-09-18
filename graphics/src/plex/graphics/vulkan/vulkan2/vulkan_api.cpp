@@ -22,6 +22,11 @@ VulkanResult UseDevice(VkDevice device)
     return loader::UseDevice(device);
 };
 
+VkInstance GetInstance() noexcept
+{
+    return loader::GetInstance();
+}
+
 VulkanResult vkEnumeratePhysicalDevices(uint32_t* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices)
 {
   return GetFunctionTable().vkEnumeratePhysicalDevices(GetInstance(), pPhysicalDeviceCount, pPhysicalDevices);
