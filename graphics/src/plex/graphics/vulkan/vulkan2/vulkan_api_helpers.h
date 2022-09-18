@@ -1,8 +1,7 @@
 #ifndef PLEX_ENGINE_GRAPHICS_VULKAN_API_HELPERS_H
 #define PLEX_ENGINE_GRAPHICS_VULKAN_API_HELPERS_H
 
-#define VK_NO_PROTOTYPES
-#include <vulkan/vulkan_core.h>
+#include "vulkan_types.h"
 
 #include <utility>
 

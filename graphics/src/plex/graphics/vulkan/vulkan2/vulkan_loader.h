@@ -4,8 +4,7 @@
 #include "vulkan_api_helpers.h"
 #include "vulkan_function_table.h"
 
-#define VK_NO_PROTOTYPES
-#include <vulkan/vulkan_core.h>
+#include "vulkan_types.h"
 
 #include <vector>
 
