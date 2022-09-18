@@ -10,8 +10,8 @@ namespace plex::graphics::vkapi::loader
 
 namespace
 {
- static FunctionTable _table; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
- static std::vector<const char*> _extensions; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+  FunctionTable _table; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+  std::vector<const char*> _extensions; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 } // namespace
 
 FunctionTable& GetFunctionTable() noexcept
