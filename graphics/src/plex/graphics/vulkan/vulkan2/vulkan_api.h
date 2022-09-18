@@ -15,7 +15,7 @@ namespace plex::graphics::vkapi
 VulkanResult CreateInstance(const VkApplicationInfo& app_info,
 const std::vector<const char*>& extensions,
 const std::vector<const char*>& layers,
-const void* create_info_extension)
+const void* create_info_extension);
 
 VulkanResult UseDevice(VkDevice device);
 
