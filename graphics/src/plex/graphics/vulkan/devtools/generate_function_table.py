@@ -294,7 +294,7 @@ if __name__ == '__main__':
     {{
         if (index >= {len(function_names)})
         {{
-            LOG_ERROR("Invalid function index: " + std::to_string(index));
+            LOG_ERROR("Invalid function index: {{}}", std::to_string(index));
             return nullptr;
         }}
         return function_names[index];

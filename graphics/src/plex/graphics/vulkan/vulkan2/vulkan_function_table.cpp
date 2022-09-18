@@ -656,7 +656,7 @@ const char* GetFunctionName(uint32_t index) noexcept
 {
     if (index >= 501)
     {
-        LOG_ERROR("Invalid function index: " + std::to_string(index));
+        LOG_ERROR("Invalid function index: {}", std::to_string(index));
         return nullptr;
     }
     return function_names[index];

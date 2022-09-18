@@ -100,14 +100,14 @@ namespace
       const auto function_name = GetFunctionName(index);
       if (!function_name)
       {
-        LOG_ERROR("Failed to get name of vulkan function: " + std::string(group_name));
+        LOG_ERROR("Failed to get name of vulkan function: {}", std::string(group_name));
         return VK_ERROR_INITIALIZATION_FAILED;
       }
 
       const auto function_pointer = resolver(handle, function_name);
       if (!function_pointer)
       {
-        LOG_ERROR("Failed to load vulkan function: " + std::string(function_name));
+        LOG_ERROR("Failed to load vulkan function: {}", std::string(function_name));
         return VK_ERROR_INITIALIZATION_FAILED;
       }
 
