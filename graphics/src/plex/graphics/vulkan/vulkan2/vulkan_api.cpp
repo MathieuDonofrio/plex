@@ -27,7 +27,7 @@ VkInstance GetInstance() noexcept
 
 VulkanResult vkEnumeratePhysicalDevices(uint32_t* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices)
 {
-  return loader::GetFunctionTable().vkEnumeratePhysicalDevices(GetInstance(), pPhysicalDeviceCount, pPhysicalDevices);
+  return loader::GetFunctionTable().vkEnumeratePhysicalDevices(loader::GetInstance(), pPhysicalDeviceCount, pPhysicalDevices);
 }
 
 void vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures)
@@ -68,7 +68,7 @@ void vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice, VkPhys
 
 VulkanFunctionPointer vkGetInstanceProcAddr(const char* pName)
 {
-  return loader::GetFunctionTable().vkGetInstanceProcAddr(GetInstance(), pName);
+  return loader::GetFunctionTable().vkGetInstanceProcAddr(loader::GetInstance(), pName);
 }
 
 VulkanFunctionPointer vkGetDeviceProcAddr(const char* pName)
@@ -512,7 +512,7 @@ void vkGetDeviceGroupPeerMemoryFeatures(uint32_t heapIndex, uint32_t localDevice
 
 VulkanResult vkEnumeratePhysicalDeviceGroups(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties)
 {
-  return loader::GetFunctionTable().vkEnumeratePhysicalDeviceGroups(GetInstance(), pPhysicalDeviceGroupCount, pPhysicalDeviceGroupProperties);
+  return loader::GetFunctionTable().vkEnumeratePhysicalDeviceGroups(loader::GetInstance(), pPhysicalDeviceGroupCount, pPhysicalDeviceGroupProperties);
 }
 
 void vkGetImageMemoryRequirements2(const VkImageMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements)
@@ -725,7 +725,7 @@ void vkGetDeviceImageSparseMemoryRequirements(const VkDeviceImageMemoryRequireme
 
 void vkDestroySurfaceKHR(VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator)
 {
-  return loader::GetFunctionTable().vkDestroySurfaceKHR(GetInstance(), surface, pAllocator);
+  return loader::GetFunctionTable().vkDestroySurfaceKHR(loader::GetInstance(), surface, pAllocator);
 }
 
 VulkanResult vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, VkSurfaceKHR surface, VkBool32* pSupported)
@@ -867,7 +867,7 @@ VulkanResult vkGetDisplayPlaneCapabilitiesKHR(VkPhysicalDevice physicalDevice, V
 
 VulkanResult vkCreateDisplayPlaneSurfaceKHR(const VkDisplaySurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
 {
-  return loader::GetFunctionTable().vkCreateDisplayPlaneSurfaceKHR(GetInstance(), pCreateInfo, pAllocator, pSurface);
+  return loader::GetFunctionTable().vkCreateDisplayPlaneSurfaceKHR(loader::GetInstance(), pCreateInfo, pAllocator, pSurface);
 }
 
 VulkanResult vkCreateSharedSwapchainsKHR(uint32_t swapchainCount, const VkSwapchainCreateInfoKHR* pCreateInfos, const VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchains)
@@ -934,7 +934,7 @@ void vkTrimCommandPoolKHR(VkCommandPool commandPool, VkCommandPoolTrimFlags flag
 
 VulkanResult vkEnumeratePhysicalDeviceGroupsKHR(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties)
 {
-  return loader::GetFunctionTable().vkEnumeratePhysicalDeviceGroupsKHR(GetInstance(), pPhysicalDeviceGroupCount, pPhysicalDeviceGroupProperties);
+  return loader::GetFunctionTable().vkEnumeratePhysicalDeviceGroupsKHR(loader::GetInstance(), pPhysicalDeviceGroupCount, pPhysicalDeviceGroupProperties);
 }
 
 void vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo* pExternalBufferInfo, VkExternalBufferProperties* pExternalBufferProperties)
@@ -1240,17 +1240,17 @@ void vkGetDeviceImageSparseMemoryRequirementsKHR(const VkDeviceImageMemoryRequir
 
 VulkanResult vkCreateDebugReportCallbackEXT(const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
 {
-  return loader::GetFunctionTable().vkCreateDebugReportCallbackEXT(GetInstance(), pCreateInfo, pAllocator, pCallback);
+  return loader::GetFunctionTable().vkCreateDebugReportCallbackEXT(loader::GetInstance(), pCreateInfo, pAllocator, pCallback);
 }
 
 void vkDestroyDebugReportCallbackEXT(VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator)
 {
-  return loader::GetFunctionTable().vkDestroyDebugReportCallbackEXT(GetInstance(), callback, pAllocator);
+  return loader::GetFunctionTable().vkDestroyDebugReportCallbackEXT(loader::GetInstance(), callback, pAllocator);
 }
 
 void vkDebugReportMessageEXT(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage)
 {
-  return loader::GetFunctionTable().vkDebugReportMessageEXT(GetInstance(), flags, objectType, object, location, messageCode, pLayerPrefix, pMessage);
+  return loader::GetFunctionTable().vkDebugReportMessageEXT(loader::GetInstance(), flags, objectType, object, location, messageCode, pLayerPrefix, pMessage);
 }
 
 VulkanResult vkDebugMarkerSetObjectTagEXT(const VkDebugMarkerObjectTagInfoEXT* pTagInfo)
@@ -1375,17 +1375,17 @@ void vkQueueInsertDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT* 
 
 VulkanResult vkCreateDebugUtilsMessengerEXT(const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger)
 {
-  return loader::GetFunctionTable().vkCreateDebugUtilsMessengerEXT(GetInstance(), pCreateInfo, pAllocator, pMessenger);
+  return loader::GetFunctionTable().vkCreateDebugUtilsMessengerEXT(loader::GetInstance(), pCreateInfo, pAllocator, pMessenger);
 }
 
 void vkDestroyDebugUtilsMessengerEXT(VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks* pAllocator)
 {
-  return loader::GetFunctionTable().vkDestroyDebugUtilsMessengerEXT(GetInstance(), messenger, pAllocator);
+  return loader::GetFunctionTable().vkDestroyDebugUtilsMessengerEXT(loader::GetInstance(), messenger, pAllocator);
 }
 
 void vkSubmitDebugUtilsMessageEXT(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData)
 {
-  return loader::GetFunctionTable().vkSubmitDebugUtilsMessageEXT(GetInstance(), messageSeverity, messageTypes, pCallbackData);
+  return loader::GetFunctionTable().vkSubmitDebugUtilsMessageEXT(loader::GetInstance(), messageSeverity, messageTypes, pCallbackData);
 }
 
 void vkGetPhysicalDeviceMultisamplePropertiesEXT(VkPhysicalDevice physicalDevice, VkSampleCountFlagBits samples, VkMultisamplePropertiesEXT* pMultisampleProperties)
@@ -1570,7 +1570,7 @@ VulkanResultWithValue<std::vector<VkFramebufferMixedSamplesCombinationNV>> vkGet
 
 VulkanResult vkCreateHeadlessSurfaceEXT(const VkHeadlessSurfaceCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface)
 {
-  return loader::GetFunctionTable().vkCreateHeadlessSurfaceEXT(GetInstance(), pCreateInfo, pAllocator, pSurface);
+  return loader::GetFunctionTable().vkCreateHeadlessSurfaceEXT(loader::GetInstance(), pCreateInfo, pAllocator, pSurface);
 }
 
 void vkResetQueryPoolEXT(VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount)

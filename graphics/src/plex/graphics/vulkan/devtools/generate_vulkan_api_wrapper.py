@@ -149,7 +149,7 @@ if __name__ == '__main__':
         # Bind instance
         if 'VkInstance' in parameter_types:
             del parameters[0]
-            function['call_arguments'][0] = 'GetInstance()'
+            function['call_arguments'][0] = 'loader::GetInstance()'
             function['tags'].append('instance_bound')
 
         # Make count query function return vector
