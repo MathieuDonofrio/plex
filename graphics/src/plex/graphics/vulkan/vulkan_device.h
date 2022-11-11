@@ -8,6 +8,7 @@
 #include "plex/graphics/vulkan/vulkan_surface.h"
 
 #include <memory>
+#include <array>
 
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>

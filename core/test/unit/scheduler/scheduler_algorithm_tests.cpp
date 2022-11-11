@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <bit>
+#include <optional>
 
 namespace plex::tests
 {
