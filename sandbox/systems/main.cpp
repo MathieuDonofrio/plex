@@ -1,11 +1,9 @@
 
-#include <iostream>
-
 #include "plex/app/app.h"
 #include "plex/async/sync_wait.h"
 #include "plex/async/task.h"
 #include "plex/debug/logging.h"
-#include "plex/system/system.h"
+#include "plex/ecs/ecs.h"
 
 using namespace plex;
 
@@ -22,6 +20,11 @@ public:
 
   TestApp()
   {
+    AddPackage(ECSPackage {});
+
+    GetGlobal<EntityRegistry>().Create<int>(10);
+    GetGlobal<EntityRegistry>().Create<int>(99);
+
     AddSystem<TestApp::Stage1>(system1);
     AddSystem<TestApp::Stage1>(system2);
     AddSystem<TestApp::Stage2>(system3);
@@ -38,9 +41,13 @@ public:
     SyncWait(RunScheduler());
   }
 
-  static void system1()
+  static void system1(EntityRegistry& registry)
   {
     LOG_INFO("System1");
+
+    EntityForEach(registry.ViewFor<int>(), [](Entity entity, int i) { LOG_INFO("Entity {}: {}", entity, i); });
+
+    registry.Create<int>(100);
   }
 
   static Task<void> system2(ThreadPool& pool)
