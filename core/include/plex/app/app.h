@@ -129,7 +129,7 @@ public:
   template<typename Type>
   const Type& GetGlobal() const noexcept
   {
-    global_context_.template Get<Type>();
+    return global_context_.template Get<Type>();
   }
 
   ///
@@ -144,7 +144,7 @@ public:
   template<typename Type>
   Type& GetGlobal() noexcept
   {
-    global_context_.template Get<Type>();
+    return global_context_.template Get<Type>();
   }
 
 private:
