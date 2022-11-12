@@ -65,6 +65,7 @@ run_conan()
 
 add_subdirectory(core)
 add_subdirectory(ecs)
+add_subdirectory(events)
 add_subdirectory(graphics)
 
 #
