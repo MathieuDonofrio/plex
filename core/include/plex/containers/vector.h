@@ -6,7 +6,7 @@
 #include <ranges>
 #include <utility>
 
-#include "plex/containers/array.h"
+#include "plex/containers/carray.h"
 #include "plex/debug/assertion.h"
 #include "plex/utilities/memory.h"
 #include "plex/utilities/type_traits.h"

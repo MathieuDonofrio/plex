@@ -2,42 +2,25 @@
 
 namespace plex
 {
-namespace
-{
-  bool HasWriteDependency(const Vector<QueryDataAccess>& access, const QueryDataAccess& data) noexcept
-  {
-    for (const QueryDataAccess& other : access)
-    {
-      if (other.category == data.category && other.name == data.name) return !other.read_only;
-    }
-
-    return false;
-  }
-
-  bool HasReadDependency(const Vector<QueryDataAccess>& access, const QueryDataAccess& data) noexcept
-  {
-    for (const QueryDataAccess& other : access)
-    {
-      if (other.category == data.category && other.name == data.name) return true;
-    }
-
-    return false;
-  }
-} // namespace
-
 [[nodiscard]] bool SystemObject::HasDependency(const SystemObject& system) const noexcept
 {
+  static constexpr std::string_view any {};
+
   for (const QueryDataAccess& data : data_access_)
   {
-    if (data.thread_safe) continue;
+    if (data.thread_safe) continue; // Thread safe data cannot form a dependency
 
-    if (data.read_only)
+    for (const QueryDataAccess& other : system.data_access_)
     {
-      if (HasWriteDependency(system.data_access_, data)) return true;
-    }
-    else if (HasReadDependency(system.data_access_, data))
-    {
-      return true;
+      if (other.thread_safe) continue; // Thread safe data cannot form a dependency
+      if (other.read_only && data.read_only) continue; // Two reads cannot form a dependency
+      if (other.source != data.source) continue; // Access from different data sources cannot form a dependency
+
+      // The same section of the data source must be accessed for there to be a dependency.
+      if (other.section == any || data.section == any || other.section == data.section)
+      {
+        return true;
+      }
     }
   }
 

@@ -6,6 +6,7 @@ namespace plex::tests
 {
 static_assert(IsTriviallyRelocatable<Deque<size_t>>::value, "Dequeue should be relocatable");
 static_assert(std::random_access_iterator<Deque<size_t>::iterator>, "Dequeue iterator should be random access");
+static_assert(std::ranges::random_access_range<Deque<size_t>>, "Deque should be a random access range");
 
 TEST(Deque_Tests, Empty_Trivial_AfterDefaultConstruction_True)
 {

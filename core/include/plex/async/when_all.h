@@ -3,8 +3,8 @@
 
 #include <atomic>
 
-#include "plex/containers/vector.h"
 #include "plex/async/trigger_task.h"
+#include "plex/containers/vector.h"
 
 namespace plex
 {
@@ -182,7 +182,7 @@ private:
 ///
 /// @return Task that co_awaits all awaitables in container.
 ///
-template<std::ranges::range Awaitables, Awaitable Awaitable = typename Awaitables::value_type>
+template<std::ranges::input_range Awaitables, Awaitable Awaitable = typename Awaitables::value_type>
 Task<> WhenAll(Awaitables awaitables)
 {
   const size_t amount = std::ranges::size(awaitables);

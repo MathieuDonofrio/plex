@@ -1,8 +1,4 @@
-#include "plex/ecs/archetype.h"
-
-#include <algorithm>
-
-#include <gtest/gtest.h>
+#include "plex/utilities/type_sort.h"
 
 namespace plex::tests
 {
@@ -14,7 +10,7 @@ namespace
 
   // Archetype generation util
   template<size_t... Tags>
-  using ATG = ComponentList<TestType<Tags>...>;
+  using ATG = SortedTypes<TestType<Tags>...>;
 } // namespace
 
 // Archetype static tests
@@ -111,74 +107,4 @@ static_assert(std::is_same_v<ATG<1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12>, ATG<1, 
 static_assert(std::is_same_v<ATG<12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1>, ATG<1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12>>);
 static_assert(!std::is_same_v<ATG<12, 11, 10, 9, 99, 7, 6, 5, 4, 3, 2, 1>, ATG<1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12>>);
 
-TEST(Archetype_Tests, GetComponentId_Single_AlwaysSame)
-{
-  EXPECT_EQ(GetComponentId<TestType<0>>(), GetComponentId<TestType<0>>());
-}
-
-TEST(Archetype_Tests, GetComponentId_Double_Different)
-{
-  EXPECT_NE(GetComponentId<TestType<0>>(), GetComponentId<TestType<1>>());
-}
-
-TEST(Archetype_Tests, GetViewId_Single_AlwaysSame)
-{
-  EXPECT_EQ(GetViewId<TestType<0>>(), GetViewId<TestType<0>>());
-}
-
-TEST(Archetype_Tests, GetViewId_Double_Different)
-{
-  EXPECT_NE(GetViewId<TestType<0>>(), GetViewId<TestType<1>>());
-}
-
-TEST(Archetype_Tests, GetArchetypeId_Single_AlwaysSame)
-{
-  EXPECT_EQ(GetArchetypeId<TestType<0>>(), GetArchetypeId<TestType<0>>());
-}
-
-TEST(Archetype_Tests, GetArchetypeId_Double_Different)
-{
-  EXPECT_NE(GetArchetypeId<TestType<0>>(), GetArchetypeId<TestType<1>>());
-}
-
-TEST(Archetype_Tests, GetComponentIds_Single_Same)
-{
-  auto list = GetComponentIds<TestType<0>>();
-
-  EXPECT_EQ(GetComponentId<TestType<0>>(), list[0]);
-}
-
-TEST(Archetype_Tests, GetComponentIds_Multiple_Same)
-{
-  auto list = GetComponentIds<TestType<0>, TestType<1>, TestType<2>>();
-
-  EXPECT_NE(std::ranges::find(list, GetComponentId<TestType<0>>()), list.end());
-  EXPECT_NE(std::ranges::find(list, GetComponentId<TestType<1>>()), list.end());
-  EXPECT_NE(std::ranges::find(list, GetComponentId<TestType<2>>()), list.end());
-  EXPECT_EQ(std::ranges::find(list, GetComponentId<TestType<3>>()), list.end());
-}
-
-TEST(Archetype_Tests, GetComponentIds_ObtainedTwiceSameOrder_Same)
-{
-  const auto& list1 = GetComponentIds<TestType<0>, TestType<1>, TestType<2>>();
-  const auto& list2 = GetComponentIds<TestType<0>, TestType<1>, TestType<2>>();
-
-  EXPECT_EQ(list1, list2);
-}
-
-TEST(Archetype_Tests, GetComponentIds_ObtainedTwiceDifferentOrder_Same)
-{
-  const auto& list1 = GetComponentIds<TestType<0>, TestType<1>, TestType<2>>();
-  const auto& list2 = GetComponentIds<TestType<2>, TestType<0>, TestType<1>>();
-
-  EXPECT_EQ(list1, list2);
-}
-
-TEST(Archetype_Tests, GetComponentIds_ObtainedTwiceDifferentValues_Different)
-{
-  const auto& list1 = GetComponentIds<TestType<0>, TestType<1>, TestType<2>>();
-  const auto& list2 = GetComponentIds<TestType<2>, TestType<5>, TestType<1>>();
-
-  EXPECT_NE(list1, list2);
-}
 } // namespace plex::tests

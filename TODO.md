@@ -16,6 +16,8 @@ These tasks may be minor bug fixes or optimizations. They do not change the inte
 
 These tasks are small or large updates that are non-breaking for non deprecated functionalities.
 
+### Core
+
 Async
 
 - [ ] Work stealing thread pool
@@ -27,36 +29,23 @@ Config
 Containers
 
 - [ ] Bitset (SIMD optimized)
-- [ ] Deque
+- [x] Deque
 - [ ] Map
 - [ ] Set
 
-ECS
+Debug
 
-- [ ] Archetype swapping
-- [ ] Empty type optimizations
-- [ ] Investigate Hierarchies
-- [ ] Investigate Scripting
-- [ ] Storage extra indirection for very large components. (Speeds up insert/destroy/swapping)
+- [ ] Remove stacktrace (standard stacktrace in c++23)
+
+System
+
+- [ ] Support member function systems
+
+Scheduler
+
 - [ ] Optimize scheduler graph computations
-- [ ] Optimize scheduler execution
-- [ ] Scheduler profile guided optimization for dynamic reordering of systems
 - [ ] Scheduler debug info & statistics
-
-Events
-
-- [ ] Rewrite event system to be integrated with ECS
-- [ ] Move to ECS and erase
-
-IO
-
-- [ ] IO Service
-- [ ] File IO
-- [ ] Networking abstraction
-- [ ] Serialization/Deserialization
-- [ ] YAML Parser
-- [ ] JSON Parser
-- [ ] XML Parser
+- [ ] Runtime optimizations
 
 Math
 
@@ -81,7 +70,33 @@ Utilities
 
 - [ ] UUID
 
-Other
+### ECS
+
+- [ ] Entities query
+- [ ] Archetype swapping
+- [ ] Component adding & removing
+- [ ] Empty type optimizations
+- [ ] Investigate Groups
+- [ ] Investigate Hierarchies
+- [ ] Investigate Scripting
+- [ ] ArchetypeStorage extra indirection for very large components. (Speeds up insert/destroy/swapping)
+
+### Events
+
+- [ ] Event system integrated with scheduler
+- [ ] Remove old events
+
+### IO
+
+- [ ] IO Service
+- [ ] File IO
+- [ ] Serialization/Deserialization
+- [ ] YAML Parser
+- [ ] JSON Parser
+- [ ] XML Parser
+- [ ] Networking abstraction
+
+### Other
 
 - [ ] Static analysis
 - [ ] Sanitizers
@@ -92,6 +107,7 @@ Other
 - [ ] Github Actions
 - [ ] Precompiled headers
 - [ ] Update style guide
+- [ ] Measure and reduce compile time
 - [ ] Add CONTRIBUTING.md
 
 Official C++ 20 Support
@@ -103,10 +119,10 @@ Official C++ 20 Support
 
 These tasks are large updates with potentially breaking changes.
 
-- [ ] Rename framework
-- [ ] Split libraries (Core, ...)
-- [ ] Restructure test folders to include mock, unit and system
-- [ ] Restructure bench folder
+- [x] Rename framework
+- [x] Split libraries (Core, ...)
+- [x] Restructure test folders to include mock, unit and system
+- [x] Restructure bench folder
 
 ## Experimental
 

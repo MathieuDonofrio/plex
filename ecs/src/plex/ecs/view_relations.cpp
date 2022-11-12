@@ -1,4 +1,4 @@
-#include "plex/ecs/archetype.h"
+#include "plex/ecs/view_relations.h"
 
 namespace plex
 {
