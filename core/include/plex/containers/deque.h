@@ -497,6 +497,19 @@ public:
   }
 
   ///
+  /// Removes the element at the iterator. Shifts all elements after element.
+  ///
+  /// @param[in] it Iterator for element to erase
+  ///
+  void erase(iterator it)
+  {
+    ASSERT(!empty(), "Vector is empty");
+
+    it->~Type();
+    if (it + 1 != end()) UninitializedRelocate(it + 1, end(), it);
+  }
+
+  ///
   /// Clears the deque of all its contents without deallocating the memory.
   ///
   void clear() noexcept
