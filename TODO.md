@@ -25,6 +25,9 @@ Async
 Config
 
 - [ ] Split compiler.h
+- [ ] ASSUME(condition) and UNREACHABLE hints
+- [ ] RESTRICT hint
+- [ ] PURE hint
 
 Containers
 
@@ -83,7 +86,7 @@ Utilities
 
 ### Events
 
-- [ ] Event system integrated with scheduler
+- [ ] Make events work with graphic window input
 - [ ] Remove old events
 
 ### IO
