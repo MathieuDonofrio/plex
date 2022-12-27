@@ -14,7 +14,7 @@ function(add_sandbox_project subdirectory)
 
   add_executable(sandbox_${subdirectory} ${${subdirectory}_sandbox_headers} ${${subdirectory}_sandbox_headers})
 
-  target_link_libraries(sandbox_${subdirectory} PRIVATE plex-core plex-ecs plex-graphics)
+  target_link_libraries(sandbox_${subdirectory} PRIVATE plex-core plex-ecs plex-events plex-graphics)
 endfunction()
 
 #
