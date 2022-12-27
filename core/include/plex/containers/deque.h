@@ -324,12 +324,20 @@ public:
   ///
   Deque(const Deque<Type, AllocatorType>& other) : front_(0), rear_(static_cast<uint32_t>(other.size()))
   {
-    const auto capacity = ComputeCapacity(rear_);
+    if (rear_ > 0)
+    {
+      const auto capacity = ComputeCapacity(rear_);
 
-    mask_ = CapacityToMask(capacity);
-    array_ = Allocate(capacity);
+      mask_ = CapacityToMask(capacity);
+      array_ = Allocate(capacity);
 
-    other.CopyTo(array_);
+      other.CopyTo(array_);
+    }
+    else
+    {
+      array_ = nullptr;
+      mask_ = 0;
+    }
   }
 
   ///
