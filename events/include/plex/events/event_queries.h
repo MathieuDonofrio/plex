@@ -52,7 +52,7 @@ public:
   {
     return { QueryDataAccess {
       TypeName<EventType>(),
-      {}, // Access entire data source
+      TypeName<EventRegistry>(), // Access entire data source
       std::is_const_v<Type>, // Check const qualifier to see if the access is read-only.
       IsThreadSafe<Type>::value // Check ThreadSafe trait to see if the access is thread-safe.
     } };
