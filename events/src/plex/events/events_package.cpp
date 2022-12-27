@@ -3,9 +3,6 @@
 namespace plex
 {
 
-void EventsPackage::DoAdd(plex::App& app) const
-{
-  // TODO
-}
+void EventsPackage::DoAdd(plex::App&) const {}
 
 } // namespace plex
