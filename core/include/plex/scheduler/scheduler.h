@@ -2,6 +2,7 @@
 #define PLEX_SCHEDULER_SCHEDULER_H
 
 #include "plex/async/shared_task.h"
+#include "plex/async/thread_pool.h"
 #include "plex/async/when_all.h"
 #include "plex/scheduler/stage.h"
 #include "plex/system/system.h"

@@ -30,7 +30,7 @@ project(
   LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_BINARY_DIR})
 
@@ -65,6 +65,7 @@ run_conan()
 
 add_subdirectory(core)
 add_subdirectory(ecs)
+add_subdirectory(events)
 add_subdirectory(graphics)
 
 #

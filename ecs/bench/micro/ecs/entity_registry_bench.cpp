@@ -1,4 +1,4 @@
-#include "plex/ecs/registry.h"
+#include "plex/ecs/entity_registry.h"
 
 #include <benchmark/benchmark.h>
 
@@ -26,9 +26,9 @@ namespace
   };
 } // namespace
 
-static void Registry_Iterate_SimpleWork_ManualFor(benchmark::State& state)
+static void EntityRegistry_Iterate_SimpleWork_ManualFor(benchmark::State& state)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   size_t amount = state.range(0);
 
@@ -47,9 +47,9 @@ static void Registry_Iterate_SimpleWork_ManualFor(benchmark::State& state)
       {
         auto data = *first;
 
-        std::get<Position*>(data)->data += std::get<Velocity*>(data)->data * std::get<Velocity*>(data)->data;
+        std::get<Position>(data).data += std::get<Velocity>(data).data * std::get<Velocity>(data).data;
 
-        benchmark::DoNotOptimize(*std::get<Position*>(data));
+        benchmark::DoNotOptimize(std::get<Position>(data));
       }
     }
   }
@@ -59,16 +59,16 @@ static void Registry_Iterate_SimpleWork_ManualFor(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_SimpleWork_ManualFor)
+BENCHMARK(EntityRegistry_Iterate_SimpleWork_ManualFor)
   ->Arg(100)
   ->Arg(1000)
   ->Arg(10000)
   ->Arg(100000)
   ->Complexity(::benchmark::oN);
 
-static void Registry_Iterate_SimpleWork_ForEach(benchmark::State& state)
+static void EntityRegistry_Iterate_SimpleWork_ForEach(benchmark::State& state)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   size_t amount = state.range(0);
 
@@ -79,7 +79,7 @@ static void Registry_Iterate_SimpleWork_ForEach(benchmark::State& state)
 
   for (auto _ : state)
   {
-    EntityForEach(registry.ViewFor<Position, Velocity>(),
+    EntityForEach(registry.ViewFor<Position, const Velocity>(),
       [](Position& position, const Velocity& velocity)
       {
         position.data += velocity.data * velocity.data;
@@ -92,16 +92,16 @@ static void Registry_Iterate_SimpleWork_ForEach(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_SimpleWork_ForEach)
+BENCHMARK(EntityRegistry_Iterate_SimpleWork_ForEach)
   ->Arg(100)
   ->Arg(1000)
   ->Arg(10000)
   ->Arg(100000)
   ->Complexity(::benchmark::oN);
 
-static void Registry_Iterate_OneArchetype(benchmark::State& state)
+static void EntityRegistry_Iterate_OneArchetype(benchmark::State& state)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   size_t amount = state.range(0);
 
@@ -120,11 +120,11 @@ static void Registry_Iterate_OneArchetype(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_OneArchetype)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Iterate_OneArchetype)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
+static void EntityRegistry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   size_t amount = state.range(0);
 
@@ -148,11 +148,11 @@ static void Registry_Iterate_OneArchetype_Unpack1(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_OneArchetype_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Iterate_OneArchetype_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
+static void EntityRegistry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   size_t amount = state.range(0);
 
@@ -177,11 +177,11 @@ static void Registry_Iterate_OneArchetype_Unpack2(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_OneArchetype_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Iterate_OneArchetype_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
+static void EntityRegistry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   size_t amount = state.range(0);
 
@@ -211,11 +211,11 @@ static void Registry_Iterate_TwoArchetypes_Unpack2(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_TwoArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Iterate_TwoArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
+static void EntityRegistry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
 {
-  Registry registry;
+  EntityRegistry registry;
 
   size_t amount = state.range(0);
 
@@ -285,9 +285,9 @@ static void Registry_Iterate_TenArchetypes_Unpack2(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Iterate_TenArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Iterate_TenArchetypes_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Create_NoComponents(benchmark::State& state)
+static void EntityRegistry_Create_NoComponents(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -295,7 +295,7 @@ static void Registry_Create_NoComponents(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry registry;
+    EntityRegistry registry;
 
     state.ResumeTiming();
 
@@ -310,9 +310,9 @@ static void Registry_Create_NoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Create_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
+BENCHMARK(EntityRegistry_Create_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity();
 
-static void Registry_Create_OneComponent(benchmark::State& state)
+static void EntityRegistry_Create_OneComponent(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -320,7 +320,7 @@ static void Registry_Create_OneComponent(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry registry;
+    EntityRegistry registry;
 
     state.ResumeTiming();
 
@@ -335,9 +335,9 @@ static void Registry_Create_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Create_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Create_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Create_TwoComponents(benchmark::State& state)
+static void EntityRegistry_Create_TwoComponents(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -345,7 +345,7 @@ static void Registry_Create_TwoComponents(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry registry;
+    EntityRegistry registry;
 
     state.ResumeTiming();
 
@@ -360,9 +360,9 @@ static void Registry_Create_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Create_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Create_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Destroy_NoComponents(benchmark::State& state)
+static void EntityRegistry_Destroy_NoComponents(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -370,7 +370,7 @@ static void Registry_Destroy_NoComponents(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry registry;
+    EntityRegistry registry;
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -390,9 +390,9 @@ static void Registry_Destroy_NoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Destroy_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Destroy_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Destroy_OneComponent(benchmark::State& state)
+static void EntityRegistry_Destroy_OneComponent(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -400,7 +400,7 @@ static void Registry_Destroy_OneComponent(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry registry;
+    EntityRegistry registry;
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -420,9 +420,9 @@ static void Registry_Destroy_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Destroy_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Destroy_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Registry_Destroy_TwoComponents(benchmark::State& state)
+static void EntityRegistry_Destroy_TwoComponents(benchmark::State& state)
 {
   size_t amount = state.range(0);
 
@@ -430,7 +430,7 @@ static void Registry_Destroy_TwoComponents(benchmark::State& state)
   {
     state.PauseTiming();
 
-    Registry registry;
+    EntityRegistry registry;
 
     for (size_t i = 0; i < amount; i++)
     {
@@ -450,5 +450,5 @@ static void Registry_Destroy_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Registry_Destroy_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(EntityRegistry_Destroy_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 } // namespace plex::bench

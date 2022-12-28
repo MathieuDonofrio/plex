@@ -1,4 +1,4 @@
-#include "plex/ecs/storage.h"
+#include "plex/ecs/archetype_storage.h"
 
 #include <benchmark/benchmark.h>
 
@@ -14,10 +14,10 @@ namespace
   };
 } // namespace
 
-static void Storage_Unpack(benchmark::State& state)
+static void ArchetypeStorage_Unpack(benchmark::State& state)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<Component<0>>();
 
   storage.Insert(999, Component<0> { 999, 999 });
@@ -28,12 +28,12 @@ static void Storage_Unpack(benchmark::State& state)
   }
 }
 
-BENCHMARK(Storage_Unpack);
+BENCHMARK(ArchetypeStorage_Unpack);
 
-static void Storage_Contains(benchmark::State& state)
+static void ArchetypeStorage_Contains(benchmark::State& state)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<Component<0>>();
 
   storage.Insert(999, Component<0> { 999, 999 });
@@ -44,14 +44,14 @@ static void Storage_Contains(benchmark::State& state)
   }
 }
 
-BENCHMARK(Storage_Contains);
+BENCHMARK(ArchetypeStorage_Contains);
 
-static void Storage_Iterate(benchmark::State& state)
+static void ArchetypeStorage_Iterate(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   for (size_t i = 0; i < amount; i++)
@@ -72,14 +72,14 @@ static void Storage_Iterate(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Iterate)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Iterate_Unpack1(benchmark::State& state)
+static void ArchetypeStorage_Iterate_Unpack1(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<Component<0>>();
 
   for (size_t i = 0; i < amount; i++)
@@ -103,14 +103,14 @@ static void Storage_Iterate_Unpack1(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Iterate_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Iterate_Unpack1)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Iterate_Unpack2(benchmark::State& state)
+static void ArchetypeStorage_Iterate_Unpack2(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<Component<0>, Component<1>>();
 
   for (size_t i = 0; i < amount; i++)
@@ -136,19 +136,19 @@ static void Storage_Iterate_Unpack2(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Iterate_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Iterate_Unpack2)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Insert_NoComponents(benchmark::State& state)
+static void ArchetypeStorage_Insert_NoComponents(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
+  ArchetypeStorageSparseArray<size_t> sparse;
 
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    Storage<size_t> storage(&sparse);
+    ArchetypeStorage<size_t> storage(&sparse);
     storage.Initialize<>();
 
     state.ResumeTiming();
@@ -164,19 +164,19 @@ static void Storage_Insert_NoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Insert_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Insert_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Insert_OneComponent(benchmark::State& state)
+static void ArchetypeStorage_Insert_OneComponent(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
+  ArchetypeStorageSparseArray<size_t> sparse;
 
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    Storage<size_t> storage(&sparse);
+    ArchetypeStorage<size_t> storage(&sparse);
     storage.Initialize<Component<0>>();
 
     state.ResumeTiming();
@@ -192,19 +192,19 @@ static void Storage_Insert_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Insert_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Insert_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Insert_OneComponentNonTrivial(benchmark::State& state)
+static void ArchetypeStorage_Insert_OneComponentNonTrivial(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
+  ArchetypeStorageSparseArray<size_t> sparse;
 
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    Storage<size_t> storage(&sparse);
+    ArchetypeStorage<size_t> storage(&sparse);
     storage.Initialize<std::string>();
 
     state.ResumeTiming();
@@ -220,19 +220,19 @@ static void Storage_Insert_OneComponentNonTrivial(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Insert_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Insert_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Insert_TwoComponents(benchmark::State& state)
+static void ArchetypeStorage_Insert_TwoComponents(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
+  ArchetypeStorageSparseArray<size_t> sparse;
 
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    Storage<size_t> storage(&sparse);
+    ArchetypeStorage<size_t> storage(&sparse);
     storage.Initialize<Component<0>, Component<1>>();
 
     state.ResumeTiming();
@@ -248,19 +248,19 @@ static void Storage_Insert_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Insert_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Insert_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Erase_NoComponents(benchmark::State& state)
+static void ArchetypeStorage_Erase_NoComponents(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
+  ArchetypeStorageSparseArray<size_t> sparse;
 
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    Storage<size_t> storage(&sparse);
+    ArchetypeStorage<size_t> storage(&sparse);
     storage.Initialize<>();
 
     for (size_t i = 0; i < amount; i++)
@@ -281,19 +281,19 @@ static void Storage_Erase_NoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Erase_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Erase_NoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Erase_OneComponent(benchmark::State& state)
+static void ArchetypeStorage_Erase_OneComponent(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
+  ArchetypeStorageSparseArray<size_t> sparse;
 
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    Storage<size_t> storage(&sparse);
+    ArchetypeStorage<size_t> storage(&sparse);
     storage.Initialize<Component<0>>();
 
     for (size_t i = 0; i < amount; i++)
@@ -314,19 +314,19 @@ static void Storage_Erase_OneComponent(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Erase_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Erase_OneComponent)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Erase_OneComponentNonTrivial(benchmark::State& state)
+static void ArchetypeStorage_Erase_OneComponentNonTrivial(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
+  ArchetypeStorageSparseArray<size_t> sparse;
 
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    Storage<size_t> storage(&sparse);
+    ArchetypeStorage<size_t> storage(&sparse);
     storage.Initialize<std::string>();
 
     for (size_t i = 0; i < amount; i++)
@@ -347,19 +347,19 @@ static void Storage_Erase_OneComponentNonTrivial(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Erase_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Erase_OneComponentNonTrivial)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 
-static void Storage_Erase_TwoComponents(benchmark::State& state)
+static void ArchetypeStorage_Erase_TwoComponents(benchmark::State& state)
 {
   const size_t amount = state.range(0);
 
-  SharedSparseArray<size_t> sparse;
+  ArchetypeStorageSparseArray<size_t> sparse;
 
   for (auto _ : state)
   {
     state.PauseTiming();
 
-    Storage<size_t> storage(&sparse);
+    ArchetypeStorage<size_t> storage(&sparse);
     storage.Initialize<Component<0>, Component<1>>();
 
     for (size_t i = 0; i < amount; i++)
@@ -380,5 +380,5 @@ static void Storage_Erase_TwoComponents(benchmark::State& state)
   state.SetComplexityN(amount);
 }
 
-BENCHMARK(Storage_Erase_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
+BENCHMARK(ArchetypeStorage_Erase_TwoComponents)->Arg(100)->Arg(1000)->Arg(10000)->Complexity(::benchmark::oN);
 } // namespace plex::bench

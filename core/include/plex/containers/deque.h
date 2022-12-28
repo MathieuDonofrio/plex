@@ -3,14 +3,13 @@
 
 #include <memory_resource>
 
-#include "plex/containers/array.h"
+#include "plex/containers/carray.h"
 #include "plex/debug/assertion.h"
 #include "plex/utilities/memory.h"
 #include "plex/utilities/type_traits.h"
 
 namespace plex
 {
-
 namespace details
 {
   template<typename Type, typename Ref, typename Ptr>
@@ -325,12 +324,20 @@ public:
   ///
   Deque(const Deque<Type, AllocatorType>& other) : front_(0), rear_(static_cast<uint32_t>(other.size()))
   {
-    const auto capacity = ComputeCapacity(rear_);
+    if (rear_ > 0)
+    {
+      const auto capacity = ComputeCapacity(rear_);
 
-    mask_ = CapacityToMask(capacity);
-    array_ = Allocate(capacity);
+      mask_ = CapacityToMask(capacity);
+      array_ = Allocate(capacity);
 
-    other.CopyTo(array_);
+      other.CopyTo(array_);
+    }
+    else
+    {
+      array_ = nullptr;
+      mask_ = 0;
+    }
   }
 
   ///
@@ -487,6 +494,19 @@ public:
 
       SwapArrays(new_array, new_capacity);
     }
+  }
+
+  ///
+  /// Removes the element at the iterator. Shifts all elements after element.
+  ///
+  /// @param[in] it Iterator for element to erase
+  ///
+  void erase(iterator it)
+  {
+    ASSERT(!empty(), "Vector is empty");
+
+    it->~Type();
+    if (it + 1 != end()) UninitializedRelocate(it + 1, end(), it);
   }
 
   ///

@@ -22,16 +22,17 @@ namespace
   {};
 
   template<typename... Components>
-  struct MockQuery : public QueryDataAccessFactory<MockQuery<Components...>, Components...>
+  struct MockQuery
   {
-    static MockQuery FetchData(void*, Context&, Context&)
+    static MockQuery Fetch(void*, Context&, Context&)
     {
       return MockQuery();
     }
 
-    static constexpr std::string_view GetCategory()
+    static consteval std::array<QueryDataAccess, sizeof...(Components)> GetDataAccess() noexcept
     {
-      return "Test";
+      return { QueryDataAccess {
+        "mock", TypeName<Components>(), std::is_const_v<Components>, IsThreadSafe<Components>::value }... };
     }
   };
 

@@ -34,7 +34,7 @@ namespace details
   // Element storage
 
   template<typename Type, size_t I>
-  struct TightPairElementStorage
+  struct TightPairElement
   {
     Type _element;
     // clang-format off
@@ -46,10 +46,10 @@ namespace details
   // Specialization for empty base class optimization.
   // Uses inheritance rather than storing the element as a member variable.
   template<TightPairEBCO Type, size_t I>
-  struct TightPairElementStorage<Type, I> : public Type
+  struct TightPairElement<Type, I> : public Type
   {
-    constexpr TightPairElementStorage() = default;
-    constexpr TightPairElementStorage(Type) {};
+    constexpr TightPairElement() = default;
+    constexpr TightPairElement(Type) {};
 
     // clang-format off
     constexpr const Type& Get() const& { return *this; }
@@ -67,12 +67,11 @@ namespace details
 /// @tparam SecondType Second type of pair.
 ///
 template<typename FirstType, typename SecondType>
-class TightPair : private details::TightPairElementStorage<FirstType, 0>,
-                  private details::TightPairElementStorage<SecondType, 1>
+class TightPair : private details::TightPairElement<FirstType, 0>, private details::TightPairElement<SecondType, 1>
 {
 private:
-  using FirstStorage = details::TightPairElementStorage<FirstType, 0>;
-  using SecondStorage = details::TightPairElementStorage<SecondType, 1>;
+  using FirstStorage = details::TightPairElement<FirstType, 0>;
+  using SecondStorage = details::TightPairElement<SecondType, 1>;
 
 public:
   ///

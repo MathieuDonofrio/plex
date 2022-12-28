@@ -92,7 +92,7 @@ public:
   {
     ASSERT(Contains<Type>(), "Instance of given type not found");
 
-    return *std::bit_cast<Type*>(map_.Get<Type>());
+    return *static_cast<std::remove_reference_t<Type>*>(map_.template Get<Type>());
   }
 
   ///

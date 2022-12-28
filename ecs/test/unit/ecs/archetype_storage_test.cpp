@@ -1,4 +1,4 @@
-#include "plex/ecs/storage.h"
+#include "plex/ecs/archetype_storage.h"
 
 #include <algorithm>
 
@@ -6,19 +6,19 @@
 
 namespace plex::tests
 {
-TEST(Storage_Tests, Empty_AfterInitialization_True)
+TEST(ArchetypeStorage_Tests, Empty_AfterInitialization_True)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
 
   EXPECT_TRUE(storage.Empty());
   EXPECT_EQ(storage.Size(), 0);
 }
 
-TEST(Storage_Tests, Insert_Single_SizeIncrease)
+TEST(ArchetypeStorage_Tests, Insert_Single_SizeIncrease)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -27,19 +27,19 @@ TEST(Storage_Tests, Insert_Single_SizeIncrease)
   EXPECT_EQ(storage.Size(), 1);
 }
 
-TEST(Storage_Tests, Contains_WithoutValue_False)
+TEST(ArchetypeStorage_Tests, Contains_WithoutValue_False)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   EXPECT_FALSE(storage.Contains(0));
 }
 
-TEST(Storage_Tests, Contains_WithValue_False)
+TEST(ArchetypeStorage_Tests, Contains_WithValue_False)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -48,19 +48,19 @@ TEST(Storage_Tests, Contains_WithValue_False)
   EXPECT_FALSE(storage.Contains(1));
 }
 
-TEST(Storage_Tests, Contains_LargeNonExistant_False)
+TEST(ArchetypeStorage_Tests, Contains_LargeNonExistant_False)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   EXPECT_FALSE(storage.Contains(1000000));
 }
 
-TEST(Storage_Tests, Erase_Single_SizeDecrease)
+TEST(ArchetypeStorage_Tests, Erase_Single_SizeDecrease)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -69,10 +69,10 @@ TEST(Storage_Tests, Erase_Single_SizeDecrease)
   EXPECT_FALSE(storage.Contains(0));
 }
 
-TEST(Storage_Tests, Clear_Empty_Empty)
+TEST(ArchetypeStorage_Tests, Clear_Empty_Empty)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Clear();
@@ -81,10 +81,10 @@ TEST(Storage_Tests, Clear_Empty_Empty)
   EXPECT_EQ(storage.Size(), 0);
 }
 
-TEST(Storage_Tests, Clear_NotEmpty_Empty)
+TEST(ArchetypeStorage_Tests, Clear_NotEmpty_Empty)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -94,10 +94,10 @@ TEST(Storage_Tests, Clear_NotEmpty_Empty)
   EXPECT_EQ(storage.Size(), 0);
 }
 
-TEST(Storage_Tests, Insert_Double_IncreaseSize)
+TEST(ArchetypeStorage_Tests, Insert_Double_IncreaseSize)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -107,10 +107,10 @@ TEST(Storage_Tests, Insert_Double_IncreaseSize)
   EXPECT_EQ(storage.Size(), 2);
 }
 
-TEST(Storage_Tests, Erase_Double_DecreaseSize)
+TEST(ArchetypeStorage_Tests, Erase_Double_DecreaseSize)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -127,10 +127,10 @@ TEST(Storage_Tests, Erase_Double_DecreaseSize)
   EXPECT_EQ(storage.Size(), 0);
 }
 
-TEST(Storage_Tests, Insert_ReinsertionAfterClear_RestoredState)
+TEST(ArchetypeStorage_Tests, Insert_ReinsertionAfterClear_RestoredState)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   storage.Insert(0);
@@ -141,10 +141,10 @@ TEST(Storage_Tests, Insert_ReinsertionAfterClear_RestoredState)
   EXPECT_EQ(storage.Size(), 1);
 }
 
-TEST(Storage_Tests, Insert_TriggerSparseGrowth_CorrectState)
+TEST(ArchetypeStorage_Tests, Insert_TriggerSparseGrowth_CorrectState)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   const size_t big_value = 10000;
@@ -157,10 +157,10 @@ TEST(Storage_Tests, Insert_TriggerSparseGrowth_CorrectState)
   EXPECT_FALSE(storage.Contains(0));
 }
 
-TEST(Storage_Tests, Insert_TriggerDenseGrowth_CorrectState)
+TEST(ArchetypeStorage_Tests, Insert_TriggerDenseGrowth_CorrectState)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<>();
 
   const size_t amount = 10000;
@@ -181,10 +181,10 @@ TEST(Storage_Tests, Insert_TriggerDenseGrowth_CorrectState)
   EXPECT_FALSE(storage.Contains(amount));
 }
 
-TEST(Storage_Tests, Insert_WithComponent_SizeIncrease)
+TEST(ArchetypeStorage_Tests, Insert_WithComponent_SizeIncrease)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   EXPECT_TRUE(storage.Empty());
@@ -196,10 +196,10 @@ TEST(Storage_Tests, Insert_WithComponent_SizeIncrease)
   EXPECT_EQ(storage.Size(), 1);
 }
 
-TEST(Storage_Tests, Insert_WithComponentNonTrivial_SizeIncrease)
+TEST(ArchetypeStorage_Tests, Insert_WithComponentNonTrivial_SizeIncrease)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<std::string>();
 
   EXPECT_TRUE(storage.Empty());
@@ -211,10 +211,10 @@ TEST(Storage_Tests, Insert_WithComponentNonTrivial_SizeIncrease)
   EXPECT_EQ(storage.Size(), 1);
 }
 
-TEST(Storage_Tests, Insert_WithComponent_CorrectValue)
+TEST(ArchetypeStorage_Tests, Insert_WithComponent_CorrectValue)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   storage.Insert(0, 10);
@@ -222,10 +222,10 @@ TEST(Storage_Tests, Insert_WithComponent_CorrectValue)
   EXPECT_EQ(storage.Unpack<int>(0), 10);
 }
 
-TEST(Storage_Tests, Insert_WithComponentRef_CorrectValue)
+TEST(ArchetypeStorage_Tests, Insert_WithComponentRef_CorrectValue)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   int data = 10;
@@ -235,10 +235,10 @@ TEST(Storage_Tests, Insert_WithComponentRef_CorrectValue)
   EXPECT_EQ(storage.Unpack<int>(0), 10);
 }
 
-TEST(Storage_Tests, Insert_WithComponentNonTrivial_CorrectValue)
+TEST(ArchetypeStorage_Tests, Insert_WithComponentNonTrivial_CorrectValue)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<std::string>();
 
   storage.Insert(0, std::string { "10" });
@@ -246,10 +246,10 @@ TEST(Storage_Tests, Insert_WithComponentNonTrivial_CorrectValue)
   EXPECT_EQ(storage.Unpack<std::string>(0), "10");
 }
 
-TEST(Storage_Tests, Insert_WithMultipleComponents_CorrectValue)
+TEST(ArchetypeStorage_Tests, Insert_WithMultipleComponents_CorrectValue)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<int, std::string>();
 
   storage.Insert(0, 10, std::string { "11" });
@@ -258,10 +258,10 @@ TEST(Storage_Tests, Insert_WithMultipleComponents_CorrectValue)
   EXPECT_EQ(storage.Unpack<std::string>(0), "11");
 }
 
-TEST(Storage_Tests, Erase_WithComponent_SizeDecrease)
+TEST(ArchetypeStorage_Tests, Erase_WithComponent_SizeDecrease)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   storage.Insert(0, 10);
@@ -271,10 +271,10 @@ TEST(Storage_Tests, Erase_WithComponent_SizeDecrease)
   EXPECT_EQ(storage.Size(), 0);
 }
 
-TEST(Storage_Tests, Erase_WithComponentNonTrivial_SizeDecrease)
+TEST(ArchetypeStorage_Tests, Erase_WithComponentNonTrivial_SizeDecrease)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<std::string>();
 
   storage.Insert(0, std::string { "10" });
@@ -284,10 +284,10 @@ TEST(Storage_Tests, Erase_WithComponentNonTrivial_SizeDecrease)
   EXPECT_EQ(storage.Size(), 0);
 }
 
-TEST(Storage_Tests, Insert_WithMultipleComponents_SizeDecrease)
+TEST(ArchetypeStorage_Tests, Insert_WithMultipleComponents_SizeDecrease)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<int, std::string>();
 
   storage.Insert(0, 10, std::string { "11" });
@@ -297,10 +297,10 @@ TEST(Storage_Tests, Insert_WithMultipleComponents_SizeDecrease)
   EXPECT_EQ(storage.Size(), 0);
 }
 
-TEST(Storage_Tests, Erase_MultipleEraseAfterMultipleInsert_CorrectState)
+TEST(ArchetypeStorage_Tests, Erase_MultipleEraseAfterMultipleInsert_CorrectState)
 {
-  SharedSparseArray<size_t> sparse;
-  Storage<size_t> storage(&sparse);
+  ArchetypeStorageSparseArray<size_t> sparse;
+  ArchetypeStorage<size_t> storage(&sparse);
   storage.Initialize<int>();
 
   storage.Insert<int>(0, 0);

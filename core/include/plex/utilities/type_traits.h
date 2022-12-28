@@ -15,6 +15,8 @@ namespace details
 
   TYPE_TRAITS_DETECTOR(IsTriviallyRelocatable);
   TYPE_TRAITS_DETECTOR(IsThreadSafe);
+
+#undef TYPE_TRAITS_DETECTOR
 } // namespace details
 
 ///
@@ -44,8 +46,8 @@ struct IsTriviallyRelocatable
       details::Detect_IsTriviallyRelocatable<Type> || // Note that there is no way to inherit the trait, watch
                                                       // P1144r5 for this feature in the future.
       std::is_empty_v<Type> || // For cases like std::allocator
-      ((std::is_trivially_copy_constructible_v<
-          Type> || std::is_trivially_move_constructible_v<Type>)&&std::is_trivially_destructible_v<Type>)>
+      ((std::is_trivially_copy_constructible_v<Type>
+        || std::is_trivially_move_constructible_v<Type>)&&std::is_trivially_destructible_v<Type>)>
 {};
 
 // Specialize commonly used STL types
@@ -91,7 +93,9 @@ struct IsUniqueTypes : std::true_type
 
 template<typename Type, typename... Types>
 struct IsUniqueTypes<Type, Types...>
-  : std::conjunction<std::negation<std::disjunction<std::is_same<Type, Types>...>>, IsUniqueTypes<Types...>>
+  : std::conjunction<
+      std::negation<std::disjunction<std::is_same<std::remove_cvref_t<Type>, std::remove_cvref_t<Types>>...>>,
+      IsUniqueTypes<Types...>>
 {};
 
 ///

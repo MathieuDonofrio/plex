@@ -6,6 +6,7 @@
 #include "plex/graphics/vulkan/images/vulkan_image.h"
 #include "plex/graphics/vulkan/images/vulkan_image_factory.h"
 
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <unordered_map>
