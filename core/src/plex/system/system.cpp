@@ -6,6 +6,8 @@ namespace plex
 {
   static constexpr std::string_view any {};
 
+  if (*this == system) return true; // Depends on itself since the system might access local data.
+
   for (const QueryDataAccess& data : data_access_)
   {
     if (data.thread_safe) continue; // Thread safe data cannot form a dependency

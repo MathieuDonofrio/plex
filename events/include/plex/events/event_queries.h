@@ -2,6 +2,7 @@
 #define PLEX_EVENTS_EVENT_QUERIES_H
 
 #include "plex/events/event_queue.h"
+#include "plex/events/event_registry.h"
 #include "plex/system/query.h"
 
 namespace plex
@@ -26,16 +27,19 @@ public:
     if (!global_context.Contains<EventQueue<EventType>>()) [[unlikely]]
     {
       global_context.Emplace<EventQueue<EventType>>();
+
+      EventRegistry& registry = global_context.template Get<EventRegistry>();
+
+      registry.AddQueue(&global_context.Get<EventQueue<EventType>>());
     }
 
     if (!local_context.Contains<details::EventCursor<EventType>>()) [[unlikely]]
     {
-      local_context.Emplace<details::EventCursor<EventType>>(0);
+      local_context.Emplace<details::EventCursor<EventType>>(details::EventCursor<EventType> { 0 });
 
       details::EventCursor<EventType>& cursor = local_context.template Get<details::EventCursor<EventType>>();
-      EventQueue<EventType> queue = global_context.template Get<EventQueue<EventType>>();
 
-      queue.AddConsumer(&cursor.index);
+      global_context.template Get<EventQueue<EventType>>().AddConsumer(&cursor.index);
     }
 
     auto& queue = global_context.template Get<EventQueue<EventType>>();
@@ -48,7 +52,7 @@ public:
   {
     return { QueryDataAccess {
       TypeName<EventType>(),
-      {}, // Access entire data source
+      TypeName<EventRegistry>(), // Access entire data source
       std::is_const_v<Type>, // Check const qualifier to see if the access is read-only.
       IsThreadSafe<Type>::value // Check ThreadSafe trait to see if the access is thread-safe.
     } };

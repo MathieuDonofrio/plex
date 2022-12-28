@@ -31,7 +31,7 @@ public:
     {
       const size_t old_consume = *consume;
 
-      consume = old_consume <= old_pivot ? 0 : old_consume - old_pivot; // max(0, old_consume - old_pivot)
+      *consume = old_consume <= old_pivot ? 0 : old_consume - old_pivot; // max(0, old_consume - old_pivot)
     }
 
     // Free memory

@@ -22,6 +22,9 @@ public:
   struct Stage3
   {};
 
+  struct EventsUpdateStage
+  {};
+
   TestApp()
   {
     AddPackage(ECSPackage {});
@@ -34,6 +37,8 @@ public:
     AddSystem<TestApp::Stage1>(system2);
     AddSystem<TestApp::Stage2>(system3);
     AddSystem<TestApp::Stage3>(system4);
+
+    AddSystem<TestApp::EventsUpdateStage>(EventsUpdateSystem);
   }
 
   void Run()
@@ -43,14 +48,25 @@ public:
     Schedule<TestApp::Stage3>();
     Schedule<TestApp::Stage3>();
 
+    Schedule<TestApp::EventsUpdateStage>();
+
     SyncWait(RunScheduler());
   }
 
-  static void system1(EntityRegistry& registry)
+  static Task<void> EventsUpdateSystem(ThreadPool& pool, EventRegistry& registry)
   {
+    co_await pool.Schedule();
+
+    registry.Update();
+  }
+
+  static Task<void> system1(ThreadPool& pool, Entities<int> entities, EntityRegistry& registry)
+  {
+    co_await pool.Schedule();
+
     LOG_INFO("System1");
 
-    EntityForEach(registry.ViewFor<int>(), [](Entity entity, int i) { LOG_INFO("Entity {}: {}", entity, i); });
+    entities.ForEach([](Entity entity, int i) { LOG_INFO("Entity {}: {}", entity, i); });
 
     registry.Create<int>(100);
   }
@@ -62,17 +78,23 @@ public:
     LOG_INFO("System2");
   }
 
-  static void system3(Event<int> int_event)
+  static Task<void> system3(ThreadPool& pool, Event<int> int_event)
   {
+    co_await pool.Schedule();
+
     LOG_INFO("System3");
 
     int_event.Send(100);
     int_event.Send(200);
     int_event.Send(300);
+
+    LOG_INFO("Sent events");
   }
 
-  static void system4(Event<const int> int_event)
+  static Task<void> system4(ThreadPool& pool, Event<const int> int_event)
   {
+    co_await pool.Schedule();
+
     LOG_INFO("System4");
 
     while (int_event.HasNext())
