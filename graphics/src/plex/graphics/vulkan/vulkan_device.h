@@ -7,13 +7,14 @@
 #include "plex/graphics/vulkan/vulkan_instance.h"
 #include "plex/graphics/vulkan/vulkan_surface.h"
 
-#include <memory>
 #include <array>
+#include <memory>
 
 #include <vk_mem_alloc.h>
-#include <vulkan/vulkan_core.h>
 
-namespace plex
+#include "vulkan2/vulkan_types.h"
+
+namespace plex::graphics
 {
 struct VulkanQueueFamilyIndices
 {
@@ -30,8 +31,7 @@ struct VulkanQueueFamilyIndices
 class VulkanDevice : public Device
 {
 public:
-  VulkanDevice(std::shared_ptr<VulkanInstance> instance,
-    std::shared_ptr<VulkanSurface> surface,
+  VulkanDevice(std::shared_ptr<VulkanSurface> surface,
     SwapchainImageUsage swapchain_image_usage = SwapchainImageUsage::ColorAttachment);
 
   VulkanDevice(const VulkanDevice&) = delete;
@@ -109,7 +109,7 @@ private:
   template<typename T>
   T GetFunctionPointer(const char* name) const noexcept
   {
-    return reinterpret_cast<T>(vkGetInstanceProcAddr(instance_->GetHandle(), name));
+    return reinterpret_cast<T>(vkapi::vkGetInstanceProcAddr( name));
   }
 
   [[nodiscard]] static VkImageUsageFlags ConvertSwapchainUsage(SwapchainImageUsage usage) noexcept
@@ -127,13 +127,11 @@ private:
     }
   }
 
-  bool PickPhysicalDevice(const std::shared_ptr<VulkanInstance>& instance,
-    const std::shared_ptr<VulkanSurface>& surface,
-    const VkImageUsageFlags swapchain_image_usage);
+  bool PickPhysicalDevice(const std::shared_ptr<VulkanSurface>& surface, const VkImageUsageFlags swapchain_image_usage);
 
   bool Initialize(const std::shared_ptr<VulkanSurface>& surface);
 
-  bool InitializeVMA(const std::shared_ptr<VulkanInstance>& instance);
+  bool InitializeVMA();
 
   static bool IsPhysicalDeviceSupported(
     VkPhysicalDevice physical_device, VkSurfaceKHR surface, VkImageUsageFlags usage);
@@ -145,7 +143,7 @@ private:
 
   static uint32_t ComputePhysicalDeviceScore(VkPhysicalDevice physical_device);
 
-  static std::vector<VkPhysicalDevice> GetAvailablePhysicalDevices(VkInstance instance);
+  static std::vector<VkPhysicalDevice> GetAvailablePhysicalDevices();
 
   [[nodiscard]] VkPhysicalDeviceLimits GetPhysicalDeviceLimits() const;
 
@@ -166,5 +164,5 @@ private:
   uint32_t max_compute_work_group_invocations_;
 };
 
-} // namespace plex
+} // namespace plex::graphics
 #endif

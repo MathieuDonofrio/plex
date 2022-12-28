@@ -1,26 +1,24 @@
 #include "vulkan_device.h"
 
 #include "plex/debug/logging.h"
+#include "plex/graphics/vulkan/vulkan2/vulkan_api.h"
 #include "plex/graphics/vulkan/vulkan_config.h"
 #include "plex/graphics/vulkan/vulkan_surface.h"
 #include "plex/graphics/vulkan/vulkan_swapchain.h"
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <set>
 #include <vector>
-#include <optional>
 
-namespace plex
+namespace plex::graphics
 {
 
-VulkanDevice::VulkanDevice(std::shared_ptr<VulkanInstance> instance,
-  std::shared_ptr<VulkanSurface> surface,
-  SwapchainImageUsage swapchain_image_usage)
-  : instance_(instance)
+VulkanDevice::VulkanDevice(std::shared_ptr<VulkanSurface> surface, SwapchainImageUsage swapchain_image_usage)
 {
   const auto swapchain_image_usage_flag = ConvertSwapchainUsage(swapchain_image_usage);
-  if (!PickPhysicalDevice(instance, surface, swapchain_image_usage_flag))
+  if (!PickPhysicalDevice(surface, swapchain_image_usage_flag))
   {
     LOG_ERROR("Failed to find a suitable vulkan physical device");
 
@@ -34,7 +32,7 @@ VulkanDevice::VulkanDevice(std::shared_ptr<VulkanInstance> instance,
     return;
   }
 
-  if (!InitializeVMA(instance))
+  if (!InitializeVMA())
   {
     LOG_ERROR("Failed to initialize vulkan memory allocator");
 
@@ -49,19 +47,19 @@ VulkanDevice::~VulkanDevice()
   vmaDestroyAllocator(vma_allocator_);
   vma_allocator_ = nullptr;
 
-  vkDestroyDevice(logical_device_, nullptr);
+  // TODO: the loader has the ownership of the logical device now
+  // vkDestroyDevice(logical_device_, nullptr);
   logical_device_ = VK_NULL_HANDLE;
 
   LOG_INFO("Vulkan device destroyed");
 }
 
-bool VulkanDevice::PickPhysicalDevice(const std::shared_ptr<VulkanInstance>& instance,
-  const std::shared_ptr<VulkanSurface>& surface,
-  const VkImageUsageFlags swapchain_image_usage)
+bool VulkanDevice::PickPhysicalDevice(
+  const std::shared_ptr<VulkanSurface>& surface, const VkImageUsageFlags swapchain_image_usage)
 {
   std::vector<std::pair<VkPhysicalDevice, uint32_t>> candidates;
 
-  for (const auto& physical_device : GetAvailablePhysicalDevices(instance->GetHandle()))
+  for (const auto& physical_device : GetAvailablePhysicalDevices())
   {
     if (IsPhysicalDeviceSupported(physical_device, surface->GetHandle(), swapchain_image_usage))
     {
@@ -139,16 +137,18 @@ bool VulkanDevice::Initialize(const std::shared_ptr<VulkanSurface>& surface)
   create_info.enabledLayerCount = 0;
 #endif
 
-  if (vkCreateDevice(physical_device_, &create_info, nullptr, &logical_device_) != VK_SUCCESS)
+  if (!vkapi::vkCreateDevice(physical_device_, &create_info, nullptr, &logical_device_))
   {
     LOG_ERROR("Failed to create vulkan logical device");
 
     return false;
   }
 
-  vkGetDeviceQueue(logical_device_, queue_family_indices_.graphics_family_index, 0, &graphics_queue_);
-  vkGetDeviceQueue(logical_device_, queue_family_indices_.present_family_index, 0, &present_queue_);
-  vkGetDeviceQueue(logical_device_, queue_family_indices_.compute_family_index, 0, &compute_queue_);
+  vkapi::UseDevice(logical_device_);
+
+  vkapi::vkGetDeviceQueue(queue_family_indices_.graphics_family_index, 0, &graphics_queue_);
+  vkapi::vkGetDeviceQueue(queue_family_indices_.present_family_index, 0, &present_queue_);
+  vkapi::vkGetDeviceQueue(queue_family_indices_.compute_family_index, 0, &compute_queue_);
 
   const auto limits = GetPhysicalDeviceLimits();
 
@@ -163,8 +163,10 @@ bool VulkanDevice::Initialize(const std::shared_ptr<VulkanSurface>& surface)
   return true;
 }
 
-bool VulkanDevice::InitializeVMA(const std::shared_ptr<VulkanInstance>& instance)
+bool VulkanDevice::InitializeVMA()
 {
+  // TODO create wrapper for native vulkan function pointers
+  // TODO should be done in the vulkan loader
   VmaVulkanFunctions vulkanFunctions = {};
   vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
   vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
@@ -200,7 +202,7 @@ bool VulkanDevice::InitializeVMA(const std::shared_ptr<VulkanInstance>& instance
   allocator_create_info.vulkanApiVersion = VK_API_VERSION_1_3;
   allocator_create_info.physicalDevice = physical_device_;
   allocator_create_info.device = logical_device_;
-  allocator_create_info.instance = instance->GetHandle();
+  allocator_create_info.instance = vkapi::GetInstance();
   allocator_create_info.pVulkanFunctions = &vulkanFunctions;
   allocator_create_info.flags = VmaAllocatorCreateFlagBits::VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 
@@ -224,7 +226,7 @@ bool VulkanDevice::IsPhysicalDeviceSupported(
   if (!(swap_chain_support.capabilities.supportedUsageFlags & usage)) return false;
 
   VkPhysicalDeviceFeatures physical_device_supported_features;
-  vkGetPhysicalDeviceFeatures(physical_device, &physical_device_supported_features);
+  vkapi::vkGetPhysicalDeviceFeatures(physical_device, &physical_device_supported_features);
 
   if (!physical_device_supported_features.samplerAnisotropy) return false;
 
@@ -238,19 +240,16 @@ bool VulkanDevice::FindQueueFamilies(
   std::optional<uint32_t> present_family_index;
   std::optional<uint32_t> compute_family_index;
 
-  uint32_t queue_family_count = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
+  const auto [result, queue_families_properties] = vkapi::vkGetPhysicalDeviceQueueFamilyProperties(physical_device);
+  if (!result) return false;
 
-  std::vector<VkQueueFamilyProperties> queue_families_properties(queue_family_count);
-  vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families_properties.data());
-
-  for (uint32_t i = 0; i < queue_family_count; ++i)
+  for (uint32_t i = 0; i < queue_families_properties.size(); ++i)
   {
     if (queue_families_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) graphics_family_index = i;
     if (queue_families_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) compute_family_index = i;
 
     VkBool32 is_present_surface_supported = false;
-    vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, surface, &is_present_surface_supported);
+    vkapi::vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, surface, &is_present_surface_supported);
 
     if (is_present_surface_supported) present_family_index = i;
 
@@ -272,14 +271,9 @@ bool VulkanDevice::FindQueueFamilies(
 
 bool VulkanDevice::IsExtensionSupported(VkPhysicalDevice physical_device, const std::string& extension_name)
 {
-  uint32_t available_extension_count = 0;
 
-  vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &available_extension_count, nullptr);
-
-  std::vector<VkExtensionProperties> available_extensions(available_extension_count);
-
-  vkEnumerateDeviceExtensionProperties(
-    physical_device, nullptr, &available_extension_count, available_extensions.data());
+  const auto [result, available_extensions] = vkapi::vkEnumerateDeviceExtensionProperties(physical_device, nullptr);
+  if (!result) return false;
 
   for (const auto& extension : available_extensions)
   {
@@ -296,8 +290,8 @@ uint32_t VulkanDevice::ComputePhysicalDeviceScore(VkPhysicalDevice physical_devi
   VkPhysicalDeviceProperties device_properties;
   VkPhysicalDeviceFeatures device_features;
 
-  vkGetPhysicalDeviceProperties(physical_device, &device_properties);
-  vkGetPhysicalDeviceFeatures(physical_device, &device_features);
+  vkapi::vkGetPhysicalDeviceProperties(physical_device, &device_properties);
+  vkapi::vkGetPhysicalDeviceFeatures(physical_device, &device_features);
 
   // Discrete GPUs have a significant performance advantage
 
@@ -313,18 +307,13 @@ uint32_t VulkanDevice::ComputePhysicalDeviceScore(VkPhysicalDevice physical_devi
 VkPhysicalDeviceLimits VulkanDevice::GetPhysicalDeviceLimits() const
 {
   VkPhysicalDeviceProperties physical_device_properties_;
-  vkGetPhysicalDeviceProperties(physical_device_, &physical_device_properties_);
+  vkapi::vkGetPhysicalDeviceProperties(physical_device_, &physical_device_properties_);
   return physical_device_properties_.limits;
 }
 
-std::vector<VkPhysicalDevice> VulkanDevice::GetAvailablePhysicalDevices(VkInstance instance)
+std::vector<VkPhysicalDevice> VulkanDevice::GetAvailablePhysicalDevices()
 {
-  uint32_t physical_device_count = 0;
-  vkEnumeratePhysicalDevices(instance, &physical_device_count, nullptr);
-
-  std::vector<VkPhysicalDevice> physical_devices(physical_device_count);
-  vkEnumeratePhysicalDevices(instance, &physical_device_count, physical_devices.data());
-
+  const auto [result, physical_devices] = vkapi::vkEnumeratePhysicalDevices();
   return physical_devices;
 }
-} // namespace plex
+} // namespace plex::graphics

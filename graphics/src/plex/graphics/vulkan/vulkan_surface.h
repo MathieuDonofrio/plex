@@ -1,18 +1,18 @@
 #ifndef PLEX_GRAPHICS_VULKAN_SURFACE_H
 #define PLEX_GRAPHICS_VULKAN_SURFACE_H
 
+#include "plex/debug/logging.h"
+#include "plex/graphics/vulkan/vulkan2/vulkan_api.h"
+
 #include <memory>
 
-#include "plex/debug/logging.h"
-#include "plex/graphics/vulkan/vulkan_instance.h"
-
-namespace plex
+namespace plex::graphics
 {
 
 class VulkanSurface
 {
 public:
-  VulkanSurface(std::shared_ptr<Window> window, std::shared_ptr<VulkanInstance> instance) : instance_(instance)
+  VulkanSurface(std::shared_ptr<Window> window)
   {
     if (!Initialize(dynamic_cast<VulkanCapableWindow*>(window.get())))
     {
@@ -31,13 +31,13 @@ public:
 
   ~VulkanSurface()
   {
-    vkDestroySurfaceKHR(instance_->GetHandle(), surface_handle_, nullptr);
+    vkapi::vkDestroySurfaceKHR(surface_handle_, nullptr);
     surface_handle_ = VK_NULL_HANDLE;
 
     LOG_INFO("Vulkan surface destroyed");
   };
 
-  [[nodiscard]] const VkSurfaceKHR GetHandle() const noexcept
+  [[nodiscard]] VkSurfaceKHR GetHandle() const noexcept
   {
     return surface_handle_;
   }
@@ -45,16 +45,14 @@ public:
 private:
   bool Initialize(VulkanCapableWindow* window)
   {
-    surface_handle_ = window->CreateWindowSurface(instance_->GetHandle());
+    surface_handle_ = window->CreateWindowSurface(vkapi::GetInstance());
 
     return surface_handle_ != VK_NULL_HANDLE;
   };
 
 private:
-  VkSurfaceKHR surface_handle_;
-
-  std::shared_ptr<VulkanInstance> instance_;
+  VkSurfaceKHR surface_handle_ { VK_NULL_HANDLE };
 };
 
-} // namespace plex
+} // namespace plex::graphics
 #endif
