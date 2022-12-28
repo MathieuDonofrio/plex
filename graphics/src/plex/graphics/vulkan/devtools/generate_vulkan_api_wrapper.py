@@ -143,17 +143,20 @@ if __name__ == '__main__':
         # Bind device
         if 'VkDevice' in parameter_types:
             del parameters[0]
+            del parameter_types[0]
             function['call_arguments'][0] = 'loader::GetDevice()'
             function['tags'].append('device_bound')
 
         # Bind instance
         if 'VkInstance' in parameter_types:
             del parameters[0]
+            del parameter_types[0]
             function['call_arguments'][0] = 'loader::GetInstance()'
             function['tags'].append('instance_bound')
 
         # Make count query function return vector
-        if uint32_t_ptr_index := parameter_types.index('uint32_t*') if 'uint32_t*' in parameter_types else None:
+        uint32_t_ptr_index = parameter_types.index('uint32_t*') if 'uint32_t*' in parameter_types else None
+        if uint32_t_ptr_index is not None:
             if uint32_t_ptr_index == len(parameters) - 2 and parameters[uint32_t_ptr_index]['name'].endswith('Count'):
                 last_parameter = parameters[-1]
                 if last_parameter['type'].endswith('*'):
@@ -203,14 +206,16 @@ if __name__ == '__main__':
                 implementation += f'return loader::GetFunctionTable().{function["function_name"]}({call_arguments_str});'
             elif 'count_query' in function['tags']:
                 call_arguments_str = ', '.join(function['call_arguments'])
+                if len(call_arguments_str) > 0:
+                    call_arguments_str += ', '
                 implementation += f'const auto& fp = loader::GetFunctionTable().{function["function_name"]};\n'
                 implementation += f'uint32_t count = 0;\n'
-                implementation += f'fp({call_arguments_str}, &count, nullptr);\n'
+                implementation += f'fp({call_arguments_str}&count, nullptr);\n'
                 implementation += f'{function["return_type"]} result;\n'
                 implementation += f'result.value.resize(count);\n'
                 if function['original_return_type'] != 'void':
                     implementation += 'result.result = '
-                implementation += f'fp({call_arguments_str}, &count, result.value.data());\n'
+                implementation += f'fp({call_arguments_str}&count, result.value.data());\n'
                 implementation += f'return result;'
 
             implementation = indent(implementation, '  ')

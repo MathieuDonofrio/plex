@@ -25,9 +25,15 @@ VkInstance GetInstance() noexcept
     return loader::GetInstance();
 }
 
-VulkanResult vkEnumeratePhysicalDevices(uint32_t* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices)
+VulkanResultWithValue<std::vector<VkPhysicalDevice>> vkEnumeratePhysicalDevices()
 {
-  return loader::GetFunctionTable().vkEnumeratePhysicalDevices(loader::GetInstance(), pPhysicalDeviceCount, pPhysicalDevices);
+  const auto& fp = loader::GetFunctionTable().vkEnumeratePhysicalDevices;
+  uint32_t count = 0;
+  fp(loader::GetInstance(), &count, nullptr);
+  VulkanResultWithValue<std::vector<VkPhysicalDevice>> result;
+  result.value.resize(count);
+  result.result = fp(loader::GetInstance(), &count, result.value.data());
+  return result;
 }
 
 void vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures)
@@ -103,9 +109,15 @@ VulkanResultWithValue<std::vector<VkExtensionProperties>> vkEnumerateDeviceExten
   return result;
 }
 
-VulkanResult vkEnumerateInstanceLayerProperties(uint32_t* pPropertyCount, VkLayerProperties* pProperties)
+VulkanResultWithValue<std::vector<VkLayerProperties>> vkEnumerateInstanceLayerProperties()
 {
-  return loader::GetFunctionTable().vkEnumerateInstanceLayerProperties(pPropertyCount, pProperties);
+  const auto& fp = loader::GetFunctionTable().vkEnumerateInstanceLayerProperties;
+  uint32_t count = 0;
+  fp(&count, nullptr);
+  VulkanResultWithValue<std::vector<VkLayerProperties>> result;
+  result.value.resize(count);
+  result.result = fp(&count, result.value.data());
+  return result;
 }
 
 VulkanResultWithValue<std::vector<VkLayerProperties>> vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice)
@@ -194,9 +206,15 @@ void vkGetImageMemoryRequirements(VkImage image, VkMemoryRequirements* pMemoryRe
   return loader::GetFunctionTable().vkGetImageMemoryRequirements(loader::GetDevice(), image, pMemoryRequirements);
 }
 
-void vkGetImageSparseMemoryRequirements(VkImage image, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements* pSparseMemoryRequirements)
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements>> vkGetImageSparseMemoryRequirements(VkImage image)
 {
-  return loader::GetFunctionTable().vkGetImageSparseMemoryRequirements(loader::GetDevice(), image, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  const auto& fp = loader::GetFunctionTable().vkGetImageSparseMemoryRequirements;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), image, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements>> result;
+  result.value.resize(count);
+  fp(loader::GetDevice(), image, &count, result.value.data());
+  return result;
 }
 
 VulkanResultWithValue<std::vector<VkSparseImageFormatProperties>> vkGetPhysicalDeviceSparseImageFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkImageType type, VkSampleCountFlagBits samples, VkImageUsageFlags usage, VkImageTiling tiling)
@@ -510,9 +528,15 @@ void vkGetDeviceGroupPeerMemoryFeatures(uint32_t heapIndex, uint32_t localDevice
   return loader::GetFunctionTable().vkGetDeviceGroupPeerMemoryFeatures(loader::GetDevice(), heapIndex, localDeviceIndex, remoteDeviceIndex, pPeerMemoryFeatures);
 }
 
-VulkanResult vkEnumeratePhysicalDeviceGroups(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties)
+VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> vkEnumeratePhysicalDeviceGroups()
 {
-  return loader::GetFunctionTable().vkEnumeratePhysicalDeviceGroups(loader::GetInstance(), pPhysicalDeviceGroupCount, pPhysicalDeviceGroupProperties);
+  const auto& fp = loader::GetFunctionTable().vkEnumeratePhysicalDeviceGroups;
+  uint32_t count = 0;
+  fp(loader::GetInstance(), &count, nullptr);
+  VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> result;
+  result.value.resize(count);
+  result.result = fp(loader::GetInstance(), &count, result.value.data());
+  return result;
 }
 
 void vkGetImageMemoryRequirements2(const VkImageMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements)
@@ -525,9 +549,15 @@ void vkGetBufferMemoryRequirements2(const VkBufferMemoryRequirementsInfo2* pInfo
   return loader::GetFunctionTable().vkGetBufferMemoryRequirements2(loader::GetDevice(), pInfo, pMemoryRequirements);
 }
 
-void vkGetImageSparseMemoryRequirements2(const VkImageSparseMemoryRequirementsInfo2* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements)
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> vkGetImageSparseMemoryRequirements2(const VkImageSparseMemoryRequirementsInfo2* pInfo)
 {
-  return loader::GetFunctionTable().vkGetImageSparseMemoryRequirements2(loader::GetDevice(), pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  const auto& fp = loader::GetFunctionTable().vkGetImageSparseMemoryRequirements2;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), pInfo, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> result;
+  result.value.resize(count);
+  fp(loader::GetDevice(), pInfo, &count, result.value.data());
+  return result;
 }
 
 void vkGetPhysicalDeviceFeatures2(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures2* pFeatures)
@@ -718,9 +748,15 @@ void vkGetDeviceImageMemoryRequirements(const VkDeviceImageMemoryRequirements* p
   return loader::GetFunctionTable().vkGetDeviceImageMemoryRequirements(loader::GetDevice(), pInfo, pMemoryRequirements);
 }
 
-void vkGetDeviceImageSparseMemoryRequirements(const VkDeviceImageMemoryRequirements* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements)
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> vkGetDeviceImageSparseMemoryRequirements(const VkDeviceImageMemoryRequirements* pInfo)
 {
-  return loader::GetFunctionTable().vkGetDeviceImageSparseMemoryRequirements(loader::GetDevice(), pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  const auto& fp = loader::GetFunctionTable().vkGetDeviceImageSparseMemoryRequirements;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), pInfo, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> result;
+  result.value.resize(count);
+  fp(loader::GetDevice(), pInfo, &count, result.value.data());
+  return result;
 }
 
 void vkDestroySurfaceKHR(VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator)
@@ -770,9 +806,15 @@ void vkDestroySwapchainKHR(VkSwapchainKHR swapchain, const VkAllocationCallbacks
   return loader::GetFunctionTable().vkDestroySwapchainKHR(loader::GetDevice(), swapchain, pAllocator);
 }
 
-VulkanResult vkGetSwapchainImagesKHR(VkSwapchainKHR swapchain, uint32_t* pSwapchainImageCount, VkImage* pSwapchainImages)
+VulkanResultWithValue<std::vector<VkImage>> vkGetSwapchainImagesKHR(VkSwapchainKHR swapchain)
 {
-  return loader::GetFunctionTable().vkGetSwapchainImagesKHR(loader::GetDevice(), swapchain, pSwapchainImageCount, pSwapchainImages);
+  const auto& fp = loader::GetFunctionTable().vkGetSwapchainImagesKHR;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), swapchain, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkImage>> result;
+  result.value.resize(count);
+  result.result = fp(loader::GetDevice(), swapchain, &count, result.value.data());
+  return result;
 }
 
 VulkanResult vkAcquireNextImageKHR(VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t* pImageIndex)
@@ -932,9 +974,15 @@ void vkTrimCommandPoolKHR(VkCommandPool commandPool, VkCommandPoolTrimFlags flag
   return loader::GetFunctionTable().vkTrimCommandPoolKHR(loader::GetDevice(), commandPool, flags);
 }
 
-VulkanResult vkEnumeratePhysicalDeviceGroupsKHR(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties)
+VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> vkEnumeratePhysicalDeviceGroupsKHR()
 {
-  return loader::GetFunctionTable().vkEnumeratePhysicalDeviceGroupsKHR(loader::GetInstance(), pPhysicalDeviceGroupCount, pPhysicalDeviceGroupProperties);
+  const auto& fp = loader::GetFunctionTable().vkEnumeratePhysicalDeviceGroupsKHR;
+  uint32_t count = 0;
+  fp(loader::GetInstance(), &count, nullptr);
+  VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> result;
+  result.value.resize(count);
+  result.result = fp(loader::GetInstance(), &count, result.value.data());
+  return result;
 }
 
 void vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo* pExternalBufferInfo, VkExternalBufferProperties* pExternalBufferProperties)
@@ -1091,9 +1139,15 @@ void vkGetBufferMemoryRequirements2KHR(const VkBufferMemoryRequirementsInfo2* pI
   return loader::GetFunctionTable().vkGetBufferMemoryRequirements2KHR(loader::GetDevice(), pInfo, pMemoryRequirements);
 }
 
-void vkGetImageSparseMemoryRequirements2KHR(const VkImageSparseMemoryRequirementsInfo2* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements)
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> vkGetImageSparseMemoryRequirements2KHR(const VkImageSparseMemoryRequirementsInfo2* pInfo)
 {
-  return loader::GetFunctionTable().vkGetImageSparseMemoryRequirements2KHR(loader::GetDevice(), pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  const auto& fp = loader::GetFunctionTable().vkGetImageSparseMemoryRequirements2KHR;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), pInfo, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> result;
+  result.value.resize(count);
+  fp(loader::GetDevice(), pInfo, &count, result.value.data());
+  return result;
 }
 
 VulkanResult vkCreateSamplerYcbcrConversionKHR(const VkSamplerYcbcrConversionCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSamplerYcbcrConversion* pYcbcrConversion)
@@ -1192,19 +1246,37 @@ VulkanResult vkDeferredOperationJoinKHR(VkDeferredOperationKHR operation)
   return loader::GetFunctionTable().vkDeferredOperationJoinKHR(loader::GetDevice(), operation);
 }
 
-VulkanResult vkGetPipelineExecutablePropertiesKHR(const VkPipelineInfoKHR* pPipelineInfo, uint32_t* pExecutableCount, VkPipelineExecutablePropertiesKHR* pProperties)
+VulkanResultWithValue<std::vector<VkPipelineExecutablePropertiesKHR>> vkGetPipelineExecutablePropertiesKHR(const VkPipelineInfoKHR* pPipelineInfo)
 {
-  return loader::GetFunctionTable().vkGetPipelineExecutablePropertiesKHR(loader::GetDevice(), pPipelineInfo, pExecutableCount, pProperties);
+  const auto& fp = loader::GetFunctionTable().vkGetPipelineExecutablePropertiesKHR;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), pPipelineInfo, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkPipelineExecutablePropertiesKHR>> result;
+  result.value.resize(count);
+  result.result = fp(loader::GetDevice(), pPipelineInfo, &count, result.value.data());
+  return result;
 }
 
-VulkanResult vkGetPipelineExecutableStatisticsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo, uint32_t* pStatisticCount, VkPipelineExecutableStatisticKHR* pStatistics)
+VulkanResultWithValue<std::vector<VkPipelineExecutableStatisticKHR>> vkGetPipelineExecutableStatisticsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo)
 {
-  return loader::GetFunctionTable().vkGetPipelineExecutableStatisticsKHR(loader::GetDevice(), pExecutableInfo, pStatisticCount, pStatistics);
+  const auto& fp = loader::GetFunctionTable().vkGetPipelineExecutableStatisticsKHR;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), pExecutableInfo, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkPipelineExecutableStatisticKHR>> result;
+  result.value.resize(count);
+  result.result = fp(loader::GetDevice(), pExecutableInfo, &count, result.value.data());
+  return result;
 }
 
-VulkanResult vkGetPipelineExecutableInternalRepresentationsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo, uint32_t* pInternalRepresentationCount, VkPipelineExecutableInternalRepresentationKHR* pInternalRepresentations)
+VulkanResultWithValue<std::vector<VkPipelineExecutableInternalRepresentationKHR>> vkGetPipelineExecutableInternalRepresentationsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo)
 {
-  return loader::GetFunctionTable().vkGetPipelineExecutableInternalRepresentationsKHR(loader::GetDevice(), pExecutableInfo, pInternalRepresentationCount, pInternalRepresentations);
+  const auto& fp = loader::GetFunctionTable().vkGetPipelineExecutableInternalRepresentationsKHR;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), pExecutableInfo, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkPipelineExecutableInternalRepresentationKHR>> result;
+  result.value.resize(count);
+  result.result = fp(loader::GetDevice(), pExecutableInfo, &count, result.value.data());
+  return result;
 }
 
 VulkanResult vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2* pSubmits, VkFence fence)
@@ -1233,9 +1305,15 @@ void vkGetDeviceImageMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements
   return loader::GetFunctionTable().vkGetDeviceImageMemoryRequirementsKHR(loader::GetDevice(), pInfo, pMemoryRequirements);
 }
 
-void vkGetDeviceImageSparseMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements)
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> vkGetDeviceImageSparseMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements* pInfo)
 {
-  return loader::GetFunctionTable().vkGetDeviceImageSparseMemoryRequirementsKHR(loader::GetDevice(), pInfo, pSparseMemoryRequirementCount, pSparseMemoryRequirements);
+  const auto& fp = loader::GetFunctionTable().vkGetDeviceImageSparseMemoryRequirementsKHR;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), pInfo, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> result;
+  result.value.resize(count);
+  fp(loader::GetDevice(), pInfo, &count, result.value.data());
+  return result;
 }
 
 VulkanResult vkCreateDebugReportCallbackEXT(const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
@@ -1338,9 +1416,15 @@ VulkanResult vkGetRefreshCycleDurationGOOGLE(VkSwapchainKHR swapchain, VkRefresh
   return loader::GetFunctionTable().vkGetRefreshCycleDurationGOOGLE(loader::GetDevice(), swapchain, pDisplayTimingProperties);
 }
 
-VulkanResult vkGetPastPresentationTimingGOOGLE(VkSwapchainKHR swapchain, uint32_t* pPresentationTimingCount, VkPastPresentationTimingGOOGLE* pPresentationTimings)
+VulkanResultWithValue<std::vector<VkPastPresentationTimingGOOGLE>> vkGetPastPresentationTimingGOOGLE(VkSwapchainKHR swapchain)
 {
-  return loader::GetFunctionTable().vkGetPastPresentationTimingGOOGLE(loader::GetDevice(), swapchain, pPresentationTimingCount, pPresentationTimings);
+  const auto& fp = loader::GetFunctionTable().vkGetPastPresentationTimingGOOGLE;
+  uint32_t count = 0;
+  fp(loader::GetDevice(), swapchain, &count, nullptr);
+  VulkanResultWithValue<std::vector<VkPastPresentationTimingGOOGLE>> result;
+  result.value.resize(count);
+  result.result = fp(loader::GetDevice(), swapchain, &count, result.value.data());
+  return result;
 }
 
 void vkSetHdrMetadataEXT(uint32_t swapchainCount, const VkSwapchainKHR* pSwapchains, const VkHdrMetadataEXT* pMetadata)

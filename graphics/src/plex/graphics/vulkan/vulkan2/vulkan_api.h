@@ -21,7 +21,7 @@ VulkanResult UseDevice(VkDevice device);
 
 VkInstance GetInstance() noexcept;
 
-VulkanResult vkEnumeratePhysicalDevices(uint32_t* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices);
+VulkanResultWithValue<std::vector<VkPhysicalDevice>> vkEnumeratePhysicalDevices();
 
 void vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures);
 
@@ -45,7 +45,7 @@ VulkanResultWithValue<std::vector<VkExtensionProperties>> vkEnumerateInstanceExt
 
 VulkanResultWithValue<std::vector<VkExtensionProperties>> vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char* pLayerName);
 
-VulkanResult vkEnumerateInstanceLayerProperties(uint32_t* pPropertyCount, VkLayerProperties* pProperties);
+VulkanResultWithValue<std::vector<VkLayerProperties>> vkEnumerateInstanceLayerProperties();
 
 VulkanResultWithValue<std::vector<VkLayerProperties>> vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice);
 
@@ -79,7 +79,7 @@ void vkGetBufferMemoryRequirements(VkBuffer buffer, VkMemoryRequirements* pMemor
 
 void vkGetImageMemoryRequirements(VkImage image, VkMemoryRequirements* pMemoryRequirements);
 
-void vkGetImageSparseMemoryRequirements(VkImage image, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements* pSparseMemoryRequirements);
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements>> vkGetImageSparseMemoryRequirements(VkImage image);
 
 VulkanResultWithValue<std::vector<VkSparseImageFormatProperties>> vkGetPhysicalDeviceSparseImageFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkImageType type, VkSampleCountFlagBits samples, VkImageUsageFlags usage, VkImageTiling tiling);
 
@@ -203,13 +203,13 @@ VulkanResult vkBindImageMemory2(uint32_t bindInfoCount, const VkBindImageMemoryI
 
 void vkGetDeviceGroupPeerMemoryFeatures(uint32_t heapIndex, uint32_t localDeviceIndex, uint32_t remoteDeviceIndex, VkPeerMemoryFeatureFlags* pPeerMemoryFeatures);
 
-VulkanResult vkEnumeratePhysicalDeviceGroups(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties);
+VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> vkEnumeratePhysicalDeviceGroups();
 
 void vkGetImageMemoryRequirements2(const VkImageMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements);
 
 void vkGetBufferMemoryRequirements2(const VkBufferMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements);
 
-void vkGetImageSparseMemoryRequirements2(const VkImageSparseMemoryRequirementsInfo2* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements);
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> vkGetImageSparseMemoryRequirements2(const VkImageSparseMemoryRequirementsInfo2* pInfo);
 
 void vkGetPhysicalDeviceFeatures2(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures2* pFeatures);
 
@@ -279,7 +279,7 @@ void vkGetDeviceBufferMemoryRequirements(const VkDeviceBufferMemoryRequirements*
 
 void vkGetDeviceImageMemoryRequirements(const VkDeviceImageMemoryRequirements* pInfo, VkMemoryRequirements2* pMemoryRequirements);
 
-void vkGetDeviceImageSparseMemoryRequirements(const VkDeviceImageMemoryRequirements* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements);
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> vkGetDeviceImageSparseMemoryRequirements(const VkDeviceImageMemoryRequirements* pInfo);
 
 void vkDestroySurfaceKHR(VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator);
 
@@ -295,7 +295,7 @@ VulkanResult vkCreateSwapchainKHR(const VkSwapchainCreateInfoKHR* pCreateInfo, c
 
 void vkDestroySwapchainKHR(VkSwapchainKHR swapchain, const VkAllocationCallbacks* pAllocator);
 
-VulkanResult vkGetSwapchainImagesKHR(VkSwapchainKHR swapchain, uint32_t* pSwapchainImageCount, VkImage* pSwapchainImages);
+VulkanResultWithValue<std::vector<VkImage>> vkGetSwapchainImagesKHR(VkSwapchainKHR swapchain);
 
 VulkanResult vkAcquireNextImageKHR(VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t* pImageIndex);
 
@@ -343,7 +343,7 @@ void vkGetDeviceGroupPeerMemoryFeaturesKHR(uint32_t heapIndex, uint32_t localDev
 
 void vkTrimCommandPoolKHR(VkCommandPool commandPool, VkCommandPoolTrimFlags flags);
 
-VulkanResult vkEnumeratePhysicalDeviceGroupsKHR(uint32_t* pPhysicalDeviceGroupCount, VkPhysicalDeviceGroupProperties* pPhysicalDeviceGroupProperties);
+VulkanResultWithValue<std::vector<VkPhysicalDeviceGroupProperties>> vkEnumeratePhysicalDeviceGroupsKHR();
 
 void vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo* pExternalBufferInfo, VkExternalBufferProperties* pExternalBufferProperties);
 
@@ -397,7 +397,7 @@ void vkGetImageMemoryRequirements2KHR(const VkImageMemoryRequirementsInfo2* pInf
 
 void vkGetBufferMemoryRequirements2KHR(const VkBufferMemoryRequirementsInfo2* pInfo, VkMemoryRequirements2* pMemoryRequirements);
 
-void vkGetImageSparseMemoryRequirements2KHR(const VkImageSparseMemoryRequirementsInfo2* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements);
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> vkGetImageSparseMemoryRequirements2KHR(const VkImageSparseMemoryRequirementsInfo2* pInfo);
 
 VulkanResult vkCreateSamplerYcbcrConversionKHR(const VkSamplerYcbcrConversionCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSamplerYcbcrConversion* pYcbcrConversion);
 
@@ -435,11 +435,11 @@ VulkanResult vkGetDeferredOperationResultKHR(VkDeferredOperationKHR operation);
 
 VulkanResult vkDeferredOperationJoinKHR(VkDeferredOperationKHR operation);
 
-VulkanResult vkGetPipelineExecutablePropertiesKHR(const VkPipelineInfoKHR* pPipelineInfo, uint32_t* pExecutableCount, VkPipelineExecutablePropertiesKHR* pProperties);
+VulkanResultWithValue<std::vector<VkPipelineExecutablePropertiesKHR>> vkGetPipelineExecutablePropertiesKHR(const VkPipelineInfoKHR* pPipelineInfo);
 
-VulkanResult vkGetPipelineExecutableStatisticsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo, uint32_t* pStatisticCount, VkPipelineExecutableStatisticKHR* pStatistics);
+VulkanResultWithValue<std::vector<VkPipelineExecutableStatisticKHR>> vkGetPipelineExecutableStatisticsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo);
 
-VulkanResult vkGetPipelineExecutableInternalRepresentationsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo, uint32_t* pInternalRepresentationCount, VkPipelineExecutableInternalRepresentationKHR* pInternalRepresentations);
+VulkanResultWithValue<std::vector<VkPipelineExecutableInternalRepresentationKHR>> vkGetPipelineExecutableInternalRepresentationsKHR(const VkPipelineExecutableInfoKHR* pExecutableInfo);
 
 VulkanResult vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2* pSubmits, VkFence fence);
 
@@ -449,7 +449,7 @@ void vkGetDeviceBufferMemoryRequirementsKHR(const VkDeviceBufferMemoryRequiremen
 
 void vkGetDeviceImageMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements* pInfo, VkMemoryRequirements2* pMemoryRequirements);
 
-void vkGetDeviceImageSparseMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements* pInfo, uint32_t* pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2* pSparseMemoryRequirements);
+VulkanResultWithValue<std::vector<VkSparseImageMemoryRequirements2>> vkGetDeviceImageSparseMemoryRequirementsKHR(const VkDeviceImageMemoryRequirements* pInfo);
 
 VulkanResult vkCreateDebugReportCallbackEXT(const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback);
 
@@ -491,7 +491,7 @@ VulkanResult vkGetSwapchainCounterEXT(VkSwapchainKHR swapchain, VkSurfaceCounter
 
 VulkanResult vkGetRefreshCycleDurationGOOGLE(VkSwapchainKHR swapchain, VkRefreshCycleDurationGOOGLE* pDisplayTimingProperties);
 
-VulkanResult vkGetPastPresentationTimingGOOGLE(VkSwapchainKHR swapchain, uint32_t* pPresentationTimingCount, VkPastPresentationTimingGOOGLE* pPresentationTimings);
+VulkanResultWithValue<std::vector<VkPastPresentationTimingGOOGLE>> vkGetPastPresentationTimingGOOGLE(VkSwapchainKHR swapchain);
 
 void vkSetHdrMetadataEXT(uint32_t swapchainCount, const VkSwapchainKHR* pSwapchains, const VkHdrMetadataEXT* pMetadata);
 
