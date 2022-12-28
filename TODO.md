@@ -75,7 +75,8 @@ Utilities
 
 ### ECS
 
-- [ ] Entities query
+- [x] Entities query
+- [ ] Lazy create & destroy queries
 - [ ] Archetype swapping
 - [ ] Component adding & removing
 - [ ] Empty type optimizations
