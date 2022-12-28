@@ -8,7 +8,7 @@
 #extension GL_EXT_scalar_block_layout : enable
 #extension GL_EXT_debug_printf : enable
 
-layout (set = 0, binding = 0) uniform writeonly image2D swapchain_images[];
+layout (set = 0, binding = 0) uniform writeonly image2D swapchain_images[]; // TODO: replace array with an update every frame
 
 
 //layout(buffer_reference, buffer_reference_align=32, scalar) readonly buffer GeometryBuffer {
@@ -21,7 +21,7 @@ layout (set = 0, binding = 0) uniform writeonly image2D swapchain_images[];
 //    vec4 color;
 //};
 
-layout(push_constant, scalar, std430) uniform PushConstants {
+layout(push_constant, scalar, std430) uniform PushConstants { // std430 not really needed if not using arrays
     uint swapchain_info;
     uint frame_index;
     ivec2 padding;
