@@ -13,7 +13,7 @@
 
 #include <memory>
 
-namespace plex
+namespace plex::graphics
 {
 
 // TODO window resize event -> resize buffers, swapchain, etc...
@@ -242,9 +242,9 @@ private:
   bool Initialize(const std::string& application_name, GraphicsDebugLevel debug_level)
   {
     instance_ = std::make_shared<VulkanInstance>(window_, application_name, debug_level);
-    surface_ = std::make_shared<VulkanSurface>(window_, instance_);
-    device_ = std::make_shared<VulkanDevice>(instance_, surface_, SwapchainImageUsage::StorageImage);
-    swapchain_ = std::make_shared<VulkanSwapchain>(window_, device_, surface_, SwapchainImageUsage::StorageImage);
+    surface_ = std::make_shared<VulkanSurface>(window_);
+    device_ = std::make_shared<VulkanDevice>(surface_, SwapchainImageUsage::StorageImage);
+    swapchain_ = std::make_shared<VulkanSwapchain>(window_,  surface_, SwapchainImageUsage::StorageImage);
 
     std::vector<PushRange> push_ranges;
     push_ranges.emplace_back(PushRangeStage::Compute, (uint32_t)sizeof(PushConstantData), 0);
