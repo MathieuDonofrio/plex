@@ -18,11 +18,15 @@ VulkanRenderer::~VulkanRenderer() {}
 
 Frame* VulkanRenderer::AquireNextFrame()
 {
-  VulkanFrame* frame = &frames_[frame_index_];
+  // TODO
+
+  return nullptr;
 }
 
 void VulkanRenderer::Render(CommandBuffer* command_buffer)
 {
+  // TODO
+
   VulkanFrame& frame = frames_[frame_index_];
 
   VkSemaphore vk_image_available_semaphore =
@@ -50,6 +54,8 @@ void VulkanRenderer::Render(CommandBuffer* command_buffer)
 
 void VulkanRenderer::Present()
 {
+  // TODO
+
   VulkanFrame& frame = frames_[frame_index_];
 
   VkSemaphore vk_render_finished_semaphore =

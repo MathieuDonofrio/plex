@@ -2,7 +2,6 @@
 #define PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 
 #include "plex/graphics/frame.h"
-#include "plex/graphics/instance.h"
 #include "plex/graphics/window.h"
 
 namespace plex::graphics

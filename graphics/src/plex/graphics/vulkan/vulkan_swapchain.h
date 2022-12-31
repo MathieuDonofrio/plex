@@ -2,7 +2,6 @@
 #define PLEX_GRAPHICS_VULKAN_VULKAN_SWAPCHAIN_H
 
 #include "plex/graphics/renderer.h"
-#include "plex/graphics/swapchain.h"
 #include "plex/graphics/vulkan/api/vulkan_api.h"
 #include "plex/graphics/vulkan/vulkan_frame.h"
 #include "plex/graphics/vulkan/vulkan_image.h"
