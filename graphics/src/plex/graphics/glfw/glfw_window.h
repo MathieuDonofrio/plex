@@ -6,7 +6,7 @@
 
 #include "plex/graphics/vulkan_capable_window.h"
 #include "plex/graphics/window.h"
-#include "plex/utilities/enumerator.h"
+#include "plex/utilities/enum_flag.h"
 
 namespace
 {

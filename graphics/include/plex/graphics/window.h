@@ -5,7 +5,7 @@
 
 #include "plex/events/event_bus.h"
 #include "plex/graphics/key_codes.h"
-#include "plex/utilities/enumerator.h"
+#include "plex/utilities/enum_flag.h"
 
 namespace plex
 {

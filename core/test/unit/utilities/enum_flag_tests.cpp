@@ -1,4 +1,4 @@
-#include "plex/utilities/enumerator.h"
+#include "plex/utilities/enum_flag.h"
 
 #include <concepts>
 

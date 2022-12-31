@@ -1,30 +1,71 @@
 #ifndef PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 #define PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 
-#include "graphics_debug_level.h"
-#include "rendering_backend.h"
-#include "window.h"
-namespace plex
+#include "plex/graphics/frame.h"
+#include "plex/graphics/instance.h"
+#include "plex/graphics/window.h"
+
+namespace plex::graphics
 {
+enum class BackendType
+{
+  Vulkan,
+  // NOT SUPPORTED (YET or EVER)
+  // OpenGL,
+  // DirectX12,
+  // Metal,
+};
+
+enum class DebugLevel
+{
+  Trace,
+  Info,
+  Warn,
+  Error,
+};
+
+enum class PresentMode
+{
+  Immediate,
+  Mailbox, // Recommended triple buffering
+  FIFO, // Recommended double buffering
+  FIFO_Relaxed
+};
+
+enum class BufferingMode
+{
+  Double,
+  Triple
+};
 
 class Renderer
 {
 public:
   Renderer() = default;
+  virtual ~Renderer() = default;
+
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
   Renderer(Renderer&&) = delete;
   Renderer& operator=(Renderer&&) = delete;
 
-  virtual ~Renderer() = default;
+  virtual Frame* AquireNextFrame() = 0;
 
-  virtual void Draw(uint32_t frame_index) = 0;
+  virtual void Render(CommandBuffer* command_buffer) = 0;
+
+  virtual void Present() = 0;
 };
 
-std::shared_ptr<Renderer> CreateRenderer(std::shared_ptr<Window> window_handle,
-  const std::string& application_name,
-  GraphicsDebugLevel debug_message_severity_threshold,
-  RenderingBackend renderingBackend);
+struct RendererCreateInfo
+{
+  Window* window_handle;
+  std::string application_name;
+  DebugLevel debug_level;
+  PresentMode present_mode;
+  BufferingMode buffering_mode;
+};
 
-} // namespace plex
+std::unique_ptr<Renderer> CreateRenderer(const RendererCreateInfo& create_info, BackendType backend_type);
+
+} // namespace plex::graphics
 #endif
