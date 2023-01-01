@@ -443,7 +443,7 @@ struct WindowFramebufferResizeEvent : public WindowEvent
 ///
 /// @return Window instance pointer.
 ///
-std::shared_ptr<Window> CreateWindow(const std::string& title,
+std::unique_ptr<Window> CreateWindow(const std::string& title,
   uint32_t width,
   uint32_t height,
   EventBus* bus,

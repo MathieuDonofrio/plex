@@ -7,6 +7,7 @@
 #include "plex/graphics/window.h"
 
 using namespace plex;
+using namespace plex::graphics;
 
 struct TestWindowListener : public Listener<TestWindowListener,
                               WindowCloseEvent,
@@ -91,21 +92,29 @@ struct TestWindowListener : public Listener<TestWindowListener,
 
 int main(int, char**)
 {
-  // Setup event bus
+  // Create Window
 
   EventBus bus;
 
-  // Setup listener
-
   TestWindowListener listener { bus };
-
-  // Create Window
 
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
 
-  std::shared_ptr<Window> window = CreateWindow("Hello world", 256, 256, &bus, hints);
+  std::unique_ptr<Window> window = CreateWindow("Hello world", 512, 512, &bus, hints);
 
-  // Window loop
+  // Create Renderer
+
+  graphics::RendererCreateInfo renderer_info;
+  renderer_info.window_handle = window.get();
+  renderer_info.application_name = "Basic Window";
+  renderer_info.debug_level = DebugLevel::Info;
+  renderer_info.present_mode = PresentMode::FIFO;
+  renderer_info.buffering_mode = BufferingMode::Double;
+
+  std::unique_ptr<Renderer> renderer = CreateRenderer(renderer_info, BackendType::Vulkan);
+
+  // Loop
+
   while (!window->IsClosing())
   {
     window->WaitEvents(0.5);
