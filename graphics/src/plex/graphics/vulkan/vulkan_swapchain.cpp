@@ -144,6 +144,11 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device,
 VulkanSwapchain::~VulkanSwapchain()
 {
   vkDestroySwapchainKHR(device_, swapchain_, nullptr);
+
+  for (auto image_view : image_views_)
+  {
+    vkDestroyImageView(device_, image_view, nullptr);
+  }
 }
 
 uint32_t VulkanSwapchain::AquireNextImage(VkSemaphore semaphore, VkFence fence)
