@@ -7,7 +7,7 @@ namespace plex::graphics
 {
 VulkanInstance::VulkanInstance(
   const std::string& application_name, [[maybe_unused]] DebugLevel debug_level, std::vector<const char*> extensions)
-  : application_name_(application_name)
+  : application_name_(application_name), debug_level_(debug_level)
 {
   VkApplicationInfo app_info {};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -164,8 +164,6 @@ VkResult VulkanInstance::CreateDebugUtilsMessengerEXT(VkInstance handle,
 void VulkanInstance::DestroyDebugUtilsMessengerEXT(
   VkInstance handle, VkDebugUtilsMessengerEXT debug_messenger, const VkAllocationCallbacks* allocator_ptr)
 {
-  vkDestroyDebugUtilsMessengerEXT(handle, debug_messenger, allocator_ptr);
-
   auto destroy_debug_messenger_function = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
     vkGetInstanceProcAddr(handle, "vkDestroyDebugUtilsMessengerEXT"));
 
