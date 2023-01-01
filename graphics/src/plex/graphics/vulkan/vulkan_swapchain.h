@@ -25,7 +25,7 @@ public:
   VulkanSwapchain(VulkanSwapchain&&) = delete;
   VulkanSwapchain& operator=(VulkanSwapchain&&) = delete;
 
-  [[nodiscard]] uint32_t AquireNextImage(VkSemaphore semaphore, VkFence fence);
+  [[nodiscard]] uint32_t AquireNextImage(VkSemaphore semaphore);
 
   void Present(uint32_t image_index, VkQueue queue, VkSemaphore semaphore);
 
@@ -54,7 +54,7 @@ private:
   VkDevice device_;
 
   VkSurfaceFormatKHR surface_format_;
-  PresentMode present_mode_;
+  VkPresentModeKHR present_mode_;
   VkExtent2D extent_;
   uint32_t image_count_;
 

@@ -90,6 +90,13 @@ struct TestWindowListener : public Listener<TestWindowListener,
   }
 };
 
+void OnRender([[maybe_unused]] Frame* frame, CommandBuffer* primary_buffer)
+{
+  primary_buffer->Begin();
+
+  primary_buffer->End();
+}
+
 int main(int, char**)
 {
   // Create Window
@@ -119,6 +126,18 @@ int main(int, char**)
   {
     window->WaitEvents(0.5);
     window->PollEvents();
+
+    Frame* frame = renderer->AquireNextFrame();
+
+    CommandBuffer* primary_buffer = frame->GetCommandPool()->Allocate();
+
+    OnRender(frame, primary_buffer);
+
+    renderer->Render(frame, primary_buffer);
+
+    renderer->Present(frame);
+
+    std::this_thread::yield();
   }
 
   return 0;

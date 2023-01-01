@@ -51,7 +51,7 @@ Frame* VulkanRenderer::AquireNextFrame()
 
   // Aquire next image
 
-  uint32_t image_index = swapchain_.AquireNextImage(image_available_semaphore, fence);
+  uint32_t image_index = swapchain_.AquireNextImage(image_available_semaphore);
 
   // Setup frame data
 
@@ -79,12 +79,15 @@ void VulkanRenderer::Render(Frame* frame, CommandBuffer* command_buffer)
 
   VkCommandBuffer vk_command_buffer = static_cast<VulkanCommandBuffer*>(command_buffer)->GetHandle();
 
+  VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
   VkSubmitInfo submit_info = {};
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submit_info.commandBufferCount = 1;
   submit_info.pCommandBuffers = &vk_command_buffer;
   submit_info.waitSemaphoreCount = 1;
   submit_info.pWaitSemaphores = &vk_image_available_semaphore;
+  submit_info.pWaitDstStageMask = waitStages;
   submit_info.signalSemaphoreCount = 1;
   submit_info.pSignalSemaphores = &vk_render_finished_semaphore;
 
