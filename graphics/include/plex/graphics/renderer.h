@@ -50,9 +50,9 @@ public:
 
   virtual Frame* AquireNextFrame() = 0;
 
-  virtual void Render(CommandBuffer* command_buffer) = 0;
+  virtual void Render(Frame* frame, CommandBuffer* command_buffer) = 0;
 
-  virtual void Present() = 0;
+  virtual void Present(Frame* frame) = 0;
 };
 
 struct RendererCreateInfo

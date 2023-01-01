@@ -27,9 +27,14 @@ public:
 
   Frame* AquireNextFrame() override;
 
-  void Render(CommandBuffer* command_buffer);
+  void Render(Frame* frame, CommandBuffer* command_buffer) override;
 
-  void Present() override;
+  void Present(Frame* frame) override;
+
+  [[nodiscard]] size_t GetFrameCount() const noexcept
+  {
+    return swapchain_.GetImageCount();
+  }
 
 private:
   VulkanInstance instance_;
@@ -37,9 +42,8 @@ private:
   VulkanDevice device_;
   VulkanSwapchain swapchain_;
 
+  VulkanFrame* frames_; // TODO use FixedVector when implemented
   uint32_t frame_index_;
-
-  std::vector<VulkanFrame> frames_;
 };
 
 } // namespace plex::graphics

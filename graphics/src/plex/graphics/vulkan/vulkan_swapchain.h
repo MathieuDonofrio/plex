@@ -34,29 +34,9 @@ public:
     return images_[index];
   }
 
-  [[nodiscard]] VkSurfaceFormatKHR GetSurfaceFormat() const
+  [[nodiscard]] VkImageView GetImageView(uint32_t index) const noexcept
   {
-    return surface_format_;
-  }
-
-  [[nodiscard]] PresentMode GetPresentMode() const
-  {
-    return present_mode_;
-  }
-
-  [[nodiscard]] BufferingMode GetBufferingMode() const
-  {
-    return image_count_ == 2 ? BufferingMode::Double : BufferingMode::Triple;
-  }
-
-  [[nodiscard]] uint32_t GetWidth() const
-  {
-    return extent_.width;
-  }
-
-  [[nodiscard]] uint32_t GetHeight() const
-  {
-    return extent_.height;
+    return image_views_[index];
   }
 
   [[nodiscard]] uint32_t GetImageCount() const noexcept
@@ -79,6 +59,7 @@ private:
   uint32_t image_count_;
 
   std::vector<VkImage> images_;
+  std::vector<VkImageView> image_views_;
 };
 } // namespace plex::graphics
 

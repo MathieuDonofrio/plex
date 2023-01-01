@@ -115,7 +115,30 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device,
   images_.resize(swapchain_image_count);
   vkGetSwapchainImagesKHR(device_, swapchain_, &swapchain_image_count, images_.data());
 
-  image_count_ = swapchain_image_count; // TODO is this correct?
+  image_count_ = swapchain_image_count;
+
+  for (size_t i = 0; i < swapchain_image_count; i++)
+  {
+    VkImageViewCreateInfo image_view_create_info = {};
+    image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_create_info.image = images_[i];
+    image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_create_info.format = surface_format.format;
+    image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_create_info.subresourceRange.baseMipLevel = 0;
+    image_view_create_info.subresourceRange.levelCount = 1;
+    image_view_create_info.subresourceRange.baseArrayLayer = 0;
+    image_view_create_info.subresourceRange.layerCount = 1;
+
+    if (vkCreateImageView(device_, &image_view_create_info, nullptr, &image_views_[i]) != VK_SUCCESS)
+    {
+      LOG_ERROR("Failed to create image view");
+    }
+  }
 }
 
 VulkanSwapchain::~VulkanSwapchain()

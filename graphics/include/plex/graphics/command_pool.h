@@ -18,6 +18,8 @@ public:
 
   virtual CommandBuffer* Allocate() = 0;
   virtual void Free(CommandBuffer* command_buffer) = 0;
+
+  virtual void Reset() = 0;
 };
 } // namespace plex::graphics
 

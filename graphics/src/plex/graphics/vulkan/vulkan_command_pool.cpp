@@ -44,4 +44,9 @@ void VulkanCommandPool::Free(CommandBuffer* command_buffer)
 
   vkFreeCommandBuffers(device_, command_pool_, 1, &vk_command_buffer);
 }
+
+void VulkanCommandPool::Reset()
+{
+  vkResetCommandPool(device_, command_pool_, 0);
+}
 } // namespace plex::graphics

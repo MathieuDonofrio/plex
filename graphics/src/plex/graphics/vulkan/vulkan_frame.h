@@ -5,52 +5,55 @@
 #include "plex/graphics/vulkan/api/vulkan_api.h"
 #include "plex/graphics/vulkan/vulkan_command_buffer.h"
 #include "plex/graphics/vulkan/vulkan_command_pool.h"
-#include "plex/graphics/vulkan/vulkan_fence.h"
 #include "plex/graphics/vulkan/vulkan_image.h"
-#include "plex/graphics/vulkan/vulkan_semaphore.h"
 
 namespace plex::graphics
 {
-struct VulkanFrameCreateInfo
-{
-  VulkanDevice* device;
-  VkImage image;
-  uint32_t width;
-  uint32_t height;
-  ImageFormat format;
-  ImageUsageFlags usage;
-  int queue_family_index;
-};
-
 class VulkanFrame : public Frame
 {
 public:
-  VulkanFrame(const VulkanFrameCreateInfo& create_info);
+  VulkanFrame(VkDevice device, int queue_family_index);
+
+  ~VulkanFrame() override;
+
+  CommandPool* GetCommandPool() override
+  {
+    return &command_pool_;
+  }
+
+  void UpdateImageData(VkImage image, VkImageView image_view, uint32_t image_index) noexcept
+  {
+    image_ = image;
+    image_view_ = image_view;
+    image_index_ = image_index;
+  }
 
   // clang-format off
 
-  virtual Image* GetImage() { return &image_; }
+  [[nodiscard]] VkSemaphore GetImageAvailableSemaphore() const noexcept { return image_available_semaphore_; }
+  [[nodiscard]] VkSemaphore GetRenderFinishedSemaphore() const noexcept { return render_finished_semaphore_; }
 
-  virtual Semaphore* GetImageAvailableSemaphore() { return &image_available_semaphore_; }
-  virtual Semaphore* GetRenderFinishedSemaphore() { return &render_finished_semaphore_; }
+  [[nodiscard]] VkFence GetFence() const noexcept { return fence_; }
 
-  virtual Fence* GetFence() { return &fence_; }
-
-  virtual CommandPool* GetCommandPool() { return &command_pool_; }
-  virtual CommandBuffer* GetMainCommandBuffer() { return &main_command_buffer_; }
+  [[nodiscard]] VkImage GetImage() const noexcept { return image_; }
+  [[nodiscard]] VkImageView GetImageView() const noexcept { return image_view_; }
+  [[nodiscard]] uint32_t GetImageIndex() const noexcept { return image_index_; }
 
   // clang-format on
 
 private:
-  VulkanImage image_;
+  VkDevice device_;
 
-  VulkanSemaphore image_available_semaphore_;
-  VulkanSemaphore render_finished_semaphore_;
+  VkSemaphore image_available_semaphore_;
+  VkSemaphore render_finished_semaphore_;
 
-  VulkanFence fence_;
+  VkFence fence_;
 
   VulkanCommandPool command_pool_;
-  VulkanCommandBuffer main_command_buffer_;
+
+  VkImage image_;
+  VkImageView image_view_;
+  uint32_t image_index_;
 };
 } // namespace plex::graphics
 

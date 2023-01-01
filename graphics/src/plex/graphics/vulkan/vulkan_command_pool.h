@@ -22,6 +22,8 @@ public:
 
   void Free(CommandBuffer* command_buffer) override;
 
+  void Reset() override;
+
   [[nodiscard]] VkCommandPool GetHandle() const noexcept
   {
     return command_pool_;
