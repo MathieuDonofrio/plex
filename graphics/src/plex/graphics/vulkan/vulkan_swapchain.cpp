@@ -117,7 +117,9 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device,
 
   image_count_ = swapchain_image_count;
 
-  for (size_t i = 0; i < swapchain_image_count; i++)
+  image_views_.resize(image_count_);
+
+  for (size_t i = 0; i < image_count_; i++)
   {
     VkImageViewCreateInfo image_view_create_info = {};
     image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
