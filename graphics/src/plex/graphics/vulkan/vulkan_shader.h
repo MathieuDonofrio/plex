@@ -3,7 +3,7 @@
 
 #include "plex/graphics/shader.h"
 #include "plex/graphics/vulkan/api/vulkan_api.h"
-#include "vulkan_spv_binary.h"
+#include "plex/graphics/vulkan/vulkan_spv_binary.h"
 
 namespace plex::graphics
 {
@@ -11,7 +11,7 @@ class VulkanShader : public Shader
 {
 public:
 
-  VulkanShader(VkDevice device, const VulkanSpvBinary& spv_binary, ShaderStageFlags stage);
+  VulkanShader(VkDevice device, const VulkanSpvBinary& spv_binary, ShaderType type);
 
   ~VulkanShader() override;
 

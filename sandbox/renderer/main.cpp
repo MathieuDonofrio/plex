@@ -84,16 +84,18 @@ int main(int, char**)
 
   // Create material
 
-  auto vertex_shader_code = LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.vert.spv");
-  auto fragment_shader_code = LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.frag.spv");
+  auto vertex_shader = renderer->CreateShader("./assets/shader.vert", ShaderType::Vertex);
+  auto fragment_shader = renderer->CreateShader("./assets/shader.frag", ShaderType::Fragment);
 
-  auto vertex_shader = renderer->CreateShader(vertex_shader_code.data(), vertex_shader_code.size(), ShaderType::Vertex);
-  auto fragment_shader =
-    renderer->CreateShader(fragment_shader_code.data(), fragment_shader_code.size(), ShaderType::Fragment);
+  if (!vertex_shader || !fragment_shader) [[unlikely]]
+  {
+    LOG_ERROR("Failed to create shaders");
+    return -1;
+  }
 
   MaterialCreateInfo material_create_info {};
-  material_create_info.vertex_shader = vertex_shader.get();
-  material_create_info.fragment_shader = fragment_shader.get();
+  material_create_info.vertex_shader = vertex_shader.value().get();
+  material_create_info.fragment_shader = fragment_shader.value().get();
 
   material = renderer->CreateMaterial(material_create_info);
 
@@ -105,7 +107,7 @@ int main(int, char**)
   {
     window->PollEvents();
 
-    CommandBuffer* primary_buffer = renderer->AquireNextFrame();
+    CommandBuffer* primary_buffer = renderer->AcquireNextFrame();
 
     RecordCommandBuffer(primary_buffer);
 

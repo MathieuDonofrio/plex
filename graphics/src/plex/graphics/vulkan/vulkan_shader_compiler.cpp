@@ -13,17 +13,16 @@ namespace fs = std::filesystem;
 namespace
 {
 
-  shaderc_shader_kind FromShaderStageFlags(ShaderStageFlags stage)
+  shaderc_shader_kind FromShaderType(ShaderType type)
   {
-    switch (stage)
+    switch (type)
     {
-    case ShaderStageFlags::Vertex: return shaderc_glsl_vertex_shader;
-    case ShaderStageFlags::Fragment: return shaderc_glsl_fragment_shader;
-    case ShaderStageFlags::Compute: return shaderc_glsl_compute_shader;
-    case ShaderStageFlags::All: return shaderc_glsl_infer_from_source;
+    case ShaderType::Vertex: return shaderc_glsl_vertex_shader;
+    case ShaderType::Fragment: return shaderc_glsl_fragment_shader;
+    case ShaderType::Compute: return shaderc_glsl_compute_shader;
     default:
     {
-      LOG_WARN("Unknown shader stage flag: {}", static_cast<int>(stage));
+      LOG_WARN("Unknown shader stage flag: {}", static_cast<int>(type));
       return shaderc_glsl_infer_from_source;
     }
     }
@@ -58,7 +57,7 @@ VulkanShaderCompiler::VulkanShaderCompiler() : spirv_tools_(SPV_ENV_VULKAN_1_3)
   options_.SetTargetSpirv(shaderc_spirv_version_1_6);
 }
 
-std::optional<VulkanSpvBinary> VulkanShaderCompiler::Compile(const fs::path& path, ShaderStageFlags stage)
+std::optional<VulkanSpvBinary> VulkanShaderCompiler::Compile(const fs::path& path, ShaderType type)
 {
   if (!compiler_.IsValid())
   {
@@ -79,7 +78,7 @@ std::optional<VulkanSpvBinary> VulkanShaderCompiler::Compile(const fs::path& pat
   }
 
   const auto absolute_path = fs::absolute(path).string();
-  const auto shader_kind = FromShaderStageFlags(stage);
+  const auto shader_kind = FromShaderType(type);
   shaderc::PreprocessedSourceCompilationResult preprocess_result;
   {
     auto buffer = ReadFile(path);

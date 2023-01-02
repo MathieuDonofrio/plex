@@ -1,8 +1,8 @@
 #ifndef PLEX_GRAPHICS_VULKAN_VULKAN_RENDERER_H
 #define PLEX_GRAPHICS_VULKAN_VULKAN_RENDERER_H
 
-#include <filesystem>
 #include <array>
+#include <filesystem>
 #include <string>
 
 #include "plex/graphics/renderer.h"
@@ -47,15 +47,13 @@ public:
 
   [[nodiscard]] std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) override;
 
-  [[nodiscard]] std::unique_ptr<Shader> CreateShader(char* shader_code, size_t size, ShaderType type) override;
+  [[nodiscard]] std::optional<std::unique_ptr<Shader>> CreateShader(
+    const std::filesystem::path& source_path, ShaderType type) override;
 
   [[nodiscard]] size_t GetFrameCount() const noexcept
   {
     return swapchain_.GetImageCount();
   }
-
-  std::optional<std::unique_ptr<Shader>> CreateShader(
-    const std::filesystem::path& source_path, ShaderStageFlags stage) override;
 
 private:
   VulkanInstance instance_;

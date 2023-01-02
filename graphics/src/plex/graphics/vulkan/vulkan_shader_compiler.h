@@ -27,7 +27,7 @@ public:
   VulkanShaderCompiler& operator=(VulkanShaderCompiler&&) = delete;
   ~VulkanShaderCompiler() = default;
 
-  [[nodiscard]] std::optional<VulkanSpvBinary> Compile(const std::filesystem::path& path, ShaderStageFlags stage);
+  [[nodiscard]] std::optional<VulkanSpvBinary> Compile(const std::filesystem::path& path, ShaderType type);
 
   [[nodiscard]] bool HasError() const
   {

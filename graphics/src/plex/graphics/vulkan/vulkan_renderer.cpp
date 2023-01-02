@@ -120,7 +120,7 @@ CommandBuffer* VulkanRenderer::AcquireNextFrame()
   vkWaitForFences(device_.GetHandle(), 1, &frame.fence, VK_TRUE, UINT64_MAX);
   vkResetFences(device_.GetHandle(), 1, &frame.fence);
 
-  // Aquire next image
+  // Acquire next image
 
   current_image_index_ = swapchain_.AquireNextImage(frame.image_available_semaphore);
 
@@ -336,15 +336,10 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   return std::make_unique<VulkanMaterial>(pipeline_layout, pipeline);
 }
 
-std::unique_ptr<Shader> VulkanRenderer::CreateShader(char* shader_code, size_t size, ShaderType type)
-{
-  return std::make_unique<VulkanShader>(device_.GetHandle(), shader_code, size, type);
-}
-
 std::optional<std::unique_ptr<Shader>> VulkanRenderer::CreateShader(
-  const std::filesystem::path& source_path, ShaderStageFlags stage)
+  const std::filesystem::path& source_path, ShaderType type)
 {
-  auto spv_binary = shader_compiler_.Compile(source_path, stage);
+  auto spv_binary = shader_compiler_.Compile(source_path, type);
   if (!spv_binary)
   {
     LOG_ERROR("Failed to compile shader: {}, reason: {}", source_path.string(), shader_compiler_.GetErrorMessage());
@@ -357,7 +352,7 @@ std::optional<std::unique_ptr<Shader>> VulkanRenderer::CreateShader(
     return std::nullopt;
   }
 
-  auto vulkan_shader = std::make_unique<VulkanShader>(device_.GetHandle(), *spv_binary, stage);
+  auto vulkan_shader = std::make_unique<VulkanShader>(device_.GetHandle(), *spv_binary, type);
 
   if (!dynamic_cast<Shader*>(vulkan_shader.get())) // TODO: check required ?
   {

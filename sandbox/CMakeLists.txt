@@ -32,5 +32,7 @@ endfunction()
 
 add_sandbox_project(logging)
 add_sandbox_project(renderer)
+copy_sandbox_directory(renderer assets)
+
 add_sandbox_project(systems)
 add_sandbox_project(window)
