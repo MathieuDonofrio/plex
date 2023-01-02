@@ -1,7 +1,7 @@
 #ifndef PLEX_GRAPHICS_MATERIAL_H
 #define PLEX_GRAPHICS_MATERIAL_H
 
-#include <vector>
+#include "plex/graphics/shader.h"
 
 namespace plex::graphics
 {
@@ -19,8 +19,8 @@ public:
 
 struct MaterialCreateInfo
 {
-  std::vector<char> vertex_shader_code;
-  std::vector<char> fragment_shader_code;
+  Shader* vertex_shader;
+  Shader* fragment_shader;
 };
 } // namespace plex::graphics
 

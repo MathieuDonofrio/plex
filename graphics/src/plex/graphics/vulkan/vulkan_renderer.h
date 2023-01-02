@@ -45,6 +45,8 @@ public:
 
   [[nodiscard]] std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) override;
 
+  [[nodiscard]] std::unique_ptr<Shader> CreateShader(char* shader_code, size_t size, ShaderType type) override;
+
   [[nodiscard]] size_t GetFrameCount() const noexcept
   {
     return swapchain_.GetImageCount();

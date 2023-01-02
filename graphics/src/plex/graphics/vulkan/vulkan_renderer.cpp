@@ -1,5 +1,8 @@
 #include "plex/graphics/vulkan/vulkan_renderer.h"
 
+#include "plex/graphics/vulkan/vulkan_material.h"
+#include "plex/graphics/vulkan/vulkan_shader.h"
+
 namespace plex::graphics
 {
 VulkanRenderer::VulkanRenderer(VulkanCapableWindow* window,
@@ -210,37 +213,13 @@ void VulkanRenderer::Present()
 
 std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInfo& create_info)
 {
-  // Shader Modules
+  // Shaders
 
-  VkShaderModuleCreateInfo vert_shader_module_create_info {};
-  vert_shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  vert_shader_module_create_info.codeSize = create_info.vertex_shader_code.size();
-  vert_shader_module_create_info.pCode = reinterpret_cast<const uint32_t*>(create_info.vertex_shader_code.data());
+  auto* vertex_shader = static_cast<VulkanShader*>(create_info.vertex_shader);
+  auto* fragment_shader = static_cast<VulkanShader*>(create_info.fragment_shader);
 
-  VkShaderModule vert_shader_module;
-  vkCreateShaderModule(device_.GetHandle(), &vert_shader_module_create_info, nullptr, &vert_shader_module);
-
-  VkShaderModuleCreateInfo frag_shader_module_create_info {};
-  frag_shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  frag_shader_module_create_info.codeSize = create_info.fragment_shader_code.size();
-  frag_shader_module_create_info.pCode = reinterpret_cast<const uint32_t*>(create_info.fragment_shader_code.data());
-
-  VkShaderModule frag_shader_module;
-  vkCreateShaderModule(device_.GetHandle(), &frag_shader_module_create_info, nullptr, &frag_shader_module);
-
-  VkPipelineShaderStageCreateInfo vert_shader_stage_create_info {};
-  vert_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  vert_shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-  vert_shader_stage_create_info.module = vert_shader_module;
-  vert_shader_stage_create_info.pName = "main";
-
-  VkPipelineShaderStageCreateInfo frag_shader_stage_create_info {};
-  frag_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  frag_shader_stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  frag_shader_stage_create_info.module = frag_shader_module;
-  frag_shader_stage_create_info.pName = "main";
-
-  VkPipelineShaderStageCreateInfo shader_stages[] = { vert_shader_stage_create_info, frag_shader_stage_create_info };
+  VkPipelineShaderStageCreateInfo shader_stages[] = { vertex_shader->GetPipelineShaderStageCreateInfo(),
+    fragment_shader->GetPipelineShaderStageCreateInfo() };
 
   // Vertex Input
 
@@ -352,11 +331,11 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   VkPipeline graphics_pipeline;
   vkCreateGraphicsPipelines(device_.GetHandle(), VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &graphics_pipeline);
 
-  // Destroy shader modules
-
-  vkDestroyShaderModule(device_.GetHandle(), vert_shader_module, nullptr);
-  vkDestroyShaderModule(device_.GetHandle(), frag_shader_module, nullptr);
-
   return std::make_unique<VulkanMaterial>(graphics_pipeline);
+}
+
+std::unique_ptr<Shader> VulkanRenderer::CreateShader(char* shader_code, size_t size, ShaderType type)
+{
+  return std::make_unique<VulkanShader>(device_.GetHandle(), shader_code, size, type);
 }
 } // namespace plex::graphics

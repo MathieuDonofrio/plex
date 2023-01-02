@@ -168,10 +168,16 @@ int main(int, char**)
 
   // Create material
 
+  auto vertex_shader_code = LoadShaderCodeFromFile("../../sandbox/basic_window/assets/shader.vert.spv");
+  auto fragment_shader_code = LoadShaderCodeFromFile("../../sandbox/basic_window/assets/shader.frag.spv");
+
+  auto vertex_shader = renderer->CreateShader(vertex_shader_code.data(), vertex_shader_code.size(), ShaderType::Vertex);
+  auto fragment_shader =
+    renderer->CreateShader(fragment_shader_code.data(), fragment_shader_code.size(), ShaderType::Fragment);
+
   MaterialCreateInfo material_create_info {};
-  material_create_info.vertex_shader_code = LoadShaderCodeFromFile("../../sandbox/basic_window/assets/shader.vert.spv");
-  material_create_info.fragment_shader_code =
-    LoadShaderCodeFromFile("../../sandbox/basic_window/assets/shader.frag.spv");
+  material_create_info.vertex_shader = vertex_shader.get();
+  material_create_info.fragment_shader = fragment_shader.get();
 
   material = renderer->CreateMaterial(material_create_info);
 
