@@ -4,15 +4,27 @@
 #include "plex/graphics/command_buffer.h"
 #include "plex/graphics/vulkan/api/vulkan_api.h"
 #include "plex/graphics/vulkan/vulkan_device.h"
+#include "plex/graphics/vulkan/vulkan_material.h"
 
 namespace plex::graphics
 {
+struct VulkanCommandBufferContext
+{
+  VkDevice device;
+  VkPipelineLayout pipeline_layout;
+  VkRenderPass render_pass;
+  VkFramebuffer framebuffer;
+  VkExtent2D extent;
+};
+
 class VulkanCommandBuffer : public CommandBuffer
 {
 public:
   VulkanCommandBuffer() = default;
 
-  VulkanCommandBuffer(VkCommandBuffer command_buffer) : command_buffer_(command_buffer) {}
+  VulkanCommandBuffer(VkCommandBuffer command_buffer, VulkanCommandBufferContext context)
+    : command_buffer_(command_buffer), context_(context)
+  {}
 
   void Reset() override;
 
@@ -22,7 +34,7 @@ public:
   void BeginRenderPass() override;
   void EndRenderPass() override;
 
-  void FirstTriangleTest(const std::vector<char>& vert, const std::vector<char>& frag) override; // TODO remove
+  void FirstTriangleTest(Material* material) override; // TODO remove
 
   [[nodiscard]] VkCommandBuffer GetHandle() const noexcept
   {
@@ -31,6 +43,8 @@ public:
 
 private:
   VkCommandBuffer command_buffer_;
+
+  VulkanCommandBufferContext context_;
 };
 } // namespace plex::graphics
 

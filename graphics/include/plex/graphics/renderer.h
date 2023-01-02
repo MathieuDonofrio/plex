@@ -2,6 +2,7 @@
 #define PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 
 #include "plex/graphics/command_buffer.h"
+#include "plex/graphics/material.h"
 #include "plex/graphics/window.h"
 
 namespace plex::graphics
@@ -51,6 +52,8 @@ public:
   virtual CommandBuffer* AquireNextFrame() = 0;
   virtual void Render() = 0;
   virtual void Present() = 0;
+
+  [[nodiscard]] virtual std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) = 0;
 };
 
 struct RendererCreateInfo

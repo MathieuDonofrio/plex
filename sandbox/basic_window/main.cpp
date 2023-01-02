@@ -1,4 +1,6 @@
 
+#include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -91,13 +93,29 @@ struct TestWindowListener : public Listener<TestWindowListener,
   }
 };
 
+struct FPSCounter
+{
+  std::chrono::high_resolution_clock::time_point last_time_ = std::chrono::high_resolution_clock::now();
+
+  double GetFPS()
+  {
+    auto now = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - last_time_).count();
+    last_time_ = now;
+    return 1000000.0 / duration;
+  }
+};
+
 std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
 {
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
   if (!file.is_open()) [[unlikely]]
   {
-    LOG_ERROR("Failed to open shader file: {}", filename);
+    std::filesystem::path path(filename);
+    std::filesystem::path absolute_path = std::filesystem::absolute(path);
+
+    LOG_ERROR("Failed to open shader file: {}", absolute_path.string());
     return {};
   }
 
@@ -112,10 +130,16 @@ std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
   return buffer;
 }
 
+std::unique_ptr<Material> material;
+
 void RecordCommandBuffer(CommandBuffer* primary_buffer)
 {
   primary_buffer->Begin();
+  primary_buffer->BeginRenderPass();
 
+  primary_buffer->FirstTriangleTest(material.get());
+
+  primary_buffer->EndRenderPass();
   primary_buffer->End();
 }
 
@@ -142,16 +166,21 @@ int main(int, char**)
 
   std::unique_ptr<Renderer> renderer = CreateRenderer(renderer_info, BackendType::Vulkan);
 
-  // Load Shaders
+  // Create material
 
-  // std::vector<char> vertex_shader_code = LoadShaderCodeFromFile("sandbox/basic_window/shaders/shader.vert.spv");
-  // std::vector<char> fragment_shader_code = LoadShaderCodeFromFile("sandbox/basic_window/shaders/shader.frag.spv");
+  MaterialCreateInfo material_create_info {};
+  material_create_info.vertex_shader_code = LoadShaderCodeFromFile("../../sandbox/basic_window/assets/shader.vert.spv");
+  material_create_info.fragment_shader_code =
+    LoadShaderCodeFromFile("../../sandbox/basic_window/assets/shader.frag.spv");
+
+  material = renderer->CreateMaterial(material_create_info);
 
   // Loop
 
+  FPSCounter fps_counter;
+
   while (!window->IsClosing())
   {
-    window->WaitEvents(0.5);
     window->PollEvents();
 
     CommandBuffer* primary_buffer = renderer->AquireNextFrame();
@@ -161,6 +190,8 @@ int main(int, char**)
     renderer->Render();
 
     renderer->Present();
+
+    window->SetTitle("FPS: " + std::to_string(fps_counter.GetFPS()));
 
     std::this_thread::yield();
   }

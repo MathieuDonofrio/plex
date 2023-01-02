@@ -25,6 +25,8 @@ public:
   VulkanSwapchain(VulkanSwapchain&&) = delete;
   VulkanSwapchain& operator=(VulkanSwapchain&&) = delete;
 
+  void CreateFrameBuffers(VkRenderPass render_pass);
+
   [[nodiscard]] uint32_t AquireNextImage(VkSemaphore semaphore);
 
   void Present(uint32_t image_index, VkQueue queue, VkSemaphore semaphore);
@@ -37,6 +39,21 @@ public:
   [[nodiscard]] VkImageView GetImageView(uint32_t index) const noexcept
   {
     return image_views_[index];
+  }
+
+  [[nodiscard]] VkFramebuffer GetFramebuffer(uint32_t index) const noexcept
+  {
+    return framebuffers_[index];
+  }
+
+  [[nodiscard]] VkSurfaceFormatKHR GetSurfaceFormat() const noexcept
+  {
+    return surface_format_;
+  }
+
+  [[nodiscard]] VkExtent2D GetExtent() const noexcept
+  {
+    return extent_;
   }
 
   [[nodiscard]] uint32_t GetImageCount() const noexcept
@@ -60,6 +77,7 @@ private:
 
   std::vector<VkImage> images_;
   std::vector<VkImageView> image_views_;
+  std::vector<VkFramebuffer> framebuffers_;
 };
 } // namespace plex::graphics
 

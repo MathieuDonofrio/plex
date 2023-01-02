@@ -43,6 +43,8 @@ public:
 
   void Present() override;
 
+  [[nodiscard]] std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) override;
+
   [[nodiscard]] size_t GetFrameCount() const noexcept
   {
     return swapchain_.GetImageCount();
@@ -55,8 +57,12 @@ private:
   VulkanSwapchain swapchain_;
 
   std::array<FrameData, 3> frames_;
+
   uint32_t current_frame_index_;
   uint32_t current_image_index_;
+
+  VkPipelineLayout pipeline_layout_;
+  VkRenderPass render_pass_;
 };
 
 } // namespace plex::graphics

@@ -167,6 +167,32 @@ VulkanSwapchain::~VulkanSwapchain()
   {
     vkDestroyImageView(device_, image_view, nullptr);
   }
+
+  for (auto frame_buffer : framebuffers_)
+  {
+    vkDestroyFramebuffer(device_, frame_buffer, nullptr);
+  }
+}
+
+void VulkanSwapchain::CreateFrameBuffers(VkRenderPass render_pass)
+{
+  framebuffers_.resize(image_views_.size());
+
+  for (size_t i = 0; i < image_views_.size(); i++)
+  {
+    VkImageView attachments[] = { image_views_[i] };
+
+    VkFramebufferCreateInfo framebuffer_create_info = {};
+    framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebuffer_create_info.renderPass = render_pass;
+    framebuffer_create_info.attachmentCount = 1;
+    framebuffer_create_info.pAttachments = attachments;
+    framebuffer_create_info.width = extent_.width;
+    framebuffer_create_info.height = extent_.height;
+    framebuffer_create_info.layers = 1;
+
+    vkCreateFramebuffer(device_, &framebuffer_create_info, nullptr, &framebuffers_[i]);
+  }
 }
 
 uint32_t VulkanSwapchain::AquireNextImage(VkSemaphore semaphore)

@@ -1,9 +1,7 @@
 #ifndef PLEX_GRAPHICS_COMMAND_BUFFER_H
 #define PLEX_GRAPHICS_COMMAND_BUFFER_H
 
-#include <vector>
-
-#include "plex/graphics/shader.h"
+#include "plex/graphics/material.h"
 
 namespace plex::graphics
 {
@@ -26,7 +24,7 @@ public:
   virtual void BeginRenderPass() = 0;
   virtual void EndRenderPass() = 0;
 
-  virtual void FirstTriangleTest(const std::vector<char>& vert, const std::vector<char>& frag) = 0; // TODO remove
+  virtual void FirstTriangleTest(Material* material) = 0; // TODO remove
 
   // TODO: add more commands
 };
