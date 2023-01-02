@@ -5,6 +5,7 @@
 
 #include "plex/events/event_bus.h"
 #include "plex/graphics/key_codes.h"
+#include "plex/utilities/delegate.h"
 #include "plex/utilities/enum_flag.h"
 
 namespace plex
@@ -30,6 +31,25 @@ enum class WindowCreationHints : uint64_t
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(WindowCreationHints)
+
+///
+/// Callback for handling window events.
+///
+template<typename Event>
+using WindowEventCallback = Delegate<void(const Event&)>;
+
+// Forward declare events
+struct WindowResizeEvent;
+struct WindowCloseEvent;
+struct WindowFocusEvent;
+struct WindowIconifyEvent;
+struct WindowMaximizeEvent;
+struct WindowKeyboardEvent;
+struct WindowCursorMoveEvent;
+struct WindowCursorEnterEvent;
+struct WindowMouseButtonEvent;
+struct WindowMouseScrollEvent;
+struct WindowFramebufferResizeEvent;
 
 ///
 /// Window interface. Specifies the methods to be implemented for a fully functional window implementation.
@@ -237,6 +257,161 @@ public:
   /// @return Frame buffer size pair.
   ///
   [[nodiscard]] virtual std::pair<int32_t, int32_t> GetFrameBufferSize() const = 0;
+
+  ///
+  /// Add a callback for handling for window resize events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowResizeEventCallback(WindowEventCallback<WindowResizeEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window close events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowCloseEventCallback(WindowEventCallback<WindowCloseEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window focus events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowFocusEventCallback(WindowEventCallback<WindowFocusEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window inconify events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowIconifyEventCallback(WindowEventCallback<WindowIconifyEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window maximize events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowMaximizeEventCallback(WindowEventCallback<WindowMaximizeEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window keyboard events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowKeyboardEventCallback(WindowEventCallback<WindowKeyboardEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window cursor move events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowCursorMoveEventCallback(WindowEventCallback<WindowCursorMoveEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window cursor enter events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowCursorEnterEventCallback(WindowEventCallback<WindowCursorEnterEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window button events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowMouseButtonEventCallback(WindowEventCallback<WindowMouseButtonEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window mouse scroll events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowMouseScrollEventCallback(WindowEventCallback<WindowMouseScrollEvent> callback) = 0;
+
+  ///
+  /// Add a callback for handling for window framebuffer resize events.
+  ///
+  /// @param[in] callback Callback to be called when event occures.
+  ///
+  virtual void AddWindowFramebufferResizeEventCallback(WindowEventCallback<WindowFramebufferResizeEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window resize events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowResizeEventCallback(WindowEventCallback<WindowResizeEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window close events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowCloseEventCallback(WindowEventCallback<WindowCloseEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window focus events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowFocusEventCallback(WindowEventCallback<WindowFocusEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window inconify events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowIconifyEventCallback(WindowEventCallback<WindowIconifyEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window maximize events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowMaximizeEventCallback(WindowEventCallback<WindowMaximizeEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window keyboard events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowKeyboardEventCallback(WindowEventCallback<WindowKeyboardEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window cursor move events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowCursorMoveEventCallback(WindowEventCallback<WindowCursorMoveEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window cursor enter events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowCursorEnterEventCallback(WindowEventCallback<WindowCursorEnterEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window button events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowMouseButtonEventCallback(WindowEventCallback<WindowMouseButtonEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window mouse scroll events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowMouseScrollEventCallback(WindowEventCallback<WindowMouseScrollEvent> callback) = 0;
+
+  ///
+  /// Remove a callback for handling for window framebuffer resize events.
+  ///
+  /// @param[in] callback Callback to be removed.
+  ///
+  virtual void RemoveWindowFramebufferResizeEventCallback(
+    WindowEventCallback<WindowFramebufferResizeEvent> callback) = 0;
 };
 
 ///

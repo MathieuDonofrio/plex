@@ -249,6 +249,11 @@ void GLFWWindow::Close()
     event.window = this;
 
     bus_->Publish(event);
+
+    for (auto& callback : close_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -445,6 +450,171 @@ void GLFWWindow::ApplyWindowCreationHints(const WindowCreationHints& hints)
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, (hints & WindowCreationHints::ScalingToMonitor) != 0);
 }
 
+void GLFWWindow::AddWindowResizeEventCallback(WindowEventCallback<WindowResizeEvent> callback)
+{
+  resize_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowCloseEventCallback(WindowEventCallback<WindowCloseEvent> callback)
+{
+  close_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowFocusEventCallback(WindowEventCallback<WindowFocusEvent> callback)
+{
+  focus_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowIconifyEventCallback(WindowEventCallback<WindowIconifyEvent> callback)
+{
+  iconify_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowMaximizeEventCallback(WindowEventCallback<WindowMaximizeEvent> callback)
+{
+  maximize_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowKeyboardEventCallback(WindowEventCallback<WindowKeyboardEvent> callback)
+{
+  keyboard_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowCursorMoveEventCallback(WindowEventCallback<WindowCursorMoveEvent> callback)
+{
+  cursor_move_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowCursorEnterEventCallback(WindowEventCallback<WindowCursorEnterEvent> callback)
+{
+  cursor_enter_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowMouseButtonEventCallback(WindowEventCallback<WindowMouseButtonEvent> callback)
+{
+  mouse_button_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowMouseScrollEventCallback(WindowEventCallback<WindowMouseScrollEvent> callback)
+{
+  mouse_scroll_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::AddWindowFramebufferResizeEventCallback(WindowEventCallback<WindowFramebufferResizeEvent> callback)
+{
+  framebuffer_resize_event_callbacks_.push_back(callback);
+}
+
+void GLFWWindow::RemoveWindowResizeEventCallback(WindowEventCallback<WindowResizeEvent> callback)
+{
+  auto it = std::find(resize_event_callbacks_.begin(), resize_event_callbacks_.end(), callback);
+
+  if (it != resize_event_callbacks_.end())
+  {
+    resize_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowCloseEventCallback(WindowEventCallback<WindowCloseEvent> callback)
+{
+  auto it = std::find(close_event_callbacks_.begin(), close_event_callbacks_.end(), callback);
+
+  if (it != close_event_callbacks_.end())
+  {
+    close_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowFocusEventCallback(WindowEventCallback<WindowFocusEvent> callback)
+{
+  auto it = std::find(focus_event_callbacks_.begin(), focus_event_callbacks_.end(), callback);
+
+  if (it != focus_event_callbacks_.end())
+  {
+    focus_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowIconifyEventCallback(WindowEventCallback<WindowIconifyEvent> callback)
+{
+  auto it = std::find(iconify_event_callbacks_.begin(), iconify_event_callbacks_.end(), callback);
+
+  if (it != iconify_event_callbacks_.end())
+  {
+    iconify_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowMaximizeEventCallback(WindowEventCallback<WindowMaximizeEvent> callback)
+{
+  auto it = std::find(maximize_event_callbacks_.begin(), maximize_event_callbacks_.end(), callback);
+
+  if (it != maximize_event_callbacks_.end())
+  {
+    maximize_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowKeyboardEventCallback(WindowEventCallback<WindowKeyboardEvent> callback)
+{
+  auto it = std::find(keyboard_event_callbacks_.begin(), keyboard_event_callbacks_.end(), callback);
+
+  if (it != keyboard_event_callbacks_.end())
+  {
+    keyboard_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowCursorMoveEventCallback(WindowEventCallback<WindowCursorMoveEvent> callback)
+{
+  auto it = std::find(cursor_move_event_callbacks_.begin(), cursor_move_event_callbacks_.end(), callback);
+
+  if (it != cursor_move_event_callbacks_.end())
+  {
+    cursor_move_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowCursorEnterEventCallback(WindowEventCallback<WindowCursorEnterEvent> callback)
+{
+  auto it = std::find(cursor_enter_event_callbacks_.begin(), cursor_enter_event_callbacks_.end(), callback);
+
+  if (it != cursor_enter_event_callbacks_.end())
+  {
+    cursor_enter_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowMouseButtonEventCallback(WindowEventCallback<WindowMouseButtonEvent> callback)
+{
+  auto it = std::find(mouse_button_event_callbacks_.begin(), mouse_button_event_callbacks_.end(), callback);
+
+  if (it != mouse_button_event_callbacks_.end())
+  {
+    mouse_button_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowMouseScrollEventCallback(WindowEventCallback<WindowMouseScrollEvent> callback)
+{
+  auto it = std::find(mouse_scroll_event_callbacks_.begin(), mouse_scroll_event_callbacks_.end(), callback);
+
+  if (it != mouse_scroll_event_callbacks_.end())
+  {
+    mouse_scroll_event_callbacks_.erase(it);
+  }
+}
+
+void GLFWWindow::RemoveWindowFramebufferResizeEventCallback(WindowEventCallback<WindowFramebufferResizeEvent> callback)
+{
+  auto it = std::find(framebuffer_resize_event_callbacks_.begin(), framebuffer_resize_event_callbacks_.end(), callback);
+
+  if (it != framebuffer_resize_event_callbacks_.end())
+  {
+    framebuffer_resize_event_callbacks_.erase(it);
+  }
+}
+
 void GLFWWindow::GLFWCloseEventCallback(GLFWWindowHandle handle)
 {
   auto window = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(handle));
@@ -456,6 +626,11 @@ void GLFWWindow::GLFWCloseEventCallback(GLFWWindowHandle handle)
     event.window = window;
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->close_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -471,6 +646,11 @@ void GLFWWindow::GLFWMaximizeEventCallback(GLFWWindowHandle handle, int32_t curr
     event.maximized = current_state == GLFW_TRUE;
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->maximize_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -486,6 +666,11 @@ void GLFWWindow::GLFWIconifyEventCallback(GLFWWindowHandle handle, int32_t curre
     event.iconified = current_state == GLFW_TRUE;
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->iconify_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -502,6 +687,11 @@ void GLFWWindow::GLFWResizeEventCallback(GLFWWindowHandle handle, int32_t new_wi
     event.height = static_cast<uint32_t>(new_height);
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->resize_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -517,6 +707,11 @@ void GLFWWindow::GLFWFocusEventCallback(GLFWWindowHandle handle, int32_t current
     event.state = static_cast<WindowFocusEvent::FocusState>(current_state);
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->focus_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -535,6 +730,11 @@ void GLFWWindow::GLFWKeyCallback(GLFWWindowHandle handle, int32_t key, int32_t s
     event.action = static_cast<ButtonEvent::Action>(action);
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->keyboard_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -551,6 +751,11 @@ void GLFWWindow::GLFWCursorPosCallback(GLFWWindowHandle handle, double x_pos, do
     event.pos_y = static_cast<int32_t>(y_pos);
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->cursor_move_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -566,6 +771,11 @@ void GLFWWindow::GLFWCursorEnterCallback(GLFWWindowHandle handle, int32_t entere
     event.cursor_hover_state = static_cast<WindowCursorEnterEvent::CursorHoverState>(entered);
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->cursor_enter_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -583,6 +793,11 @@ void GLFWWindow::GLFWMouseButtonCallback(GLFWWindowHandle handle, int32_t button
     event.modifiers = static_cast<ButtonEvent::ModifierKeys>(mods);
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->mouse_button_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -598,6 +813,11 @@ void GLFWWindow::GLFWMouseScrollCallback(GLFWWindow::GLFWWindowHandle handle, do
     event.vertical_offset = static_cast<int32_t>(y_offset);
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->mouse_scroll_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
@@ -614,6 +834,11 @@ void GLFWWindow::GLFWFramebufferResizeCallback(GLFWWindowHandle handle, int32_t 
     event.height = static_cast<uint32_t>(new_height);
 
     window->bus_->Publish(event);
+
+    for (auto& callback : window->framebuffer_resize_event_callbacks_)
+    {
+      callback(event);
+    }
   }
 }
 
