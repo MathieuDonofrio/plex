@@ -48,13 +48,22 @@ public:
 
   void ClearIncludePaths() { include_handler_->Clear(); }
 
+  void SetValidationEnabled(bool enabled) { validation_enabled_ = enabled; }
+
 private:
+  std::optional<shaderc::PreprocessedSourceCompilationResult> Preprocess(const std::vector<char>& source, const std::string& absolute_path, ShaderType type);
+  std::optional<shaderc::CompilationResult<uint32_t>> Compile(
+    const std::vector<char>& source, const std::string& absolute_path, ShaderType type);
+
   spvtools::SpirvTools spirv_tools_;
   shaderc::Compiler compiler_;
   shaderc::CompileOptions options_;
   std::string error_message_;
 
   std::unique_ptr<VulkanShaderIncludeHandler> include_handler_;
+
+  bool validation_enabled_ = true;
+  bool valid_ = false;
 };
 
 } // namespace plex::graphics

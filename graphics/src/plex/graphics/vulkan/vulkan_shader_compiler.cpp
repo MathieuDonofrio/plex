@@ -45,6 +45,30 @@ namespace
     return buffer;
   }
 
+  void SpirvToolsConsumeMessage(
+    spv_message_level_t level, const char* source, const spv_position_t& position, const char* message)
+  {
+    switch (level)
+    {
+    case SPV_MSG_FATAL:
+    case SPV_MSG_INTERNAL_ERROR:
+    case SPV_MSG_ERROR:
+      LOG_ERROR("SPIR-V error: {}, line: {}, column: {}, message: {}", source, position.line, position.column, message);
+      break;
+    case SPV_MSG_WARNING:
+      LOG_WARN(
+        "SPIR-V warning: {}, line: {}, column: {}, message: {}", source, position.line, position.column, message);
+      break;
+    case SPV_MSG_INFO:
+      LOG_INFO("SPIR-V info: {}, line: {}, column: {}, message: {}", source, position.line, position.column, message);
+      break;
+    case SPV_MSG_DEBUG:
+      LOG_TRACE("SPIR-V debug: {}, line: {}, column: {}, message: {}", source, position.line, position.column, message);
+      break;
+    default: LOG_WARN("Unknown SPIR-V message level: {}", static_cast<int>(level)); break;
+    }
+  }
+
 } // namespace
 
 VulkanShaderCompiler::VulkanShaderCompiler() : spirv_tools_(SPV_ENV_VULKAN_1_3)
@@ -55,96 +79,102 @@ VulkanShaderCompiler::VulkanShaderCompiler() : spirv_tools_(SPV_ENV_VULKAN_1_3)
 
   options_.SetSourceLanguage(shaderc_source_language_glsl);
   options_.SetTargetSpirv(shaderc_spirv_version_1_6);
-}
+  options_.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 
-std::optional<VulkanSpvBinary> VulkanShaderCompiler::Compile(const fs::path& path, ShaderType type)
-{
+  spirv_tools_.SetMessageConsumer(SpirvToolsConsumeMessage);
+
   if (!compiler_.IsValid())
   {
     error_message_ = "Failed to initialize shader compiler";
-    return std::nullopt;
+    valid_ = false;
   }
 
   if (!spirv_tools_.IsValid())
   {
+    if (!error_message_.empty()) error_message_ += ", ";
     error_message_ = "Failed to initialize SPIR-V tools";
-    return std::nullopt;
+    valid_ = false;
   }
+}
 
-  if (!fs::exists(path))
+std::optional<VulkanSpvBinary> VulkanShaderCompiler::Compile(const fs::path& path, ShaderType type)
+{
+  if (!valid_)
   {
-    error_message_ = "Shader file does not exist: " + fs::absolute(path).string();
+    LOG_ERROR("Failed to compile shader: {}", error_message_);
     return std::nullopt;
   }
 
   const auto absolute_path = fs::absolute(path).string();
-  const auto shader_kind = FromShaderType(type);
-  shaderc::PreprocessedSourceCompilationResult preprocess_result;
+
+  if (!fs::exists(path))
   {
-    auto buffer = ReadFile(path);
-    if (!buffer)
+    error_message_ = "Shader file does not exist: " + absolute_path;
+    return std::nullopt;
+  }
+  
+  std::vector<char> preprocessed_source;
+  {
+    auto source_buffer = ReadFile(path);
+    if (!source_buffer)
     {
-      error_message_ = "Failed to read shader file: " + fs::absolute(path).string();
+      error_message_ = "Failed to read shader file: " + absolute_path;
       return std::nullopt;
     }
 
-    preprocess_result =
-      compiler_.PreprocessGlsl(buffer->data(), buffer->size(), shader_kind, absolute_path.c_str(), options_);
-    if (preprocess_result.GetCompilationStatus() != shaderc_compilation_status_success)
-    {
-      error_message_ = preprocess_result.GetErrorMessage();
-      return std::nullopt;
-    }
+    auto result = Preprocess(*source_buffer, absolute_path, type);
+    if (!result) return std::nullopt;
+
+    preprocessed_source = std::vector<char>(result->begin(), result->end());
   }
 
-  size_t preprocessed_size = std::distance(preprocess_result.cbegin(), preprocess_result.cend());
-  auto compile_result = compiler_.CompileGlslToSpv(
-    preprocess_result.cbegin(), preprocessed_size, shader_kind, absolute_path.c_str(), options_);
+  std::vector<uint32_t> compiled_spv;
+  {
+    auto compile_result = Compile(preprocessed_source, absolute_path, type);
+    if (!compile_result) return std::nullopt;
 
+    compiled_spv = std::vector<uint32_t>(compile_result->cbegin(), compile_result->cend());
+  }
+
+  if (validation_enabled_ && !spirv_tools_.Validate(compiled_spv))
+  {
+    error_message_ = "SPIR-V validation failed";
+    return std::nullopt;
+  }
+
+  return VulkanSpvBinary(std::move(compiled_spv), absolute_path);
+}
+
+std::optional<shaderc::PreprocessedSourceCompilationResult> VulkanShaderCompiler::Preprocess(
+  const std::vector<char>& source, const std::string& absolute_path, ShaderType type)
+{
+  const auto shader_kind = FromShaderType(type);
+
+  auto preprocess_result =
+    compiler_.PreprocessGlsl(source.data(), source.size(), shader_kind, absolute_path.c_str(), options_);
+  if (preprocess_result.GetCompilationStatus() != shaderc_compilation_status_success)
+  {
+    error_message_ = preprocess_result.GetErrorMessage();
+    return std::nullopt;
+  }
+
+  return preprocess_result;
+}
+
+std::optional<shaderc::CompilationResult<uint32_t>> VulkanShaderCompiler::Compile(
+  const std::vector<char>& source, const std::string& absolute_path, ShaderType type)
+{
+  const auto shader_kind = FromShaderType(type);
+
+  auto compile_result =
+    compiler_.CompileGlslToSpv(source.data(), source.size(), shader_kind, absolute_path.c_str(), options_);
   if (compile_result.GetCompilationStatus() != shaderc_compilation_status_success)
   {
     error_message_ = compile_result.GetErrorMessage();
     return std::nullopt;
   }
 
-  const size_t compiled_size = std::distance(compile_result.cbegin(), compile_result.cend());
-  // const size_t padding = compiled_size % sizeof(uint32_t);
-  std::vector<uint32_t> spv(compiled_size);
-  std::memcpy(spv.data(), compile_result.cbegin(), compiled_size);
-
-  spirv_tools_.SetMessageConsumer(
-    [](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message)
-    {
-      switch (level)
-      {
-      case SPV_MSG_FATAL:
-      case SPV_MSG_INTERNAL_ERROR:
-      case SPV_MSG_ERROR:
-        LOG_ERROR(
-          "SPIR-V error: {}, line: {}, column: {}, message: {}", source, position.line, position.column, message);
-        break;
-      case SPV_MSG_WARNING:
-        LOG_WARN(
-          "SPIR-V warning: {}, line: {}, column: {}, message: {}", source, position.line, position.column, message);
-        break;
-      case SPV_MSG_INFO:
-        LOG_INFO("SPIR-V info: {}, line: {}, column: {}, message: {}", source, position.line, position.column, message);
-        break;
-      case SPV_MSG_DEBUG:
-        LOG_TRACE(
-          "SPIR-V debug: {}, line: {}, column: {}, message: {}", source, position.line, position.column, message);
-        break;
-      default: LOG_WARN("Unknown SPIR-V message level: {}", static_cast<int>(level)); break;
-      }
-    });
-
-  if (!spirv_tools_.Validate(spv))
-  {
-    error_message_ = "SPIR-V validation failed";
-    return std::nullopt;
-  }
-
-  return VulkanSpvBinary(std::move(spv), absolute_path);
+  return compile_result;
 }
 
 // TODO: split into recursive and non-recursive versions
