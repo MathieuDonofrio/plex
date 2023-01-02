@@ -1,6 +1,11 @@
 #ifndef PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 #define PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 
+
+#include <filesystem>
+#include <memory>
+#include <optional>
+
 #include "plex/graphics/command_buffer.h"
 #include "plex/graphics/material.h"
 #include "plex/graphics/shader.h"
@@ -50,12 +55,15 @@ public:
   Renderer(Renderer&&) = delete;
   Renderer& operator=(Renderer&&) = delete;
 
-  virtual CommandBuffer* AquireNextFrame() = 0;
+  virtual CommandBuffer* AcquireNextFrame() = 0;
   virtual void Render() = 0;
   virtual void Present() = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) = 0;
   [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(char* shader_code, size_t size, ShaderType type) = 0;
+
+  virtual std::optional<std::unique_ptr<Shader>> CreateShader(
+    const std::filesystem::path& source, ShaderStageFlags stage) = 0;
 };
 
 struct RendererCreateInfo

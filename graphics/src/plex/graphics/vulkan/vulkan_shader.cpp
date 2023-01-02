@@ -4,6 +4,27 @@ namespace plex::graphics
 {
 namespace
 {
+  std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
+  {
+    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open()) [[unlikely]]
+    {
+      LOG_ERROR("Failed to open shader file: {}", filename);
+      return {};
+    }
+
+    std::streamsize fileSize = file.tellg();
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+
+    file.close();
+
+    return buffer;
+  }
+
   VkShaderStageFlagBits GetShaderStageFlagBits(ShaderType type)
   {
     switch (type)
@@ -16,12 +37,14 @@ namespace
   }
 } // namespace
 
-VulkanShader::VulkanShader(VkDevice device, char* code, size_t size, ShaderType type) : device_(device), type_(type)
+VulkanShader::VulkanShader(VkDevice device, const VulkanSpvBinary& spv_binary, ShaderStageFlags stage)
+  : device_(device), stage_(stage)
 {
+  // Create the shader module
   VkShaderModuleCreateInfo create_info = {};
   create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  create_info.codeSize = size;
-  create_info.pCode = reinterpret_cast<uint32_t*>(code);
+  create_info.codeSize = spv_binary.GetSize() * sizeof(uint32_t);
+  create_info.pCode = reinterpret_cast<const uint32_t*>(spv_binary.GetData());
 
   vkCreateShaderModule(device, &create_info, nullptr, &shader_module_);
 }

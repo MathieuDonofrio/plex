@@ -1,7 +1,8 @@
 #include "plex/graphics/vulkan/vulkan_renderer.h"
 
-#include "plex/graphics/vulkan/vulkan_material.h"
+#include "plex/debug/logging.h"
 #include "plex/graphics/vulkan/vulkan_shader.h"
+#include "plex/graphics/vulkan/vulkan_material.h"
 
 namespace plex::graphics
 {
@@ -108,7 +109,7 @@ VulkanRenderer::~VulkanRenderer()
   vkDestroyRenderPass(device_.GetHandle(), render_pass_, nullptr);
 }
 
-CommandBuffer* VulkanRenderer::AquireNextFrame()
+CommandBuffer* VulkanRenderer::AcquireNextFrame()
 {
   // Get next frame
 
@@ -339,4 +340,32 @@ std::unique_ptr<Shader> VulkanRenderer::CreateShader(char* shader_code, size_t s
 {
   return std::make_unique<VulkanShader>(device_.GetHandle(), shader_code, size, type);
 }
+
+std::optional<std::unique_ptr<Shader>> VulkanRenderer::CreateShader(
+  const std::filesystem::path& source_path, ShaderStageFlags stage)
+{
+  auto spv_binary = shader_compiler_.Compile(source_path, stage);
+  if (!spv_binary)
+  {
+    LOG_ERROR("Failed to compile shader: {}, reason: {}", source_path.string(), shader_compiler_.GetErrorMessage());
+    return std::nullopt;
+  }
+
+  if(spv_binary->GetSize() == 0)
+  {
+    LOG_ERROR("Failed to compile shader: {}, reason: Compiled shader binary is empty", source_path.string());
+    return std::nullopt;
+  }
+
+  auto vulkan_shader = std::make_unique<VulkanShader>(device_.GetHandle(), *spv_binary, stage);
+
+  if (!dynamic_cast<Shader*>(vulkan_shader.get())) // TODO: check required ?
+  {
+    LOG_ERROR("Failed to cast shader to base class");
+    return std::nullopt;
+  }
+
+  return std::unique_ptr<Shader>(vulkan_shader.release());
+}
+
 } // namespace plex::graphics

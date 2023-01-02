@@ -1,6 +1,7 @@
 #ifndef PLEX_GRAPHICS_VULKAN_VULKAN_RENDERER_H
 #define PLEX_GRAPHICS_VULKAN_VULKAN_RENDERER_H
 
+#include <filesystem>
 #include <array>
 #include <string>
 
@@ -8,6 +9,7 @@
 #include "plex/graphics/vulkan/vulkan_command_buffer.h"
 #include "plex/graphics/vulkan/vulkan_device.h"
 #include "plex/graphics/vulkan/vulkan_instance.h"
+#include "plex/graphics/vulkan/vulkan_shader_compiler.h"
 #include "plex/graphics/vulkan/vulkan_surface.h"
 #include "plex/graphics/vulkan/vulkan_swapchain.h"
 #include "plex/graphics/vulkan_capable_window.h"
@@ -37,7 +39,7 @@ public:
 
   ~VulkanRenderer() override;
 
-  CommandBuffer* AquireNextFrame() override;
+  CommandBuffer* AcquireNextFrame() override;
 
   void Render() override;
 
@@ -52,6 +54,9 @@ public:
     return swapchain_.GetImageCount();
   }
 
+  std::optional<std::unique_ptr<Shader>> CreateShader(
+    const std::filesystem::path& source_path, ShaderStageFlags stage) override;
+
 private:
   VulkanInstance instance_;
   VulkanSurface surface_;
@@ -62,6 +67,8 @@ private:
 
   uint32_t current_frame_index_;
   uint32_t current_image_index_;
+
+  VulkanShaderCompiler shader_compiler_;
 
   VkRenderPass render_pass_;
 };
