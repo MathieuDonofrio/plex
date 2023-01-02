@@ -11,12 +11,8 @@ namespace plex::graphics
 class VulkanSwapchain
 {
 public:
-  VulkanSwapchain(VulkanDevice* device,
-    VulkanSurface* surface,
-    PresentMode present_mode,
-    uint32_t width,
-    uint32_t height,
-    uint32_t image_count);
+  VulkanSwapchain(
+    Window* window, VulkanDevice* device, VulkanSurface* surface, PresentMode present_mode, uint32_t image_count);
 
   ~VulkanSwapchain();
 
@@ -25,11 +21,17 @@ public:
   VulkanSwapchain(VulkanSwapchain&&) = delete;
   VulkanSwapchain& operator=(VulkanSwapchain&&) = delete;
 
-  void CreateFrameBuffers(VkRenderPass render_pass);
-
   [[nodiscard]] uint32_t AquireNextImage(VkSemaphore semaphore);
 
   void Present(uint32_t image_index, VkQueue queue, VkSemaphore semaphore);
+
+  void Recreate();
+
+  void InitFramebuffers(VkRenderPass render_pass)
+  {
+    render_pass_ = render_pass;
+    CreateFramebuffers();
+  }
 
   [[nodiscard]] VkImage GetImage(uint32_t index) const noexcept
   {
@@ -44,6 +46,11 @@ public:
   [[nodiscard]] VkFramebuffer GetFramebuffer(uint32_t index) const noexcept
   {
     return framebuffers_[index];
+  }
+
+  void FlagFramebufferResized()
+  {
+    framebuffer_resized_ = true;
   }
 
   [[nodiscard]] VkSurfaceFormatKHR GetSurfaceFormat() const noexcept
@@ -67,13 +74,28 @@ public:
   }
 
 private:
+  void CreateSwapchain();
+  void CreateImageViews();
+  void CreateFramebuffers();
+
+  void CleanupSwapchain();
+
+private:
   VkSwapchainKHR swapchain_;
-  VkDevice device_;
+
+  Window* window_;
+  VulkanDevice* device_;
+  VulkanSurface* surface_;
 
   VkSurfaceFormatKHR surface_format_;
+  VkPresentModeKHR desired_present_mode_;
   VkPresentModeKHR present_mode_;
+  VkSurfaceCapabilitiesKHR surface_capabilities_;
   VkExtent2D extent_;
+  VkRenderPass render_pass_;
+  uint32_t queue_family_indices_[2];
   uint32_t image_count_;
+  bool framebuffer_resized_;
 
   std::vector<VkImage> images_;
   std::vector<VkImageView> image_views_;

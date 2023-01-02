@@ -1,5 +1,4 @@
 
-#include <chrono>
 #include <filesystem>
 #include <fstream>
 
@@ -74,7 +73,7 @@ int main(int, char**)
   // Create Renderer
 
   graphics::RendererCreateInfo renderer_info;
-  renderer_info.window_handle = window.get();
+  renderer_info.window = window.get();
   renderer_info.application_name = "Basic Window";
   renderer_info.debug_level = DebugLevel::Info;
   renderer_info.present_mode = PresentMode::FIFO;
@@ -107,6 +106,8 @@ int main(int, char**)
 
     CommandBuffer* primary_buffer = renderer->AquireNextFrame();
 
+    if (primary_buffer == nullptr) continue;
+
     RecordCommandBuffer(primary_buffer);
 
     renderer->Render();
@@ -117,6 +118,10 @@ int main(int, char**)
 
     std::this_thread::yield();
   }
+
+  renderer->WaitIdle();
+
+  // TODO destroy materials & shaders
 
   return 0;
 }

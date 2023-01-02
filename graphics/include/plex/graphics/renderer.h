@@ -53,6 +53,7 @@ public:
   virtual CommandBuffer* AquireNextFrame() = 0;
   virtual void Render() = 0;
   virtual void Present() = 0;
+  virtual void WaitIdle() = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) = 0;
   [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(char* shader_code, size_t size, ShaderType type) = 0;
@@ -61,7 +62,7 @@ public:
 struct RendererCreateInfo
 {
   std::string application_name;
-  Window* window_handle;
+  Window* window;
   DebugLevel debug_level;
   PresentMode present_mode;
   BufferingMode buffering_mode;

@@ -27,13 +27,7 @@ struct FrameData
 class VulkanRenderer : public Renderer
 {
 public:
-  VulkanRenderer(VulkanCapableWindow* window,
-    const std::string& application_name,
-    DebugLevel debug_level,
-    PresentMode present_mode,
-    uint32_t width,
-    uint32_t height,
-    uint32_t image_count);
+  VulkanRenderer(const RendererCreateInfo& create_info);
 
   ~VulkanRenderer() override;
 
@@ -42,6 +36,8 @@ public:
   void Render() override;
 
   void Present() override;
+
+  void WaitIdle() override;
 
   [[nodiscard]] std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) override;
 
@@ -53,6 +49,11 @@ public:
   }
 
 private:
+  void WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&);
+
+private:
+  Window* window_;
+
   VulkanInstance instance_;
   VulkanSurface surface_;
   VulkanDevice device_;

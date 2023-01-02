@@ -46,7 +46,7 @@ namespace
     return VK_PRESENT_MODE_FIFO_KHR; // Guaranteed to be available
   }
 
-  VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height)
+  VkExtent2D ChooseSwapExtent(Window* window, const VkSurfaceCapabilitiesKHR& capabilities)
   {
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
     {
@@ -54,48 +54,78 @@ namespace
     }
     else
     {
-      VkExtent2D actual_extent = { width, height };
+      auto [width, height] = window->GetFrameBufferSize();
 
-      actual_extent.width =
-        std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actual_extent.width));
-      actual_extent.height = std::max(
-        capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actual_extent.height));
+      VkExtent2D actualExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 
-      return actual_extent;
+      actualExtent.width =
+        std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+      actualExtent.height =
+        std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+      return actualExtent;
+    }
+  }
+
+  void WaitUntilNotMinimized(Window* window)
+  {
+    while (true)
+    {
+      auto [width, height] = window->GetFrameBufferSize();
+
+      if (width > 0 && height > 0)
+      {
+        break;
+      }
+
+      window->WaitEvents();
     }
   }
 } // namespace
 
-VulkanSwapchain::VulkanSwapchain(VulkanDevice* device,
-  VulkanSurface* surface,
-  PresentMode present_mode,
-  uint32_t width,
-  uint32_t height,
-  uint32_t image_count)
-  : device_(device->GetHandle()), image_count_(image_count)
+VulkanSwapchain::VulkanSwapchain(
+  Window* window, VulkanDevice* device, VulkanSurface* surface, PresentMode present_mode, uint32_t image_count)
+  : window_(window), swapchain_(nullptr), device_(device), surface_(surface), image_count_(image_count),
+    desired_present_mode_(FromPresentMode(present_mode))
 {
-  std::vector<VkSurfaceFormatKHR> surface_formats = surface->GetSurfaceFormats(device->GetPhysicalHandle());
+  CreateSwapchain();
+  CreateImageViews();
+}
+
+VulkanSwapchain::~VulkanSwapchain()
+{
+  CleanupSwapchain();
+}
+
+void VulkanSwapchain::CreateSwapchain()
+{
+  std::vector<VkSurfaceFormatKHR> surface_formats = surface_->GetSurfaceFormats(device_->GetPhysicalHandle());
 
   surface_format_ = ChooseSwapSurfaceFormat(surface_formats);
 
-  std::vector<VkPresentModeKHR> present_modes = surface->GetPresentModes(device->GetPhysicalHandle());
+  std::vector<VkPresentModeKHR> present_modes = surface_->GetPresentModes(device_->GetPhysicalHandle());
 
-  present_mode_ = ChoosePresentMode(present_modes, FromPresentMode(present_mode));
+  present_mode_ = ChoosePresentMode(present_modes, desired_present_mode_);
 
-  VkSurfaceCapabilitiesKHR surface_capabilities = surface->GetSurfaceCapabilities(device->GetPhysicalHandle());
+  surface_capabilities_ = surface_->GetSurfaceCapabilities(device_->GetPhysicalHandle());
 
-  extent_ = ChooseSwapExtent(surface_capabilities, width, height);
+  queue_family_indices_[0] = device_->GetGraphicsQueueFamilyIndex();
+  queue_family_indices_[1] = device_->GetPresentQueueFamilyIndex();
 
-  if (surface_capabilities.maxImageCount > 0 && image_count_ > surface_capabilities.maxImageCount)
+  extent_ = ChooseSwapExtent(window_, surface_capabilities_);
+
+  LOG_INFO("Swapchain extent: {}x{}", extent_.width, extent_.height);
+
+  if (surface_capabilities_.maxImageCount > 0 && image_count_ > surface_capabilities_.maxImageCount)
   {
-    image_count_ = surface_capabilities.maxImageCount;
+    image_count_ = surface_capabilities_.maxImageCount;
 
     LOG_WARN("Image count exceeds maximum, clamping to {}", image_count_);
   }
 
   VkSwapchainCreateInfoKHR swapchain_create_info = {};
   swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  swapchain_create_info.surface = surface->GetHandle();
+  swapchain_create_info.surface = surface_->GetHandle();
   swapchain_create_info.minImageCount = image_count_;
   swapchain_create_info.imageFormat = surface_format_.format;
   swapchain_create_info.imageColorSpace = surface_format_.colorSpace;
@@ -103,13 +133,11 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device,
   swapchain_create_info.imageArrayLayers = 1;
   swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-  uint32_t queue_family_indices[] = { device->GetGraphicsQueueFamilyIndex(), device->GetPresentQueueFamilyIndex() };
-
-  if (device->GetGraphicsQueueFamilyIndex() != device->GetPresentQueueFamilyIndex())
+  if (queue_family_indices_[0] != queue_family_indices_[1])
   {
     swapchain_create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
     swapchain_create_info.queueFamilyIndexCount = 2;
-    swapchain_create_info.pQueueFamilyIndices = queue_family_indices;
+    swapchain_create_info.pQueueFamilyIndices = queue_family_indices_;
   }
   else
   {
@@ -118,20 +146,23 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device,
     swapchain_create_info.pQueueFamilyIndices = nullptr; // Optional
   }
 
-  swapchain_create_info.preTransform = surface_capabilities.currentTransform;
+  swapchain_create_info.preTransform = surface_capabilities_.currentTransform;
   swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   swapchain_create_info.presentMode = present_mode_;
   swapchain_create_info.clipped = VK_TRUE;
   swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
 
-  if (vkCreateSwapchainKHR(device_, &swapchain_create_info, nullptr, &swapchain_) != VK_SUCCESS)
+  if (vkCreateSwapchainKHR(device_->GetHandle(), &swapchain_create_info, nullptr, &swapchain_) != VK_SUCCESS)
   {
     LOG_ERROR("Failed to create swapchain");
   }
+}
 
-  vkGetSwapchainImagesKHR(device_, swapchain_, &image_count_, nullptr);
+void VulkanSwapchain::CreateImageViews()
+{
+  vkGetSwapchainImagesKHR(device_->GetHandle(), swapchain_, &image_count_, nullptr);
   images_.resize(image_count_);
-  vkGetSwapchainImagesKHR(device_, swapchain_, &image_count_, images_.data());
+  vkGetSwapchainImagesKHR(device_->GetHandle(), swapchain_, &image_count_, images_.data());
 
   image_views_.resize(image_count_);
 
@@ -152,29 +183,14 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device,
     image_view_create_info.subresourceRange.baseArrayLayer = 0;
     image_view_create_info.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(device_, &image_view_create_info, nullptr, &image_views_[i]) != VK_SUCCESS)
+    if (vkCreateImageView(device_->GetHandle(), &image_view_create_info, nullptr, &image_views_[i]) != VK_SUCCESS)
     {
       LOG_ERROR("Failed to create image view");
     }
   }
 }
 
-VulkanSwapchain::~VulkanSwapchain()
-{
-  vkDestroySwapchainKHR(device_, swapchain_, nullptr);
-
-  for (auto image_view : image_views_)
-  {
-    vkDestroyImageView(device_, image_view, nullptr);
-  }
-
-  for (auto frame_buffer : framebuffers_)
-  {
-    vkDestroyFramebuffer(device_, frame_buffer, nullptr);
-  }
-}
-
-void VulkanSwapchain::CreateFrameBuffers(VkRenderPass render_pass)
+void VulkanSwapchain::CreateFramebuffers()
 {
   framebuffers_.resize(image_views_.size());
 
@@ -184,21 +200,53 @@ void VulkanSwapchain::CreateFrameBuffers(VkRenderPass render_pass)
 
     VkFramebufferCreateInfo framebuffer_create_info = {};
     framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebuffer_create_info.renderPass = render_pass;
+    framebuffer_create_info.renderPass = render_pass_;
     framebuffer_create_info.attachmentCount = 1;
     framebuffer_create_info.pAttachments = attachments;
     framebuffer_create_info.width = extent_.width;
     framebuffer_create_info.height = extent_.height;
     framebuffer_create_info.layers = 1;
 
-    vkCreateFramebuffer(device_, &framebuffer_create_info, nullptr, &framebuffers_[i]);
+    vkCreateFramebuffer(device_->GetHandle(), &framebuffer_create_info, nullptr, &framebuffers_[i]);
   }
+}
+
+void VulkanSwapchain::CleanupSwapchain()
+{
+  vkDestroySwapchainKHR(device_->GetHandle(), swapchain_, nullptr);
+
+  images_.clear();
+
+  for (auto image_view : image_views_)
+  {
+    vkDestroyImageView(device_->GetHandle(), image_view, nullptr);
+  }
+
+  image_views_.clear();
+
+  for (auto frame_buffer : framebuffers_)
+  {
+    vkDestroyFramebuffer(device_->GetHandle(), frame_buffer, nullptr);
+  }
+
+  framebuffers_.clear();
 }
 
 uint32_t VulkanSwapchain::AquireNextImage(VkSemaphore semaphore)
 {
   uint32_t image_index = 0;
-  vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, semaphore, VK_NULL_HANDLE, &image_index);
+  VkResult result =
+    vkAcquireNextImageKHR(device_->GetHandle(), swapchain_, UINT64_MAX, semaphore, VK_NULL_HANDLE, &image_index);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    Recreate();
+    return UINT32_MAX;
+  }
+  else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+  {
+    LOG_ERROR("Failed to acquire swapchain image");
+  }
 
   return image_index;
 }
@@ -213,7 +261,30 @@ void VulkanSwapchain::Present(uint32_t image_index, VkQueue queue, VkSemaphore s
   present_info.pSwapchains = &swapchain_;
   present_info.pImageIndices = &image_index;
 
-  vkQueuePresentKHR(queue, &present_info);
+  VkResult result = vkQueuePresentKHR(queue, &present_info);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebuffer_resized_)
+  {
+    framebuffer_resized_ = false;
+    Recreate();
+  }
+  else if (result != VK_SUCCESS)
+  {
+    LOG_ERROR("Failed to present swapchain image");
+  }
+}
+
+void VulkanSwapchain::Recreate()
+{
+  WaitUntilNotMinimized(window_);
+
+  vkDeviceWaitIdle(device_->GetHandle());
+
+  CleanupSwapchain();
+
+  CreateSwapchain();
+  CreateImageViews();
+  CreateFramebuffers();
 }
 
 } // namespace plex::graphics

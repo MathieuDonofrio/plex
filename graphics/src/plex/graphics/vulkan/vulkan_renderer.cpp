@@ -5,19 +5,30 @@
 
 namespace plex::graphics
 {
-VulkanRenderer::VulkanRenderer(VulkanCapableWindow* window,
-  const std::string& application_name,
-  DebugLevel debug_level,
-  PresentMode present_mode,
-  uint32_t width,
-  uint32_t height,
-  uint32_t image_count)
-  : instance_(application_name, debug_level, window->GetRequiredInstanceExtensions()),
-    surface_(window, instance_.GetHandle()), device_(instance_.GetHandle(), surface_.GetHandle()),
-    swapchain_(&device_, &surface_, present_mode, width, height, image_count), current_frame_index_(0),
-    current_image_index_(0)
+VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
+  : // Window
+    window_(create_info.window),
+    // Instance
+    instance_(create_info.application_name,
+      create_info.debug_level,
+      dynamic_cast<VulkanCapableWindow*>(window_)->GetRequiredInstanceExtensions()),
+    // Surface
+    surface_(dynamic_cast<VulkanCapableWindow*>(window_), instance_.GetHandle()),
+    // Device
+    device_(instance_.GetHandle(), surface_.GetHandle()),
+    // Swapchain
+    swapchain_(window_,
+      &device_,
+      &surface_,
+      create_info.present_mode,
+      create_info.buffering_mode == BufferingMode::Double ? 2 : 3),
+    current_frame_index_(0), current_image_index_(0)
 {
   ASSERT(GetFrameCount() <= 3, "Frame count must be less than or equal to 3");
+
+  WindowEventCallback<WindowFramebufferResizeEvent> callback;
+  callback.Bind<VulkanRenderer, &VulkanRenderer::WindowFramebufferResizeCallback>(this);
+  window_->AddWindowFramebufferResizeEventCallback(callback);
 
   // Make frame data
 
@@ -88,11 +99,15 @@ VulkanRenderer::VulkanRenderer(VulkanCapableWindow* window,
 
   vkCreateRenderPass(device_.GetHandle(), &render_pass_create_info, nullptr, &render_pass_);
 
-  swapchain_.CreateFrameBuffers(render_pass_);
+  swapchain_.InitFramebuffers(render_pass_);
 }
 
 VulkanRenderer::~VulkanRenderer()
 {
+  WindowEventCallback<WindowFramebufferResizeEvent> callback;
+  callback.Bind<VulkanRenderer, &VulkanRenderer::WindowFramebufferResizeCallback>(this);
+  window_->RemoveWindowFramebufferResizeEventCallback(callback);
+
   for (size_t i = 0; i < GetFrameCount(); i++)
   {
     FrameData& frame = frames_[i];
@@ -114,14 +129,17 @@ CommandBuffer* VulkanRenderer::AquireNextFrame()
 
   FrameData& frame = frames_[current_frame_index_];
 
-  // Wait for the fence to be signaled
-
-  vkWaitForFences(device_.GetHandle(), 1, &frame.fence, VK_TRUE, UINT64_MAX);
-  vkResetFences(device_.GetHandle(), 1, &frame.fence);
-
   // Aquire next image
 
-  current_image_index_ = swapchain_.AquireNextImage(frame.image_available_semaphore);
+  vkWaitForFences(device_.GetHandle(), 1, &frame.fence, VK_TRUE, UINT64_MAX);
+
+  auto result = swapchain_.AquireNextImage(frame.image_available_semaphore);
+
+  if (result == UINT32_MAX) return nullptr;
+
+  vkResetFences(device_.GetHandle(), 1, &frame.fence);
+
+  current_image_index_ = result;
 
   // Reset command pool
 
@@ -183,21 +201,16 @@ void VulkanRenderer::Present()
 
   // Present image
 
-  VkSwapchainKHR vk_swapchain = swapchain_.GetHandle();
-
-  VkPresentInfoKHR present_info = {};
-  present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  present_info.waitSemaphoreCount = 1;
-  present_info.pWaitSemaphores = &frame.render_finished_semaphore;
-  present_info.swapchainCount = 1;
-  present_info.pSwapchains = &vk_swapchain;
-  present_info.pImageIndices = &current_image_index_;
-
-  vkQueuePresentKHR(device_.GetPresentQueue(), &present_info);
+  swapchain_.Present(current_image_index_, device_.GetPresentQueue(), frame.render_finished_semaphore);
 
   // Increment frame index
 
   current_frame_index_ = (current_frame_index_ + 1) % GetFrameCount();
+}
+
+void VulkanRenderer::WaitIdle()
+{
+  vkDeviceWaitIdle(device_.GetHandle());
 }
 
 std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInfo& create_info)
@@ -338,5 +351,10 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
 std::unique_ptr<Shader> VulkanRenderer::CreateShader(char* shader_code, size_t size, ShaderType type)
 {
   return std::make_unique<VulkanShader>(device_.GetHandle(), shader_code, size, type);
+}
+
+void VulkanRenderer::WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&)
+{
+  swapchain_.FlagFramebufferResized();
 }
 } // namespace plex::graphics
