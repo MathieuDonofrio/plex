@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <shaderc/shaderc.hpp>
+#include <spirv-tools/libspirv.hpp>
 
 #include "plex/graphics/shader.h"
 #include "plex/graphics/vulkan/vulkan_shader_include_handler.h"
@@ -48,6 +49,7 @@ public:
   void ClearIncludePaths() { include_handler_->Clear(); }
 
 private:
+  spvtools::SpirvTools spirv_tools_;
   shaderc::Compiler compiler_;
   shaderc::CompileOptions options_;
   std::string error_message_;
