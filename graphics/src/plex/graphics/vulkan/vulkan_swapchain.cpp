@@ -114,8 +114,6 @@ void VulkanSwapchain::CreateSwapchain()
 
   extent_ = ChooseSwapExtent(window_, surface_capabilities_);
 
-  LOG_INFO("Swapchain extent: {}x{}", extent_.width, extent_.height);
-
   if (surface_capabilities_.maxImageCount > 0 && image_count_ > surface_capabilities_.maxImageCount)
   {
     image_count_ = surface_capabilities_.maxImageCount;

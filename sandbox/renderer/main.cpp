@@ -83,12 +83,12 @@ int main(int, char**)
 
   // Create material
 
-  auto vertex_shader_code = LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.vert.spv");
-  auto fragment_shader_code = LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.frag.spv");
+  LOG_INFO("Compiling shaders...");
 
-  auto vertex_shader = renderer->CreateShader(vertex_shader_code.data(), vertex_shader_code.size(), ShaderType::Vertex);
-  auto fragment_shader =
-    renderer->CreateShader(fragment_shader_code.data(), fragment_shader_code.size(), ShaderType::Fragment);
+  auto vertex_shader = renderer->CreateShader("assets/shader.vert", ShaderType::Vertex);
+  auto fragment_shader = renderer->CreateShader("assets/shader.frag", ShaderType::Fragment);
+
+  LOG_INFO("Shaders compiled");
 
   MaterialCreateInfo material_create_info {};
   material_create_info.vertex_shader = vertex_shader.get();
@@ -104,7 +104,7 @@ int main(int, char**)
   {
     window->PollEvents();
 
-    CommandBuffer* primary_buffer = renderer->AquireNextFrame();
+    CommandBuffer* primary_buffer = renderer->AcquireNextFrame();
 
     if (primary_buffer == nullptr) continue;
 

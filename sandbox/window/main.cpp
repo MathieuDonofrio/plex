@@ -1,4 +1,3 @@
-
 #include <iostream>
 
 #include "plex/debug/logging.h"

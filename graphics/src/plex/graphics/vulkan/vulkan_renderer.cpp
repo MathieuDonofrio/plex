@@ -1,5 +1,6 @@
 #include "plex/graphics/vulkan/vulkan_renderer.h"
 
+#include "plex/debug/logging.h"
 #include "plex/graphics/vulkan/vulkan_material.h"
 #include "plex/graphics/vulkan/vulkan_shader.h"
 
@@ -123,7 +124,7 @@ VulkanRenderer::~VulkanRenderer()
   vkDestroyRenderPass(device_.GetHandle(), render_pass_, nullptr);
 }
 
-CommandBuffer* VulkanRenderer::AquireNextFrame()
+CommandBuffer* VulkanRenderer::AcquireNextFrame()
 {
   // Get next frame
 
@@ -348,9 +349,23 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   return std::make_unique<VulkanMaterial>(pipeline_layout, pipeline);
 }
 
-std::unique_ptr<Shader> VulkanRenderer::CreateShader(char* shader_code, size_t size, ShaderType type)
+std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::filesystem::path& source_path, ShaderType type)
 {
-  return std::make_unique<VulkanShader>(device_.GetHandle(), shader_code, size, type);
+  auto spv_binary = shader_compiler_.Compile(source_path, type);
+
+  if (!spv_binary)
+  {
+    LOG_ERROR("Failed to compile shader: {}, reason: {}", source_path.string(), shader_compiler_.GetErrorMessage());
+    return nullptr;
+  }
+
+  if (spv_binary->GetSize() == 0)
+  {
+    LOG_ERROR("Failed to compile shader: {}, reason: Compiled shader binary is empty", source_path.string());
+    return nullptr;
+  }
+
+  return std::make_unique<VulkanShader>(device_.GetHandle(), *spv_binary, type);
 }
 
 void VulkanRenderer::WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&)
