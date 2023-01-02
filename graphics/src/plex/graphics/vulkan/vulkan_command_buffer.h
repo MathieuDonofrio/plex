@@ -11,7 +11,6 @@ namespace plex::graphics
 struct VulkanCommandBufferContext
 {
   VkDevice device;
-  VkPipelineLayout pipeline_layout;
   VkRenderPass render_pass;
   VkFramebuffer framebuffer;
   VkExtent2D extent;

@@ -63,7 +63,6 @@ private:
   uint32_t current_frame_index_;
   uint32_t current_image_index_;
 
-  VkPipelineLayout pipeline_layout_;
   VkRenderPass render_pass_;
 };
 

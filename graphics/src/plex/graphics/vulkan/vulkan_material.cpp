@@ -3,4 +3,4 @@
 namespace plex::graphics
 {
 
-}
+} // namespace plex::graphics

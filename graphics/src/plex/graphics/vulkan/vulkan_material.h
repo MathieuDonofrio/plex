@@ -9,7 +9,14 @@ namespace plex::graphics
 class VulkanMaterial : public Material
 {
 public:
-  VulkanMaterial(VkPipeline pipeline) : pipeline_(pipeline) {}
+  VulkanMaterial(VkPipelineLayout pipeline_layout, VkPipeline pipeline)
+    : pipeline_layout_(pipeline_layout), pipeline_(pipeline)
+  {}
+
+  [[nodiscard]] VkPipelineLayout GetPipelineLayout() const noexcept
+  {
+    return pipeline_layout_;
+  }
 
   [[nodiscard]] VkPipeline GetPipeline() const noexcept
   {
@@ -17,6 +24,7 @@ public:
   }
 
 private:
+  VkPipelineLayout pipeline_layout_;
   VkPipeline pipeline_;
 };
 

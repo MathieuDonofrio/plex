@@ -21,6 +21,7 @@ endfunction()
 # Sandboxes
 #
 
-add_sandbox_project(basic_window)
 add_sandbox_project(logging)
+add_sandbox_project(renderer)
 add_sandbox_project(systems)
+add_sandbox_project(window)

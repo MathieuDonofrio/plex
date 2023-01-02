@@ -50,15 +50,6 @@ VulkanRenderer::VulkanRenderer(VulkanCapableWindow* window,
 
   // Make shared data
 
-  VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
-  pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipeline_layout_create_info.setLayoutCount = 0;
-  pipeline_layout_create_info.pSetLayouts = nullptr;
-  pipeline_layout_create_info.pushConstantRangeCount = 0;
-  pipeline_layout_create_info.pPushConstantRanges = nullptr;
-
-  vkCreatePipelineLayout(device_.GetHandle(), &pipeline_layout_create_info, nullptr, &pipeline_layout_);
-
   VkAttachmentDescription color_attachment {};
   color_attachment.format = swapchain_.GetSurfaceFormat().format;
   color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -114,7 +105,6 @@ VulkanRenderer::~VulkanRenderer()
     vkDestroyCommandPool(device_.GetHandle(), frame.command_pool, nullptr);
   }
 
-  vkDestroyPipelineLayout(device_.GetHandle(), pipeline_layout_, nullptr);
   vkDestroyRenderPass(device_.GetHandle(), render_pass_, nullptr);
 }
 
@@ -150,7 +140,6 @@ CommandBuffer* VulkanRenderer::AquireNextFrame()
 
   VulkanCommandBufferContext context;
   context.device = device_.GetHandle();
-  context.pipeline_layout = pipeline_layout_;
   context.render_pass = render_pass_;
   context.framebuffer = swapchain_.GetFramebuffer(current_image_index_);
   context.extent = swapchain_.GetExtent();
@@ -213,6 +202,18 @@ void VulkanRenderer::Present()
 
 std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInfo& create_info)
 {
+  // Pipeline layout
+
+  VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
+  pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipeline_layout_create_info.setLayoutCount = 0;
+  pipeline_layout_create_info.pSetLayouts = nullptr;
+  pipeline_layout_create_info.pushConstantRangeCount = 0;
+  pipeline_layout_create_info.pPushConstantRanges = nullptr;
+
+  VkPipelineLayout pipeline_layout;
+  vkCreatePipelineLayout(device_.GetHandle(), &pipeline_layout_create_info, nullptr, &pipeline_layout);
+
   // Shaders
 
   auto* vertex_shader = static_cast<VulkanShader*>(create_info.vertex_shader);
@@ -322,16 +323,16 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   pipeline_create_info.pRasterizationState = &rasterizer_create_info;
   pipeline_create_info.pMultisampleState = &multisampling_create_info;
   pipeline_create_info.pColorBlendState = &color_blending_create_info;
-  pipeline_create_info.layout = pipeline_layout_;
+  pipeline_create_info.layout = pipeline_layout;
   pipeline_create_info.renderPass = render_pass_;
   pipeline_create_info.subpass = 0;
   pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
   pipeline_create_info.basePipelineIndex = -1;
 
-  VkPipeline graphics_pipeline;
-  vkCreateGraphicsPipelines(device_.GetHandle(), VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &graphics_pipeline);
+  VkPipeline pipeline;
+  vkCreateGraphicsPipelines(device_.GetHandle(), VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &pipeline);
 
-  return std::make_unique<VulkanMaterial>(graphics_pipeline);
+  return std::make_unique<VulkanMaterial>(pipeline_layout, pipeline);
 }
 
 std::unique_ptr<Shader> VulkanRenderer::CreateShader(char* shader_code, size_t size, ShaderType type)
