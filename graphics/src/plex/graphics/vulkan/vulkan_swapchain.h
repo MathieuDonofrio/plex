@@ -3,8 +3,8 @@
 
 #include "plex/graphics/renderer.h"
 #include "plex/graphics/vulkan/api/vulkan_api.h"
-#include "plex/graphics/vulkan/vulkan_frame.h"
-#include "plex/graphics/vulkan/vulkan_image.h"
+#include "plex/graphics/vulkan/vulkan_device.h"
+#include "plex/graphics/vulkan/vulkan_surface.h"
 
 namespace plex::graphics
 {

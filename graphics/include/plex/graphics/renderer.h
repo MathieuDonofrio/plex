@@ -1,7 +1,7 @@
 #ifndef PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 #define PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 
-#include "plex/graphics/frame.h"
+#include "plex/graphics/command_buffer.h"
 #include "plex/graphics/window.h"
 
 namespace plex::graphics
@@ -48,17 +48,15 @@ public:
   Renderer(Renderer&&) = delete;
   Renderer& operator=(Renderer&&) = delete;
 
-  virtual Frame* AquireNextFrame() = 0;
-
-  virtual void Render(Frame* frame, CommandBuffer* command_buffer) = 0;
-
-  virtual void Present(Frame* frame) = 0;
+  virtual CommandBuffer* AquireNextFrame() = 0;
+  virtual void Render() = 0;
+  virtual void Present() = 0;
 };
 
 struct RendererCreateInfo
 {
-  Window* window_handle;
   std::string application_name;
+  Window* window_handle;
   DebugLevel debug_level;
   PresentMode present_mode;
   BufferingMode buffering_mode;

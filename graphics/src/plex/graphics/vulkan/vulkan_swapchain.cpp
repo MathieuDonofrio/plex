@@ -20,20 +20,6 @@ namespace
     }
   }
 
-  constexpr ImageFormat ToImageFormat(VkFormat format)
-  {
-    switch (format)
-    {
-    case VK_FORMAT_R8G8B8_UNORM: return ImageFormat::RGB;
-    case VK_FORMAT_R8G8B8A8_UNORM: return ImageFormat::RGBA;
-    case VK_FORMAT_B8G8R8_UNORM: return ImageFormat::BGR;
-    case VK_FORMAT_B8G8R8A8_UNORM: return ImageFormat::BGRA;
-    case VK_FORMAT_R8_UNORM: return ImageFormat::LUMINANCE;
-    case VK_FORMAT_R8G8_UNORM: return ImageFormat::LUMINANCE_ALPHA;
-    default: return ImageFormat::UNDEFINED;
-    }
-  }
-
   VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& available_formats)
   {
     for (const auto& available_format : available_formats)

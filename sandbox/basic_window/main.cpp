@@ -1,4 +1,5 @@
 
+#include <fstream>
 #include <iostream>
 
 #include "plex/debug/logging.h"
@@ -90,7 +91,28 @@ struct TestWindowListener : public Listener<TestWindowListener,
   }
 };
 
-void OnRender([[maybe_unused]] Frame* frame, CommandBuffer* primary_buffer)
+std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
+{
+  std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+  if (!file.is_open()) [[unlikely]]
+  {
+    LOG_ERROR("Failed to open shader file: {}", filename);
+    return {};
+  }
+
+  std::streamsize fileSize = file.tellg();
+  std::vector<char> buffer(fileSize);
+
+  file.seekg(0);
+  file.read(buffer.data(), fileSize);
+
+  file.close();
+
+  return buffer;
+}
+
+void RecordCommandBuffer(CommandBuffer* primary_buffer)
 {
   primary_buffer->Begin();
 
@@ -120,6 +142,11 @@ int main(int, char**)
 
   std::unique_ptr<Renderer> renderer = CreateRenderer(renderer_info, BackendType::Vulkan);
 
+  // Load Shaders
+
+  // std::vector<char> vertex_shader_code = LoadShaderCodeFromFile("sandbox/basic_window/shaders/shader.vert.spv");
+  // std::vector<char> fragment_shader_code = LoadShaderCodeFromFile("sandbox/basic_window/shaders/shader.frag.spv");
+
   // Loop
 
   while (!window->IsClosing())
@@ -127,15 +154,13 @@ int main(int, char**)
     window->WaitEvents(0.5);
     window->PollEvents();
 
-    Frame* frame = renderer->AquireNextFrame();
+    CommandBuffer* primary_buffer = renderer->AquireNextFrame();
 
-    CommandBuffer* primary_buffer = frame->GetCommandPool()->Allocate();
+    RecordCommandBuffer(primary_buffer);
 
-    OnRender(frame, primary_buffer);
+    renderer->Render();
 
-    renderer->Render(frame, primary_buffer);
-
-    renderer->Present(frame);
+    renderer->Present();
 
     std::this_thread::yield();
   }

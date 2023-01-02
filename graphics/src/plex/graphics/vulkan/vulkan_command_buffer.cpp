@@ -1,5 +1,7 @@
 #include "plex/graphics/vulkan/vulkan_command_buffer.h"
 
+#include "plex/graphics/vulkan/vulkan_shader.h"
+
 namespace plex::graphics
 {
 void VulkanCommandBuffer::Reset()
@@ -21,6 +23,22 @@ void VulkanCommandBuffer::Begin()
 void VulkanCommandBuffer::End()
 {
   vkEndCommandBuffer(command_buffer_);
+}
+
+void VulkanCommandBuffer::BeginRenderPass()
+{
+  // TODO
+}
+
+void VulkanCommandBuffer::EndRenderPass()
+{
+  // TODO
+}
+
+void VulkanCommandBuffer::FirstTriangleTest(
+  [[maybe_unused]] const std::vector<char>& vert, [[maybe_unused]] const std::vector<char>& frag)
+{
+  // Create Graphics Pipeline
 }
 
 } // namespace plex::graphics

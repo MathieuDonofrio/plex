@@ -15,11 +15,9 @@ class VulkanShader : public Shader
 public:
   // TODO make this accept code not a file. This class should not have the responsibility of loading files.
 
-  VulkanShader(VkDevice device, const std::string& filename, ShaderStageFlags stage);
+  VulkanShader(VkDevice device, std::vector<char> code, ShaderStageFlags stage);
 
   ~VulkanShader() override;
-
-  [[nodiscard]] VkPipelineShaderStageCreateInfo GetPipelineShaderStageCreateInfo() const;
 
   [[nodiscard]] ShaderStageFlags GetStage() const override
   {

@@ -4,7 +4,6 @@
 #include <string>
 
 #include "plex/graphics/vulkan/api/vulkan_api.h"
-#include "plex/graphics/vulkan/vulkan_command_pool.h"
 #include "plex/graphics/vulkan/vulkan_surface.h"
 
 namespace plex::graphics
