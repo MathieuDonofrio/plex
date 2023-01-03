@@ -30,7 +30,6 @@ public:
   GLFWWindow(const std::string& title,
     uint32_t width,
     uint32_t height,
-    EventBus* bus,
     WindowCreationHints hints = WindowCreationHints::Defaults);
 
   ~GLFWWindow() override;
@@ -252,8 +251,6 @@ private:
   GLFWWindowHandle handle_;
 
   std::string title_;
-
-  EventBus* bus_;
 
   Vector<WindowEventCallback<WindowResizeEvent>> resize_event_callbacks_;
   Vector<WindowEventCallback<WindowCloseEvent>> close_event_callbacks_;

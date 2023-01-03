@@ -1,9 +1,9 @@
 #ifndef PLEX_GRAPHICS_WINDOW_H
 #define PLEX_GRAPHICS_WINDOW_H
 
+#include <memory>
 #include <string>
 
-#include "plex/events/event_bus.h"
 #include "plex/graphics/key_codes.h"
 #include "plex/utilities/delegate.h"
 #include "plex/utilities/enum_flag.h"
@@ -618,11 +618,8 @@ struct WindowFramebufferResizeEvent : public WindowEvent
 ///
 /// @return Window instance pointer.
 ///
-std::unique_ptr<Window> CreateWindow(const std::string& title,
-  uint32_t width,
-  uint32_t height,
-  EventBus* bus,
-  WindowCreationHints hints = WindowCreationHints::Defaults);
+std::unique_ptr<Window> CreateWindow(
+  const std::string& title, uint32_t width, uint32_t height, WindowCreationHints hints = WindowCreationHints::Defaults);
 
 } // namespace plex
 #endif

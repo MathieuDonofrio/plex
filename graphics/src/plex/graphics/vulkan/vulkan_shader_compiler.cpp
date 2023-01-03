@@ -44,8 +44,10 @@ namespace
     return buffer;
   }
 
-  void SpirvToolsConsumeMessage(
-    spv_message_level_t level, const char* source, const spv_position_t& position, const char* message)
+  void SpirvToolsConsumeMessage(spv_message_level_t level,
+    [[maybe_unused]] const char* source,
+    [[maybe_unused]] const spv_position_t& position,
+    [[maybe_unused]] const char* message)
   {
     switch (level)
     {
