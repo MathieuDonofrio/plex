@@ -63,7 +63,7 @@ public:
   ///
   /// Binds a free function.
   ///
-  /// @tparam FreeFunction Compile-time free function pointer.
+  /// @tparam FreeFunction CompileToSpv-time free function pointer.
   ///
   template<Return (*FreeFunction)(Args...)>
   constexpr void Bind() noexcept
@@ -81,7 +81,7 @@ public:
   /// Binds a member function.
   ///
   /// @tparam Type The type of class the member function is for.
-  /// @tparam MemberFunction Compile-time member function pointer.
+  /// @tparam MemberFunction CompileToSpv-time member function pointer.
   ///
   /// @param[in] instance The instance to call the member function for.
   ///
@@ -101,7 +101,7 @@ public:
   /// Binds a const member function.
   ///
   /// @tparam Type The type of class the member function is for.
-  /// @tparam MemberFunction Compile-time member function pointer.
+  /// @tparam MemberFunction CompileToSpv-time member function pointer.
   ///
   /// @param[in] instance The instance to call the member function for.
   ///

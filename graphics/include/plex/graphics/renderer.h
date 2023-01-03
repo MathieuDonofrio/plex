@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <string>
 
 #include "plex/graphics/command_buffer.h"
 #include "plex/graphics/material.h"
@@ -61,7 +62,8 @@ public:
 
   [[nodiscard]] virtual std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) = 0;
 
-  [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const std::filesystem::path& source, ShaderType type) = 0;
+  [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(
+    const std::string& source, const std::filesystem::path& path, ShaderType type) = 0;
 };
 
 struct RendererCreateInfo

@@ -22,7 +22,7 @@ struct FPSCounter
   }
 };
 
-std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
+std::string LoadShaderCodeFromFile(const std::string& filename)
 {
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -35,15 +35,16 @@ std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
     return {};
   }
 
-  std::streamsize fileSize = file.tellg();
-  std::vector<char> buffer(fileSize);
+  std::streamsize file_size = file.tellg();
+  std::string source;
+  source.resize(file_size);
 
   file.seekg(0);
-  file.read(buffer.data(), fileSize);
+  file.read(source.data(), file_size);
 
   file.close();
 
-  return buffer;
+  return source;
 }
 
 std::unique_ptr<Material> material;
@@ -73,7 +74,7 @@ int main(int, char**)
   renderer_info.window = window.get();
   renderer_info.application_name = "Basic Window";
   renderer_info.debug_level = DebugLevel::Info;
-  renderer_info.present_mode = PresentMode::FIFO;
+  renderer_info.present_mode = PresentMode::Mailbox;
   renderer_info.buffering_mode = BufferingMode::Double;
 
   std::unique_ptr<Renderer> renderer = CreateRenderer(renderer_info, BackendType::Vulkan);
@@ -82,8 +83,10 @@ int main(int, char**)
 
   LOG_INFO("Compiling shaders...");
 
-  auto vertex_shader = renderer->CreateShader("assets/shader.vert", ShaderType::Vertex);
-  auto fragment_shader = renderer->CreateShader("assets/shader.frag", ShaderType::Fragment);
+  auto vertex_shader =
+    renderer->CreateShader(LoadShaderCodeFromFile("assets/shader.vert"), "assets/shader.vert", ShaderType::Vertex);
+  auto fragment_shader =
+    renderer->CreateShader(LoadShaderCodeFromFile("assets/shader.frag"), "assets/shader.frag", ShaderType::Fragment);
 
   LOG_INFO("Shaders compiled");
 

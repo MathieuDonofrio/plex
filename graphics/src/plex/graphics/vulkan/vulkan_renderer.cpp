@@ -345,9 +345,9 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   return std::make_unique<VulkanMaterial>(pipeline_layout, pipeline);
 }
 
-std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::filesystem::path& source_path, ShaderType type)
+std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::string& source, const std::filesystem::path& source_path, ShaderType type)
 {
-  auto spv_binary = shader_compiler_.Compile(source_path, type);
+  auto spv_binary = shader_compiler_.Compile(source, source_path, type);
 
   if (!spv_binary)
   {
@@ -355,7 +355,7 @@ std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::filesystem::path
     return nullptr;
   }
 
-  if (spv_binary->GetSize() == 0)
+  if (spv_binary->shader.empty())
   {
     LOG_ERROR("Failed to compile shader: {}, reason: Compiled shader binary is empty", source_path.string());
     return nullptr;
