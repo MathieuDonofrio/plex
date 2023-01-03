@@ -216,18 +216,6 @@ void VulkanRenderer::WaitIdle()
 
 std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInfo& create_info)
 {
-  // Pipeline layout
-
-  VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
-  pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipeline_layout_create_info.setLayoutCount = 0;
-  pipeline_layout_create_info.pSetLayouts = nullptr;
-  pipeline_layout_create_info.pushConstantRangeCount = 0;
-  pipeline_layout_create_info.pPushConstantRanges = nullptr;
-
-  VkPipelineLayout pipeline_layout;
-  vkCreatePipelineLayout(device_.GetHandle(), &pipeline_layout_create_info, nullptr, &pipeline_layout);
-
   // Shaders
 
   auto* vertex_shader = static_cast<VulkanShader*>(create_info.vertex_shader);
@@ -254,26 +242,12 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   input_assembly_state_create_info.primitiveRestartEnable = VK_FALSE;
 
-  // Viewports & Scissors
-
-  VkViewport viewport {};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  viewport.width = static_cast<float>(swapchain_.GetExtent().width);
-  viewport.height = static_cast<float>(swapchain_.GetExtent().height);
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-
-  VkRect2D scissor {};
-  scissor.offset = { 0, 0 };
-  scissor.extent = swapchain_.GetExtent();
+  // Viewports
 
   VkPipelineViewportStateCreateInfo viewport_state_create_info {};
   viewport_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewport_state_create_info.viewportCount = 1;
-  viewport_state_create_info.pViewports = &viewport;
   viewport_state_create_info.scissorCount = 1;
-  viewport_state_create_info.pScissors = &scissor;
 
   // Rasterizer
 
@@ -325,6 +299,27 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   color_blending_create_info.blendConstants[2] = 0.0f;
   color_blending_create_info.blendConstants[3] = 0.0f;
 
+  // Dynamic State
+
+  VkDynamicState dynamic_states[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
+  VkPipelineDynamicStateCreateInfo dynamic_state_create_info {};
+  dynamic_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+  dynamic_state_create_info.dynamicStateCount = 2;
+  dynamic_state_create_info.pDynamicStates = dynamic_states;
+
+  // Create pipeline layout
+
+  VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
+  pipeline_layout_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipeline_layout_create_info.setLayoutCount = 0;
+  pipeline_layout_create_info.pSetLayouts = nullptr;
+  pipeline_layout_create_info.pushConstantRangeCount = 0;
+  pipeline_layout_create_info.pPushConstantRanges = nullptr;
+
+  VkPipelineLayout pipeline_layout;
+  vkCreatePipelineLayout(device_.GetHandle(), &pipeline_layout_create_info, nullptr, &pipeline_layout);
+
   // Create graphics pipeline
 
   VkGraphicsPipelineCreateInfo pipeline_create_info {};
@@ -337,6 +332,7 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   pipeline_create_info.pRasterizationState = &rasterizer_create_info;
   pipeline_create_info.pMultisampleState = &multisampling_create_info;
   pipeline_create_info.pColorBlendState = &color_blending_create_info;
+  pipeline_create_info.pDynamicState = &dynamic_state_create_info;
   pipeline_create_info.layout = pipeline_layout;
   pipeline_create_info.renderPass = render_pass_;
   pipeline_create_info.subpass = 0;

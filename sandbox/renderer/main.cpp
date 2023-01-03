@@ -3,7 +3,6 @@
 #include <fstream>
 
 #include "plex/debug/logging.h"
-#include "plex/events/listener.h"
 #include "plex/graphics/renderer.h"
 #include "plex/graphics/window.h"
 
@@ -64,11 +63,9 @@ int main(int, char**)
 {
   // Create Window
 
-  EventBus bus;
-
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
 
-  std::unique_ptr<Window> window = CreateWindow("Hello world", 512, 512, &bus, hints);
+  std::unique_ptr<Window> window = CreateWindow("Hello world", 512, 512, hints);
 
   // Create Renderer
 
