@@ -6,10 +6,10 @@
 #include <string>
 
 #include "plex/graphics/renderer.h"
+#include "plex/graphics/spirv/shader_compiler.h"
 #include "plex/graphics/vulkan/vulkan_command_buffer.h"
 #include "plex/graphics/vulkan/vulkan_device.h"
 #include "plex/graphics/vulkan/vulkan_instance.h"
-#include "plex/graphics/vulkan/vulkan_shader_compiler.h"
 #include "plex/graphics/vulkan/vulkan_surface.h"
 #include "plex/graphics/vulkan/vulkan_swapchain.h"
 #include "plex/graphics/vulkan_capable_window.h"
@@ -44,7 +44,7 @@ public:
   [[nodiscard]] std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) override;
 
   [[nodiscard]] std::unique_ptr<Shader> CreateShader(
-    const std::filesystem::path& source_path, ShaderType type) override;
+    const std::string& source, const std::filesystem::path& source_path, ShaderType type) override;
 
   [[nodiscard]] size_t GetFrameCount() const noexcept
   {
@@ -70,7 +70,7 @@ private:
   uint32_t current_frame_index_;
   uint32_t current_image_index_;
 
-  VulkanShaderCompiler shader_compiler_;
+  ShaderCompiler shader_compiler_;
 
   VkRenderPass render_pass_;
 };

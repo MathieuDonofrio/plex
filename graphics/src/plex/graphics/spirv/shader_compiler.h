@@ -6,16 +6,17 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
+
+#include <shaderc/shaderc.hpp>
+#include <spirv-tools/libspirv.hpp>
 
 #include "plex/graphics/shader.h"
 
 namespace plex::graphics
 {
-struct ShaderSPVBinary
-{
-  const char* data;
-  size_t size;
-};
+
+using ShaderSPVBinary = std::vector<uint32_t>;
 
 struct ShaderData
 {
@@ -28,21 +29,47 @@ struct ShaderData
 class ShaderCompiler
 {
 public:
-  ShaderCompiler() = default;
+  ShaderCompiler();
   ~ShaderCompiler() = default;
 
   ShaderCompiler(const ShaderCompiler&) = delete;
-  ShaderCompiler(ShaderCompiler&&) = default;
+  ShaderCompiler(ShaderCompiler&&) = delete;
   ShaderCompiler& operator=(const ShaderCompiler&) = delete;
-  ShaderCompiler& operator=(ShaderCompiler&&) = default;
+  ShaderCompiler& operator=(ShaderCompiler&&) = delete;
 
-  std::optional<ShaderData> Compile([[maybe_unused]] const std::filesystem::path& path,
-    [[maybe_unused]] const std::string& source,
-    [[maybe_unused]] ShaderType type)
+  std::optional<ShaderData> Compile(const std::string& source, const std::filesystem::path& path, ShaderType type);
+
+  [[nodiscard]] bool HasError() const
   {
-    // TODO
-    return std::nullopt;
+    return !error_message_.empty();
   }
+
+  [[nodiscard]] const std::string& GetErrorMessage() const
+  {
+    return error_message_;
+  }
+
+  void ClearError()
+  {
+    error_message_.clear();
+  }
+
+  void SetValidationEnabled(bool enabled)
+  {
+    validation_enabled_ = enabled;
+  }
+
+private:
+  std::optional<shaderc::CompilationResult<uint32_t>> CompileToSpv(
+    const std::string& source, const std::string& absolute_path, ShaderType type);
+
+  spvtools::SpirvTools spirv_tools_;
+  shaderc::Compiler compiler_;
+  shaderc::CompileOptions options_;
+  std::string error_message_;
+
+  bool validation_enabled_ = true;
+  bool valid_ = true;
 };
 } // namespace plex::graphics
 

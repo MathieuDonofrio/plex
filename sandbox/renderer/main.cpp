@@ -22,7 +22,7 @@ struct FPSCounter
   }
 };
 
-std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
+std::string LoadShaderCodeFromFile(const std::string& filename)
 {
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -35,15 +35,16 @@ std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
     return {};
   }
 
-  std::streamsize fileSize = file.tellg();
-  std::vector<char> buffer(fileSize);
+  std::streamsize file_size = file.tellg();
+  std::string source;
+  source.resize(file_size);
 
   file.seekg(0);
-  file.read(buffer.data(), fileSize);
+  file.read(source.data(), file_size);
 
   file.close();
 
-  return buffer;
+  return source;
 }
 
 std::unique_ptr<Window> window;
@@ -93,8 +94,12 @@ int main(int, char**)
 
   LOG_INFO("Compiling shaders...");
 
-  auto vertex_shader = renderer->CreateShader("../../sandbox/renderer/assets/shader.vert", ShaderType::Vertex);
-  auto fragment_shader = renderer->CreateShader("../../sandbox/renderer/assets/shader.frag", ShaderType::Fragment);
+  auto vertex_shader = renderer->CreateShader(LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.vert"),
+    "../../sandbox/renderer/assets/shader.vert",
+    ShaderType::Vertex);
+  auto fragment_shader = renderer->CreateShader(LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.frag"),
+    "../../sandbox/renderer/assets/shader.frag",
+    ShaderType::Fragment);
 
   LOG_INFO("Shaders compiled");
 

@@ -16,13 +16,15 @@ namespace
   }
 } // namespace
 
-VulkanShader::VulkanShader(VkDevice device, const VulkanSpvBinary& spv_binary, ShaderType type)
+VulkanShader::VulkanShader(VkDevice device, const ShaderData& shader_data, ShaderType type)
   : device_(device), type_(type)
 {
+  const auto& spv_binary = shader_data.shader;
+
   VkShaderModuleCreateInfo create_info = {};
   create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  create_info.codeSize = spv_binary.GetSize() * sizeof(uint32_t);
-  create_info.pCode = spv_binary.GetData();
+  create_info.codeSize = spv_binary.size() * sizeof(uint32_t);
+  create_info.pCode = spv_binary.data();
 
   vkCreateShaderModule(device, &create_info, nullptr, &shader_module_);
 }
