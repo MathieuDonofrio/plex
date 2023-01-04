@@ -21,9 +21,12 @@ class VulkanCommandBuffer : public CommandBuffer
 public:
   VulkanCommandBuffer() = default;
 
-  VulkanCommandBuffer(VkCommandBuffer command_buffer, VulkanCommandBufferContext context)
-    : command_buffer_(command_buffer), context_(context)
-  {}
+  VulkanCommandBuffer(VkCommandBuffer command_buffer) : command_buffer_(command_buffer) {}
+
+  void SetContext(const VulkanCommandBufferContext& context) noexcept
+  {
+    context_ = context;
+  }
 
   void Reset() override;
 

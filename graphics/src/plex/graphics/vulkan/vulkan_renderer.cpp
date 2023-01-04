@@ -64,6 +64,8 @@ VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
   {
     FrameData& frame = frames_[i];
 
+    // Create semaphores
+
     VkSemaphoreCreateInfo semaphore_create_info {};
     semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     semaphore_create_info.pNext = nullptr;
@@ -72,6 +74,8 @@ VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
     vkCreateSemaphore(device_.GetHandle(), &semaphore_create_info, nullptr, &frame.image_available_semaphore);
     vkCreateSemaphore(device_.GetHandle(), &semaphore_create_info, nullptr, &frame.render_finished_semaphore);
 
+    // Create CPU fence
+
     VkFenceCreateInfo fence_create_info {};
     fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_create_info.pNext = nullptr;
@@ -79,12 +83,26 @@ VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
 
     vkCreateFence(device_.GetHandle(), &fence_create_info, nullptr, &frame.fence);
 
+    // Create command pool
+
     VkCommandPoolCreateInfo command_pool_create_info {};
     command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     command_pool_create_info.queueFamilyIndex = device_.GetGraphicsQueueFamilyIndex();
 
     vkCreateCommandPool(device_.GetHandle(), &command_pool_create_info, nullptr, &frame.command_pool);
+
+    VkCommandBufferAllocateInfo command_buffer_allocate_info {};
+    command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    command_buffer_allocate_info.commandPool = frame.command_pool;
+    command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    command_buffer_allocate_info.commandBufferCount = 1;
+
+    // Create primary command buffer
+
+    VkCommandBuffer command_buffer;
+    vkAllocateCommandBuffers(device_.GetHandle(), &command_buffer_allocate_info, &command_buffer);
+    new (&frame.primary_command_buffer) VulkanCommandBuffer(command_buffer);
   }
 
   // Make shared data
@@ -153,11 +171,11 @@ VulkanRenderer::~VulkanRenderer()
 
 CommandBuffer* VulkanRenderer::AcquireNextFrame()
 {
-  // Get next frame
+  // Get the next frame
 
   FrameData& frame = frames_[current_frame_index_];
 
-  // Aquire next image
+  // Aquire the next image
 
   vkWaitForFences(device_.GetHandle(), 1, &frame.fence, VK_TRUE, UINT64_MAX);
 
@@ -169,20 +187,11 @@ CommandBuffer* VulkanRenderer::AcquireNextFrame()
 
   current_image_index_ = result;
 
-  // Reset command pool
+  // Reset the command pool (Resets all buffers)
 
   vkResetCommandPool(device_.GetHandle(), frame.command_pool, 0);
 
-  VkCommandBufferAllocateInfo command_buffer_allocate_info {};
-  command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  command_buffer_allocate_info.commandPool = frame.command_pool;
-  command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  command_buffer_allocate_info.commandBufferCount = 1;
-
-  // Create primary command buffer
-
-  VkCommandBuffer command_buffer;
-  vkAllocateCommandBuffers(device_.GetHandle(), &command_buffer_allocate_info, &command_buffer);
+  // Set Context
 
   VulkanCommandBufferContext context;
   context.device = device_.GetHandle();
@@ -190,8 +199,7 @@ CommandBuffer* VulkanRenderer::AcquireNextFrame()
   context.framebuffer = swapchain_.GetFramebuffer(current_image_index_);
   context.extent = swapchain_.GetExtent();
 
-  frame.primary_command_buffer.~VulkanCommandBuffer();
-  new (&frame.primary_command_buffer) VulkanCommandBuffer(command_buffer, context);
+  frame.primary_command_buffer.SetContext(context);
 
   return &frame.primary_command_buffer;
 }
@@ -392,7 +400,8 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   return std::make_unique<VulkanMaterial>(pipeline_layout, pipeline);
 }
 
-std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::string& source, const std::filesystem::path& source_path, ShaderType type)
+std::unique_ptr<Shader> VulkanRenderer::CreateShader(
+  const std::string& source, const std::filesystem::path& source_path, ShaderType type)
 {
   auto spv_binary = shader_compiler_.Compile(source, source_path, type);
 

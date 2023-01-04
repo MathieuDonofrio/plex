@@ -26,25 +26,10 @@ namespace
     }
   }
 
-  std::optional<std::vector<char>> ReadFile(const fs::path& path)
-  {
-    std::ifstream file(path, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open()) [[unlikely]]
-      return std::nullopt;
-
-    std::streamsize fileSize = file.tellg();
-    std::vector<char> buffer(fileSize);
-
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-
-    file.close();
-    return buffer;
-  }
-
-  void SpirvToolsConsumeMessage(
-    spv_message_level_t level, const char* source, const spv_position_t& position, const char* message)
+  void SpirvToolsConsumeMessage([[maybe_unused]] spv_message_level_t level,
+    [[maybe_unused]] const char* source,
+    [[maybe_unused]] const spv_position_t& position,
+    [[maybe_unused]] const char* message)
   {
     switch (level)
     {
