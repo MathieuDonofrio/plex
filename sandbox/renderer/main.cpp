@@ -29,13 +29,9 @@ public:
 
     if (elapsed >= 1s)
     {
-      double second_mult = 1.0 / duration_cast<duration<double>>(elapsed).count();
-
-      fps_ = frame_count_ * second_mult;
+      fps_ = frame_count_ * (1.0 / duration_cast<duration<double>>(elapsed).count());
       frame_count_ = 0;
-
       last_time_ = now;
-
       return true;
     }
 
@@ -53,6 +49,64 @@ private:
   double frame_count_ = 0;
   double fps_ = 0;
 };
+
+class DeltaTime
+{
+public:
+  using Clock = std::chrono::high_resolution_clock;
+  using TimePoint = std::chrono::time_point<Clock>;
+
+  DeltaTime() : last_time_(Clock::now()) {}
+
+  void Update()
+  {
+    using namespace std::chrono;
+
+    auto now = Clock::now();
+    auto elapsed = now - last_time_;
+    last_time_ = now;
+
+    delta_time_ = duration_cast<duration<double>>(elapsed).count();
+  }
+
+  [[nodiscard]] float GetDeltaTime() const noexcept
+  {
+    return static_cast<float>(delta_time_);
+  }
+
+private:
+  TimePoint last_time_;
+  double delta_time_ = 0;
+};
+
+float3 HSVtoRGB(float h, float s, float v)
+{
+  float r, g, b;
+  float i;
+  float f, p, q, t;
+  if (s == 0)
+  {
+    // achromatic (grey)
+    r = g = b = v;
+    return float3(r, g, b);
+  }
+  h /= 60; // sector 0 to 5
+  i = floor(h);
+  f = h - i; // factorial part of h
+  p = v * (1 - s);
+  q = v * (1 - s * f);
+  t = v * (1 - s * (1 - f));
+  switch (static_cast<int>(i))
+  {
+  case 0: r = v, g = t, b = p; break;
+  case 1: r = q, g = v, b = p; break;
+  case 2: r = p, g = v, b = t; break;
+  case 3: r = p, g = q, b = v; break;
+  case 4: r = t, g = p, b = v; break;
+  default: r = v, g = p, b = q; break;
+  }
+  return { r, g, b };
+}
 
 std::string LoadShaderCodeFromFile(const std::string& filename)
 {
@@ -87,10 +141,25 @@ std::unique_ptr<Material> material;
 Buffer<Vertex> vertex_buffer;
 Buffer<uint16_t> index_buffer;
 
-void RecordCommandBuffer(CommandBuffer* primary_buffer)
+float wheel = 0;
+float wheel_speed = 0.2f;
+
+void RecordCommandBuffer(CommandBuffer* primary_buffer, float delta)
 {
   primary_buffer->Begin();
   primary_buffer->BeginRenderPass();
+
+  wheel = fmodf(wheel + 360 * wheel_speed * delta, 360);
+
+  Vertex* data = vertex_buffer.Map();
+
+  auto color = HSVtoRGB(static_cast<float>(wheel), 1, 1);
+
+  data[0].color = color;
+  data[1].color = color;
+  data[2].color = color;
+
+  vertex_buffer.Unmap();
 
   primary_buffer->BindVertexBuffer(vertex_buffer);
   primary_buffer->BindIndexBuffer(index_buffer);
@@ -169,16 +238,19 @@ int main(int, char**)
   // Loop
 
   FPSCounter fps_counter;
+  DeltaTime delta_time;
 
   while (!window->IsClosing())
   {
+    delta_time.Update();
+
     window->PollEvents();
 
     CommandBuffer* primary_buffer = renderer->AcquireNextFrame();
 
     if (primary_buffer == nullptr) continue;
 
-    RecordCommandBuffer(primary_buffer);
+    RecordCommandBuffer(primary_buffer, delta_time.GetDeltaTime());
 
     renderer->Render();
 
@@ -186,7 +258,7 @@ int main(int, char**)
 
     if (fps_counter.Update())
     {
-      window->SetTitle("FPS: " + std::to_string(static_cast<int>(fps_counter.GetFPS())));
+      window->SetTitle("FPS: " + std::to_string(static_cast<int>(std::round(fps_counter.GetFPS()))));
     }
 
     std::this_thread::yield();
