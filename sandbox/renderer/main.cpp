@@ -9,17 +9,49 @@
 using namespace plex;
 using namespace plex::graphics;
 
-struct FPSCounter
+class FPSCounter
 {
-  std::chrono::high_resolution_clock::time_point last_time_ = std::chrono::high_resolution_clock::now();
+public:
+  using Clock = std::chrono::high_resolution_clock;
+  using TimePoint = std::chrono::time_point<Clock>;
 
-  double GetFPS()
+  FPSCounter() : last_time_(std::chrono::high_resolution_clock::now()) {}
+
+  bool Update()
   {
-    auto now = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - last_time_).count();
-    last_time_ = now;
-    return 1000000.0 / duration;
+    using namespace std::chrono_literals;
+    using namespace std::chrono;
+
+    frame_count_++;
+
+    auto now = Clock::now();
+    auto elapsed = now - last_time_;
+
+    if (elapsed >= 1s)
+    {
+      double second_mult = 1.0 / duration_cast<duration<double>>(elapsed).count();
+
+      fps_ = frame_count_ * second_mult;
+      frame_count_ = 0;
+
+      last_time_ = now;
+
+      return true;
+    }
+
+    return false;
   }
+
+  [[nodiscard]] double GetFPS() const noexcept
+  {
+    return fps_;
+  }
+
+private:
+  TimePoint last_time_;
+
+  double frame_count_ = 0;
+  double fps_ = 0;
 };
 
 std::string LoadShaderCodeFromFile(const std::string& filename)
@@ -152,7 +184,10 @@ int main(int, char**)
 
     renderer->Present();
 
-    window->SetTitle("FPS: " + std::to_string(fps_counter.GetFPS()));
+    if (fps_counter.Update())
+    {
+      window->SetTitle("FPS: " + std::to_string(static_cast<int>(fps_counter.GetFPS())));
+    }
 
     std::this_thread::yield();
   }
