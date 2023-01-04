@@ -16,7 +16,7 @@
 
 namespace plex::graphics
 {
-struct FrameData
+struct FrameLocalData
 {
   VkSemaphore image_available_semaphore;
   VkSemaphore render_finished_semaphore;
@@ -34,15 +34,14 @@ public:
   ~VulkanRenderer() override;
 
   CommandBuffer* AcquireNextFrame() override;
-
   void Render() override;
-
   void Present() override;
+
+  void SubmitImmediate(std::function<void(CommandBuffer*)> func) override;
 
   void WaitIdle() override;
 
   [[nodiscard]] std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) override;
-
   [[nodiscard]] std::unique_ptr<Shader> CreateShader(
     const std::string& source, const std::filesystem::path& source_path, ShaderType type) override;
 
@@ -52,8 +51,7 @@ public:
   }
 
 private:
-  std::unique_ptr<pbi::PolymorphicBufferInterface> CreateBuffer(
-    size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties) override;
+  pbi::Buffer CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties) override;
 
   void WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&);
 
@@ -65,14 +63,19 @@ private:
   VulkanDevice device_;
   VulkanSwapchain swapchain_;
 
-  std::array<FrameData, 3> frames_;
+  std::array<FrameLocalData, 3> frames_;
 
   uint32_t current_frame_index_;
   uint32_t current_image_index_;
 
-  ShaderCompiler shader_compiler_;
-
   VkRenderPass render_pass_;
+
+  VkFence submit_immediate_fence_;
+  VkCommandPool command_pool_;
+
+  VulkanCommandBuffer submit_immediate_command_buffer_;
+
+  ShaderCompiler shader_compiler_;
 };
 
 } // namespace plex::graphics

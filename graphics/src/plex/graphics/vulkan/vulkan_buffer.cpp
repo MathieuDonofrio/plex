@@ -1,6 +1,6 @@
 #include "plex/graphics/vulkan/vulkan_buffer.h"
 
-namespace plex::graphics::pbi
+namespace plex::graphics
 {
 VulkanBufferInterface::~VulkanBufferInterface()
 {
@@ -19,4 +19,4 @@ void VulkanBufferInterface::Unmap()
 {
   vkUnmapMemory(device_, memory_);
 }
-} // namespace plex::graphics::pbi
+} // namespace plex::graphics

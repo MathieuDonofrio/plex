@@ -2,6 +2,7 @@
 #define PLEX_GRAPHICS_GRAPHIC_RENDERER_H
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -59,6 +60,9 @@ public:
   virtual CommandBuffer* AcquireNextFrame() = 0;
   virtual void Render() = 0;
   virtual void Present() = 0;
+
+  virtual void SubmitImmediate(std::function<void(CommandBuffer*)> func) = 0;
+
   virtual void WaitIdle() = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) = 0;
@@ -72,8 +76,7 @@ public:
   }
 
 private:
-  virtual std::unique_ptr<pbi::PolymorphicBufferInterface> CreateBuffer(
-    size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties) = 0;
+  virtual pbi::Buffer CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties) = 0;
 };
 
 struct RendererCreateInfo

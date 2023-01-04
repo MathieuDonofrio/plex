@@ -38,6 +38,15 @@ public:
 
   virtual void Draw(uint32_t vertex_count) = 0;
   virtual void DrawIndexed(uint32_t index_count) = 0;
+
+  template<typename Type>
+  void CopyBuffer(const Buffer<Type>& src, const Buffer<Type>& dst)
+  {
+    CopyBuffer(src.GetInterface(), dst.GetInterface(), 0, 0, src.size() * sizeof(Type));
+  }
+
+private:
+  virtual void CopyBuffer(pbi::Buffer src, pbi::Buffer dst, size_t src_offset, size_t dst_offset, size_t size) = 0;
 };
 } // namespace plex::graphics
 

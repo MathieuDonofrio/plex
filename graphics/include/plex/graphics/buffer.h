@@ -32,24 +32,26 @@ enum class MemoryPropertyFlags : uint16_t
 
 DEFINE_ENUM_FLAG_OPERATORS(MemoryPropertyFlags);
 
+class PolymorphicBufferInterface
+{
+public:
+  PolymorphicBufferInterface() = default;
+  virtual ~PolymorphicBufferInterface() = default;
+
+  PolymorphicBufferInterface(const PolymorphicBufferInterface&) = delete;
+  PolymorphicBufferInterface& operator=(const PolymorphicBufferInterface&) = delete;
+  PolymorphicBufferInterface(PolymorphicBufferInterface&&) = delete;
+  PolymorphicBufferInterface& operator=(PolymorphicBufferInterface&&) = delete;
+
+  virtual void* Map() = 0;
+  virtual void Unmap() = 0;
+
+  virtual void* GetNativeHandle() const noexcept = 0;
+};
+
 namespace pbi
 {
-  class PolymorphicBufferInterface
-  {
-  public:
-    PolymorphicBufferInterface() = default;
-    virtual ~PolymorphicBufferInterface() = default;
-
-    PolymorphicBufferInterface(const PolymorphicBufferInterface&) = delete;
-    PolymorphicBufferInterface& operator=(const PolymorphicBufferInterface&) = delete;
-    PolymorphicBufferInterface(PolymorphicBufferInterface&&) = delete;
-    PolymorphicBufferInterface& operator=(PolymorphicBufferInterface&&) = delete;
-
-    virtual void* Map() = 0;
-    virtual void Unmap() = 0;
-
-    virtual void* GetNativeHandle() const noexcept = 0;
-  };
+  using Buffer = PolymorphicBufferInterface*;
 } // namespace pbi
 
 template<TriviallyRelocatable Type>
@@ -60,11 +62,9 @@ public:
     : interface_(nullptr), size_(0), usage_(BufferUsageFlags::None), memory_properties_(MemoryPropertyFlags::None)
   {}
 
-  constexpr Buffer(std::unique_ptr<pbi::PolymorphicBufferInterface>&& interface,
-    uint32_t size,
-    BufferUsageFlags usage,
-    MemoryPropertyFlags memory_property) noexcept
-    : interface_(interface.release()), size_(size), usage_(usage), memory_properties_(memory_property)
+  constexpr Buffer(
+    pbi::Buffer interface, uint32_t size, BufferUsageFlags usage, MemoryPropertyFlags memory_property) noexcept
+    : interface_(interface), size_(size), usage_(usage), memory_properties_(memory_property)
   {}
 
   constexpr Buffer(Buffer&& other) noexcept
@@ -122,6 +122,11 @@ public:
     std::swap(memory_properties_, other.memory_properties_);
   }
 
+  [[nodiscard]] pbi::Buffer GetInterface() const noexcept
+  {
+    return interface_;
+  }
+
   [[nodiscard]] BufferUsageFlags GetUsage() const noexcept
   {
     return usage_;
@@ -143,7 +148,7 @@ public:
   }
 
 private:
-  pbi::PolymorphicBufferInterface* interface_;
+  pbi::Buffer interface_;
   Type* data_;
   uint32_t size_;
   BufferUsageFlags usage_;

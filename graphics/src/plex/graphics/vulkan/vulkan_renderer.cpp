@@ -62,7 +62,7 @@ VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
 
   for (size_t i = 0; i < GetFrameCount(); i++)
   {
-    FrameData& frame = frames_[i];
+    FrameLocalData& frame = frames_[i];
 
     // Create semaphores
 
@@ -105,7 +105,9 @@ VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
     new (&frame.primary_command_buffer) VulkanCommandBuffer(command_buffer);
   }
 
-  // Make shared data
+  // Make global data
+
+  // Make render pass
 
   VkAttachmentDescription color_attachment {};
   color_attachment.format = swapchain_.GetSurfaceFormat().format;
@@ -145,7 +147,39 @@ VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
 
   vkCreateRenderPass(device_.GetHandle(), &render_pass_create_info, nullptr, &render_pass_);
 
+  // Init framebuffers
+
   swapchain_.InitFramebuffers(render_pass_);
+
+  // Create fences
+
+  VkFenceCreateInfo fence_create_info {};
+  fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fence_create_info.pNext = nullptr;
+  fence_create_info.flags = 0;
+
+  vkCreateFence(device_.GetHandle(), &fence_create_info, nullptr, &submit_immediate_fence_);
+
+  // Create command pool
+
+  VkCommandPoolCreateInfo command_pool_create_info {};
+  command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  command_pool_create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  command_pool_create_info.queueFamilyIndex = device_.GetGraphicsQueueFamilyIndex();
+
+  vkCreateCommandPool(device_.GetHandle(), &command_pool_create_info, nullptr, &command_pool_);
+
+  // Create command buffer
+
+  VkCommandBufferAllocateInfo command_buffer_allocate_info {};
+  command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  command_buffer_allocate_info.commandPool = command_pool_;
+  command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  command_buffer_allocate_info.commandBufferCount = 1;
+
+  VkCommandBuffer command_buffer;
+  vkAllocateCommandBuffers(device_.GetHandle(), &command_buffer_allocate_info, &command_buffer);
+  new (&submit_immediate_command_buffer_) VulkanCommandBuffer(command_buffer);
 }
 
 VulkanRenderer::~VulkanRenderer()
@@ -156,7 +190,7 @@ VulkanRenderer::~VulkanRenderer()
 
   for (size_t i = 0; i < GetFrameCount(); i++)
   {
-    FrameData& frame = frames_[i];
+    FrameLocalData& frame = frames_[i];
 
     vkWaitForFences(device_.GetHandle(), 1, &frame.fence, VK_TRUE, UINT64_MAX); // TODO is this nessesary?
 
@@ -167,13 +201,15 @@ VulkanRenderer::~VulkanRenderer()
   }
 
   vkDestroyRenderPass(device_.GetHandle(), render_pass_, nullptr);
+  vkDestroyFence(device_.GetHandle(), submit_immediate_fence_, nullptr);
+  vkDestroyCommandPool(device_.GetHandle(), command_pool_, nullptr);
 }
 
 CommandBuffer* VulkanRenderer::AcquireNextFrame()
 {
   // Get the next frame
 
-  FrameData& frame = frames_[current_frame_index_];
+  FrameLocalData& frame = frames_[current_frame_index_];
 
   // Aquire the next image
 
@@ -208,7 +244,7 @@ void VulkanRenderer::Render()
 {
   // Get current frame
 
-  const FrameData& frame = frames_[current_frame_index_];
+  const FrameLocalData& frame = frames_[current_frame_index_];
 
   // Submit command buffer
 
@@ -218,11 +254,12 @@ void VulkanRenderer::Render()
 
   VkSubmitInfo submit_info = {};
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submit_info.commandBufferCount = 1;
-  submit_info.pCommandBuffers = &vk_command_buffer;
+  submit_info.pNext = nullptr;
   submit_info.waitSemaphoreCount = 1;
   submit_info.pWaitSemaphores = &frame.image_available_semaphore;
   submit_info.pWaitDstStageMask = waitStages;
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &vk_command_buffer;
   submit_info.signalSemaphoreCount = 1;
   submit_info.pSignalSemaphores = &frame.render_finished_semaphore;
 
@@ -233,7 +270,7 @@ void VulkanRenderer::Present()
 {
   // Get current frame
 
-  const FrameData& frame = frames_[current_frame_index_];
+  const FrameLocalData& frame = frames_[current_frame_index_];
 
   // Present image
 
@@ -242,6 +279,31 @@ void VulkanRenderer::Present()
   // Increment frame index
 
   current_frame_index_ = (current_frame_index_ + 1) % GetFrameCount();
+}
+
+void VulkanRenderer::SubmitImmediate(std::function<void(CommandBuffer*)> func)
+{
+  func(&submit_immediate_command_buffer_);
+
+  VkCommandBuffer vk_command_buffer = submit_immediate_command_buffer_.GetHandle();
+
+  VkSubmitInfo submit_info = {};
+  submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submit_info.pNext = nullptr;
+  submit_info.waitSemaphoreCount = 0;
+  submit_info.pWaitSemaphores = nullptr;
+  submit_info.pWaitDstStageMask = nullptr;
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &vk_command_buffer;
+  submit_info.signalSemaphoreCount = 0;
+  submit_info.pSignalSemaphores = nullptr;
+
+  vkQueueSubmit(device_.GetGraphicsQueue(), 1, &submit_info, submit_immediate_fence_);
+
+  vkWaitForFences(device_.GetHandle(), 1, &submit_immediate_fence_, VK_TRUE, UINT64_MAX);
+  vkResetFences(device_.GetHandle(), 1, &submit_immediate_fence_);
+
+  vkResetCommandPool(device_.GetHandle(), command_pool_, 0);
 }
 
 void VulkanRenderer::WaitIdle()
@@ -420,8 +482,7 @@ std::unique_ptr<Shader> VulkanRenderer::CreateShader(
   return std::make_unique<VulkanShader>(device_.GetHandle(), *spv_binary, type);
 }
 
-std::unique_ptr<pbi::PolymorphicBufferInterface> VulkanRenderer::CreateBuffer(
-  size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties)
+pbi::Buffer VulkanRenderer::CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties)
 {
   VkBufferCreateInfo buffer_create_info {};
   buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -439,7 +500,7 @@ std::unique_ptr<pbi::PolymorphicBufferInterface> VulkanRenderer::CreateBuffer(
 
   vkBindBufferMemory(device_.GetHandle(), buffer, buffer_memory, 0);
 
-  return std::make_unique<pbi::VulkanBufferInterface>(device_.GetHandle(), buffer, buffer_memory, size);
+  return new VulkanBufferInterface(device_.GetHandle(), buffer, buffer_memory, size);
 }
 
 void VulkanRenderer::WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&)

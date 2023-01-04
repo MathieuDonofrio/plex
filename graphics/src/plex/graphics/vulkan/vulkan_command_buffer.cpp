@@ -111,4 +111,18 @@ void VulkanCommandBuffer::DrawIndexed(uint32_t index_count)
   vkCmdDrawIndexed(command_buffer_, index_count, 1, 0, 0, 0);
 }
 
+void VulkanCommandBuffer::CopyBuffer(
+  pbi::Buffer src, pbi::Buffer dst, size_t src_offset, size_t dst_offset, size_t size)
+{
+  auto vk_src_buffer = static_cast<VkBuffer>(src->GetNativeHandle());
+  auto vk_dst_buffer = static_cast<VkBuffer>(dst->GetNativeHandle());
+
+  VkBufferCopy copy_region {};
+  copy_region.srcOffset = src_offset;
+  copy_region.dstOffset = dst_offset;
+  copy_region.size = size;
+
+  vkCmdCopyBuffer(command_buffer_, vk_src_buffer, vk_dst_buffer, 1, &copy_region);
+}
+
 } // namespace plex::graphics

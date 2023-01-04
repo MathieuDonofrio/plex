@@ -55,6 +55,9 @@ public:
   }
 
 private:
+  void CopyBuffer(pbi::Buffer src, pbi::Buffer dst, size_t src_offset, size_t dst_offset, size_t size) override;
+
+private:
   VkCommandBuffer command_buffer_;
 
   VulkanCommandBufferContext context_;

@@ -144,10 +144,71 @@ Buffer<uint16_t> index_buffer;
 float wheel = 0;
 float wheel_speed = 0.2f;
 
-void RecordCommandBuffer(CommandBuffer* primary_buffer, float delta)
+void OnInit()
 {
-  primary_buffer->Begin();
-  primary_buffer->BeginRenderPass();
+  // Create material
+
+  LOG_INFO("Compiling shaders...");
+
+  auto vertex_shader = renderer->CreateShader(LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.vert"),
+    "../../sandbox/renderer/assets/shader.vert",
+    ShaderType::Vertex);
+  auto fragment_shader = renderer->CreateShader(LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.frag"),
+    "../../sandbox/renderer/assets/shader.frag",
+    ShaderType::Fragment);
+
+  LOG_INFO("Shaders compiled");
+
+  MaterialCreateInfo material_create_info {};
+  material_create_info.vertex_shader = vertex_shader.get();
+  material_create_info.fragment_shader = fragment_shader.get();
+
+  material = renderer->CreateMaterial(material_create_info);
+
+  // Make CPU accessible vertex buffer
+
+  vertex_buffer = renderer->CreateBuffer<Vertex>(3, BufferUsageFlags::Vertex, MemoryPropertyFlags::HostVisible);
+
+  Vertex* data = vertex_buffer.Map();
+
+  data[0].pos = { 0.0f, -0.5f };
+  data[0].color = { 1.0f, 0.0f, 0.0f };
+  data[1].pos = { 0.5, 0.5 };
+  data[1].color = { 0.0f, 1.0f, 0.0f };
+  data[2].pos = { -0.5, 0.5 };
+  data[2].color = { 0.0f, 0.0f, 1.0f };
+
+  vertex_buffer.Unmap();
+
+  // Make GPU-Only accessible index buffer
+
+  Buffer<uint16_t> staging_index_buffer =
+    renderer->CreateBuffer<uint16_t>(3, BufferUsageFlags::TransferSource, MemoryPropertyFlags::HostVisible);
+
+  uint16_t* index_data = staging_index_buffer.Map();
+
+  index_data[0] = 0;
+  index_data[1] = 1;
+  index_data[2] = 2;
+
+  staging_index_buffer.Unmap();
+
+  index_buffer = renderer->CreateBuffer<uint16_t>(
+    3, BufferUsageFlags::Index | BufferUsageFlags::TransferDestination, MemoryPropertyFlags::DeviceLocal);
+
+  renderer->SubmitImmediate(
+    [&](CommandBuffer* command_buffer)
+    {
+      command_buffer->Begin();
+      command_buffer->CopyBuffer(staging_index_buffer, index_buffer);
+      command_buffer->End();
+    });
+}
+
+void OnRecord(CommandBuffer* command_buffer, float delta)
+{
+  command_buffer->Begin();
+  command_buffer->BeginRenderPass();
 
   wheel = fmodf(wheel + 360 * wheel_speed * delta, 360);
 
@@ -161,15 +222,15 @@ void RecordCommandBuffer(CommandBuffer* primary_buffer, float delta)
 
   vertex_buffer.Unmap();
 
-  primary_buffer->BindVertexBuffer(vertex_buffer);
-  primary_buffer->BindIndexBuffer(index_buffer);
+  command_buffer->BindVertexBuffer(vertex_buffer);
+  command_buffer->BindIndexBuffer(index_buffer);
 
-  primary_buffer->BindMaterial(material.get());
+  command_buffer->BindMaterial(material.get());
 
-  primary_buffer->DrawIndexed(index_buffer.size());
+  command_buffer->DrawIndexed(index_buffer.size());
 
-  primary_buffer->EndRenderPass();
-  primary_buffer->End();
+  command_buffer->EndRenderPass();
+  command_buffer->End();
 }
 
 int main(int, char**)
@@ -191,49 +252,9 @@ int main(int, char**)
 
   renderer = CreateRenderer(renderer_info, BackendType::Vulkan);
 
-  // Create material
+  // Init
 
-  LOG_INFO("Compiling shaders...");
-
-  auto vertex_shader = renderer->CreateShader(LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.vert"),
-    "../../sandbox/renderer/assets/shader.vert",
-    ShaderType::Vertex);
-  auto fragment_shader = renderer->CreateShader(LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.frag"),
-    "../../sandbox/renderer/assets/shader.frag",
-    ShaderType::Fragment);
-
-  LOG_INFO("Shaders compiled");
-
-  MaterialCreateInfo material_create_info {};
-  material_create_info.vertex_shader = vertex_shader.get();
-  material_create_info.fragment_shader = fragment_shader.get();
-
-  material = renderer->CreateMaterial(material_create_info);
-
-  // Create Buffers
-
-  vertex_buffer = renderer->CreateBuffer<Vertex>(3, BufferUsageFlags::Vertex, MemoryPropertyFlags::HostVisible);
-
-  Vertex* data = vertex_buffer.Map();
-
-  data[0].pos = { 0.0f, -0.5f };
-  data[0].color = { 1.0f, 0.0f, 0.0f };
-  data[1].pos = { 0.5, 0.5 };
-  data[1].color = { 0.0f, 1.0f, 0.0f };
-  data[2].pos = { -0.5, 0.5 };
-  data[2].color = { 0.0f, 0.0f, 1.0f };
-
-  vertex_buffer.Unmap();
-
-  index_buffer = renderer->CreateBuffer<uint16_t>(3, BufferUsageFlags::Index, MemoryPropertyFlags::HostVisible);
-
-  uint16_t* index_data = index_buffer.Map();
-
-  index_data[0] = 0;
-  index_data[1] = 1;
-  index_data[2] = 2;
-
-  index_buffer.Unmap();
+  OnInit();
 
   // Loop
 
@@ -250,10 +271,9 @@ int main(int, char**)
 
     if (primary_buffer == nullptr) continue;
 
-    RecordCommandBuffer(primary_buffer, delta_time.GetDeltaTime());
+    OnRecord(primary_buffer, delta_time.GetDeltaTime());
 
     renderer->Render();
-
     renderer->Present();
 
     if (fps_counter.Update())

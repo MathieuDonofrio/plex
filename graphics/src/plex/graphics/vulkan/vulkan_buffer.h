@@ -4,7 +4,7 @@
 #include "plex/graphics/buffer.h"
 #include "plex/graphics/vulkan/api/vulkan_api.h"
 
-namespace plex::graphics::pbi
+namespace plex::graphics
 {
 class VulkanBufferInterface : public PolymorphicBufferInterface
 {
@@ -29,7 +29,6 @@ private:
   VkDeviceMemory memory_;
   size_t size_;
 };
-
-} // namespace plex::graphics::pbi
+} // namespace plex::graphics
 
 #endif
