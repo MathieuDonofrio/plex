@@ -15,6 +15,8 @@ public:
 
   ~VulkanDevice();
 
+  VkDeviceMemory Allocate(VkMemoryRequirements requirements, VkMemoryPropertyFlagBits properties);
+
   [[nodiscard]] VkQueue GetGraphicsQueue() const noexcept
   {
     return graphics_queue_;

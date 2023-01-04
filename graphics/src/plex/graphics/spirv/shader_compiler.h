@@ -36,7 +36,9 @@ public:
   ShaderCompiler& operator=(const ShaderCompiler&) = delete;
   ShaderCompiler& operator=(ShaderCompiler&&) = default;
 
-  std::optional<ShaderData> Compile(const std::filesystem::path& path, const std::string& source, ShaderType type)
+  std::optional<ShaderData> Compile([[maybe_unused]] const std::filesystem::path& path,
+    [[maybe_unused]] const std::string& source,
+    [[maybe_unused]] ShaderType type)
   {
     // TODO
     return std::nullopt;

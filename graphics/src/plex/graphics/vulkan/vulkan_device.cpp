@@ -215,6 +215,24 @@ namespace
 
     return most_suitable->first;
   }
+
+  uint32_t FindMemoryType(VkPhysicalDevice device, uint32_t type_filter, VkMemoryPropertyFlags properties)
+  {
+    VkPhysicalDeviceMemoryProperties memory_properties;
+    vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
+
+    for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
+    {
+      if ((type_filter & (1 << i)) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties)
+      {
+        return i;
+      }
+    }
+
+    LOG_ERROR("Failed to find suitable memory type");
+
+    return 0;
+  }
 } // namespace
 
 VulkanDevice::VulkanDevice(VkInstance instance, VkSurfaceKHR surface)
@@ -277,6 +295,23 @@ VulkanDevice::VulkanDevice(VkInstance instance, VkSurfaceKHR surface)
 VulkanDevice::~VulkanDevice()
 {
   vkDestroyDevice(logical_device_, nullptr);
+}
+
+VkDeviceMemory VulkanDevice::Allocate(VkMemoryRequirements requirements, VkMemoryPropertyFlagBits properties)
+{
+  VkMemoryAllocateInfo memory_allocate_info {};
+  memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  memory_allocate_info.allocationSize = requirements.size;
+  memory_allocate_info.memoryTypeIndex = FindMemoryType(physical_device_, requirements.memoryTypeBits, properties);
+
+  VkDeviceMemory memory;
+  if (vkAllocateMemory(logical_device_, &memory_allocate_info, nullptr, &memory) != VK_SUCCESS)
+  {
+    LOG_ERROR("Failed to allocate memory");
+    return nullptr;
+  }
+
+  return memory;
 }
 
 } // namespace plex::graphics

@@ -46,14 +46,25 @@ std::vector<char> LoadShaderCodeFromFile(const std::string& filename)
   return buffer;
 }
 
+std::unique_ptr<Window> window;
+std::unique_ptr<Renderer> renderer;
+
 std::unique_ptr<Material> material;
+
+Buffer<Vertex> vertex_buffer;
+Buffer<uint16_t> index_buffer;
 
 void RecordCommandBuffer(CommandBuffer* primary_buffer)
 {
   primary_buffer->Begin();
   primary_buffer->BeginRenderPass();
 
-  primary_buffer->FirstTriangleTest(material.get());
+  primary_buffer->BindVertexBuffer(vertex_buffer);
+  primary_buffer->BindIndexBuffer(index_buffer);
+
+  primary_buffer->BindMaterial(material.get());
+
+  primary_buffer->DrawIndexed(index_buffer.size());
 
   primary_buffer->EndRenderPass();
   primary_buffer->End();
@@ -65,7 +76,7 @@ int main(int, char**)
 
   constexpr WindowCreationHints hints = WindowCreationHints::Defaults;
 
-  std::unique_ptr<Window> window = CreateWindow("Hello world", 512, 512, hints);
+  window = CreateWindow("Hello world", 512, 512, hints);
 
   // Create Renderer
 
@@ -73,17 +84,17 @@ int main(int, char**)
   renderer_info.window = window.get();
   renderer_info.application_name = "Basic Window";
   renderer_info.debug_level = DebugLevel::Info;
-  renderer_info.present_mode = PresentMode::FIFO;
+  renderer_info.present_mode = PresentMode::Immediate;
   renderer_info.buffering_mode = BufferingMode::Double;
 
-  std::unique_ptr<Renderer> renderer = CreateRenderer(renderer_info, BackendType::Vulkan);
+  renderer = CreateRenderer(renderer_info, BackendType::Vulkan);
 
   // Create material
 
   LOG_INFO("Compiling shaders...");
 
-  auto vertex_shader = renderer->CreateShader("assets/shader.vert", ShaderType::Vertex);
-  auto fragment_shader = renderer->CreateShader("assets/shader.frag", ShaderType::Fragment);
+  auto vertex_shader = renderer->CreateShader("../../sandbox/renderer/assets/shader.vert", ShaderType::Vertex);
+  auto fragment_shader = renderer->CreateShader("../../sandbox/renderer/assets/shader.frag", ShaderType::Fragment);
 
   LOG_INFO("Shaders compiled");
 
@@ -92,6 +103,31 @@ int main(int, char**)
   material_create_info.fragment_shader = fragment_shader.get();
 
   material = renderer->CreateMaterial(material_create_info);
+
+  // Create Buffers
+
+  vertex_buffer = renderer->CreateBuffer<Vertex>(3, BufferUsageFlags::Vertex, MemoryPropertyFlags::HostVisible);
+
+  Vertex* data = vertex_buffer.Map();
+
+  data[0].pos = { 0.0f, -0.5f };
+  data[0].color = { 1.0f, 0.0f, 0.0f };
+  data[1].pos = { 0.5, 0.5 };
+  data[1].color = { 0.0f, 1.0f, 0.0f };
+  data[2].pos = { -0.5, 0.5 };
+  data[2].color = { 0.0f, 0.0f, 1.0f };
+
+  vertex_buffer.Unmap();
+
+  index_buffer = renderer->CreateBuffer<uint16_t>(3, BufferUsageFlags::Index, MemoryPropertyFlags::HostVisible);
+
+  uint16_t* index_data = index_buffer.Map();
+
+  index_data[0] = 0;
+  index_data[1] = 1;
+  index_data[2] = 2;
+
+  index_buffer.Unmap();
 
   // Loop
 

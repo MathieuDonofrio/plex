@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 
+#include "plex/graphics/buffer.h"
 #include "plex/graphics/command_buffer.h"
 #include "plex/graphics/material.h"
 #include "plex/graphics/shader.h"
@@ -60,8 +61,17 @@ public:
   virtual void WaitIdle() = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) = 0;
-
   [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const std::filesystem::path& source, ShaderType type) = 0;
+
+  template<typename Type>
+  [[nodiscard]] Buffer<Type> CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties)
+  {
+    return { CreateBuffer(size * sizeof(Type), usage, properties), static_cast<uint32_t>(size), usage, properties };
+  }
+
+private:
+  virtual std::unique_ptr<pbi::PolymorphicBufferInterface> CreateBuffer(
+    size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties) = 0;
 };
 
 struct RendererCreateInfo

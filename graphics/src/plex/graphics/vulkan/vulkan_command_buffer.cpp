@@ -38,6 +38,11 @@ void VulkanCommandBuffer::BeginRenderPass()
   render_pass_begin_info.pClearValues = &clear_value;
 
   vkCmdBeginRenderPass(command_buffer_, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+  SetViewport(
+    0.0f, 0.0f, static_cast<float>(context_.extent.width), static_cast<float>(context_.extent.height), 0.0f, 1.0f);
+
+  SetScissor(0, 0, context_.extent.width, context_.extent.height);
 }
 
 void VulkanCommandBuffer::EndRenderPass()
@@ -45,27 +50,65 @@ void VulkanCommandBuffer::EndRenderPass()
   vkCmdEndRenderPass(command_buffer_);
 }
 
-void VulkanCommandBuffer::FirstTriangleTest(Material* material)
+void VulkanCommandBuffer::SetViewport(float x, float y, float width, float height, float min_depth, float max_depth)
+{
+  VkViewport viewport {};
+  viewport.x = x;
+  viewport.y = y;
+  viewport.width = width;
+  viewport.height = height;
+  viewport.minDepth = min_depth;
+  viewport.maxDepth = max_depth;
+
+  vkCmdSetViewport(command_buffer_, 0, 1, &viewport);
+}
+
+void VulkanCommandBuffer::SetScissor(int32_t x, int32_t y, uint32_t width, uint32_t height)
+{
+  VkRect2D scissor {};
+  scissor.offset = { x, y };
+  scissor.extent = { width, height };
+
+  vkCmdSetScissor(command_buffer_, 0, 1, &scissor);
+}
+
+void VulkanCommandBuffer::BindVertexBuffer(const Buffer<Vertex>& buffer)
+{
+  auto vk_buffer = static_cast<VkBuffer>(buffer.GetNativeHandle());
+  VkDeviceSize offsets[] = { 0 };
+
+  vkCmdBindVertexBuffers(command_buffer_, 0, 1, &vk_buffer, offsets);
+}
+
+void VulkanCommandBuffer::BindIndexBuffer(const Buffer<uint32_t>& buffer)
+{
+  auto vk_buffer = static_cast<VkBuffer>(buffer.GetNativeHandle());
+
+  vkCmdBindIndexBuffer(command_buffer_, vk_buffer, 0, VK_INDEX_TYPE_UINT32);
+}
+
+void VulkanCommandBuffer::BindIndexBuffer(const Buffer<uint16_t>& buffer)
+{
+  auto vk_buffer = static_cast<VkBuffer>(buffer.GetNativeHandle());
+
+  vkCmdBindIndexBuffer(command_buffer_, vk_buffer, 0, VK_INDEX_TYPE_UINT16);
+}
+
+void VulkanCommandBuffer::BindMaterial(Material* material)
 {
   auto* vulkan_material = static_cast<VulkanMaterial*>(material);
 
   vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkan_material->GetPipeline());
+}
 
-  VkViewport viewport {};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  viewport.width = (float)context_.extent.width;
-  viewport.height = (float)context_.extent.height;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-  vkCmdSetViewport(command_buffer_, 0, 1, &viewport);
+void VulkanCommandBuffer::Draw(uint32_t vertex_count)
+{
+  vkCmdDraw(command_buffer_, vertex_count, 1, 0, 0);
+}
 
-  VkRect2D scissor {};
-  scissor.offset = { 0, 0 };
-  scissor.extent = context_.extent;
-  vkCmdSetScissor(command_buffer_, 0, 1, &scissor);
-
-  vkCmdDraw(command_buffer_, 3, 1, 0, 0);
+void VulkanCommandBuffer::DrawIndexed(uint32_t index_count)
+{
+  vkCmdDrawIndexed(command_buffer_, index_count, 1, 0, 0, 0);
 }
 
 } // namespace plex::graphics

@@ -1,11 +1,38 @@
 #include "plex/graphics/vulkan/vulkan_renderer.h"
 
 #include "plex/debug/logging.h"
+#include "plex/graphics/vulkan/vulkan_buffer.h"
 #include "plex/graphics/vulkan/vulkan_material.h"
 #include "plex/graphics/vulkan/vulkan_shader.h"
 
 namespace plex::graphics
 {
+namespace
+{
+  VkBufferUsageFlagBits GetBufferUsageFlagBits(BufferUsageFlags usage)
+  {
+    int flags = 0;
+    if ((usage & BufferUsageFlags::Vertex) != 0) flags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Index) != 0) flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Uniform) != 0) flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Storage) != 0) flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::TransferSource) != 0) flags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    if ((usage & BufferUsageFlags::TransferDestination) != 0) flags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    return static_cast<VkBufferUsageFlagBits>(flags);
+  }
+
+  VkMemoryPropertyFlagBits GetMemoryPropertyFlagBits(MemoryPropertyFlags properties)
+  {
+    int flags = 0;
+    if ((properties & MemoryPropertyFlags::DeviceLocal) != 0) flags |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    if ((properties & MemoryPropertyFlags::HostVisible) != 0) flags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    if ((properties & MemoryPropertyFlags::HostCoherent) != 0) flags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    if ((properties & MemoryPropertyFlags::HostCached) != 0) flags |= VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+    if ((properties & MemoryPropertyFlags::LazilyAllocated) != 0) flags |= VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+    return static_cast<VkMemoryPropertyFlagBits>(flags);
+  }
+} // namespace
+
 VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
   : // Window
     window_(create_info.window),
@@ -226,14 +253,34 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
 
   // Vertex Input
 
-  // TODO currently vertex data is hardcoded in the shader
+  VkVertexInputBindingDescription bindingDescription {};
+  bindingDescription.binding = 0;
+  bindingDescription.stride = sizeof(Vertex);
+  bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions {};
+
+  attributeDescriptions[0].binding = 0;
+  attributeDescriptions[0].location = 0;
+  attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+  attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+  attributeDescriptions[1].binding = 0;
+  attributeDescriptions[1].location = 1;
+  attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+  attributeDescriptions[2].binding = 0;
+  attributeDescriptions[2].location = 2;
+  attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attributeDescriptions[2].offset = offsetof(Vertex, tex);
 
   VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info {};
   vertex_input_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertex_input_state_create_info.vertexBindingDescriptionCount = 0;
-  vertex_input_state_create_info.pVertexBindingDescriptions = nullptr;
-  vertex_input_state_create_info.vertexAttributeDescriptionCount = 0;
-  vertex_input_state_create_info.pVertexAttributeDescriptions = nullptr;
+  vertex_input_state_create_info.vertexBindingDescriptionCount = 1;
+  vertex_input_state_create_info.pVertexBindingDescriptions = &bindingDescription;
+  vertex_input_state_create_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+  vertex_input_state_create_info.pVertexAttributeDescriptions = attributeDescriptions.data();
 
   // Input Assembly
 
@@ -362,6 +409,28 @@ std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::filesystem::path
   }
 
   return std::make_unique<VulkanShader>(device_.GetHandle(), *spv_binary, type);
+}
+
+std::unique_ptr<pbi::PolymorphicBufferInterface> VulkanRenderer::CreateBuffer(
+  size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties)
+{
+  VkBufferCreateInfo buffer_create_info {};
+  buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  buffer_create_info.size = size;
+  buffer_create_info.usage = GetBufferUsageFlagBits(usage);
+  buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  VkBuffer buffer;
+  vkCreateBuffer(device_.GetHandle(), &buffer_create_info, nullptr, &buffer);
+
+  VkMemoryRequirements memory_requirements;
+  vkGetBufferMemoryRequirements(device_.GetHandle(), buffer, &memory_requirements);
+
+  VkDeviceMemory buffer_memory = device_.Allocate(memory_requirements, GetMemoryPropertyFlagBits(properties));
+
+  vkBindBufferMemory(device_.GetHandle(), buffer, buffer_memory, 0);
+
+  return std::make_unique<pbi::VulkanBufferInterface>(device_.GetHandle(), buffer, buffer_memory, size);
 }
 
 void VulkanRenderer::WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&)

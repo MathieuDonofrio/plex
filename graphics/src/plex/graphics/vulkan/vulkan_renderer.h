@@ -52,6 +52,9 @@ public:
   }
 
 private:
+  std::unique_ptr<pbi::PolymorphicBufferInterface> CreateBuffer(
+    size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties) override;
+
   void WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&);
 
 private:

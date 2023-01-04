@@ -33,7 +33,18 @@ public:
   void BeginRenderPass() override;
   void EndRenderPass() override;
 
-  void FirstTriangleTest(Material* material) override; // TODO remove
+  void SetViewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
+  void SetScissor(int32_t x, int32_t y, uint32_t width, uint32_t height) override;
+
+  void BindVertexBuffer(const Buffer<Vertex>& buffer) override;
+
+  void BindIndexBuffer(const Buffer<uint32_t>& buffer) override;
+  void BindIndexBuffer(const Buffer<uint16_t>& buffer) override;
+
+  void BindMaterial(Material* material) override;
+
+  void Draw(uint32_t vertex_count) override;
+  void DrawIndexed(uint32_t index_count) override;
 
   [[nodiscard]] VkCommandBuffer GetHandle() const noexcept
   {
