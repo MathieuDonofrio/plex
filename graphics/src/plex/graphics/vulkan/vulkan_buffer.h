@@ -9,8 +9,8 @@ namespace plex::graphics
 class VulkanBufferInterface : public PolymorphicBufferInterface
 {
 public:
-  VulkanBufferInterface(VkDevice device, VkBuffer buffer, VkDeviceMemory memory, size_t size) noexcept
-    : device_(device), buffer_(buffer), memory_(memory), size_(size)
+  VulkanBufferInterface(VkBuffer buffer, VmaAllocation allocation, VmaAllocator allocator) noexcept
+    : buffer_(buffer), allocation_(allocation), allocator_(allocator)
   {}
 
   ~VulkanBufferInterface() override;
@@ -24,10 +24,9 @@ public:
   }
 
 private:
-  VkDevice device_;
   VkBuffer buffer_;
-  VkDeviceMemory memory_;
-  size_t size_;
+  VmaAllocation allocation_;
+  VmaAllocator allocator_;
 };
 } // namespace plex::graphics
 

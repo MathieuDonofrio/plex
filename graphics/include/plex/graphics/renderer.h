@@ -66,19 +66,19 @@ public:
   virtual void WaitIdle() = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) = 0;
-  [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const std::string& source,
-    const std::filesystem::path& path,
-    ShaderType type,
-    ShaderCompilationOptions compile_options = {}) = 0;
+  [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(
+    const std::string& source, const std::filesystem::path& path, ShaderType type, ShaderCompileOptions options) = 0;
 
   template<typename Type>
-  [[nodiscard]] Buffer<Type> CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties)
+  [[nodiscard]] Buffer<Type> CreateBuffer(uint32_t size, BufferUsageFlags buffer_usage_flags, MemoryUsage memory_usage)
   {
-    return { CreateBuffer(size * sizeof(Type), usage, properties), static_cast<uint32_t>(size), usage, properties };
+    return {
+      CreateBuffer(size * sizeof(Type), buffer_usage_flags, memory_usage), size, buffer_usage_flags, memory_usage
+    };
   }
 
 private:
-  virtual pbi::Buffer CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties) = 0;
+  virtual pbi::Buffer CreateBuffer(size_t size, BufferUsageFlags buffer_usage_flags, MemoryUsage memory_usage) = 0;
 };
 
 struct RendererCreateInfo

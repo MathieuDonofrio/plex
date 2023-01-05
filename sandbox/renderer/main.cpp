@@ -150,12 +150,22 @@ void OnInit()
 
   LOG_INFO("Compiling shaders...");
 
-  auto vertex_shader = renderer->CreateShader(LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.vert"),
-    "../../sandbox/renderer/assets/shader.vert",
-    ShaderType::Vertex);
-  auto fragment_shader = renderer->CreateShader(LoadShaderCodeFromFile("../../sandbox/renderer/assets/shader.frag"),
-    "../../sandbox/renderer/assets/shader.frag",
-    ShaderType::Fragment);
+  ShaderCompileOptions options {};
+  options.language = ShaderLanguage::GLSL;
+
+#ifdef NDEBUG
+  options.optimization = ShaderOptimization::Speed;
+#else
+  options.optimization = ShaderOptimization::None;
+#endif
+
+  auto vertex_shader_location = "../../sandbox/renderer/assets/shader.vert";
+  auto fragment_shader_location = "../../sandbox/renderer/assets/shader.frag";
+
+  auto vertex_shader = renderer->CreateShader(
+    LoadShaderCodeFromFile(vertex_shader_location), vertex_shader_location, ShaderType::Vertex, options);
+  auto fragment_shader = renderer->CreateShader(
+    LoadShaderCodeFromFile(fragment_shader_location), fragment_shader_location, ShaderType::Fragment, options);
 
   LOG_INFO("Shaders compiled");
 
@@ -167,7 +177,7 @@ void OnInit()
 
   // Make CPU accessible vertex buffer
 
-  vertex_buffer = renderer->CreateBuffer<Vertex>(3, BufferUsageFlags::Vertex, MemoryPropertyFlags::HostVisible);
+  vertex_buffer = renderer->CreateBuffer<Vertex>(3, BufferUsageFlags::Vertex, MemoryUsage::CPU_To_GPU);
 
   Vertex* data = vertex_buffer.Map();
 
@@ -183,7 +193,7 @@ void OnInit()
   // Make GPU-Only accessible index buffer
 
   Buffer<uint16_t> staging_index_buffer =
-    renderer->CreateBuffer<uint16_t>(3, BufferUsageFlags::TransferSource, MemoryPropertyFlags::HostVisible);
+    renderer->CreateBuffer<uint16_t>(3, BufferUsageFlags::TransferSource, MemoryUsage::CPU_To_GPU);
 
   uint16_t* index_data = staging_index_buffer.Map();
 
@@ -194,7 +204,7 @@ void OnInit()
   staging_index_buffer.Unmap();
 
   index_buffer = renderer->CreateBuffer<uint16_t>(
-    3, BufferUsageFlags::Index | BufferUsageFlags::TransferDestination, MemoryPropertyFlags::DeviceLocal);
+    3, BufferUsageFlags::Index | BufferUsageFlags::TransferDestination, MemoryUsage::GPU_Only);
 
   renderer->SubmitImmediate(
     [&](CommandBuffer* command_buffer)

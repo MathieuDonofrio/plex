@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
 namespace plex::graphics::vapi

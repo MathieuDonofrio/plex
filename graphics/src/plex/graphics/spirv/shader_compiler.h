@@ -75,7 +75,7 @@ public:
   std::optional<ShaderData> Compile(const std::string& source,
     const std::filesystem::path& path,
     ShaderType type,
-    ShaderCompilationOptions compile_options);
+    ShaderCompileOptions compile_options);
 
   [[nodiscard]] bool HasError() const
   {

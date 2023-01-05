@@ -46,7 +46,7 @@ public:
   [[nodiscard]] std::unique_ptr<Shader> CreateShader(const std::string& source,
     const std::filesystem::path& source_path,
     ShaderType type,
-    ShaderCompilationOptions compile_options) override;
+    ShaderCompileOptions options) override;
 
   [[nodiscard]] size_t GetFrameCount() const noexcept
   {
@@ -54,7 +54,7 @@ public:
   }
 
 private:
-  pbi::Buffer CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties) override;
+  pbi::Buffer CreateBuffer(size_t size, BufferUsageFlags buffer_usage_flags, MemoryUsage memory_usage) override;
 
   void WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&);
 

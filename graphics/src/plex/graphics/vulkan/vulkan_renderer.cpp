@@ -7,31 +7,6 @@
 
 namespace plex::graphics
 {
-namespace
-{
-  VkBufferUsageFlagBits GetBufferUsageFlagBits(BufferUsageFlags usage)
-  {
-    int flags = 0;
-    if ((usage & BufferUsageFlags::Vertex) != 0) flags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    if ((usage & BufferUsageFlags::Index) != 0) flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    if ((usage & BufferUsageFlags::Uniform) != 0) flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    if ((usage & BufferUsageFlags::Storage) != 0) flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-    if ((usage & BufferUsageFlags::TransferSource) != 0) flags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    if ((usage & BufferUsageFlags::TransferDestination) != 0) flags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    return static_cast<VkBufferUsageFlagBits>(flags);
-  }
-
-  VkMemoryPropertyFlagBits GetMemoryPropertyFlagBits(MemoryPropertyFlags properties)
-  {
-    int flags = 0;
-    if ((properties & MemoryPropertyFlags::DeviceLocal) != 0) flags |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    if ((properties & MemoryPropertyFlags::HostVisible) != 0) flags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-    if ((properties & MemoryPropertyFlags::HostCoherent) != 0) flags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    if ((properties & MemoryPropertyFlags::HostCached) != 0) flags |= VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-    if ((properties & MemoryPropertyFlags::LazilyAllocated) != 0) flags |= VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
-    return static_cast<VkMemoryPropertyFlagBits>(flags);
-  }
-} // namespace
 
 VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
   : // Window
@@ -466,12 +441,10 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   return std::make_unique<VulkanMaterial>(pipeline_layout, pipeline);
 }
 
-std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::string& source,
-  const std::filesystem::path& source_path,
-  ShaderType type,
-  ShaderCompilationOptions compile_options)
+std::unique_ptr<Shader> VulkanRenderer::CreateShader(
+  const std::string& source, const std::filesystem::path& source_path, ShaderType type, ShaderCompileOptions options)
 {
-  auto spv_binary = shader_compiler_.Compile(source, source_path, type, compile_options);
+  auto spv_binary = shader_compiler_.Compile(source, source_path, type, options);
 
   if (!spv_binary)
   {
@@ -488,25 +461,9 @@ std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::string& source,
   return std::make_unique<VulkanShader>(device_.GetHandle(), *spv_binary, type);
 }
 
-pbi::Buffer VulkanRenderer::CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties)
+pbi::Buffer VulkanRenderer::CreateBuffer(size_t size, BufferUsageFlags buffer_usage_flags, MemoryUsage memory_usage)
 {
-  VkBufferCreateInfo buffer_create_info {};
-  buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  buffer_create_info.size = size;
-  buffer_create_info.usage = GetBufferUsageFlagBits(usage);
-  buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-  VkBuffer buffer;
-  vkCreateBuffer(device_.GetHandle(), &buffer_create_info, nullptr, &buffer);
-
-  VkMemoryRequirements memory_requirements;
-  vkGetBufferMemoryRequirements(device_.GetHandle(), buffer, &memory_requirements);
-
-  VkDeviceMemory buffer_memory = device_.Allocate(memory_requirements, GetMemoryPropertyFlagBits(properties));
-
-  vkBindBufferMemory(device_.GetHandle(), buffer, buffer_memory, 0);
-
-  return new VulkanBufferInterface(device_.GetHandle(), buffer, buffer_memory, size);
+  return device_.CreateBuffer(size, buffer_usage_flags, memory_usage);
 }
 
 void VulkanRenderer::WindowFramebufferResizeCallback(const WindowFramebufferResizeEvent&)

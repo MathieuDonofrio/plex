@@ -4,6 +4,7 @@
 #include <string>
 
 #include "plex/graphics/vulkan/api/vulkan_api.h"
+#include "plex/graphics/vulkan/vulkan_buffer.h"
 #include "plex/graphics/vulkan/vulkan_surface.h"
 
 namespace plex::graphics
@@ -15,47 +16,21 @@ public:
 
   ~VulkanDevice();
 
-  VkDeviceMemory Allocate(VkMemoryRequirements requirements, VkMemoryPropertyFlagBits properties);
+  VulkanBufferInterface* CreateBuffer(size_t size, BufferUsageFlags buffer_usage_flags, MemoryUsage memory_usage);
 
-  [[nodiscard]] VkQueue GetGraphicsQueue() const noexcept
-  {
-    return graphics_queue_;
-  }
+  // clang-format off
 
-  [[nodiscard]] VkQueue GetTransferQueue() const noexcept
-  {
-    return transfer_queue_;
-  }
+  [[nodiscard]] VkQueue GetGraphicsQueue() const noexcept { return graphics_queue_; }
+  [[nodiscard]] VkQueue GetTransferQueue() const noexcept { return transfer_queue_; }
+  [[nodiscard]] VkQueue GetPresentQueue() const noexcept { return present_queue_; }
+  [[nodiscard]] VkQueue GetComputeQueue() const noexcept { return compute_queue_; }
 
-  [[nodiscard]] VkQueue GetPresentQueue() const noexcept
-  {
-    return present_queue_;
-  }
+  [[nodiscard]] uint32_t GetGraphicsQueueFamilyIndex() const noexcept { return graphics_queue_family_index_; }
+  [[nodiscard]] uint32_t GetTransferQueueFamilyIndex() const noexcept { return transfer_queue_family_index_; }
+  [[nodiscard]] uint32_t GetPresentQueueFamilyIndex() const noexcept { return present_queue_family_index_; }
+  [[nodiscard]] uint32_t GetComputeQueueFamilyIndex() const noexcept { return compute_queue_family_index_; }
 
-  [[nodiscard]] VkQueue GetComputeQueue() const noexcept
-  {
-    return compute_queue_;
-  }
-
-  [[nodiscard]] uint32_t GetGraphicsQueueFamilyIndex() const noexcept
-  {
-    return graphics_queue_family_index_;
-  }
-
-  [[nodiscard]] uint32_t GetTransferQueueFamilyIndex() const noexcept
-  {
-    return transfer_queue_family_index_;
-  }
-
-  [[nodiscard]] uint32_t GetPresentQueueFamilyIndex() const noexcept
-  {
-    return present_queue_family_index_;
-  }
-
-  [[nodiscard]] uint32_t GetComputeQueueFamilyIndex() const noexcept
-  {
-    return compute_queue_family_index_;
-  }
+  // clang-format on
 
   [[nodiscard]] VkDevice GetHandle() const noexcept
   {
@@ -70,6 +45,8 @@ public:
 private:
   VkPhysicalDevice physical_device_;
   VkDevice logical_device_;
+
+  VmaAllocator allocator_;
 
   VkQueue graphics_queue_;
   VkQueue transfer_queue_;

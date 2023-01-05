@@ -24,14 +24,14 @@ namespace
     }
   }
 
-  shaderc_optimization_level FromOptimizationLevel(OptimizationLevel optimization_level)
+  shaderc_optimization_level FromOptimizationLevel(ShaderOptimization optimization_level)
   {
     {
       switch (optimization_level)
       {
-      case OptimizationLevel::None: return shaderc_optimization_level_zero;
-      case OptimizationLevel::Size: return shaderc_optimization_level_size;
-      case OptimizationLevel::Speed: return shaderc_optimization_level_performance;
+      case ShaderOptimization::None: return shaderc_optimization_level_zero;
+      case ShaderOptimization::Size: return shaderc_optimization_level_size;
+      case ShaderOptimization::Speed: return shaderc_optimization_level_performance;
       default:
       {
         LOG_WARN("Unknown optimization level: {}", static_cast<int>(optimization_level));
@@ -122,12 +122,12 @@ namespace
     }
   }
 
-  shaderc_source_language FromSourceLanguage(SourceLanguage lang)
+  shaderc_source_language FromSourceLanguage(ShaderLanguage lang)
   {
     switch (lang)
     {
-    case SourceLanguage::GLSL: return shaderc_source_language_glsl;
-    case SourceLanguage::HLSL: return shaderc_source_language_hlsl;
+    case ShaderLanguage::GLSL: return shaderc_source_language_glsl;
+    case ShaderLanguage::HLSL: return shaderc_source_language_hlsl;
     default:
     {
       LOG_WARN("Unknown source language: {}", static_cast<int>(lang));
@@ -205,10 +205,8 @@ ShaderCompiler::ShaderCompiler(const ShaderCompilerOptions& compiler_options)
   }
 }
 
-std::optional<ShaderData> ShaderCompiler::Compile(const std::string& source,
-  const std::filesystem::path& path,
-  ShaderType type,
-  ShaderCompilationOptions compile_options)
+std::optional<ShaderData> ShaderCompiler::Compile(
+  const std::string& source, const std::filesystem::path& path, ShaderType type, ShaderCompileOptions compile_options)
 {
   if (!valid_)
   {
@@ -216,8 +214,8 @@ std::optional<ShaderData> ShaderCompiler::Compile(const std::string& source,
     return std::nullopt;
   }
 
-  options_.SetOptimizationLevel(FromOptimizationLevel(compile_options.optimization_level));
-  options_.SetSourceLanguage(FromSourceLanguage(compile_options.source_language));
+  options_.SetOptimizationLevel(FromOptimizationLevel(compile_options.optimization));
+  options_.SetSourceLanguage(FromSourceLanguage(compile_options.language));
 
   auto compile_result = CompileToSpv(source, fs::absolute(path).string(), type);
   if (!compile_result) return std::nullopt;

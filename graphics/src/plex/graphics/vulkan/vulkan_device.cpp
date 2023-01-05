@@ -233,10 +233,40 @@ namespace
 
     return 0;
   }
+
+  constexpr VkBufferUsageFlagBits GetBufferUsageFlagBits(BufferUsageFlags usage) noexcept
+  {
+    int flags = 0;
+    if ((usage & BufferUsageFlags::Vertex) != 0) flags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Index) != 0) flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Uniform) != 0) flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Storage) != 0) flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::TransferSource) != 0) flags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    if ((usage & BufferUsageFlags::TransferDestination) != 0) flags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    return static_cast<VkBufferUsageFlagBits>(flags);
+  }
+
+  constexpr VmaMemoryUsage GetVmaMemoryUsage(MemoryUsage memory_usage) noexcept
+  {
+    switch (memory_usage)
+    {
+    case MemoryUsage::Unknown: return VMA_MEMORY_USAGE_UNKNOWN;
+    case MemoryUsage::GPU_Only: return VMA_MEMORY_USAGE_GPU_ONLY;
+    case MemoryUsage::CPU_Only: return VMA_MEMORY_USAGE_CPU_ONLY;
+    case MemoryUsage::CPU_To_GPU: return VMA_MEMORY_USAGE_CPU_TO_GPU;
+    case MemoryUsage::GPU_To_CPU: return VMA_MEMORY_USAGE_GPU_TO_CPU;
+    case MemoryUsage::CPU_Copy: return VMA_MEMORY_USAGE_CPU_COPY;
+    case MemoryUsage::Auto: return VMA_MEMORY_USAGE_AUTO;
+    }
+
+    return VMA_MEMORY_USAGE_UNKNOWN;
+  }
 } // namespace
 
 VulkanDevice::VulkanDevice(VkInstance instance, VkSurfaceKHR surface)
 {
+  // Pick physical device
+
   physical_device_ = PickPhysicalDevice(instance, surface, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
   if (!physical_device_)
@@ -244,6 +274,8 @@ VulkanDevice::VulkanDevice(VkInstance instance, VkSurfaceKHR surface)
     LOG_ERROR("Failed to find a suitable GPU");
     return;
   }
+
+  // Create logical device
 
   QueueFamilyIndices queue_family_indices;
   FindQueueFamilies(physical_device_, surface, &queue_family_indices);
@@ -286,10 +318,21 @@ VulkanDevice::VulkanDevice(VkInstance instance, VkSurfaceKHR surface)
     return;
   }
 
+  // Queues
+
   vkGetDeviceQueue(logical_device_, graphics_queue_family_index_, 0, &graphics_queue_);
   vkGetDeviceQueue(logical_device_, present_queue_family_index_, 0, &present_queue_);
   vkGetDeviceQueue(logical_device_, transfer_queue_family_index_, 0, &transfer_queue_);
   vkGetDeviceQueue(logical_device_, compute_queue_family_index_, 0, &compute_queue_);
+
+  // Memory allocator
+
+  VmaAllocatorCreateInfo vma_allocator_create_info = {};
+  vma_allocator_create_info.physicalDevice = physical_device_;
+  vma_allocator_create_info.device = logical_device_;
+  vma_allocator_create_info.instance = instance;
+
+  vmaCreateAllocator(&vma_allocator_create_info, &allocator_);
 }
 
 VulkanDevice::~VulkanDevice()
@@ -297,21 +340,22 @@ VulkanDevice::~VulkanDevice()
   vkDestroyDevice(logical_device_, nullptr);
 }
 
-VkDeviceMemory VulkanDevice::Allocate(VkMemoryRequirements requirements, VkMemoryPropertyFlagBits properties)
+VulkanBufferInterface* VulkanDevice::CreateBuffer(
+  size_t size, BufferUsageFlags buffer_usage_flags, MemoryUsage memory_usage)
 {
-  VkMemoryAllocateInfo memory_allocate_info {};
-  memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  memory_allocate_info.allocationSize = requirements.size;
-  memory_allocate_info.memoryTypeIndex = FindMemoryType(physical_device_, requirements.memoryTypeBits, properties);
+  VkBufferCreateInfo buffer_create_info {};
+  buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  buffer_create_info.size = size;
+  buffer_create_info.usage = GetBufferUsageFlagBits(buffer_usage_flags);
+  buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  VkDeviceMemory memory;
-  if (vkAllocateMemory(logical_device_, &memory_allocate_info, nullptr, &memory) != VK_SUCCESS)
-  {
-    LOG_ERROR("Failed to allocate memory");
-    return nullptr;
-  }
+  VmaAllocationCreateInfo allocation_create_info {};
+  allocation_create_info.requiredFlags = GetVmaMemoryUsage(memory_usage);
 
-  return memory;
+  VkBuffer buffer;
+  VmaAllocation allocation;
+  vmaCreateBuffer(allocator_, &buffer_create_info, &allocation_create_info, &buffer, &allocation, nullptr);
+
+  return new VulkanBufferInterface(buffer, allocation, allocator_);
 }
-
 } // namespace plex::graphics

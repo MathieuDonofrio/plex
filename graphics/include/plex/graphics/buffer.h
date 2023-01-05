@@ -7,7 +7,7 @@
 
 namespace plex::graphics
 {
-enum class BufferUsageFlags : uint16_t
+enum class BufferUsageFlags
 {
   None = 0,
   Vertex = BitFlag(0),
@@ -20,17 +20,16 @@ enum class BufferUsageFlags : uint16_t
 
 DEFINE_ENUM_FLAG_OPERATORS(BufferUsageFlags);
 
-enum class MemoryPropertyFlags : uint16_t
+enum class MemoryUsage
 {
-  None = 0,
-  DeviceLocal = BitFlag(0),
-  HostVisible = BitFlag(1),
-  HostCoherent = BitFlag(2),
-  HostCached = BitFlag(3),
-  LazilyAllocated = BitFlag(4)
+  Unknown = 0,
+  GPU_Only,
+  CPU_Only,
+  CPU_To_GPU,
+  GPU_To_CPU,
+  CPU_Copy,
+  Auto
 };
-
-DEFINE_ENUM_FLAG_OPERATORS(MemoryPropertyFlags);
 
 class PolymorphicBufferInterface
 {
@@ -58,23 +57,22 @@ template<TriviallyRelocatable Type>
 class Buffer
 {
 public:
-  constexpr Buffer()
-    : interface_(nullptr), size_(0), usage_(BufferUsageFlags::None), memory_properties_(MemoryPropertyFlags::None)
-  {}
+  constexpr Buffer() : interface_(nullptr), size_(0), buffer_usage_flags_(0), memory_usage_(0) {}
 
   constexpr Buffer(
-    pbi::Buffer interface, uint32_t size, BufferUsageFlags usage, MemoryPropertyFlags memory_property) noexcept
-    : interface_(interface), size_(size), usage_(usage), memory_properties_(memory_property)
+    pbi::Buffer interface, uint32_t size, BufferUsageFlags buffer_usage_flags, MemoryUsage memory_usage) noexcept
+    : interface_(interface), size_(size), buffer_usage_flags_(static_cast<uint16_t>(buffer_usage_flags)),
+      memory_usage_(static_cast<uint16_t>(memory_usage))
   {}
 
   constexpr Buffer(Buffer&& other) noexcept
-    : interface_(other.interface_), size_(other.size_), usage_(other.usage_),
-      memory_properties_(other.memory_properties_)
+    : interface_(other.interface_), size_(other.size_), buffer_usage_flags_(other.buffer_usage_flags_),
+      memory_usage_(other.memory_usage_)
   {
     other.interface_ = nullptr;
     other.size_ = 0;
-    other.usage_ = BufferUsageFlags::None;
-    other.memory_properties_ = MemoryPropertyFlags::None;
+    other.buffer_usage_flags_ = 0;
+    other.memory_usage_ = 0;
   }
 
   Buffer& operator=(Buffer&& other) noexcept
@@ -118,8 +116,8 @@ public:
   {
     std::swap(interface_, other.interface_);
     std::swap(size_, other.size_);
-    std::swap(usage_, other.usage_);
-    std::swap(memory_properties_, other.memory_properties_);
+    std::swap(buffer_usage_flags_, other.buffer_usage_flags_);
+    std::swap(memory_usage_, other.memory_usage_);
   }
 
   [[nodiscard]] pbi::Buffer GetInterface() const noexcept
@@ -127,14 +125,14 @@ public:
     return interface_;
   }
 
-  [[nodiscard]] BufferUsageFlags GetUsage() const noexcept
+  [[nodiscard]] BufferUsageFlags GetBufferUsageFlags() const noexcept
   {
-    return usage_;
+    return static_cast<BufferUsageFlags>(buffer_usage_flags_);
   }
 
-  [[nodiscard]] MemoryPropertyFlags GetMemoryProperties() const noexcept
+  [[nodiscard]] MemoryUsage GetMemoryUsage() const noexcept
   {
-    return memory_properties_;
+    return static_cast<MemoryUsage>(memory_usage_);
   }
 
   [[nodiscard]] Type* data() const noexcept
@@ -151,8 +149,8 @@ private:
   pbi::Buffer interface_;
   Type* data_;
   uint32_t size_;
-  BufferUsageFlags usage_;
-  MemoryPropertyFlags memory_properties_;
+  uint16_t buffer_usage_flags_;
+  uint16_t memory_usage_;
 };
 
 } // namespace plex::graphics

@@ -4,19 +4,18 @@ namespace plex::graphics
 {
 VulkanBufferInterface::~VulkanBufferInterface()
 {
-  vkDestroyBuffer(device_, buffer_, nullptr);
-  vkFreeMemory(device_, memory_, nullptr);
+  vmaDestroyBuffer(allocator_, buffer_, allocation_);
 }
 
 void* VulkanBufferInterface::Map()
 {
   void* data;
-  vkMapMemory(device_, memory_, 0, size_, 0, &data);
+  vmaMapMemory(allocator_, allocation_, &data);
   return data;
 }
 
 void VulkanBufferInterface::Unmap()
 {
-  vkUnmapMemory(device_, memory_);
+  vmaUnmapMemory(allocator_, allocation_);
 }
 } // namespace plex::graphics
