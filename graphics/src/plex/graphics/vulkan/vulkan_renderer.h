@@ -42,8 +42,11 @@ public:
   void WaitIdle() override;
 
   [[nodiscard]] std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) override;
-  [[nodiscard]] std::unique_ptr<Shader> CreateShader(
-    const std::string& source, const std::filesystem::path& source_path, ShaderType type) override;
+
+  [[nodiscard]] std::unique_ptr<Shader> CreateShader(const std::string& source,
+    const std::filesystem::path& source_path,
+    ShaderType type,
+    ShaderCompilationOptions compile_options) override;
 
   [[nodiscard]] size_t GetFrameCount() const noexcept
   {

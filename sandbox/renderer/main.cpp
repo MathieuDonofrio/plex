@@ -249,6 +249,8 @@ int main(int, char**)
   renderer_info.debug_level = DebugLevel::Info;
   renderer_info.present_mode = PresentMode::Immediate;
   renderer_info.buffering_mode = BufferingMode::Double;
+  renderer_info.shader_debug_info_enabled = true;
+  renderer_info.shader_validation_enabled = true;
 
   renderer = CreateRenderer(renderer_info, BackendType::Vulkan);
 

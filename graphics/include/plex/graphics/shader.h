@@ -4,6 +4,23 @@
 #include <filesystem>
 #include <string>
 
+enum class OptimizationLevel
+{
+    None,
+    Size,
+    Speed,
+};
+enum class SourceLanguage
+{
+  GLSL,
+  HLSL,
+};
+
+struct ShaderCompilationOptions {
+  OptimizationLevel optimization_level = OptimizationLevel::Speed;
+  SourceLanguage source_language = SourceLanguage::GLSL;
+};
+
 namespace plex::graphics
 {
 enum class ShaderType

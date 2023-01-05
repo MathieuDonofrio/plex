@@ -50,7 +50,11 @@ VulkanRenderer::VulkanRenderer(const RendererCreateInfo& create_info)
       &surface_,
       create_info.present_mode,
       create_info.buffering_mode == BufferingMode::Double ? 2 : 3),
-    current_frame_index_(0), current_image_index_(0)
+    current_frame_index_(0), current_image_index_(0), shader_compiler_({ TargetEnvironment::Vulkan,
+                                                        TargetEnvironmentVersion::Vulkan_1_3,
+                                                        SpirvVersion::Spirv_1_6,
+                                                        create_info.shader_validation_enabled,
+                                                        create_info.shader_debug_info_enabled })
 {
   ASSERT(GetFrameCount() <= 3, "Frame count must be less than or equal to 3");
 
@@ -462,10 +466,12 @@ std::unique_ptr<Material> VulkanRenderer::CreateMaterial(const MaterialCreateInf
   return std::make_unique<VulkanMaterial>(pipeline_layout, pipeline);
 }
 
-std::unique_ptr<Shader> VulkanRenderer::CreateShader(
-  const std::string& source, const std::filesystem::path& source_path, ShaderType type)
+std::unique_ptr<Shader> VulkanRenderer::CreateShader(const std::string& source,
+  const std::filesystem::path& source_path,
+  ShaderType type,
+  ShaderCompilationOptions compile_options)
 {
-  auto spv_binary = shader_compiler_.Compile(source, source_path, type);
+  auto spv_binary = shader_compiler_.Compile(source, source_path, type, compile_options);
 
   if (!spv_binary)
   {

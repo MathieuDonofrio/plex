@@ -66,8 +66,10 @@ public:
   virtual void WaitIdle() = 0;
 
   [[nodiscard]] virtual std::unique_ptr<Material> CreateMaterial(const MaterialCreateInfo& create_info) = 0;
-  [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(
-    const std::string& source, const std::filesystem::path& path, ShaderType type) = 0;
+  [[nodiscard]] virtual std::unique_ptr<Shader> CreateShader(const std::string& source,
+    const std::filesystem::path& path,
+    ShaderType type,
+    ShaderCompilationOptions compile_options = {}) = 0;
 
   template<typename Type>
   [[nodiscard]] Buffer<Type> CreateBuffer(size_t size, BufferUsageFlags usage, MemoryPropertyFlags properties)
@@ -86,6 +88,8 @@ struct RendererCreateInfo
   DebugLevel debug_level;
   PresentMode present_mode;
   BufferingMode buffering_mode;
+  bool shader_debug_info_enabled;
+  bool shader_validation_enabled;
 };
 
 std::unique_ptr<Renderer> CreateRenderer(const RendererCreateInfo& create_info, BackendType backend_type);

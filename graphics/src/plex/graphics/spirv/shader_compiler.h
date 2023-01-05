@@ -26,10 +26,45 @@ struct ShaderData
   // TODO Reflection data
 };
 
+enum class TargetEnvironment
+{
+  Vulkan,
+  OpenGL,
+};
+
+enum class SpirvVersion
+{
+  Spirv_1_0,
+  Spirv_1_1,
+  Spirv_1_2,
+  Spirv_1_3,
+  Spirv_1_4,
+  Spirv_1_5,
+  Spirv_1_6,
+};
+
+enum class TargetEnvironmentVersion
+{
+  Vulkan_1_0,
+  Vulkan_1_1,
+  Vulkan_1_2,
+  Vulkan_1_3,
+  OpenGL_4_5,
+};
+
+struct ShaderCompilerOptions
+{
+  TargetEnvironment target_environment;
+  TargetEnvironmentVersion target_environment_version;
+  SpirvVersion spirv_version;
+  bool validation_enabled;
+  bool generate_debug_information;
+};
+
 class ShaderCompiler
 {
 public:
-  ShaderCompiler();
+  ShaderCompiler(const ShaderCompilerOptions& options);
   ~ShaderCompiler() = default;
 
   ShaderCompiler(const ShaderCompiler&) = delete;
@@ -37,7 +72,10 @@ public:
   ShaderCompiler& operator=(const ShaderCompiler&) = delete;
   ShaderCompiler& operator=(ShaderCompiler&&) = delete;
 
-  std::optional<ShaderData> Compile(const std::string& source, const std::filesystem::path& path, ShaderType type);
+  std::optional<ShaderData> Compile(const std::string& source,
+    const std::filesystem::path& path,
+    ShaderType type,
+    ShaderCompilationOptions compile_options);
 
   [[nodiscard]] bool HasError() const
   {

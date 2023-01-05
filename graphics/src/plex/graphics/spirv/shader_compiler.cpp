@@ -1,7 +1,5 @@
 #include "plex/graphics/spirv/shader_compiler.h"
 
-#include <fstream>
-
 #include "plex/debug/logging.h"
 
 namespace plex::graphics
@@ -22,6 +20,135 @@ namespace
     {
       LOG_WARN("Unknown shader stage flag: {}", static_cast<int>(type));
       return shaderc_glsl_infer_from_source;
+    }
+    }
+  }
+
+  shaderc_optimization_level FromOptimizationLevel(OptimizationLevel optimization_level)
+  {
+    {
+      switch (optimization_level)
+      {
+      case OptimizationLevel::None: return shaderc_optimization_level_zero;
+      case OptimizationLevel::Size: return shaderc_optimization_level_size;
+      case OptimizationLevel::Speed: return shaderc_optimization_level_performance;
+      default:
+      {
+        LOG_WARN("Unknown optimization level: {}", static_cast<int>(optimization_level));
+        return shaderc_optimization_level_zero;
+      }
+      }
+    }
+  }
+
+  shaderc_spirv_version FromSpirvVersion(SpirvVersion version)
+  {
+    switch (version)
+    {
+    case SpirvVersion::Spirv_1_0: return shaderc_spirv_version_1_0;
+    case SpirvVersion::Spirv_1_1: return shaderc_spirv_version_1_1;
+    case SpirvVersion::Spirv_1_2: return shaderc_spirv_version_1_2;
+    case SpirvVersion::Spirv_1_3: return shaderc_spirv_version_1_3;
+    case SpirvVersion::Spirv_1_4: return shaderc_spirv_version_1_4;
+    case SpirvVersion::Spirv_1_5: return shaderc_spirv_version_1_5;
+    case SpirvVersion::Spirv_1_6: return shaderc_spirv_version_1_6;
+    default:
+    {
+      LOG_WARN("Unknown spirv version: {}", static_cast<int>(version));
+      return shaderc_spirv_version_1_0;
+    }
+    }
+  }
+
+  shaderc_target_env FromTargetEnvironment(TargetEnvironment env)
+  {
+    switch (env)
+    {
+    case TargetEnvironment::Vulkan: return shaderc_target_env_vulkan;
+    case TargetEnvironment::OpenGL: return shaderc_target_env_opengl;
+    default:
+    {
+      LOG_WARN("Unknown target environment: {}", static_cast<int>(env));
+      return shaderc_target_env_vulkan;
+    }
+    }
+  }
+
+  spv_target_env FromSpirvTargetEnvironment(SpirvVersion version, TargetEnvironment env)
+  {
+    switch (env)
+    {
+    case TargetEnvironment::Vulkan:
+    {
+      switch (version)
+      {
+      case SpirvVersion::Spirv_1_0: return SPV_ENV_VULKAN_1_0;
+      case SpirvVersion::Spirv_1_1:
+      case SpirvVersion::Spirv_1_2:
+      case SpirvVersion::Spirv_1_3: return SPV_ENV_VULKAN_1_1;
+      case SpirvVersion::Spirv_1_4: return SPV_ENV_VULKAN_1_1_SPIRV_1_4;
+      case SpirvVersion::Spirv_1_5: return SPV_ENV_VULKAN_1_2;
+      case SpirvVersion::Spirv_1_6: return SPV_ENV_VULKAN_1_3;
+      default:
+      {
+        LOG_WARN("Unknown spirv version: {}", static_cast<int>(version));
+        return SPV_ENV_VULKAN_1_0;
+      }
+      }
+    }
+    case TargetEnvironment::OpenGL:
+    {
+      switch (version)
+      {
+      case SpirvVersion::Spirv_1_0: return SPV_ENV_UNIVERSAL_1_0;
+      case SpirvVersion::Spirv_1_1: return SPV_ENV_UNIVERSAL_1_1;
+      case SpirvVersion::Spirv_1_2: return SPV_ENV_UNIVERSAL_1_2;
+      case SpirvVersion::Spirv_1_3: return SPV_ENV_UNIVERSAL_1_3;
+      case SpirvVersion::Spirv_1_4: return SPV_ENV_UNIVERSAL_1_4;
+      case SpirvVersion::Spirv_1_5: return SPV_ENV_UNIVERSAL_1_5;
+      case SpirvVersion::Spirv_1_6: return SPV_ENV_UNIVERSAL_1_6;
+      default:
+      {
+        LOG_WARN("Unknown spirv version: {}", static_cast<int>(version));
+        return SPV_ENV_UNIVERSAL_1_0;
+      }
+      }
+    }
+    default:
+    {
+      LOG_WARN("Unknown target environment: {}", static_cast<int>(env));
+      return SPV_ENV_UNIVERSAL_1_0;
+    }
+    }
+  }
+
+  shaderc_source_language FromSourceLanguage(SourceLanguage lang)
+  {
+    switch (lang)
+    {
+    case SourceLanguage::GLSL: return shaderc_source_language_glsl;
+    case SourceLanguage::HLSL: return shaderc_source_language_hlsl;
+    default:
+    {
+      LOG_WARN("Unknown source language: {}", static_cast<int>(lang));
+      return shaderc_source_language_glsl;
+    }
+    }
+  }
+
+  shaderc_env_version FromTargetEnvironmentVersion(TargetEnvironmentVersion version)
+  {
+    switch (version)
+    {
+    case TargetEnvironmentVersion::Vulkan_1_0: return shaderc_env_version_vulkan_1_0;
+    case TargetEnvironmentVersion::Vulkan_1_1: return shaderc_env_version_vulkan_1_1;
+    case TargetEnvironmentVersion::Vulkan_1_2: return shaderc_env_version_vulkan_1_2;
+    case TargetEnvironmentVersion::Vulkan_1_3: return shaderc_env_version_vulkan_1_3;
+    case TargetEnvironmentVersion::OpenGL_4_5: return shaderc_env_version_opengl_4_5;
+    default:
+    {
+      LOG_WARN("Unknown target environment version: {}", static_cast<int>(version));
+      return shaderc_env_version_vulkan_1_0;
     }
     }
   }
@@ -54,15 +181,13 @@ namespace
 
 } // namespace
 
-ShaderCompiler::ShaderCompiler() : spirv_tools_(SPV_ENV_VULKAN_1_3)
+ShaderCompiler::ShaderCompiler(const ShaderCompilerOptions& compiler_options)
+  : spirv_tools_(FromSpirvTargetEnvironment(compiler_options.spirv_version, compiler_options.target_environment))
 {
-#ifndef NDEBUG // TODO: Add a different flag for this and synchronize with vulkan extensions
-  options_.SetGenerateDebugInfo();
-#endif
-
-  options_.SetSourceLanguage(shaderc_source_language_glsl);
-  options_.SetTargetSpirv(shaderc_spirv_version_1_6);
-  options_.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+  if (compiler_options.generate_debug_information) options_.SetGenerateDebugInfo();
+  options_.SetTargetSpirv(FromSpirvVersion(compiler_options.spirv_version));
+  options_.SetTargetEnvironment(FromTargetEnvironment(compiler_options.target_environment),
+    FromTargetEnvironmentVersion(compiler_options.target_environment_version));
 
   spirv_tools_.SetMessageConsumer(SpirvToolsConsumeMessage);
 
@@ -80,14 +205,19 @@ ShaderCompiler::ShaderCompiler() : spirv_tools_(SPV_ENV_VULKAN_1_3)
   }
 }
 
-std::optional<ShaderData> ShaderCompiler::Compile(
-  const std::string& source, const std::filesystem::path& path, ShaderType type)
+std::optional<ShaderData> ShaderCompiler::Compile(const std::string& source,
+  const std::filesystem::path& path,
+  ShaderType type,
+  ShaderCompilationOptions compile_options)
 {
   if (!valid_)
   {
     LOG_ERROR("Failed to compile shader: {}", error_message_);
     return std::nullopt;
   }
+
+  options_.SetOptimizationLevel(FromOptimizationLevel(compile_options.optimization_level));
+  options_.SetSourceLanguage(FromSourceLanguage(compile_options.source_language));
 
   auto compile_result = CompileToSpv(source, fs::absolute(path).string(), type);
   if (!compile_result) return std::nullopt;
