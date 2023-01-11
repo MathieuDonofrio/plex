@@ -5,6 +5,7 @@
 #include "plex/debug/logging.h"
 #include "plex/graphics/renderer.h"
 #include "plex/graphics/window.h"
+#include "plex/graphics/color.h"
 
 using namespace plex;
 using namespace plex::graphics;
@@ -78,35 +79,6 @@ private:
   TimePoint last_time_;
   double delta_time_ = 0;
 };
-
-float3 HSVtoRGB(float h, float s, float v)
-{
-  float r, g, b;
-  float i;
-  float f, p, q, t;
-  if (s == 0)
-  {
-    // achromatic (grey)
-    r = g = b = v;
-    return float3(r, g, b);
-  }
-  h /= 60; // sector 0 to 5
-  i = floor(h);
-  f = h - i; // factorial part of h
-  p = v * (1 - s);
-  q = v * (1 - s * f);
-  t = v * (1 - s * (1 - f));
-  switch (static_cast<int>(i))
-  {
-  case 0: r = v, g = t, b = p; break;
-  case 1: r = q, g = v, b = p; break;
-  case 2: r = p, g = v, b = t; break;
-  case 3: r = p, g = q, b = v; break;
-  case 4: r = t, g = p, b = v; break;
-  default: r = v, g = p, b = q; break;
-  }
-  return { r, g, b };
-}
 
 std::string LoadShaderCodeFromFile(const std::string& filename)
 {
@@ -224,7 +196,7 @@ void OnRecord(CommandBuffer* command_buffer, float delta)
 
   Vertex* data = vertex_buffer.Map();
 
-  auto color = HSVtoRGB(static_cast<float>(wheel), 1, 1);
+  auto color = RGBfloat::FromHSV(static_cast<float>(wheel), 1, 1);
 
   data[0].color = color;
   data[1].color = color;
