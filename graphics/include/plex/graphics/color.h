@@ -50,7 +50,7 @@ namespace details
 struct [[maybe_unused]] RGBint : public Color<uint8_t, 3>
 {
   [[nodiscard]] static Color<uint8_t, 3> FromHSV(
-    float h, float s, float v) // NOLINT(bugprone-easily-swappable-parameters)
+    float h, float s, float v) noexcept // NOLINT(bugprone-easily-swappable-parameters)
   {
     const auto color = details::FromHSV(h, s, v);
     const auto r = static_cast<uint8_t>(color.r);
@@ -63,7 +63,7 @@ struct [[maybe_unused]] RGBint : public Color<uint8_t, 3>
 struct [[maybe_unused]] RGBfloat : public Color<float, 3>
 {
   [[nodiscard]] static Color<float, 3> FromHSV(
-    float h, float s, float v) // NOLINT(bugprone-easily-swappable-parameters)
+    float h, float s, float v) noexcept // NOLINT(bugprone-easily-swappable-parameters)
   {
     return details::FromHSV(h, s, v);
   }
@@ -72,7 +72,7 @@ struct [[maybe_unused]] RGBfloat : public Color<float, 3>
 struct [[maybe_unused]] RGBAint : public Color<uint8_t, 4>
 {
   [[nodiscard]] static Color<uint8_t, 4> FromHSV(
-    float h, float s, float v, float a = 1.0f) // NOLINT(bugprone-easily-swappable-parameters)
+    float h, float s, float v, float a = 1.0f) noexcept // NOLINT(bugprone-easily-swappable-parameters)
   {
     const auto color = details::FromHSV(h, s, v);
     const auto r = static_cast<uint8_t>(color.r);
@@ -86,7 +86,7 @@ struct [[maybe_unused]] RGBAint : public Color<uint8_t, 4>
 struct [[maybe_unused]] RGBAfloat : public Color<float, 4>
 {
   [[nodiscard]] static Color<float, 4> FromHSV(
-    float h, float s, float v, float a = 1.0f) // NOLINT(bugprone-easily-swappable-parameters)
+    float h, float s, float v, float a = 1.0f) noexcept // NOLINT(bugprone-easily-swappable-parameters)
   {
     const auto color = details::FromHSV(h, s, v);
     return { { color.r, color.g, color.b, a } };
