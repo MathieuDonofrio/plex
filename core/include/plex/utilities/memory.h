@@ -11,6 +11,14 @@
 #include "plex/debug/assertion.h"
 #include "plex/utilities/type_traits.h"
 
+#if PLATFORM_WINDOWS
+#include <malloc.h>
+#define STACK_ALLOC(size) _alloca(size)
+#else
+#include <alloca.h>
+#define STACK_ALLOC(size) alloca(size)
+#endif
+
 namespace plex
 {
 ///
