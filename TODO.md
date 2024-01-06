@@ -2,7 +2,7 @@
 
 Completed tasks are marked with and 'x', they will be removed at the next release.
 
-If there is nothing todo the list will be: [x] None
+If there is nothing todo the list will be: [x] Unknown
 
 ## Patch
 
@@ -10,7 +10,7 @@ High priority!
 
 These tasks may be minor bug fixes or optimizations. They do not change the interface.
 
-- [x] None
+- [x] Unknown
 
 ## Minor
 
@@ -31,10 +31,10 @@ Config
 
 Containers
 
-- [ ] Bitset (SIMD optimized)
+- [ ] FixedVector
 - [x] Deque
-- [ ] Map
-- [ ] Set
+- [ ] FlatMap
+- [ ] FlatSet
 
 Debug
 
@@ -72,6 +72,9 @@ Graph
 Utilities
 
 - [ ] UUID
+- [ ] Dynamic stack allocation
+- [ ] Radix sort (SIMD optimized)
+- [ ] Bitset (SIMD optimized)
 
 ### ECS
 
@@ -102,7 +105,7 @@ Utilities
 
 ### Graphics
 
-- [ ] Make Vulkan loader work for linux
+- [ ] Vulkan loader
 - [ ] Make the Vulkan api wrapper generate extension functions
 - [ ] Implement shader check script for Vulkan
 
@@ -138,4 +141,4 @@ These tasks are large updates with potentially breaking changes.
 
 These tasks are experiments to be done in the experimental branch.
 
-- [x] None
+- [x] Unknown

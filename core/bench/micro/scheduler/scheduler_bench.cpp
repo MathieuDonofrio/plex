@@ -137,41 +137,41 @@ BENCHMARK(Scheduler_ComputeSchedulerSteps_5Stages4SystemsEach)
   ->MeasureProcessCPUTime()
   ->UseRealTime();
 
-static void Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach(benchmark::State& state)
-{
-  static constexpr size_t Stages = 10;
-  static constexpr size_t SystemsPerStage = 8;
-  static constexpr bool Async = false;
-
-  Context context;
-
-  Scheduler scheduler;
-
-  Vector<std::unique_ptr<Stage>> stages;
-
-  StageGenerator<Stages, SystemsPerStage, Async>::MakeStages(stages);
-
-  Vector<Stage*> raw_ptr_stages;
-
-  for (auto& stage : stages)
-  {
-    raw_ptr_stages.push_back(stage.get());
-  }
-
-  for (auto _ : state)
-  {
-    auto steps = ComputeSchedulerData(raw_ptr_stages);
-
-    benchmark::DoNotOptimize(steps);
-  }
-
-  benchmark::DoNotOptimize(scheduler);
-}
-
-BENCHMARK(Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach)
-  ->Unit(benchmark::kMillisecond)
-  ->MeasureProcessCPUTime()
-  ->UseRealTime();
+// static void Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach(benchmark::State& state)
+//{
+//   static constexpr size_t Stages = 10;
+//   static constexpr size_t SystemsPerStage = 8;
+//   static constexpr bool Async = false;
+//
+//   Context context;
+//
+//   Scheduler scheduler;
+//
+//   Vector<std::unique_ptr<Stage>> stages;
+//
+//   StageGenerator<Stages, SystemsPerStage, Async>::MakeStages(stages);
+//
+//   Vector<Stage*> raw_ptr_stages;
+//
+//   for (auto& stage : stages)
+//   {
+//     raw_ptr_stages.push_back(stage.get());
+//   }
+//
+//   for (auto _ : state)
+//   {
+//     auto steps = ComputeSchedulerData(raw_ptr_stages);
+//
+//     benchmark::DoNotOptimize(steps);
+//   }
+//
+//   benchmark::DoNotOptimize(scheduler);
+// }
+//
+// BENCHMARK(Scheduler_ComputeSchedulerSteps_10Stages8SystemsEach)
+//   ->Unit(benchmark::kMillisecond)
+//   ->MeasureProcessCPUTime()
+//   ->UseRealTime();
 
 static void Scheduler_Reference_5Stages4SystemsEach(benchmark::State& state)
 {
