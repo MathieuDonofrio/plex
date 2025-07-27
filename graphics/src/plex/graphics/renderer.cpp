@@ -1,33 +1,18 @@
 #include "plex/graphics/renderer.h"
 
+#include "plex/debug/logging.h"
 #include "plex/graphics/vulkan/vulkan_renderer.h"
 
-namespace plex
+namespace plex::graphics
 {
-
-std::shared_ptr<VulkanRenderer> CreateVulkanRenderer(
-  std::shared_ptr<Window> window, const std::string& application_name, GraphicsDebugLevel debug_level)
+std::unique_ptr<Renderer> CreateRenderer(
+  [[maybe_unused]] const RendererCreateInfo& create_info, BackendType backend_type)
 {
-  if (dynamic_cast<VulkanCapableWindow*>(window.get()) == nullptr)
+  switch (backend_type)
   {
-    LOG_ERROR("Window is not vulkan capable");
-
-    return nullptr;
-  }
-
-  return std::make_shared<VulkanRenderer>(window, application_name, debug_level);
-}
-
-std::shared_ptr<Renderer> CreateRenderer(std::shared_ptr<Window> window,
-  const std::string& application_name,
-  GraphicsDebugLevel debug_level,
-  RenderingBackend renderingBackend)
-{
-  switch (renderingBackend)
-  {
-  case RenderingBackend::VULKAN: return CreateVulkanRenderer(window, application_name, debug_level);
+  case BackendType::Vulkan: return std::make_unique<VulkanRenderer>(create_info);
   default: return nullptr;
   }
 }
 
-} // namespace plex
+} // namespace plex::graphics

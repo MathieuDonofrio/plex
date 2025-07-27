@@ -66,7 +66,8 @@ public:
 
     LOG_INFO("System1");
 
-    entities.ForEach([](Entity entity, int i) { LOG_INFO("Entity {}: {}", entity, i); });
+    entities.ForEach(
+      []([[maybe_unused]] Entity entity, [[maybe_unused]] int i) { LOG_INFO("Entity {}: {}", entity, i); });
 
     registry.Create<int>(100);
   }

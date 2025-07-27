@@ -1,60 +1,36 @@
-#ifndef PLEX_GRAPHICS_VULKAN_SURFACE_H
-#define PLEX_GRAPHICS_VULKAN_SURFACE_H
+#ifndef PLEX_GRAPHICS_VULKAN_VULKAN_SURFACE_H
+#define PLEX_GRAPHICS_VULKAN_VULKAN_SURFACE_H
 
-#include <memory>
+#include <vector>
 
-#include "plex/debug/logging.h"
-#include "plex/graphics/vulkan/vulkan_instance.h"
+#include "plex/graphics/vulkan/api/vulkan_api.h"
+#include "plex/graphics/vulkan_capable_window.h"
 
-namespace plex
+namespace plex::graphics
 {
-
 class VulkanSurface
 {
 public:
-  VulkanSurface(std::shared_ptr<Window> window, std::shared_ptr<VulkanInstance> instance) : instance_(instance)
+  VulkanSurface(VulkanCapableWindow* window, VkInstance instance);
+
+  ~VulkanSurface();
+
+  [[nodiscard]] std::vector<VkSurfaceFormatKHR> GetSurfaceFormats(VkPhysicalDevice device) const;
+
+  [[nodiscard]] std::vector<VkPresentModeKHR> GetPresentModes(VkPhysicalDevice device) const;
+
+  [[nodiscard]] VkSurfaceCapabilitiesKHR GetSurfaceCapabilities(VkPhysicalDevice device) const;
+
+  [[nodiscard]] VkSurfaceKHR GetHandle() const
   {
-    if (!Initialize(dynamic_cast<VulkanCapableWindow*>(window.get())))
-    {
-      LOG_ERROR("Failed to initialize Vulkan surface");
-
-      return;
-    }
-
-    LOG_INFO("Vulkan surface initialized");
-  }
-
-  VulkanSurface(const VulkanSurface&) = delete;
-  VulkanSurface& operator=(const VulkanSurface&) = delete;
-  VulkanSurface(VulkanSurface&&) = delete;
-  VulkanSurface& operator=(VulkanSurface&&) = delete;
-
-  ~VulkanSurface()
-  {
-    vkDestroySurfaceKHR(instance_->GetHandle(), surface_handle_, nullptr);
-    surface_handle_ = VK_NULL_HANDLE;
-
-    LOG_INFO("Vulkan surface destroyed");
-  };
-
-  [[nodiscard]] const VkSurfaceKHR GetHandle() const noexcept
-  {
-    return surface_handle_;
+    return surface_;
   }
 
 private:
-  bool Initialize(VulkanCapableWindow* window)
-  {
-    surface_handle_ = window->CreateWindowSurface(instance_->GetHandle());
-
-    return surface_handle_ != VK_NULL_HANDLE;
-  };
-
-private:
-  VkSurfaceKHR surface_handle_;
-
-  std::shared_ptr<VulkanInstance> instance_;
+  VkSurfaceKHR surface_;
+  VkInstance instance_;
 };
 
-} // namespace plex
+} // namespace plex::graphics
+
 #endif

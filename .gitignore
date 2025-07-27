@@ -20,3 +20,7 @@ cmake-build-*
 .vs
 .vscode
 .idea
+
+# Shaders
+*.*.spv
+shader_hashes.txt

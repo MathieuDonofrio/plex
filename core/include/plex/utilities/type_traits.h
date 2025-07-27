@@ -67,6 +67,14 @@ struct IsTriviallyRelocatable<std::unique_ptr<Type>> : public std::true_type
 {};
 
 ///
+/// Returns whether or not all the type is trivially relocatable.
+///
+/// @tparam Types Types to check for trivial relocatability.
+///
+template<typename Type>
+concept TriviallyRelocatable = IsTriviallyRelocatable<Type>::value;
+
+///
 /// Trait used to detect whether of not a type is thread safe.
 ///
 /// This means that no matter how the type is used, member access, methods... it will be thread safe.

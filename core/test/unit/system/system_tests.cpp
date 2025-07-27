@@ -61,6 +61,12 @@ namespace
   {
     system_call_counter++;
   }
+
+  template<size_t Id, typename... Queries>
+  void SystemMockId2(Queries&&...)
+  {
+    system_call_counter++;
+  }
 } // namespace
 
 static_assert(System<decltype(SystemMock1<>)>);
@@ -421,10 +427,20 @@ TEST(SystemObject_Tests, HasDependency_SystemNoDependencies_NoDependency)
   EXPECT_FALSE(object1.HasDependency(object2));
 }
 
+TEST(SystemObject_Tests, HasDependency_SameSystem_Dependency)
+{
+  auto system = SystemMock2<ResourcesMock<>>;
+
+  SystemObject object1(system);
+  SystemObject object2(system);
+
+  EXPECT_TRUE(object1.HasDependency(object2));
+}
+
 TEST(SystemObject_Tests, HasDependency_SimpleNoDependencies_NoDependency)
 {
-  auto system1 = SystemMock2<ResourcesMock<>>;
-  auto system2 = SystemMock2<ResourcesMock<>>;
+  auto system1 = SystemMockId2<0, ResourcesMock<>>;
+  auto system2 = SystemMockId2<1, ResourcesMock<>>;
 
   SystemObject object1(system1);
   SystemObject object2(system2);
@@ -434,8 +450,8 @@ TEST(SystemObject_Tests, HasDependency_SimpleNoDependencies_NoDependency)
 
 TEST(SystemObject_Tests, HasDependency_MultipleQueriesNoDependencies_NoDependency)
 {
-  auto system1 = SystemMock2<ResourcesMock<>, EntitiesMock<>>;
-  auto system2 = SystemMock2<ResourcesMock<>, EntitiesMock<>>;
+  auto system1 = SystemMockId2<0, ResourcesMock<>, EntitiesMock<>>;
+  auto system2 = SystemMockId2<1, ResourcesMock<>, EntitiesMock<>>;
 
   SystemObject object1(system1);
   SystemObject object2(system2);
@@ -456,8 +472,8 @@ TEST(SystemObject_Tests, HasDependency_WriteWrite_Dependency)
 
 TEST(SystemObject_Tests, HasDependency_ReadRead_NoDependency)
 {
-  auto system1 = SystemMock2<ResourcesMock<const int>>;
-  auto system2 = SystemMock2<ResourcesMock<const int>>;
+  auto system1 = SystemMockId2<0, ResourcesMock<const int>>;
+  auto system2 = SystemMockId2<1, ResourcesMock<const int>>;
 
   SystemObject object1(system1);
   SystemObject object2(system2);
@@ -465,7 +481,7 @@ TEST(SystemObject_Tests, HasDependency_ReadRead_NoDependency)
   EXPECT_FALSE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject_Tests, HasDependency_WriteRead_NoDependency)
+TEST(SystemObject_Tests, HasDependency_WriteRead_Dependency)
 {
   auto system1 = SystemMock2<ResourcesMock<int>>;
   auto system2 = SystemMock2<ResourcesMock<const int>>;
@@ -476,7 +492,7 @@ TEST(SystemObject_Tests, HasDependency_WriteRead_NoDependency)
   EXPECT_TRUE(object1.HasDependency(object2));
 }
 
-TEST(SystemObject_Tests, HasDependency_ReadWrite_NoDependency)
+TEST(SystemObject_Tests, HasDependency_ReadWrite_Dependency)
 {
   auto system1 = SystemMock2<ResourcesMock<const int>>;
   auto system2 = SystemMock2<ResourcesMock<int>>;
@@ -529,8 +545,8 @@ TEST(SystemObject_Tests, HasDependency_WriteWriteThreadSafe_NoDependency)
     size_t value;
   };
 
-  auto system1 = SystemMock2<ResourcesMock<ThreadSafeRessource>>;
-  auto system2 = SystemMock2<ResourcesMock<ThreadSafeRessource>>;
+  auto system1 = SystemMockId2<0, ResourcesMock<ThreadSafeRessource>>;
+  auto system2 = SystemMockId2<1, ResourcesMock<ThreadSafeRessource>>;
 
   SystemObject object1(system1);
   SystemObject object2(system2);

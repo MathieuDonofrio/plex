@@ -1,49 +1,34 @@
-#ifndef PLEX_GRAPHICS_VULKAN_INSTANCE_H
-#define PLEX_GRAPHICS_VULKAN_INSTANCE_H
+#ifndef PLEX_GRAPHICS_VULKAN_VULKAN_INSTANCE_H
+#define PLEX_GRAPHICS_VULKAN_VULKAN_INSTANCE_H
 
-#include "plex/graphics/graphics_debug_level.h"
-#include "plex/graphics/vulkan/vulkan_capable_window.h"
-#include "plex/graphics/window.h"
-#include "plex/utilities/enumerator.h"
+#include <vector>
 
-#include <vulkan/vulkan_core.h>
+#include "plex/graphics/renderer.h"
+#include "plex/graphics/vulkan/api/vulkan_api.h"
 
-#include <string>
-
-namespace plex
+namespace plex::graphics
 {
-
 class VulkanInstance
 {
 public:
-  VulkanInstance(
-    std::shared_ptr<Window> window_handle, const std::string& application_name, GraphicsDebugLevel debug_level);
-
-  VulkanInstance(const VulkanInstance&) = delete;
-  VulkanInstance& operator=(const VulkanInstance&) = delete;
-  VulkanInstance(VulkanInstance&&) = delete;
-  VulkanInstance& operator=(VulkanInstance&&) = delete;
+  VulkanInstance(const std::string& application_name, DebugLevel debug_level, std::vector<const char*> extensions);
 
   ~VulkanInstance();
 
-  [[nodiscard]] const VkInstance GetHandle() const noexcept
+  [[nodiscard]] DebugLevel GetDebugLevel() const
   {
-    return instance_;
+    return debug_level_;
   }
 
-  const std::string& GetApplicationName()
+  [[nodiscard]] const std::string& GetApplicationName() const
   {
     return application_name_;
   }
 
-private:
-  bool Initialize(VulkanCapableWindow* window_handle);
-
-  bool CheckValidationLayerSupport();
-
-  bool IsValidationLayerSupported(const std::string& layer_name);
-
-  bool SetupDebugMessenger();
+  [[nodiscard]] VkInstance GetHandle() const noexcept
+  {
+    return instance_;
+  }
 
 private:
   ///
@@ -95,8 +80,8 @@ private:
   std::string application_name_;
 
   VkDebugUtilsMessengerEXT debug_messenger_;
-  GraphicsDebugLevel debug_level_;
+  DebugLevel debug_level_;
 };
+} // namespace plex::graphics
 
-} // namespace plex
 #endif

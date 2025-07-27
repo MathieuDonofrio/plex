@@ -1,107 +1,299 @@
-#include "vulkan_device.h"
+#include "plex/graphics/vulkan/vulkan_device.h"
 
-#include "plex/debug/logging.h"
-#include "plex/graphics/vulkan/vulkan_config.h"
-#include "plex/graphics/vulkan/vulkan_surface.h"
-#include "plex/graphics/vulkan/vulkan_swapchain.h"
-
-#include <array>
-#include <memory>
+#include <algorithm>
+#include <optional>
 #include <set>
 #include <vector>
-#include <optional>
 
-namespace plex
+#include "plex/debug/logging.h"
+#include "plex/graphics/vulkan/vulkan_swapchain.h"
+
+namespace plex::graphics
 {
-
-VulkanDevice::VulkanDevice(std::shared_ptr<VulkanInstance> instance,
-  std::shared_ptr<VulkanSurface> surface,
-  SwapchainImageUsage swapchain_image_usage)
-  : instance_(instance)
+namespace
 {
-  const auto swapchain_image_usage_flag = ConvertSwapchainUsage(swapchain_image_usage);
-  if (!PickPhysicalDevice(instance, surface, swapchain_image_usage_flag))
+  struct QueueFamilyIndices
   {
-    LOG_ERROR("Failed to find a suitable vulkan physical device");
+    std::optional<uint32_t> graphics_family;
+    std::optional<uint32_t> present_family;
+    std::optional<uint32_t> transfer_family;
+    std::optional<uint32_t> compute_family;
 
-    return;
-  }
-
-  if (!Initialize(surface))
-  {
-    LOG_ERROR("Failed to initialize vulkan logical device");
-
-    return;
-  }
-
-  if (!InitializeVMA(instance))
-  {
-    LOG_ERROR("Failed to initialize vulkan memory allocator");
-
-    return;
-  }
-
-  LOG_INFO("Vulkan device initialized");
-}
-
-VulkanDevice::~VulkanDevice()
-{
-  vmaDestroyAllocator(vma_allocator_);
-  vma_allocator_ = nullptr;
-
-  vkDestroyDevice(logical_device_, nullptr);
-  logical_device_ = VK_NULL_HANDLE;
-
-  LOG_INFO("Vulkan device destroyed");
-}
-
-bool VulkanDevice::PickPhysicalDevice(const std::shared_ptr<VulkanInstance>& instance,
-  const std::shared_ptr<VulkanSurface>& surface,
-  const VkImageUsageFlags swapchain_image_usage)
-{
-  std::vector<std::pair<VkPhysicalDevice, uint32_t>> candidates;
-
-  for (const auto& physical_device : GetAvailablePhysicalDevices(instance->GetHandle()))
-  {
-    if (IsPhysicalDeviceSupported(physical_device, surface->GetHandle(), swapchain_image_usage))
+    [[nodiscard]] bool IsComplete() const
     {
-      candidates.emplace_back(physical_device, ComputePhysicalDeviceScore(physical_device));
+      return graphics_family.has_value() && present_family.has_value() && transfer_family.has_value()
+             && compute_family.has_value();
+    }
+  };
+
+  struct VulkanSwapChainSupportDetails
+  {
+    VkSurfaceCapabilitiesKHR capabilities;
+
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> present_modes;
+  };
+
+  std::vector<VkPhysicalDevice> GetAvailablePhysicalDevices(VkInstance instance)
+  {
+    uint32_t device_count = 0;
+    vkEnumeratePhysicalDevices(instance, &device_count, nullptr);
+
+    if (device_count == 0)
+    {
+      LOG_ERROR("No Vulkan compatible devices found");
+      return {};
+    }
+
+    std::vector<VkPhysicalDevice> devices(device_count);
+    vkEnumeratePhysicalDevices(instance, &device_count, devices.data());
+
+    return devices;
+  }
+
+  uint32_t ComputePhysicalDeviceScore(VkPhysicalDevice physical_device)
+  {
+    uint32_t score = 0;
+
+    VkPhysicalDeviceProperties device_properties;
+    VkPhysicalDeviceFeatures device_features;
+
+    vkGetPhysicalDeviceProperties(physical_device, &device_properties);
+    vkGetPhysicalDeviceFeatures(physical_device, &device_features);
+
+    // Discrete GPUs have a significant performance advantage
+
+    if (device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) score += 1000;
+
+    // Bellow is the scoring of features and properties, add as needed
+
+    score += device_properties.limits.maxImageDimension2D / 8;
+
+    return score;
+  }
+
+  bool IsExtensionSupported(VkPhysicalDevice physical_device, const std::string& extension_name)
+  {
+    uint32_t extension_count = 0;
+    vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extension_count, nullptr);
+
+    std::vector<VkExtensionProperties> available_extensions(extension_count);
+    vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extension_count, available_extensions.data());
+
+    for (const auto& extension : available_extensions)
+    {
+      if (extension.extensionName == extension_name)
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  void FindQueueFamilies(VkPhysicalDevice physical_device, VkSurfaceKHR surface, QueueFamilyIndices* indices)
+  {
+    uint32_t queue_family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families.data());
+
+    for (int i = 0; i < queue_families.size(); ++i)
+    {
+      const auto& queue_family = queue_families[i];
+
+      if (queue_family.queueCount > 0 && queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+      {
+        indices->graphics_family = i;
+      }
+
+      VkBool32 present_support = false;
+      vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, surface, &present_support);
+
+      if (queue_family.queueCount > 0 && present_support)
+      {
+        indices->present_family = i;
+      }
+
+      if (queue_family.queueCount > 0 && queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT)
+      {
+        indices->transfer_family = i;
+      }
+
+      if (queue_family.queueCount > 0 && queue_family.queueFlags & VK_QUEUE_COMPUTE_BIT)
+      {
+        indices->compute_family = i;
+      }
     }
   }
 
-  if (candidates.empty())
+  VulkanSwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice physical_device, VkSurfaceKHR surface)
+  {
+    VulkanSwapChainSupportDetails details;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &details.capabilities);
+
+    uint32_t format_count;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &format_count, nullptr);
+
+    if (format_count != 0)
+    {
+      details.formats.resize(format_count);
+
+      vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &format_count, details.formats.data());
+    }
+
+    uint32_t present_mode_count;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &present_mode_count, nullptr);
+
+    if (present_mode_count != 0)
+    {
+      details.present_modes.resize(present_mode_count);
+
+      vkGetPhysicalDeviceSurfacePresentModesKHR(
+        physical_device, surface, &present_mode_count, details.present_modes.data());
+    }
+
+    return details;
+  }
+
+  bool IsPhysicalDeviceSupported(VkPhysicalDevice physical_device, VkSurfaceKHR surface, VkImageUsageFlags usage)
+  {
+    QueueFamilyIndices indices;
+    FindQueueFamilies(physical_device, surface, &indices);
+
+    if (!indices.IsComplete()) return false;
+
+    for (const auto& required_extension : vapi::cVulkanDeviceExtensions)
+    {
+      if (!IsExtensionSupported(physical_device, required_extension)) return false;
+    }
+
+    VulkanSwapChainSupportDetails swap_chain_support = QuerySwapChainSupport(physical_device, surface);
+
+    if (swap_chain_support.formats.empty() || swap_chain_support.present_modes.empty()) return false;
+
+    if (!(swap_chain_support.capabilities.supportedUsageFlags & usage)) return false;
+
+    VkPhysicalDeviceFeatures physical_device_supported_features;
+    vkGetPhysicalDeviceFeatures(physical_device, &physical_device_supported_features);
+
+    if (!physical_device_supported_features.samplerAnisotropy) return false;
+
+    return true;
+  }
+
+  VkPhysicalDevice PickPhysicalDevice(
+    VkInstance instance, VkSurfaceKHR surface, const VkImageUsageFlags swapchain_image_usage)
+  {
+    std::vector<std::pair<VkPhysicalDevice, uint32_t>> candidates;
+
+    for (const auto& physical_device : GetAvailablePhysicalDevices(instance))
+    {
+      if (IsPhysicalDeviceSupported(physical_device, surface, swapchain_image_usage))
+      {
+        candidates.emplace_back(physical_device, ComputePhysicalDeviceScore(physical_device));
+      }
+    }
+
+    if (candidates.empty())
+    {
+      LOG_ERROR("Failed to find a suitable GPU");
+
+      return nullptr;
+    }
+
+    auto most_suitable = std::max_element(
+      candidates.begin(), candidates.end(), [](const auto& a, const auto& b) { return a.second < b.second; });
+
+    if (most_suitable == candidates.end())
+    {
+      LOG_ERROR("Failed to find a suitable GPU");
+
+      return nullptr;
+    }
+
+    return most_suitable->first;
+  }
+
+  uint32_t FindMemoryType(VkPhysicalDevice device, uint32_t type_filter, VkMemoryPropertyFlags properties)
+  {
+    VkPhysicalDeviceMemoryProperties memory_properties;
+    vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
+
+    for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
+    {
+      if ((type_filter & (1 << i)) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties)
+      {
+        return i;
+      }
+    }
+
+    LOG_ERROR("Failed to find suitable memory type");
+
+    return 0;
+  }
+
+  constexpr VkBufferUsageFlagBits GetBufferUsageFlagBits(BufferUsageFlags usage) noexcept
+  {
+    int flags = 0;
+    if ((usage & BufferUsageFlags::Vertex) != 0) flags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Index) != 0) flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Uniform) != 0) flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::Storage) != 0) flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    if ((usage & BufferUsageFlags::TransferSource) != 0) flags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    if ((usage & BufferUsageFlags::TransferDestination) != 0) flags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    return static_cast<VkBufferUsageFlagBits>(flags);
+  }
+
+  constexpr VmaMemoryUsage GetVmaMemoryUsage(MemoryUsage memory_usage) noexcept
+  {
+    switch (memory_usage)
+    {
+    case MemoryUsage::Unknown: return VMA_MEMORY_USAGE_UNKNOWN;
+    case MemoryUsage::GPU_Only: return VMA_MEMORY_USAGE_GPU_ONLY;
+    case MemoryUsage::CPU_Only: return VMA_MEMORY_USAGE_CPU_ONLY;
+    case MemoryUsage::CPU_To_GPU: return VMA_MEMORY_USAGE_CPU_TO_GPU;
+    case MemoryUsage::GPU_To_CPU: return VMA_MEMORY_USAGE_GPU_TO_CPU;
+    case MemoryUsage::CPU_Copy: return VMA_MEMORY_USAGE_CPU_COPY;
+    case MemoryUsage::Auto: return VMA_MEMORY_USAGE_AUTO;
+    }
+
+    return VMA_MEMORY_USAGE_UNKNOWN;
+  }
+} // namespace
+
+VulkanDevice::VulkanDevice(VkInstance instance, VkSurfaceKHR surface)
+{
+  // Pick physical device
+
+  physical_device_ = PickPhysicalDevice(instance, surface, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+
+  if (!physical_device_)
   {
     LOG_ERROR("Failed to find a suitable GPU");
-
-    return false;
+    return;
   }
 
-  std::ranges::sort(candidates, [](auto lhs, auto rhs) { return std::cmp_greater(lhs.second, rhs.second); });
+  // Create logical device
 
-  physical_device_ = candidates.front().first;
+  QueueFamilyIndices queue_family_indices;
+  FindQueueFamilies(physical_device_, surface, &queue_family_indices);
 
-  return true;
-}
-
-bool VulkanDevice::Initialize(const std::shared_ptr<VulkanSurface>& surface)
-{
-  if (!FindQueueFamilies(physical_device_, surface->GetHandle(), &queue_family_indices_))
-  {
-    LOG_ERROR("Failed to find queue families");
-
-    return false;
-  }
+  graphics_queue_family_index_ = queue_family_indices.graphics_family.value();
+  present_queue_family_index_ = queue_family_indices.present_family.value();
+  transfer_queue_family_index_ = queue_family_indices.transfer_family.value();
+  compute_queue_family_index_ = queue_family_indices.compute_family.value();
 
   std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
+  std::set<uint32_t> unique_queue_families = {
+    graphics_queue_family_index_, present_queue_family_index_, transfer_queue_family_index_, compute_queue_family_index_
+  };
 
-  std::set<uint32_t> unique_queue_families = { queue_family_indices_.graphics_family_index,
-    queue_family_indices_.present_family_index };
-
-  const float queue_priority = 1.0f;
-
+  float queue_priority = 1.0f;
   for (uint32_t queue_family : unique_queue_families)
   {
-    VkDeviceQueueCreateInfo queue_create_info {};
+    VkDeviceQueueCreateInfo queue_create_info = {};
     queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queue_create_info.queueFamilyIndex = queue_family;
     queue_create_info.queueCount = 1;
@@ -109,222 +301,61 @@ bool VulkanDevice::Initialize(const std::shared_ptr<VulkanSurface>& surface)
     queue_create_infos.push_back(queue_create_info);
   }
 
-  VkPhysicalDeviceFeatures device_features {};
+  VkPhysicalDeviceFeatures device_features = {};
   device_features.samplerAnisotropy = VK_TRUE;
 
-  VkDeviceCreateInfo create_info {};
+  VkDeviceCreateInfo create_info = {};
   create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
   create_info.pQueueCreateInfos = queue_create_infos.data();
+  create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
   create_info.pEnabledFeatures = &device_features;
-  create_info.enabledExtensionCount = static_cast<uint32_t>(cVulkanDeviceExtensions.size());
-  create_info.ppEnabledExtensionNames = cVulkanDeviceExtensions.data();
-
-  // Enable non-uniform indexing
-  VkPhysicalDeviceDescriptorIndexingFeatures descriptor_indexing_features {};
-  descriptor_indexing_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-  descriptor_indexing_features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-  descriptor_indexing_features.runtimeDescriptorArray = VK_TRUE;
-  descriptor_indexing_features.descriptorBindingVariableDescriptorCount = VK_TRUE;
-  descriptor_indexing_features.descriptorBindingPartiallyBound = VK_TRUE;
-  descriptor_indexing_features.descriptorBindingUpdateUnusedWhilePending = VK_TRUE;
-  descriptor_indexing_features.descriptorBindingStorageImageUpdateAfterBind = VK_TRUE;
-
-  create_info.pNext = &descriptor_indexing_features;
-
-#ifndef NDEBUG
-  create_info.enabledLayerCount = static_cast<uint32_t>(cVulkanValidationLayers.size());
-  create_info.ppEnabledLayerNames = cVulkanValidationLayers.data();
-#else
-  create_info.enabledLayerCount = 0;
-#endif
+  create_info.enabledExtensionCount = static_cast<uint32_t>(vapi::cVulkanDeviceExtensions.size());
+  create_info.ppEnabledExtensionNames = vapi::cVulkanDeviceExtensions.data();
 
   if (vkCreateDevice(physical_device_, &create_info, nullptr, &logical_device_) != VK_SUCCESS)
   {
-    LOG_ERROR("Failed to create vulkan logical device");
-
-    return false;
+    LOG_ERROR("Failed to create logical device");
+    return;
   }
 
-  vkGetDeviceQueue(logical_device_, queue_family_indices_.graphics_family_index, 0, &graphics_queue_);
-  vkGetDeviceQueue(logical_device_, queue_family_indices_.present_family_index, 0, &present_queue_);
-  vkGetDeviceQueue(logical_device_, queue_family_indices_.compute_family_index, 0, &compute_queue_);
+  // Queues
 
-  const auto limits = GetPhysicalDeviceLimits();
+  vkGetDeviceQueue(logical_device_, graphics_queue_family_index_, 0, &graphics_queue_);
+  vkGetDeviceQueue(logical_device_, present_queue_family_index_, 0, &present_queue_);
+  vkGetDeviceQueue(logical_device_, transfer_queue_family_index_, 0, &transfer_queue_);
+  vkGetDeviceQueue(logical_device_, compute_queue_family_index_, 0, &compute_queue_);
 
-  const auto& max_compute_work_group_count = limits.maxComputeWorkGroupCount;
-  std::copy(max_compute_work_group_count, max_compute_work_group_count + 3, std::begin(max_compute_work_group_count_));
+  // Memory allocator
 
-  const auto& max_compute_work_group_size = limits.maxComputeWorkGroupSize;
-  std::copy(max_compute_work_group_size, max_compute_work_group_size + 3, std::begin(max_compute_work_group_size_));
+  VmaAllocatorCreateInfo vma_allocator_create_info = {};
+  vma_allocator_create_info.physicalDevice = physical_device_;
+  vma_allocator_create_info.device = logical_device_;
+  vma_allocator_create_info.instance = instance;
 
-  max_compute_work_group_invocations_ = limits.maxComputeWorkGroupInvocations;
-
-  return true;
+  vmaCreateAllocator(&vma_allocator_create_info, &allocator_);
 }
 
-bool VulkanDevice::InitializeVMA(const std::shared_ptr<VulkanInstance>& instance)
+VulkanDevice::~VulkanDevice()
 {
-  VmaVulkanFunctions vulkanFunctions = {};
-  vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
-  vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
-  vulkanFunctions.vkGetPhysicalDeviceProperties = &vkGetPhysicalDeviceProperties;
-  vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = &vkGetPhysicalDeviceMemoryProperties;
-  vulkanFunctions.vkAllocateMemory = &vkAllocateMemory;
-  vulkanFunctions.vkFreeMemory = &vkFreeMemory;
-  vulkanFunctions.vkMapMemory = &vkMapMemory;
-  vulkanFunctions.vkUnmapMemory = &vkUnmapMemory;
-  vulkanFunctions.vkFlushMappedMemoryRanges = &vkFlushMappedMemoryRanges;
-  vulkanFunctions.vkInvalidateMappedMemoryRanges = &vkInvalidateMappedMemoryRanges;
-  vulkanFunctions.vkBindBufferMemory = &vkBindBufferMemory;
-  vulkanFunctions.vkBindImageMemory = &vkBindImageMemory;
-  vulkanFunctions.vkGetBufferMemoryRequirements = &vkGetBufferMemoryRequirements;
-  vulkanFunctions.vkGetImageMemoryRequirements = &vkGetImageMemoryRequirements;
-  vulkanFunctions.vkCreateBuffer = &vkCreateBuffer;
-  vulkanFunctions.vkDestroyBuffer = &vkDestroyBuffer;
-  vulkanFunctions.vkCreateImage = &vkCreateImage;
-  vulkanFunctions.vkDestroyImage = &vkDestroyImage;
-  vulkanFunctions.vkCmdCopyBuffer = &vkCmdCopyBuffer;
-  vulkanFunctions.vkGetBufferMemoryRequirements2KHR =
-    GetFunctionPointer<PFN_vkGetBufferMemoryRequirements2>("vkGetBufferMemoryRequirements2");
-  vulkanFunctions.vkGetImageMemoryRequirements2KHR =
-    GetFunctionPointer<PFN_vkGetImageMemoryRequirements2>("vkGetImageMemoryRequirements2");
-  vulkanFunctions.vkBindBufferMemory2KHR = GetFunctionPointer<PFN_vkBindBufferMemory2>("vkBindBufferMemory2");
-  vulkanFunctions.vkBindImageMemory2KHR = GetFunctionPointer<PFN_vkBindImageMemory2>("vkBindImageMemory2");
-  vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR =
-    GetFunctionPointer<PFN_vkGetPhysicalDeviceMemoryProperties2KHR>("vkGetPhysicalDeviceMemoryProperties2KHR");
-  vulkanFunctions.vkGetDeviceBufferMemoryRequirements =
-    GetFunctionPointer<PFN_vkGetDeviceBufferMemoryRequirements>("vkGetDeviceBufferMemoryRequirements");
-
-  VmaAllocatorCreateInfo allocator_create_info = {};
-  allocator_create_info.vulkanApiVersion = VK_API_VERSION_1_3;
-  allocator_create_info.physicalDevice = physical_device_;
-  allocator_create_info.device = logical_device_;
-  allocator_create_info.instance = instance->GetHandle();
-  allocator_create_info.pVulkanFunctions = &vulkanFunctions;
-  allocator_create_info.flags = VmaAllocatorCreateFlagBits::VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
-
-  return vmaCreateAllocator(&allocator_create_info, &vma_allocator_) == VK_SUCCESS;
+  vkDestroyDevice(logical_device_, nullptr);
 }
 
-bool VulkanDevice::IsPhysicalDeviceSupported(
-  VkPhysicalDevice physical_device, VkSurfaceKHR surface, VkImageUsageFlags usage)
+VulkanBufferInterface* VulkanDevice::CreateBuffer(
+  size_t size, BufferUsageFlags buffer_usage_flags, MemoryUsage memory_usage)
 {
-  if (!FindQueueFamilies(physical_device, surface, nullptr)) return false;
+  VkBufferCreateInfo buffer_create_info {};
+  buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  buffer_create_info.size = size;
+  buffer_create_info.usage = GetBufferUsageFlagBits(buffer_usage_flags);
+  buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  for (const auto& required_extension : cVulkanDeviceExtensions)
-  {
-    if (!IsExtensionSupported(physical_device, required_extension)) return false;
-  }
+  VmaAllocationCreateInfo allocation_create_info {};
+  allocation_create_info.requiredFlags = GetVmaMemoryUsage(memory_usage);
 
-  VulkanSwapChainSupportDetails swap_chain_support = QuerySwapChainSupport(physical_device, surface);
+  VkBuffer buffer;
+  VmaAllocation allocation;
+  vmaCreateBuffer(allocator_, &buffer_create_info, &allocation_create_info, &buffer, &allocation, nullptr);
 
-  if (swap_chain_support.formats.empty() || swap_chain_support.present_modes.empty()) return false;
-
-  if (!(swap_chain_support.capabilities.supportedUsageFlags & usage)) return false;
-
-  VkPhysicalDeviceFeatures physical_device_supported_features;
-  vkGetPhysicalDeviceFeatures(physical_device, &physical_device_supported_features);
-
-  if (!physical_device_supported_features.samplerAnisotropy) return false;
-
-  return true;
+  return new VulkanBufferInterface(buffer, allocation, allocator_);
 }
-
-bool VulkanDevice::FindQueueFamilies(
-  VkPhysicalDevice physical_device, VkSurfaceKHR surface, VulkanQueueFamilyIndices* indices)
-{
-  std::optional<uint32_t> graphics_family_index;
-  std::optional<uint32_t> present_family_index;
-  std::optional<uint32_t> compute_family_index;
-
-  uint32_t queue_family_count = 0;
-  vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
-
-  std::vector<VkQueueFamilyProperties> queue_families_properties(queue_family_count);
-  vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, queue_families_properties.data());
-
-  for (uint32_t i = 0; i < queue_family_count; ++i)
-  {
-    if (queue_families_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) graphics_family_index = i;
-    if (queue_families_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) compute_family_index = i;
-
-    VkBool32 is_present_surface_supported = false;
-    vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, surface, &is_present_surface_supported);
-
-    if (is_present_surface_supported) present_family_index = i;
-
-    if (graphics_family_index.has_value() && present_family_index.has_value() && compute_family_index.has_value())
-    {
-      if (indices)
-        *indices = {
-          graphics_family_index.value(),
-          present_family_index.value(),
-          compute_family_index.value(),
-        };
-
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool VulkanDevice::IsExtensionSupported(VkPhysicalDevice physical_device, const std::string& extension_name)
-{
-  uint32_t available_extension_count = 0;
-
-  vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &available_extension_count, nullptr);
-
-  std::vector<VkExtensionProperties> available_extensions(available_extension_count);
-
-  vkEnumerateDeviceExtensionProperties(
-    physical_device, nullptr, &available_extension_count, available_extensions.data());
-
-  for (const auto& extension : available_extensions)
-  {
-    if (extension_name == extension.extensionName) return true;
-  }
-
-  return false;
-}
-
-uint32_t VulkanDevice::ComputePhysicalDeviceScore(VkPhysicalDevice physical_device)
-{
-  uint32_t score = 0;
-
-  VkPhysicalDeviceProperties device_properties;
-  VkPhysicalDeviceFeatures device_features;
-
-  vkGetPhysicalDeviceProperties(physical_device, &device_properties);
-  vkGetPhysicalDeviceFeatures(physical_device, &device_features);
-
-  // Discrete GPUs have a significant performance advantage
-
-  if (device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) score += 1000;
-
-  // Bellow is the scoring of features and properties, add as needed
-
-  score += device_properties.limits.maxImageDimension2D / 8;
-
-  return score;
-}
-
-VkPhysicalDeviceLimits VulkanDevice::GetPhysicalDeviceLimits() const
-{
-  VkPhysicalDeviceProperties physical_device_properties_;
-  vkGetPhysicalDeviceProperties(physical_device_, &physical_device_properties_);
-  return physical_device_properties_.limits;
-}
-
-std::vector<VkPhysicalDevice> VulkanDevice::GetAvailablePhysicalDevices(VkInstance instance)
-{
-  uint32_t physical_device_count = 0;
-  vkEnumeratePhysicalDevices(instance, &physical_device_count, nullptr);
-
-  std::vector<VkPhysicalDevice> physical_devices(physical_device_count);
-  vkEnumeratePhysicalDevices(instance, &physical_device_count, physical_devices.data());
-
-  return physical_devices;
-}
-} // namespace plex
+} // namespace plex::graphics

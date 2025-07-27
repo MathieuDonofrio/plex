@@ -4,9 +4,10 @@
 #include <cstdint>
 #include <string>
 
+#include "plex/containers/vector.h"
 #include "plex/graphics/vulkan_capable_window.h"
 #include "plex/graphics/window.h"
-#include "plex/utilities/enumerator.h"
+#include "plex/utilities/enum_flag.h"
 
 namespace
 {
@@ -26,193 +27,86 @@ public:
   // - https://www.glfw.org/docs/3.3/group__window.html
   // - https://www.glfw.org/docs/3.3.1/vulkan_guide.html
 
-  ///
-  /// Parametric constructor.
-  ///
-  /// @param[in] title Title of the window.
-  /// @param[in] width The width in pixels of the drawable area .
-  /// @param[in] height The height in pixels of the drawable area.
-  /// @param[in] bus The bus to publish events about the window to.
-  /// @param[in] hints Hints used to create the window.
-  ///
   GLFWWindow(const std::string& title,
     uint32_t width,
     uint32_t height,
-    EventBus* bus,
     WindowCreationHints hints = WindowCreationHints::Defaults);
 
-  ///
-  /// Destructor
-  ///
   ~GLFWWindow() override;
 
-  ///
-  /// Poll the OS for events associated with this window.
-  ///
-  /// @note Polling of events should be conducted every now and then to let the OS know that the process is still
-  /// responsive.
-  ///
   void PollEvents() override;
 
-  ///
-  /// Same as PollEvents() but waits for events to occur by making the thread sleep.
-  ///
   void WaitEvents() override;
 
-  ///
-  /// Same as PollEvents() but waits for events to occur by making the thread sleep.
-  ///
-  /// @param[in] timeout Maximum time to wait in seconds.
-  ///
   void WaitEvents(double timeout) override;
 
-  ///
-  /// Bring the window in focus.
-  ///
   void Focus() override;
 
-  ///
-  /// Maximise the size of the window according to its maximum size or the entire screen if there is no limits.
-  ///
   void Maximize() override;
 
-  ///
-  /// Minimise the size of the window according to its minimum size or the default minimum size if there is no limits.
-  ///
   void Iconify() override;
 
-  ///
-  /// Restore the window if it was iconified or maximized.
-  ///
   void Restore() override;
 
-  ///
-  /// Request the attention of the user in an non-interrupting way.
-  ///
   void RequestAttention() override;
 
-  ///
-  /// Put the window into a closing state.
-  ///
-  /// @note The visual window will not be closed by this function.
-  ///       It only sets closing state flags.
-  ///       Window destruction happens upon destruction of the window object.
-  ///
   void Close() override;
 
-  ///
-  /// Resize the window drawable area
-  ///
-  /// @param[in] width New width in pixels of the drawable area.
-  /// @param[in] height New height in pixels of the drawable area.
-  ///
   void Resize(uint32_t width, uint32_t height) override;
 
-  ///
-  /// Set the title of the window.
-  ///
-  /// @param[in] title New title of the window.
-  ///
   void SetTitle(const std::string& title) override;
 
-  ///
-  /// Get the title of the window
-  ///
-  /// @return const string ref of the window title
-  ///
   [[nodiscard]] const std::string& GetTitle() const override;
 
-  ///
-  /// Set the icon for the window.
-  ///
-  /// @param[in] pixels Pointer to an array of pixels in the RGBA format.
-  /// @param[in] width Width in pixels of the icon.
-  /// @param[in] height height in pixels of the icon.
-  ///
-  /// @note Preferred sizes are: 16x16, 32x32 and 48x48.
-  ///
-  /// @note To remove to the window's icon, pass in a nullptr for the pixels pointer
-  ///
   void SetIcon(uint8_t* pixels, uint32_t width, uint32_t height) override;
 
-  ///
-  /// Get the width in screen coordinate of the current monitor the window is on.
-  ///
-  /// @return Width in screen coordinate of the monitor.
-  ///
   [[nodiscard]] uint32_t GetMonitorWidth() const override;
 
-  ///
-  /// Get the height in screen coordinate of the current monitor the window is on.
-  ///
-  /// @return Height in screen coordinate of the monitor.
-  ///
   [[nodiscard]] uint32_t GetMonitorHeight() const override;
 
-  ///
-  /// Get the current width in pixels of the drawable area.
-  ///
-  /// @return Current width in pixels of the drawable area.
-  ///
   [[nodiscard]] uint32_t GetWidth() const override;
 
-  ///
-  /// Get the current height in pixels of the drawable area.
-  ///
-  /// @return Current height in pixels of the drawable area.
-  ///
   [[nodiscard]] uint32_t GetHeight() const override;
 
-  ///
-  /// Get the closed state of the window.
-  ///
-  /// @return Closed state of the window.
-  ///
   [[nodiscard]] bool IsClosing() const override;
 
-  ///
-  /// Get the iconified state of the window.
-  ///
-  /// @return Iconified state of the window.
-  ///
   [[nodiscard]] bool IsIconified() const override;
 
-  ///
-  /// Get the maximised state of the window.
-  ///
-  /// @return Maximised state of the window.
-  ///
   [[nodiscard]] bool IsMaximized() const override;
 
-  ///
-  /// Get the focused state of the window.
-  ///
-  /// @return Focused state of the window.
-  ///
   [[nodiscard]] bool IsFocused() const override;
 
-  ///
-  /// Get the visible state of the window.
-  ///
-  /// @return Visible state of the window.
-  ///
   [[nodiscard]] bool IsVisible() const override;
 
-  ///
-  /// Set the refresh rate of the window when fullscreen.
-  ///
-  /// @param[in] refresh_rate Rate of refresh in frames per second.
-  ///
-  /// @note A value of 0 will disable the refresh rate limit.
-  ///
   void SetFullScreenRefreshRate(uint32_t refresh_rate) override;
 
-  ///
-  /// Obtains the size of the window's frame buffer.
-  ///
-  /// @return Frame buffer size pair.
-  ///
   [[nodiscard]] std::pair<int32_t, int32_t> GetFrameBufferSize() const override;
+
+  void AddWindowResizeEventCallback(WindowEventCallback<WindowResizeEvent> callback) override;
+  void AddWindowCloseEventCallback(WindowEventCallback<WindowCloseEvent> callback) override;
+  void AddWindowFocusEventCallback(WindowEventCallback<WindowFocusEvent> callback) override;
+  void AddWindowIconifyEventCallback(WindowEventCallback<WindowIconifyEvent> callback) override;
+  void AddWindowMaximizeEventCallback(WindowEventCallback<WindowMaximizeEvent> callback) override;
+  void AddWindowKeyboardEventCallback(WindowEventCallback<WindowKeyboardEvent> callback) override;
+  void AddWindowCursorMoveEventCallback(WindowEventCallback<WindowCursorMoveEvent> callback) override;
+  void AddWindowCursorEnterEventCallback(WindowEventCallback<WindowCursorEnterEvent> callback) override;
+  void AddWindowMouseButtonEventCallback(WindowEventCallback<WindowMouseButtonEvent> callback) override;
+  void AddWindowMouseScrollEventCallback(WindowEventCallback<WindowMouseScrollEvent> callback) override;
+  void AddWindowFramebufferResizeEventCallback(WindowEventCallback<WindowFramebufferResizeEvent> callback) override;
+  void RemoveWindowResizeEventCallback(WindowEventCallback<WindowResizeEvent> callback) override;
+  void RemoveWindowCloseEventCallback(WindowEventCallback<WindowCloseEvent> callback) override;
+  void RemoveWindowFocusEventCallback(WindowEventCallback<WindowFocusEvent> callback) override;
+  void RemoveWindowIconifyEventCallback(WindowEventCallback<WindowIconifyEvent> callback) override;
+  void RemoveWindowMaximizeEventCallback(WindowEventCallback<WindowMaximizeEvent> callback) override;
+  void RemoveWindowKeyboardEventCallback(WindowEventCallback<WindowKeyboardEvent> callback) override;
+  void RemoveWindowCursorMoveEventCallback(WindowEventCallback<WindowCursorMoveEvent> callback) override;
+  void RemoveWindowCursorEnterEventCallback(WindowEventCallback<WindowCursorEnterEvent> callback) override;
+  void RemoveWindowMouseButtonEventCallback(WindowEventCallback<WindowMouseButtonEvent> callback) override;
+  void RemoveWindowMouseScrollEventCallback(WindowEventCallback<WindowMouseScrollEvent> callback) override;
+  void RemoveWindowFramebufferResizeEventCallback(WindowEventCallback<WindowFramebufferResizeEvent> callback) override;
+
+private:
+  // Vulkan Capable Window
 
   ///
   /// Creates a Vulkan surface for the window's drawable area.
@@ -358,7 +252,17 @@ private:
 
   std::string title_;
 
-  EventBus* bus_;
+  Vector<WindowEventCallback<WindowResizeEvent>> resize_event_callbacks_;
+  Vector<WindowEventCallback<WindowCloseEvent>> close_event_callbacks_;
+  Vector<WindowEventCallback<WindowFocusEvent>> focus_event_callbacks_;
+  Vector<WindowEventCallback<WindowIconifyEvent>> iconify_event_callbacks_;
+  Vector<WindowEventCallback<WindowMaximizeEvent>> maximize_event_callbacks_;
+  Vector<WindowEventCallback<WindowKeyboardEvent>> keyboard_event_callbacks_;
+  Vector<WindowEventCallback<WindowCursorMoveEvent>> cursor_move_event_callbacks_;
+  Vector<WindowEventCallback<WindowCursorEnterEvent>> cursor_enter_event_callbacks_;
+  Vector<WindowEventCallback<WindowMouseButtonEvent>> mouse_button_event_callbacks_;
+  Vector<WindowEventCallback<WindowMouseScrollEvent>> mouse_scroll_event_callbacks_;
+  Vector<WindowEventCallback<WindowFramebufferResizeEvent>> framebuffer_resize_event_callbacks_;
 };
 
 } // namespace plex
