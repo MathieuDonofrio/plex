@@ -1,8 +1,6 @@
 #ifndef PLEX_DEBUG_LOGGING_H
 #define PLEX_DEBUG_LOGGING_H
 
-#include <format>
-
 #include "plex/debug/stacktrace.h"
 
 namespace plex::debug
@@ -63,7 +61,8 @@ void Log(LogMetadata metadata, std::string_view message);
 
 #ifndef NDEBUG
 
-#ifdef __cpp_lib_format
+#if defined(__cpp_lib_format)
+#include <format>
 #define LOG(level, ...) ::plex::debug::Log(CREATE_LOG_METADATA(level), ::std::format(__VA_ARGS__))
 #else
 // Formatting not supported, print message without formatting

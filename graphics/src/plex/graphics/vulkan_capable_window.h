@@ -22,7 +22,7 @@ public:
   ///
   /// @Return Vulkan surface
   ///
-  virtual VkSurfaceKHR* CreateWindowSurface(VkInstance instance) = 0;
+  [[nodiscard]] virtual VkSurfaceKHR CreateWindowSurface(VkInstance instance) = 0;
 
   ///
   /// Returns the names of vulkan instance extensions required by the window API to create
@@ -30,7 +30,7 @@ public:
   ///
   /// @return Vulkan instance extensions required for the window.
   ///
-  virtual std::vector<const char*> GetRequiredInstanceExtensions() = 0;
+  [[nodiscard]] virtual std::vector<const char*> GetRequiredInstanceExtensions() = 0;
 
   ///
   /// Checks whether or not a specific queue family of a physical device supports image

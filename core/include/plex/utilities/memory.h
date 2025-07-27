@@ -1,5 +1,5 @@
-#ifndef PLEX_OS_MEMORY_H
-#define PLEX_OS_MEMORY_H
+#ifndef PLEX_UTILITIES_MEMORY_H
+#define PLEX_UTILITIES_MEMORY_H
 
 #include <cstdint>
 #include <cstdlib>
@@ -10,6 +10,14 @@
 #include "plex/config/compiler.h"
 #include "plex/debug/assertion.h"
 #include "plex/utilities/type_traits.h"
+
+#if PLATFORM_WINDOWS
+#include <malloc.h>
+#define STACK_ALLOC(size) _alloca(size)
+#else
+#include <alloca.h>
+#define STACK_ALLOC(size) alloca(size)
+#endif
 
 namespace plex
 {
@@ -64,9 +72,9 @@ constexpr Iterator2 UninitializedRelocate(Iterator1 first, Iterator1 last, Itera
   using Type = typename std::iterator_traits<Iterator2>::value_type;
   using RelocateType = decltype(std::move(*first));
 
-  constexpr bool relocatable =
-    std::is_same_v<Type, std::remove_reference_t<RelocateType>> && IsTriviallyRelocatable<Type>::value
-    && std::is_pointer_v<Iterator1> && std::is_pointer_v<Iterator2>;
+  constexpr bool relocatable = std::is_same_v<Type, std::remove_reference_t<RelocateType>>
+                               && IsTriviallyRelocatable<Type>::value
+                               && std::is_pointer_v<Iterator1> && std::is_pointer_v<Iterator2>;
 
   if constexpr (relocatable)
   {

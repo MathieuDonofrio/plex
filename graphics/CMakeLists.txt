@@ -19,7 +19,8 @@ target_compile_features(plex-graphics INTERFACE cxx_std_20)
 set_project_warnings(plex-graphics)
 
 find_package(glfw3 REQUIRED)
-find_package(Vulkan REQUIRED)
+find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
+find_package(vulkan-memory-allocator REQUIRED)
 
 target_include_directories(plex-graphics PRIVATE ${glfw_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(plex-graphics PRIVATE ${glfw_LIBRARIES} ${Vulkan_LIBRARIES})
+target_link_libraries(plex-graphics PRIVATE ${glfw_LIBRARIES} ${Vulkan_LIBRARIES} vulkan-memory-allocator::vulkan-memory-allocator Vulkan::shaderc_combined)

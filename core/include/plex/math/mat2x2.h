@@ -424,4 +424,4 @@ struct hash<plex::Mat<T, 2, 2>>
 };
 } // namespace std
 
-#endif // GENEBITS_VEC_H
+#endif

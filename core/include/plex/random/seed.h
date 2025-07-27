@@ -17,7 +17,7 @@ namespace plex
 ///
 /// @param[in] location The source location (Default is correct)
 ///
-/// @return Compile time seed
+/// @return CompileToSpv time seed
 ///
 consteval uint64_t CompileTimeSeed(const std::source_location location = std::source_location::current())
 {

@@ -145,7 +145,7 @@ namespace details
 template<typename Type, typename Tag = void>
 ALWAYS_INLINE static size_t TypeIndex() noexcept
 {
-  return details::TypeIndexGlobalStorage<Type, Tag>::value;
+  return details::TypeIndexGlobalStorage<std::remove_cvref_t<Type>, std::remove_cvref_t<Tag>>::value;
 }
 
 } // namespace plex

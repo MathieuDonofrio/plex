@@ -30,7 +30,7 @@ project(
   LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_BINARY_DIR})
 
@@ -47,6 +47,7 @@ include(cmake/ArchitectureOptimizations.cmake)
 include(cmake/Conan.cmake)
 
 add_conan_package(glfw/3.3.4)
+add_conan_package(vulkan-memory-allocator/3.0.1)
 
 if (BUILD_TESTS)
   add_conan_package(gtest/1.11.0)
@@ -64,6 +65,7 @@ run_conan()
 
 add_subdirectory(core)
 add_subdirectory(ecs)
+add_subdirectory(events)
 add_subdirectory(graphics)
 
 #

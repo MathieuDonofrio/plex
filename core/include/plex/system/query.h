@@ -1,10 +1,13 @@
 #ifndef PLEX_SYSTEM_QUERY_H
 #define PLEX_SYSTEM_QUERY_H
 
+#include <array>
+#include <ranges>
 #include <string_view>
 
-#include "plex/containers/array.h"
+#include "plex/containers/carray.h"
 #include "plex/system/context.h"
+#include "plex/utilities/puple.h"
 
 namespace plex
 {
@@ -16,44 +19,22 @@ namespace plex
 ///
 struct QueryDataAccess
 {
-  std::string_view name; // Name of the data obtained using: TypeInfo<Type>::Name()
-  std::string_view category; // Category of the data obtained using: Type::GetCategory()
+  std::string_view source; // Name of the data source
+  std::string_view section; // The section of the data source that is being accessed, empty if everything is accessed
 
   // Flags
   bool read_only; // Whether the data is read-only or not.
   bool thread_safe; // Whether the data is thread-safe or not.
 };
 
-namespace details
-{
-  ///
-  /// Checks whether or not a type is a valid query data access list.
-  ///
-  /// @tparam Type Type to check.
-  ///
-  template<typename Type>
-  struct IsValidQueryDataAccessList : public std::false_type
-  {};
-
-  ///
-  /// Checks whether or not a type is a valid query data access list.
-  ///
-  /// Specialization for arrays.
-  ///
-  /// @tparam N Number of elements for array.
-  ///
-  template<size_t N>
-  struct IsValidQueryDataAccessList<Array<QueryDataAccess, N>> : public std::true_type
-  {};
-} // namespace details
-
 ///
-/// Concept used to determine whether or not a type is a valid list of QueryDataAccess.
+/// Concept used to determine whether or not a type is a valid range of QueryDataAccess.
 ///
 /// @tparam Type The type to check.
 ///
 template<typename Type>
-concept QueryDataAccessList = details::IsValidQueryDataAccessList<Type>::value;
+concept QueryDataAccessRange =
+  std::ranges::random_access_range<Type> && std::same_as<std::ranges::range_value_t<Type>, QueryDataAccess>;
 
 // clang-format off
 
@@ -67,50 +48,74 @@ concept QueryDataAccessList = details::IsValidQueryDataAccessList<Type>::value;
 template<typename Type>
 concept Query = requires(void* handle, Context global_context, Context local_context)
 {
-  // Returns the data category of the query.
-  // This allows different query types to use the same data type.
-  { std::remove_cvref_t<Type>::GetCategory() } -> std::convertible_to<std::string_view>;
-
   // Returns information about every data access.
-  { std::remove_cvref_t<Type>::GetDataAccess() } -> QueryDataAccessList;
+  { Type::GetDataAccess() } -> QueryDataAccessRange;
 
   // Obtains the data for the query.
-  { std::remove_cvref_t<Type>::FetchData(handle, global_context, local_context) } -> std::same_as<std::remove_cvref_t<Type>>;
+  { Type::Fetch(handle, global_context, local_context) } -> std::convertible_to<Type>;
 };
 
 // clang-format on
 
 ///
-/// Implementation of the GetDataAccess requirement of a query.
+/// Global query.
 ///
-/// @note Queries are not required to use this for generating GetDataAccess, but this is the standard way to do it.
+/// Fetches the data directly from the global context.
 ///
-/// Uses const qualification to check if a type is read-only.
-/// Uses IsThreadSafe trait to check if a type is thread-safe.
+/// @warning If the queried objects do not exist in the global context, the behaviour of this query is undefined.
 ///
-/// @tparam Query The query type.
-/// @tparam Types The types to check.
+/// @tparam Types The types of objects to query.
 ///
-template<typename Query, typename... Types>
-struct QueryDataAccessFactory
+template<typename... Types>
+requires(sizeof...(Types) > 0)
+struct Global : public Puple<Types...>
 {
-  ///
-  /// Returns all the data accesses for the query at compile-time.
-  ///
-  /// @return Array of data accesses.
-  ///
-  static consteval Array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
-  {
-    const std::string_view category = Query::GetCategory();
+  using Puple<Types...>::Puple;
 
+  static Global Fetch(void*, Context& global_context, Context&)
+  {
+    return { (&global_context.template Get<Types>())... };
+  }
+
+  static consteval std::array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
+  {
     return { QueryDataAccess {
-      TypeName<Types>(), // Name of the type
-      category, // Query category
+      TypeName<Types>(),
+      {}, // Access entire data source
       std::is_const_v<Types>, // Check const qualifier to see if the access is read-only.
       IsThreadSafe<Types>::value // Check ThreadSafe trait to see if the access is thread-safe.
     }... };
   }
 };
+
+///
+/// Global query.
+///
+/// Fetches the data directly from the global context.
+///
+/// @warning If the queried objects do not exist in the global context, the behaviour of this query is undefined.
+///
+/// @tparam Types The types of objects to query.
+///
+template<typename... Types>
+requires(sizeof...(Types) > 0)
+struct Local : public Puple<Types...>
+{
+  using Puple<Types...>::Puple;
+
+  static Local Fetch(void*, Context&, Context& local_context)
+  {
+    return { (&local_context.template Get<Types>())... };
+  }
+
+  static consteval std::array<QueryDataAccess, sizeof...(Types)> GetDataAccess() noexcept
+  {
+    return {};
+  }
+};
 } // namespace plex
 
-#endif // GENEBITS_QUERY_H
+DEFINE_PUPLE_LIKE(::plex::Global)
+DEFINE_PUPLE_LIKE(::plex::Local)
+
+#endif

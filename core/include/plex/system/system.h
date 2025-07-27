@@ -24,11 +24,11 @@ template<typename Type>
 struct IsSystem : std::false_type
 {};
 
-template<typename Return, Query... Queries>
+template<typename Return, typename... Queries>
 struct IsSystem<Return(Queries...)> : std::true_type
 {};
 
-template<typename Return, Query... Queries>
+template<typename Return, typename... Queries>
 struct IsSystem<Return (*)(Queries...)> : std::true_type
 {};
 
@@ -58,18 +58,57 @@ struct SystemTraits<Return(Queries...)>
 {
 private:
   ///
-  /// Utility for checking if a query is of a certain template.
+  /// Fetches the query for the given type and the given context. If the query type does not meet the concept of a
+  /// query, a global query with the type is assumed.
   ///
-  /// @tparam QueryTemplate The template to check.
-  /// @tparam Query The query to check.
+  /// @tparam QueryType The query type or type for a global query.
   ///
-  template<template<class...> typename QueryTemplate, typename Query>
-  struct IsQueryType : public std::false_type
-  {};
+  /// @param[in] system Handle to the system that is invoking a fetch for the query.
+  /// @param[in] global_context The global context (All systems have access).
+  /// @param[in] local_context The local context (Only given system has access).
+  ///
+  /// @return The populated query object.
+  ///
+  template<typename QueryType>
+  static decltype(auto) Fetch(
+    [[maybe_unused]] void* system, Context& global_context, [[maybe_unused]] Context& local_context)
+  {
+    if constexpr (Query<std::remove_cvref_t<QueryType>>)
+    {
+      return std::remove_cvref_t<QueryType>::Fetch(system, global_context, local_context);
+    }
+    else
+    {
+      return global_context.template Get<QueryType>();
+    }
+  }
 
-  template<template<class...> typename Query, typename... Types>
-  struct IsQueryType<Query, Query<Types...>> : public std::true_type
-  {};
+  ///
+  /// Returns all the data access of the given query. If the query type does not meet the concept of a
+  /// query, a global query with the type is assumed.
+  ///
+  /// For implicit global queries, if passed by copy the data access is data access is read-only.
+  ///
+  /// @tparam QueryType The query type to obtain data access for.
+  ///
+  /// @return Data accesses for the query.
+  ///
+  template<typename QueryType>
+  static consteval auto GetDataAccess() noexcept
+  {
+    if constexpr (Query<std::remove_cvref_t<QueryType>>)
+    {
+      return std::remove_cvref_t<QueryType>::GetDataAccess();
+    }
+    else if constexpr (std::is_reference_v<QueryType>)
+    {
+      return Global<std::remove_reference_t<QueryType>>::GetDataAccess();
+    }
+    else
+    {
+      return Global<std::add_const_t<QueryType>>::GetDataAccess();
+    }
+  }
 
 public:
   using SystemType = Return(Queries...);
@@ -77,14 +116,6 @@ public:
 
   static constexpr size_t QueryCount = sizeof...(Queries);
   static constexpr bool IsCoroutine = Awaitable<ReturnType>;
-
-  ///
-  /// Checks if the system contains a query of a certain template/type.
-  ///
-  /// @tparam Query The query template to check.
-  ///
-  template<template<class...> typename Query>
-  using ContainsQueryType = std::disjunction<IsQueryType<Query, std::remove_cvref_t<Queries>>...>;
 
   ///
   /// Invokes the system with the context.
@@ -102,11 +133,11 @@ public:
 
     if constexpr (IsCoroutine)
     {
-      co_await system(std::remove_cvref_t<Queries>::FetchData(handle, global_context, local_context)...);
+      co_await system(Fetch<Queries>(handle, global_context, local_context)...);
     }
     else
     {
-      system(std::remove_cvref_t<Queries>::FetchData(handle, global_context, local_context)...);
+      system(Fetch<Queries>(handle, global_context, local_context)...);
       co_return;
     }
   }
@@ -116,9 +147,11 @@ public:
   ///
   /// @return Array of data accesses.
   ///
-  static consteval auto GetDataAccess() noexcept
+  static Vector<QueryDataAccess> GetDataAccess() noexcept
   {
-    return ConcatArrays<QueryDataAccess>(std::remove_cvref_t<Queries>::GetDataAccess()...);
+    Vector<QueryDataAccess> joined;
+    ((std::ranges::copy(GetDataAccess<Queries>(), std::back_inserter(joined))), ...);
+    return joined;
   }
 };
 

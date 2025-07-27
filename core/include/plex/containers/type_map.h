@@ -30,12 +30,12 @@ concept TypeMapContainer = requires(Type& container, size_t size)
 // clang-format on
 
 ///
-/// Container adapter for mapping types to values.
+/// Container adapter for mapping types to values across translation units.
 ///
-/// Uses an efficiently generated dense type index to do lookups into a contiguous array.
+/// Uses an efficiently generated dense type index obtained once at runtime, to do lookups into a contiguous array.
 ///
 /// Much faster than using a normal map, the price of a obtaining a value for a type is essentially the cost of an array
-/// lookup.
+/// lookup plus initialization overhead.
 ///
 /// @see TypeIndex
 ///
